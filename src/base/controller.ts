@@ -13,7 +13,7 @@ export default abstract class Controller<T extends Node> {
     }
 
     public abstract addXmlNs(name: string, uri: string): void;
-    public abstract createGroup(node: T, children?: T[], parent?: T, element?: HTMLElement): T;
+    public abstract createGroup(parent: T, node: T, children: T[]): T;
     public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
     public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
     public abstract renderNodeStatic(nodeName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;

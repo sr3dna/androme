@@ -353,7 +353,7 @@ export default class View extends Node {
                     }
                 }
                 if (this.android('layout_width') == null) {
-                    const widthDefined = this.renderChildren.filter(node => (node.has('width', CSS_STANDARD.NONE, { map: 'original' }) && !node.has('width', CSS_STANDARD.PERCENT) && !node.autoMargin));
+                    const widthDefined = this.renderChildren.filter(node => (node.has('width', 0, { map: 'original' }) && !node.has('width', CSS_STANDARD.PERCENT) && !node.autoMargin));
                     if (convertFloat(this.app('layout_columnWeight')) > 0) {
                         this.android('layout_width', '0px');
                     }
@@ -390,14 +390,12 @@ export default class View extends Node {
                                     (this.documentParent.blockStatic && this.nodeType <= NODE_STANDARD.LINEAR && ((previousSibling == null || !previousSibling.floating) && (nextSibling == null || !nextSibling.floating))))
                                 ) ||
                                 (this.is(NODE_STANDARD.FRAME) && this.renderChildren.some(node => node.blockStatic && (node.centerMarginHorizontal || node.autoLeftMargin))) ||
-                                (!this.hasElement && this.renderChildren.length > 0 && this.renderChildren.some(item => item.linear.width >= this.documentParent.box.width)))
+                                (!this.hasElement && this.renderChildren.length > 0 && this.renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !this.renderChildren.some(item => item.plainText && item.multiLine)))
                             {
                                 this.android('layout_width', 'match_parent');
                             }
                         }
-                        if (this.android('layout_width') == null) {
-                            this.android('layout_width', 'wrap_content');
-                        }
+                        this.android('layout_width', 'wrap_content', false);
                     }
                 }
             }
@@ -453,18 +451,18 @@ export default class View extends Node {
                     this.android('layout_height', 'match_parent');
                 }
                 else {
-                    const boundsHeight = this.actualHeight;
-                    if (this.inlineElement && boundsHeight > 0 && this.lineHeight >= boundsHeight) {
-                        this.android('layout_height', formatPX(boundsHeight));
-                        this.modifyBox(BOX_STANDARD.PADDING_TOP, null);
-                        this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, null);
+                    if (this.lineHeight > 0 && !this.plainText && !renderParent.linearHorizontal) {
+                        const boundsHeight = this.actualHeight;
+                        if (this.inlineElement && boundsHeight > 0 && this.lineHeight >= boundsHeight) {
+                            this.android('layout_height', formatPX(boundsHeight));
+                            this.modifyBox(BOX_STANDARD.PADDING_TOP, null);
+                            this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, null);
+                        }
+                        else if (this.block && this.box.height > 0 && this.lineHeight === this.box.height) {
+                            this.android('layout_height', formatPX(boundsHeight));
+                        }
                     }
-                    else if (this.block && this.box.height > 0 && this.lineHeight === this.box.height) {
-                        this.android('layout_height', formatPX(boundsHeight));
-                    }
-                    else {
-                        this.android('layout_height', 'wrap_content');
-                    }
+                    this.android('layout_height', 'wrap_content', false);
                 }
             }
         }
@@ -877,7 +875,7 @@ export default class View extends Node {
                 this.android('layout_height', formatPX(this.bounds.height));
             }
             else if (this.is(NODE_STANDARD.LINE)) {
-                if (viewHeight > 0 && this.cssOriginal('height') !== '' && this.cssOriginal('height') !== 'auto') {
+                if (viewHeight > 0 && this.has('height', 0, { map: 'original' }) && this.tagName !== 'HR') {
                     this.android('layout_height', formatPX(viewHeight + this.borderTopWidth + this.borderBottomWidth));
                 }
             }
@@ -930,7 +928,7 @@ export default class View extends Node {
                 }
             }
         }
-        if (!renderParent.linearHorizontal) {
+        if (!renderParent.linearHorizontal && !this.plainText) {
             const offset = this.lineHeight - this.actualHeight;
             if (offset > 0) {
                 this.modifyBox(BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));

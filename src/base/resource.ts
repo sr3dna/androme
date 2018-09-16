@@ -298,7 +298,7 @@ export default abstract class Resource<T extends Node> {
                             break;
                         default:
                             if (node.companion != null) {
-                                value = ((node.plainText ? node.companion.element.textContent : (<HTMLElement> node.companion.element).innerText) || '').trim();
+                                value = node.companion.textContent.trim();
                             }
                             break;
                     }
@@ -311,8 +311,8 @@ export default abstract class Resource<T extends Node> {
                         value = element.innerText;
                     }
                     else if (node.inlineText) {
-                        name = (element.innerText || element.textContent || '').trim();
-                        value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : element.innerText || element.textContent || '');
+                        name = node.textContent.trim();
+                        value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
                         [value, inlineTrim] = parseWhiteSpace(node, value);
                         value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
@@ -322,9 +322,9 @@ export default abstract class Resource<T extends Node> {
                         performTrim = false;
                     }
                 }
-                else if (node.plainText && element.textContent) {
-                    name = element.textContent.trim();
-                    value = replaceEntity(element.textContent);
+                else if (node.plainText) {
+                    name = node.textContent.trim();
+                    value = replaceEntity(node.textContent);
                     value = value.replace(/&[A-Za-z]+;/g, (match => match.replace('&', '&amp;')));
                     [value, inlineTrim] = parseWhiteSpace(node, value);
                 }

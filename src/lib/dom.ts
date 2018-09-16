@@ -216,52 +216,39 @@ export function isPlainText(element: Null<Element>, whiteSpace = false) {
 }
 
 export function hasLineBreak(element: Null<Element>) {
-    const node = getNodeFromElement(element);
-    let whiteSpace = '';
-    let styleMap = false;
-    if (node) {
-        whiteSpace = node.css('whiteSpace');
-        styleMap = node.has('whiteSpace');
-    }
-    else {
-        whiteSpace = getStyle(element).whiteSpace || '';
-    }
-    return (
-        element instanceof HTMLElement &&
-        element.children.length > 0 &&
-        Array.from(element.children).some(item => item.tagName === 'BR')) ||
-        (element && /\n/.test(element.textContent || '') && (
-            ['pre', 'pre-wrap'].includes(whiteSpace) ||
-            (!styleMap && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
-        )
-    );
-}
-
-export function isLineBreak(element: Null<Element>, direction = 'previous', includeNode = true) {
-    let found = false;
-    while (element != null) {
-        if (element.nodeName === '#text') {
-            if (isPlainText(element) || direction === '') {
-                break;
-            }
-            else {
-                element = element[`${direction}Sibling`];
-            }
+    if (element != null) {
+        const node = getNodeFromElement(element);
+        const fromParent = (element.nodeName === '#text');
+        let whiteSpace = '';
+        if (node != null) {
+            whiteSpace = node.css('whiteSpace');
         }
         else {
-            const node = getNodeFromElement(element);
-            const styleMap = getElementCache(element, 'styleMap');
-            found = (
-                element.tagName === 'BR' ||
-                (includeNode && getStyle(element).display === 'block' && (
-                    (node && node.excluded) ||
-                    (styleMap && convertInt(styleMap.height || styleMap.lineHeight) > 0 && element.innerHTML.trim() === ''))
-                )
-            );
-            break;
+            whiteSpace = getStyle(element).whiteSpace || '';
         }
+        return (
+            (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) ||
+            (/\n/.test(element.textContent || '') && (
+                ['pre', 'pre-wrap'].includes(whiteSpace) ||
+                (fromParent && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
+            ))
+        );
     }
-    return found;
+    return false;
+}
+
+export function isLineBreak(element: Null<Element>, excluded = true) {
+    const node = getNodeFromElement(element);
+    if (node != null) {
+        return (
+            node.tagName === 'BR' ||
+            (excluded && node.block && (
+                node.excluded ||
+                node.textContent.trim() === '')
+            )
+        );
+    }
+    return false;
 }
 
 export function getElementsBetweenSiblings(firstElement: Null<Element>, secondElement: Element, cacheNode = false, whiteSpace = false) {

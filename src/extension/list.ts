@@ -30,8 +30,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
         let xml = '';
         const node = this.node;
         const parent = this.parent as T;
-        const vertical = (!node.children.some(item => item.floating) && (NodeList.linearY(node.children) || node.children.every(item => !item.inlineElement)));
-        if (vertical) {
+        if (NodeList.linearY(node.children)) {
             xml = this.application.writeGridLayout(node, parent, (node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2));
         }
         else {

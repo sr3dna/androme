@@ -324,7 +324,7 @@ export default class Grid<T extends Node> extends Extension<T> {
             if (siblings && siblings.length > 0) {
                 siblings.unshift(node);
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
-                const group = this.application.controllerHandler.createGroup(node, siblings, parent);
+                const group = this.application.controllerHandler.createGroup(parent, node, siblings);
                 if (linearX || linearY) {
                     xml = this.application.writeLinearLayout(group, parent, linearX);
                     group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;

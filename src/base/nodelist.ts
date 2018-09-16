@@ -6,6 +6,10 @@ import { getNodeFromElement } from '../lib/dom';
 export type FindPredicate<T> = (value: T, index?: number) => boolean;
 
 export default class NodeList<T extends Node> implements Iterable<T> {
+    public static siblingIndex<T extends Node>(a: T, b: T) {
+        return (a.siblingIndex <= b.siblingIndex ? -1 : 1);
+    }
+
     public static cleared<T extends Node>(list: T[]) {
         const nodes: Set<T> = new Set();
         const floats = new Set();
@@ -70,7 +74,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                             return 1;
                         }
                         else {
-                            return (a.siblingIndex < b.siblingIndex ? -1 : 1);
+                            return (a.siblingIndex <= b.siblingIndex ? -1 : 1);
                         }
                     }
                     else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
@@ -116,13 +120,15 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 const parent = this.documentParent(nodes);
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
                     const cleared = NodeList.cleared(Array.from(parent.element.children).map(node => getNodeFromElement(node) as T).filter(node => node));
-                    const horizontal = nodes.slice().sort((a, b) => (a.siblingIndex < b.siblingIndex ? -1 : 1)).every((node, index) => {
-                        if (node.companion && node.companion.documentParent === parent) {
-                            node = node.companion as T;
-                        }
-                        const previous = node.previousSibling();
-                        if (previous != null) {
-                            return (index === 0 || !node.alignedVertical(previous, cleared));
+                    const horizontal = nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
+                        if (index > 0) {
+                            if (node.companion && node.companion.documentParent === parent) {
+                                node = node.companion as T;
+                            }
+                            const previous = node.previousSibling();
+                            if (previous != null) {
+                                return !node.alignedVertical(previous, cleared);
+                            }
                         }
                         return true;
                     });
@@ -152,16 +158,15 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 const parent = this.documentParent(nodes);
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
                     const cleared = NodeList.cleared(Array.from(parent.element.children).map(node => getNodeFromElement(node) as T).filter(node => node));
-                    return list.every(node => {
-                        if (node.lineBreak) {
-                            return true;
-                        }
-                        if (node.companion && node.companion.documentParent === parent) {
-                            node = node.companion as T;
-                        }
-                        const previous = node.previousSibling();
-                        if (previous != null) {
-                            return node.alignedVertical(previous, cleared);
+                    return nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
+                        if (index > 0 && !node.lineBreak) {
+                            if (node.companion && node.companion.documentParent === parent) {
+                                node = node.companion as T;
+                            }
+                            const previous = node.previousSibling();
+                            if (previous != null) {
+                                return node.alignedVertical(previous, cleared);
+                            }
                         }
                         return true;
                     });

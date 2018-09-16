@@ -888,7 +888,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             if (stored) {
                 if (node.renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.INLINE_WRAP)) {
                     if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                        const value = node.element.textContent || '';
+                        const value = node.textContent;
                         let leadingSpace = 0;
                         for (let i = 0; value.length; i++) {
                             switch (value.charCodeAt(i)) {

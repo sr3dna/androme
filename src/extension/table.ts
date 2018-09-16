@@ -23,18 +23,18 @@ export default class Table<T extends Node> extends Extension<T> {
         const tableWidth = node.css('width');
         if (thead.length > 0) {
             thead[0].cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(thead[0], 'styleMap'));
-            table.push(...<T[]> thead[0].children);
+            table.push(...thead[0].children as T[]);
             thead.forEach(item => item.hide());
         }
         if (tbody.length > 0) {
             tbody.forEach(item => {
-                table.push(...<T[]> item.children);
+                table.push(...item.children as T[]);
                 item.hide();
             });
         }
         if (tfoot.length > 0) {
             tfoot[0].cascade().filter(item => item.tagName === 'TH' || item.tagName === 'TD').forEach(item => item.inherit(tfoot[0], 'styleMap'));
-            table.push(...<T[]> tfoot[0].children);
+            table.push(...tfoot[0].children as T[]);
             tfoot.forEach(item => item.hide());
         }
         const borderCollapse = (node.css('borderCollapse') === 'collapse');

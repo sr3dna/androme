@@ -9,7 +9,7 @@ import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/
 import { formatResource } from './extension/lib/util';
 import { getElementsBetweenSiblings, getRangeClientRect, hasLineBreak, isLineBreak } from '../lib/dom';
 import { getPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
-import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_STANDARD, NODE_RESOURCE } from '../lib/constants';
+import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
@@ -193,9 +193,19 @@ export default class ViewController<T extends View> extends Controller<T> {
                     mapLayout = MAP_LAYOUT.relative;
                     const rows: T[][] = [];
                     const baseline: T[] = [];
-                    const multiLine = nodes.list.some((item, index) => (index > 0 && node.linear.top >= nodes.get(index - 1).linear.bottom) || item.multiLine);
                     const textIndent = node.toInt('textIndent');
                     const floatAligned = nodes.list.some((item => item.floating));
+                    let multiLine = nodes.list.some((item, index) => (index > 0 && node.linear.top >= nodes.get(index - 1).linear.bottom) || item.multiLine);
+                    let boxWidth = node.box.width;
+                    if (node.renderParent.overflowX) {
+                        boxWidth = convertInt(node.renderParent.cssOriginal('width')) || node.viewWidth || boxWidth;
+                        multiLine = true;
+                    }
+                    else if (node.renderParent.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
+                        const minLeft: number = Math.min.apply(null, nodes.list.map(item => item.linear.left));
+                        const maxRight: number = Math.max.apply(null, nodes.list.map(item => item.linear.right));
+                        boxWidth = maxRight - minLeft;
+                    }
                     let rowWidth = 0;
                     let rowPaddingLeft = 0;
                     let rowPreviousLeft: Null<T> = null;
@@ -230,19 +240,18 @@ export default class ViewController<T extends View> extends Controller<T> {
                             if (current.hasElement && current.multiLine) {
                                 dimension = getRangeClientRect(current.element)[0];
                             }
+                            const siblings = getElementsBetweenSiblings(previous.element, current.element, false, true);
                             let connected = false;
                             if (i === 1 && previous.textElement && current.textElement) {
-                                const elements = getElementsBetweenSiblings(previous.element, current.element, false, true);
-                                connected = (elements.length === 0 && !/\s+$/.test(previous.element.textContent || '') && !/^\s+/.test(current.element.textContent || ''));
+                                connected = (siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(current.textContent));
                             }
-                            if ((!connected && (
-                                    (multiLine && (!previous.floating || items.length > 1) && (Math.floor(rowWidth - current.marginLeft) + dimension.width > node.box.width)) ||
-                                    (current.multiLine && hasLineBreak(current.element))
-                                )) ||
+                            if (viewGroup ||
                                 (!multiLine && (current.linear.top >= previous.linear.bottom || withinFraction(current.linear.left, node.box.left))) ||
-                                viewGroup ||
-                                isLineBreak(<Element> current.element.previousSibling) ||
-                                isLineBreak(<Element> previous.element.nextSibling, 'next'))
+                                (siblings.length > 0 && siblings.some(element => isLineBreak(element))) ||
+                                (!connected && (
+                                    (multiLine && (!previous.floating || items.length > 1) && (Math.floor(rowWidth - current.marginLeft) + dimension.width > boxWidth)) ||
+                                    (current.multiLine && hasLineBreak(current.element))
+                               )))
                             {
                                 rowPreviousBottom = items.filter(item => !item.floating)[0] || items[0];
                                 for (let j = 0; j < items.length; j++) {
@@ -309,7 +318,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     if (SETTINGS.ellipsisOnTextOverflow && (node.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL) || rows.length === 1)) {
                         for (let i = 1; i < nodes.length; i++) {
                             const item = nodes.get(i);
-                            if (!item.multiLine && !item.floating && (Math.ceil(item.linear.right) >= node.box.right || item.bounds.width >= node.box.width) && (!item.alignParent('left') || rows.length === 1)) {
+                            if (!item.multiLine && !item.floating && (!item.alignParent('left') || rows.length === 1)) {
                                 item.android('singleLine', 'true');
                             }
                         }
@@ -1416,10 +1425,11 @@ export default class ViewController<T extends View> extends Controller<T> {
         return xml;
     }
 
-    public createGroup(node: T, children?: T[], parent?: T, element?: HTMLElement): T {
-        const group = <View> new ViewGroup(this.cache.nextId, node, parent, children, element) as T;
-        if (children != null) {
+    public createGroup(parent: T, node: T, children: T[]): T {
+        const group = <View> new ViewGroup(this.cache.nextId, node, parent, children) as T;
+        if (children.length > 0) {
             children.forEach(item => item.inherit(group, 'data'));
+            parent.sort();
         }
         this.cache.append(group);
         return group;
@@ -1456,7 +1466,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         if (node.overflowX || node.overflowY) {
             const scrollType: string[] = [];
             if (node.overflowX && node.overflowY) {
-                scrollType.push(NODE_ANDROID.SCROLL_VERTICAL, NODE_ANDROID.SCROLL_HORIZONTAL);
+                scrollType.push(NODE_ANDROID.SCROLL_HORIZONTAL, NODE_ANDROID.SCROLL_VERTICAL);
             }
             else {
                 if (node.overflowX) {
@@ -1482,34 +1492,42 @@ export default class ViewController<T extends View> extends Controller<T> {
                     container.inherit(node, 'originalStyleMap', 'styleMap');
                     container.android('fadeScrollbars', 'false');
                     if (previous != null) {
+                        previous.css('overflow', 'visible scroll');
+                        previous.css('overflowX', 'scroll');
+                        previous.css('overflowY', 'visible');
+                        previous.overflow = OVERFLOW_ELEMENT.HORIZONTAL;
                         container.parent = previous;
                         container.render(previous);
                     }
+                    container.css('overflow', 'scroll visible');
+                    container.css('overflowX', 'visible');
+                    container.css('overflowY', 'scroll');
+                    container.overflow = OVERFLOW_ELEMENT.VERTICAL;
                     if (node.has('width', CSS_STANDARD.UNIT)) {
                         container.css('width', formatPX(node.toInt('width') + node.paddingLeft + node.paddingRight));
                     }
                 }
                 container.resetBox(BOX_STANDARD.PADDING);
-                this.cache.append(container);
                 const indent = repeat(container.renderDepth);
                 preXml += `{<${container.id}}${indent}<${nodeName}{@${container.id}}>\n` +
                           `{:${container.id}}`;
                 postXml = `${indent}</${nodeName}>\n{>${container.id}}` + (index === 1 ? '\n' : '') + postXml;
                 previous = container;
+                this.cache.append(container);
                 return container;
             });
-            const renderParent = scrollView[scrollView.length - 1];
             if (scrollView.length === 2) {
                 node.android('layout_width', 'wrap_content');
                 node.android('layout_height', 'wrap_content');
             }
-            node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
-            node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
-            node.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, null);
-            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
+            else {
+                scrollView[0].overflow = node.overflow;
+                node.android((node.overflowX ? 'layout_width' : 'layout_height'), 'wrap_content');
+            }
+            node.resetBox(BOX_STANDARD.MARGIN);
             node.wrapped = true;
-            node.parent = renderParent;
-            node.render(renderParent);
+            node.parent = scrollView[scrollView.length - 1];
+            node.render(node.parent);
         }
         else {
             node.render((target ? node : parent));
@@ -1636,20 +1654,21 @@ export default class ViewController<T extends View> extends Controller<T> {
                 switch (element.type) {
                     case 'radio':
                         if (!recursive) {
-                            const result =
+                            const radiogroup =
                                 parent.children.map(item => {
                                     if (item.renderAs != null) {
                                         item = item.renderAs as T;
                                     }
-                                    if (item.visible && !item.rendered && (<HTMLInputElement> item.element).type === 'radio' && (<HTMLInputElement> item.element).name === element.name) {
+                                    const input = <HTMLInputElement> item.element;
+                                    if (item.visible && !item.rendered && input.type === 'radio' && input.name === element.name) {
                                         return item;
                                     }
                                     return null;
-                                }).filter(item => item) as T[];
-                            if (result.length > 1) {
+                                })
+                                .filter(item => item) as T[];
+                            if (radiogroup.length > 1) {
                                 let xml = '';
-                                const linearX = NodeList.linearX(result);
-                                const group = this.createGroup(node, (linearX ? sortAsc(result, 'linear.left') : result), parent);
+                                const group = this.createGroup(parent, node, radiogroup);
                                 group.setNodeType(NODE_ANDROID.RADIO_GROUP);
                                 group.inherit(node, 'alignment');
                                 group.render(parent);
@@ -1660,7 +1679,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     }
                                     xml += this.renderNode(item as T, group, NODE_STANDARD.RADIO, true);
                                 }
-                                group.android('orientation', linearX ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL);
+                                group.android('orientation', (NodeList.linearX(radiogroup) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL));
                                 group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
                                 if (checked !== '') {
                                     group.android('checkedButton', checked);

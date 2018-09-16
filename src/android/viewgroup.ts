@@ -8,20 +8,14 @@ export default class ViewGroup<T extends View> extends View {
     constructor(
         id: number,
         node: T,
-        parent?: T,
-        children?: T[],
-        element?: HTMLElement)
+        parent: T,
+        children: T[])
     {
         super(id, node.api);
         this.baseNode = node;
-        if (parent != null) {
-            this.parent = parent;
-        }
-        if (element != null) {
-            this.element = element;
-        }
-        if (children != null) {
-            this.children = children;
+        this.parent = parent;
+        this.children = children;
+        if (children.length > 0) {
             this.init();
         }
     }
@@ -29,26 +23,19 @@ export default class ViewGroup<T extends View> extends View {
     public init() {
         super.init();
         const node = this.baseNode;
-        this.children.forEach(item => item.parent = this);
-        this.documentParent = node.documentParent;
-        if (this.hasElement) {
-            this.nodeName = node.nodeName;
-            this.inherit(node, 'base', 'styleMap');
-            this.documentRoot = node.documentRoot;
-            this.excludeProcedure = node.excludeProcedure;
-            this.excludeResource = node.excludeResource;
-            this.renderExtension = node.renderExtension;
-        }
-        else {
-            this.nodeName = `${node.nodeName}_GROUP`;
-            this.setBounds();
-        }
         this.depth = node.depth;
+        this.children.forEach(item => {
+            this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
+            item.parent = this;
+        });
+        this.documentParent = node.documentParent;
+        this.nodeName = `${node.nodeName}_GROUP`;
+        this.setBounds();
         this.css('direction', this.documentParent.dir);
     }
 
     public setLayout() {
-        super.setLayout.apply(this, (this.hasElement ? null : this.childrenBox));
+        super.setLayout.apply(this, this.childrenBox);
     }
 
     public setBounds(calibrate = false) {
@@ -79,7 +66,7 @@ export default class ViewGroup<T extends View> extends View {
     }
 
     get pageflow() {
-        return (this.element != null ? super.pageflow : this.children.some(node => node.pageflow));
+        return this.children.some(node => node.pageflow);
     }
 
     get display() {
