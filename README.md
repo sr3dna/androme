@@ -104,7 +104,6 @@ androme.settings = {
     collapseUnattributedElements: true,
     showAttributes: true,
     customizationsOverwritePrivilege: false,
-    autoCloseOnWrite: true, false,
     autoCloseOnWrite: true,
     insertSpaces: 4, // tabs: 0
     convertPixels: 'dp',
@@ -248,12 +247,14 @@ It is sometimes necessary to append elements into other containers when trying t
 ```
 Using "target" into a ConstraintLayout or RelativeLayout view will not include automatic positioning.
 
-### Excluding or including applied attributes
+### Excluding procedures and applied attributes
 
 Most attributes can be excluded from the generated XML using the dataset feature in HTML. One or more can be applied to any tag using the OR "|" operator. These may cause warnings when you compile your project and should only be used in cases when an extension has their custom attributes overwritten.
-
 ```xml
-<div data-exclude-procedure="LAYOUT | ALIGNMENT | AUTOFIT | OPTIMIZATION | CUSTOMIZATION | ACCESSIBILITY | ALL" data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL"></div>
+<div data-exclude-section="INCLUDE | EXTENSION | DOM_TRAVERSE | RENDER | ALL"
+     data-exclude-procedure="LAYOUT | ALIGNMENT | AUTOFIT | OPTIMIZATION | CUSTOMIZATION | ACCESSIBILITY | ALL"
+     data-exclude-resource="BOX_STYLE | BOX_SPACING | FONT_STYLE | VALUE_STRING | OPTION_ARRAY | IMAGE_SOURCE | ASSET | ALL">
+</div>
 <div>
     <span data-exclude-resource="FONT_STYLE">content</span>
     <input id="cb1" type="checkbox" data-exclude-procedure="ACCESSIBILITY"><label for="cb1">checkbox text</label>

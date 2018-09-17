@@ -2,7 +2,7 @@ import { BoxModel, ClientRect, DisplaySettings, Flexbox, Null, ObjectMap, Point,
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasValue, hasBit, isPercent, isString, isUnit, search } from '../lib/util';
 import { assignBounds, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache } from '../lib/dom';
-import { BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
+import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 
 type T = Node;
 
@@ -21,6 +21,7 @@ export default abstract class Node implements BoxModel {
     public bounds: ClientRect;
     public linear: ClientRect;
     public overflow: number;
+    public excludeSection = APP_SECTION.NONE;
     public excludeProcedure = NODE_PROCEDURE.NONE;
     public excludeResource = NODE_RESOURCE.NONE;
     public renderExtension: IExtension[] = [];
@@ -471,7 +472,7 @@ export default abstract class Node implements BoxModel {
 
     public setExclusions() {
         if (this.hasElement) {
-            [['excludeProcedure', NODE_PROCEDURE], ['excludeResource', NODE_RESOURCE]].forEach((item: [string, any]) => {
+            [['excludeSection', APP_SECTION], ['excludeProcedure', NODE_PROCEDURE], ['excludeResource', NODE_RESOURCE]].forEach((item: [string, any]) => {
                 let exclude = this.dataset[item[0]] || '';
                 if (this._element.parentElement != null) {
                     exclude += '|' + (this._element.parentElement.dataset[`${item[0]}Child`] || '');
