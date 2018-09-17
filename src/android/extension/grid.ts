@@ -63,7 +63,7 @@ export default class GridAndroid<T extends View> extends Grid<T> {
                                             node.renderDepth,
                                             {
                                                 app: {
-                                                    layout_columnSpan: mainData.columnCount
+                                                    layout_columnSpan: mainData.columnCount.toString()
                                                 }
                                             },
                                             'match_parent',

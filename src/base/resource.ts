@@ -317,7 +317,7 @@ export default abstract class Resource<T extends Node> {
                         value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
-                    else if (element.innerText.trim() === '' && this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'))) {
+                    else if (element.innerText.trim() === '' && this.hasDrawableBackground(<BoxStyle> getElementCache(element, 'boxStyle'))) {
                         value = replaceEntity(element.innerText);
                         performTrim = false;
                     }

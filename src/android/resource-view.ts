@@ -1,9 +1,9 @@
-import { ArrayIndex, NameValue, BorderAttribute, BoxStyle, Image, FontAttribute, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
+import { ArrayIndex, BorderAttribute, BoxStyle, FontAttribute, Image, NameValue, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
 import NodeList from '../base/nodelist';
-import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, lastIndexOf, partition, trim } from '../lib/util';
+import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, lastIndexOf, partition, trimString } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setElementCache } from '../lib/dom';
@@ -39,15 +39,13 @@ const METHOD_ANDROID = {
     }
 };
 
-interface StyleTag {
+type StyleTag = {
     name?: string;
     attributes: string;
     ids: number[];
-}
+};
 
-type StyleList = ArrayIndex<ObjectMap<number[]>>;
-
-interface BackgroundImage {
+type BackgroundImage = {
     image: string;
     top: string;
     left: string;
@@ -57,7 +55,9 @@ interface BackgroundImage {
     tileModeY: string;
     width: string;
     height: string;
-}
+};
+
+type StyleList = ArrayIndex<ObjectMap<number[]>>;
 
 export default class ResourceView<T extends View> extends Resource<T> {
     public static addString(value: string, name = '') {
@@ -255,7 +255,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                     if (map.size > 1) {
                         if (style !== '') {
-                            style = trim(style.substring(style.indexOf('/') + 1), '"');
+                            style = trimString(style.substring(style.indexOf('/') + 1), '"');
                         }
                         const common: string[] = [];
                         for (const attr of map.keys()) {

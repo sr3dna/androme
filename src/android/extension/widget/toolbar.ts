@@ -275,7 +275,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
             const options = Object.assign({}, this.options[node.element.id]);
             const optionsToolbar = Object.assign({}, options.toolbar);
             overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/${menu}`);
-            node.app('menu', optionsToolbar.app.menu);
+            node.app('menu', optionsToolbar.app.menu as string);
         }
     }
 

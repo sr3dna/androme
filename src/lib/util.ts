@@ -100,6 +100,18 @@ export function convertPX(value: any, fontSize: string) {
     return '0px';
 }
 
+export function replaceWhiteSpace(value: string) {
+    value = value.replace(/\u00A0/g, '&#160;');
+    value = value.replace(/\u2002/g, '&#8194;');
+    value = value.replace(/\u2003/g, '&#8195;');
+    value = value.replace(/\u2009/g, '&#8201;');
+    value = value.replace(/\u200C/g, '&#8204;');
+    value = value.replace(/\u200D/g, '&#8205;');
+    value = value.replace(/\u200E/g, '&#8206;');
+    value = value.replace(/\u200F/g, '&#8207;');
+    return value;
+}
+
 export function formatPX(value: any) {
     value = parseFloat(value);
     return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
@@ -157,7 +169,11 @@ export function isNumber(value: string) {
     return /^-?[0-9]+(\.[0-9]+)?$/.test(value.toString().trim());
 }
 
-export function isUnit(value?: string) {
+export function isString(value: string) {
+    return (typeof value === 'string' && value !== '');
+}
+
+export function isUnit(value: string) {
     return /^-?[0-9\.]+(px|pt|em)$/.test((value || '').trim());
 }
 
@@ -225,7 +241,7 @@ export function resolvePath(value: string) {
     return value;
 }
 
-export function trim(value: string, char: string) {
+export function trimString(value: string, char: string) {
     return trimStart(trimEnd(value, char), char);
 }
 
@@ -242,12 +258,10 @@ export function repeat(n: number, value = '\t') {
 }
 
 export function indexOf(value: string, ...terms: string[]) {
-    if (hasValue(value)) {
-        for (const term of terms) {
-            const index = value.indexOf(term);
-            if (index !== -1) {
-                return index;
-            }
+    for (const term of terms) {
+        const index = value.indexOf(term);
+        if (index !== -1) {
+            return index;
         }
     }
     return -1;
@@ -334,10 +348,6 @@ export function withinRange(a: number, b: number, n = 0) {
 
 export function withinFraction(lower: number, upper: number) {
     return (lower === upper || Math.floor(lower) === Math.floor(upper) || Math.ceil(lower) === Math.ceil(upper) || Math.ceil(lower) === Math.floor(upper) || Math.floor(lower) === Math.ceil(upper));
-}
-
-export function caseInsensitve(a: string | string[], b: string | string[]) {
-    return (a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1);
 }
 
 export function sortAsc<T>(list: T[], ...attrs: string[]) {

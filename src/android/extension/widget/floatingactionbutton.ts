@@ -68,7 +68,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
                     }
                 }
                 node.app('layout_anchor', anchor);
-                node.app('layout_anchorGravity', node.android('layout_gravity') as string);
+                node.app('layout_anchorGravity', node.android('layout_gravity'));
                 node.delete('android', 'layout_gravity');
                 node.excludeProcedure |= NODE_PROCEDURE.ALIGNMENT;
                 node.render(node);

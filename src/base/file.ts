@@ -1,7 +1,7 @@
 import { PlainFile, ResourceMap, StringMap, ViewData } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
-import { lastIndexOf, trim } from '../lib/util';
+import { lastIndexOf, trimString } from '../lib/util';
 
 export default abstract class File<T extends Node> {
     public appName = '';
@@ -56,7 +56,7 @@ export default abstract class File<T extends Node> {
         }
         if (Array.isArray(files) && files.length > 0) {
             files.push(...this.queue);
-            fetch(`/api/savetodisk?directory=${encodeURIComponent(trim(this._directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this._compression.toLocaleLowerCase()}&processingtime=${this._processingTime.toString().trim()}`, {
+            fetch(`/api/savetodisk?directory=${encodeURIComponent(trimString(this._directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this._compression.toLocaleLowerCase()}&processingtime=${this._processingTime.toString().trim()}`, {
                     method: 'POST',
                     body: JSON.stringify(files),
                     headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })

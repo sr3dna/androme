@@ -1,12 +1,12 @@
 import { ObjectMap, Null } from './types';
-import { hasValue, repeat } from './util';
+import { repeat, replaceWhiteSpace } from './util';
 
-export function getPlaceholder(id: string | number, symbol = ':') {
+export function formatPlaceholder(id: string | number, symbol = ':') {
     return `{${symbol + id.toString()}}`;
 }
 
 export function replacePlaceholder(value: string, id: string | number, content: string, before = false) {
-    const placeholder = (typeof id === 'number' ? getPlaceholder(id) : id);
+    const placeholder = (typeof id === 'number' ? formatPlaceholder(id) : id);
     return value.replace(placeholder, (before ? placeholder : '') + content + (before ? '' : placeholder));
 }
 
@@ -14,7 +14,7 @@ export function removePlaceholders(value: string) {
     return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
 }
 
-export function modifyIndent(value: string, depth: number) {
+export function replaceIndent(value: string, depth: number) {
     if (depth >= 0) {
         let indent = -1;
         return value.split('\n').map(line => {
@@ -55,18 +55,6 @@ export function replaceEntity(value: string) {
     return replaceWhiteSpace(value);
 }
 
-export function replaceWhiteSpace(value: string) {
-    value = value.replace(/\u00A0/g, '&#160;');
-    value = value.replace(/\u2002/g, '&#8194;');
-    value = value.replace(/\u2003/g, '&#8195;');
-    value = value.replace(/\u2009/g, '&#8201;');
-    value = value.replace(/\u200C/g, '&#8204;');
-    value = value.replace(/\u200D/g, '&#8205;');
-    value = value.replace(/\u200E/g, '&#8206;');
-    value = value.replace(/\u200F/g, '&#8207;');
-    return value;
-}
-
 export function getTemplateLevel(data: {}, ...levels: string[]) {
     let current = data;
     for (const level of levels) {
@@ -93,7 +81,7 @@ export function parseTemplate(template: string) {
         }
         if (match == null || characters === 0) {
             template = result[section++];
-            if (!hasValue(template)) {
+            if (!template) {
                 break;
             }
             characters = template.length;

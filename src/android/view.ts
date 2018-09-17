@@ -1,7 +1,7 @@
 import { DisplaySettings, Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, hasValue, isPercent, isUnit, lastIndexOf, withinFraction } from '../lib/util';
+import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, isPercent, isUnit, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId, stripId } from './lib/util';
 import { getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
 import API_ANDROID from './customizations';
@@ -47,27 +47,19 @@ export default class View extends Node {
 
     public attr(obj: string, attr: string, value = '', overwrite = true) {
         if (!this.supported(obj, attr)) {
-            return;
+            return '';
         }
-        super.attr(obj, attr, value, overwrite);
+        return super.attr(obj, attr, value, overwrite);
     }
 
     public android(attr: string, value = '', overwrite = true) {
-        if (hasValue(value)) {
-            this.attr('android', attr, value, overwrite);
-        }
-        else {
-            return (this._android[attr] != null ? this._android[attr] : null);
-        }
+        this.attr('android', attr, value, overwrite);
+        return this._android[attr] || '';
     }
 
     public app(attr: string, value = '', overwrite = true) {
-        if (hasValue(value)) {
-            this.attr('app', attr, value, overwrite);
-        }
-        else {
-            return (this._app[attr] != null ? this._app[attr] : null);
-        }
+        this.attr('app', attr, value, overwrite);
+        return this._app[attr] || '';
     }
 
     public apply(options = {}) {
@@ -249,7 +241,7 @@ export default class View extends Node {
             }
         }
         this.controlName = nodeName;
-        if (this.android('id') != null) {
+        if (this.android('id') !== '') {
             this.nodeId = stripId(this.android('id'));
         }
         if (!this.nodeId) {
@@ -343,16 +335,8 @@ export default class View extends Node {
                         this.android('layout_width', 'wrap_content', false);
                         this.android('minWidth', styleMap.minWidth, false);
                     }
-                    if (this.has('maxWidth', CSS_STANDARD.UNIT) && this.layoutVertical) {
-                        const maxWidth = this.css('maxWidth');
-                        this.renderChildren.forEach(node => {
-                            if (node.is(NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
-                                node.android('maxWidth', maxWidth);
-                            }
-                        });
-                    }
                 }
-                if (this.android('layout_width') == null) {
+                if (this.android('layout_width') === '') {
                     const widthDefined = this.renderChildren.filter(node => (node.has('width', 0, { map: 'original' }) && !node.has('width', CSS_STANDARD.PERCENT) && !node.autoMargin));
                     if (convertFloat(this.app('layout_columnWeight')) > 0) {
                         this.android('layout_width', '0px');
@@ -433,16 +417,8 @@ export default class View extends Node {
                     this.android('layout_height', 'wrap_content', false);
                     this.android('minHeight', styleMap.minHeight, false);
                 }
-                if (this.has('maxHeight', CSS_STANDARD.UNIT) && this.layoutHorizontal) {
-                    const maxHeight = this.css('maxHeight');
-                    this.renderChildren.forEach(node => {
-                        if (node.is(NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
-                            node.android('maxWidth', maxHeight);
-                        }
-                    });
-                }
             }
-            if (this.android('layout_height') == null) {
+            if (this.android('layout_height') === '') {
                 if (height >= heightParent &&
                     parent.viewHeight > 0 &&
                     !(this.inlineElement && this.nodeType < NODE_STANDARD.INLINE) &&
@@ -659,7 +635,7 @@ export default class View extends Node {
             }
         }
         if (renderParent.is(NODE_STANDARD.CONSTRAINT)) {
-            const gravity = (renderParent.android('gravity') || '').split('|');
+            const gravity = renderParent.android('gravity').split('|');
             if (gravity.length > 0 && gravity.some(value => value === 'center_horizontal' || value === 'center') && this.inlineWidth && this.alignParent('left')) {
                 this.anchor(parseRTL('layout_constraintRight_toRightOf'), 'parent');
                 if (textAlign === '') {
@@ -736,7 +712,7 @@ export default class View extends Node {
                 }
                 else {
                     const alignInput = renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT);
-                    if (renderChildren.some(node => !node.alignOrigin || !node.baseline) || renderParent.android('baselineAlignedChildIndex') != null || alignInput) {
+                    if (renderChildren.some(node => !node.alignOrigin || !node.baseline) || renderParent.android('baselineAlignedChildIndex') !== '' || alignInput) {
                         const baseline = NodeList.textBaseline(renderChildren, alignInput);
                         if (baseline.length > 0) {
                             this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
@@ -947,7 +923,7 @@ export default class View extends Node {
                             found = true;
                         }
                         else {
-                            if (node.android('layout_below') != null) {
+                            if (node.android('layout_below') !== '') {
                                 return true;
                             }
                             else if (found) {
@@ -1068,7 +1044,7 @@ export default class View extends Node {
                         previous = previousSibling as T;
                     }
                 }
-                getElementsBetweenSiblings((previous != null ? previous.element : null), node.element).forEach(element => {
+                getElementsBetweenSiblings((previous != null ? previous.baseElement : null), node.baseElement).forEach(element => {
                     const collapsed = getNodeFromElement(element) as T;
                     if (element.tagName === 'BR' || (collapsed && collapsed.excluded && (!verified.has(collapsed) || collapsed.blockStatic))) {
                         if (collapsed != null) {

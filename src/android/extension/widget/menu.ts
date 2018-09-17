@@ -123,7 +123,7 @@ export default class Menu<T extends View> extends Nav<T> {
             layout = true;
         }
         else {
-            if (parent.android('checkableBehavior') == null) {
+            if (parent.android('checkableBehavior') === '') {
                 if (this.hasInputType(node, 'checkbox')) {
                     options.android.checkable = 'true';
                 }
@@ -133,7 +133,7 @@ export default class Menu<T extends View> extends Nav<T> {
         switch (nodeName) {
             case VIEW_NAVIGATION.ITEM:
                 this.parseDataSet(VALIDATE_ITEM, element, options);
-                if (node.android('icon') == null) {
+                if (node.android('icon') === '') {
                     let src = ResourceView.addImageURL(element.style.backgroundImage as string, DRAWABLE_PREFIX.MENU);
                     if (src !== '') {
                         options.android.icon = `@drawable/${src}`;
@@ -153,7 +153,7 @@ export default class Menu<T extends View> extends Nav<T> {
                 this.parseDataSet(VALIDATE_GROUP, element, options);
                 break;
         }
-        if (node.android('title') == null) {
+        if (node.android('title') === '') {
             if (title !== '') {
                 const name = ResourceView.addString(title);
                 if (name !== '') {
@@ -162,7 +162,7 @@ export default class Menu<T extends View> extends Nav<T> {
                 options.android.title = title;
             }
         }
-        if (options.android.id == null) {
+        if (!options.android.id) {
             node.setNodeType(nodeName);
         }
         else {

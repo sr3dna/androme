@@ -1,3 +1,4 @@
+import { Null } from '../lib/types';
 import View from './view';
 import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/constants';
 import { assignBounds } from '../lib/dom';
@@ -15,6 +16,9 @@ export default class ViewGroup<T extends View> extends View {
         this.baseNode = node;
         this.parent = parent;
         this.children = children;
+        this.depth = node.depth;
+        this.nodeName = `${node.nodeName}_GROUP`;
+        this.documentParent = node.documentParent;
         if (children.length > 0) {
             this.init();
         }
@@ -22,14 +26,11 @@ export default class ViewGroup<T extends View> extends View {
 
     public init() {
         super.init();
-        const node = this.baseNode;
-        this.depth = node.depth;
         this.children.forEach(item => {
             this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
             item.parent = this;
         });
-        this.documentParent = node.documentParent;
-        this.nodeName = `${node.nodeName}_GROUP`;
+        this.parent.sort();
         this.setBounds();
         this.css('direction', this.documentParent.dir);
     }
@@ -76,6 +77,25 @@ export default class ViewGroup<T extends View> extends View {
         else {
             return (this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.INLINE_WRAP) || this.children.some(node => (node.block && !node.floating)) ? 'block' : (this.children.every(node => node.inline) ? 'inline' : 'inline-block'));
         }
+    }
+
+    get baseElement() {
+        function cascade(nodes: T[]): Null<Element> {
+            for (let i = 0; i < nodes.length; i++) {
+                const item = nodes[i] as T;
+                if (item.hasElement || item.plainText) {
+                    return item.element;
+                }
+                else if (item.children.length > 0) {
+                    const element = cascade(item.children as T[]);
+                    if (element != null) {
+                        return element;
+                    }
+                }
+            }
+            return null;
+        }
+        return cascade(this.children as T[]) || super.baseElement;
     }
 
     get inlineElement() {

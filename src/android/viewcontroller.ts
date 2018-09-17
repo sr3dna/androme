@@ -8,7 +8,7 @@ import { capitalize, convertInt, convertEnum, convertPX, formatPX, hasValue, ind
 import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
 import { getElementsBetweenSiblings, getRangeClientRect, hasLineBreak, isLineBreak } from '../lib/dom';
-import { getPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
+import { formatPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
 import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
 import parseRTL from './localization';
@@ -227,7 +227,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             if (SETTINGS.ellipsisOnTextOverflow && rowPaddingLeft > 0) {
                                 current.android('singleLine', 'true');
                             }
-                            if (current.multiLine && (!current.siblingflow || (current.floating && current.position === 'relative') || textIndent < 0)) {
+                            if (!current.siblingflow || (current.floating && current.position === 'relative') || (current.multiLine && textIndent < 0)) {
                                 rowPreviousLeft = current;
                             }
                             rows[rows.length] = [current];
@@ -240,7 +240,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             if (current.hasElement && current.multiLine) {
                                 dimension = getRangeClientRect(current.element)[0];
                             }
-                            const siblings = getElementsBetweenSiblings(previous.element, current.element, false, true);
+                            const siblings = getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
                             let connected = false;
                             if (i === 1 && previous.textElement && current.textElement) {
                                 connected = (siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(current.textContent));
@@ -263,7 +263,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     current.constraint.marginVertical = rowPreviousBottom.stringId;
                                 }
                                 current.anchor(mapLayout['topBottom'], rowPreviousBottom.stringId);
-                                if (rowPreviousLeft && current.linear.top < rowPreviousLeft.linear.bottom && !withinRange(current.linear.top, rowPreviousLeft.linear.top, 1) && !withinRange(current.linear.bottom, rowPreviousLeft.linear.bottom, 1)) {
+                                if (rowPreviousLeft && current.linear.top < rowPreviousLeft.bounds.bottom && !withinRange(current.bounds.top, rowPreviousLeft.bounds.top, 1) && !withinRange(current.bounds.bottom, rowPreviousLeft.bounds.bottom, 1)) {
                                     current.anchor(mapLayout['leftRight'], rowPreviousLeft.stringId);
                                 }
                                 else {
@@ -1414,7 +1414,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         {
                             app: {
                                 layout_columnWeight: percent,
-                                layout_columnSpan: columnSpan
+                                layout_columnSpan: columnSpan.toString()
                             }
                         },
                         (percent !== '' ? '0px' : 'wrap_content'),
@@ -1429,7 +1429,6 @@ export default class ViewController<T extends View> extends Controller<T> {
         const group = <View> new ViewGroup(this.cache.nextId, node, parent, children) as T;
         if (children.length > 0) {
             children.forEach(item => item.inherit(group, 'data'));
-            parent.sort();
         }
         this.cache.append(group);
         return group;
@@ -1490,7 +1489,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                 else {
                     container.inherit(node, 'dimensions');
                     container.inherit(node, 'originalStyleMap', 'styleMap');
-                    container.android('fadeScrollbars', 'false');
                     if (previous != null) {
                         previous.css('overflow', 'visible scroll');
                         previous.css('overflowX', 'scroll');
@@ -1524,8 +1522,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                 scrollView[0].overflow = node.overflow;
                 node.android((node.overflowX ? 'layout_width' : 'layout_height'), 'wrap_content');
             }
+            node.removeElement();
             node.resetBox(BOX_STANDARD.MARGIN);
-            node.wrapped = true;
             node.parent = scrollView[scrollView.length - 1];
             node.render(node.parent);
         }
@@ -1537,7 +1535,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 (target || parent.isSet('dataset', 'target') || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth),
                 viewName,
                 node.id,
-                getPlaceholder(node.id),
+                formatPlaceholder(node.id),
                 preXml,
                 postXml
             );
@@ -1795,12 +1793,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                 (depth === 0 && !node.documentRoot ? -1 : depth),
                 viewName,
                 node.id,
-                (children ? getPlaceholder(node.id) : '')
+                (children ? formatPlaceholder(node.id) : '')
             );
         if (SETTINGS.showAttributes && node.id === 0) {
             const indent = repeat(renderDepth + 1);
             const attrs = node.combine().map(value => `\n${indent + value}`).join('');
-            output = output.replace(getPlaceholder(node.id, '@'), attrs);
+            output = output.replace(formatPlaceholder(node.id, '@'), attrs);
         }
         options['stringId'] = node.stringId;
         return output;
@@ -1910,7 +1908,7 @@ export default class ViewController<T extends View> extends Controller<T> {
 
     private setAttributes(data: ViewData<NodeList<T>>) {
         if (SETTINGS.showAttributes) {
-            const cache: StringMap[] = data.cache.visible.list.map(node => ({ pattern: getPlaceholder(node.id, '@'), attributes: this.parseAttributes(node) }));
+            const cache: StringMap[] = data.cache.visible.list.map(node => ({ pattern: formatPlaceholder(node.id, '@'), attributes: this.parseAttributes(node) }));
             [...data.views, ...data.includes].forEach(value => {
                 cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
                 value.content = value.content.replace(`{#0}`, this.getRootNamespace(value.content));

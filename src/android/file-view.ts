@@ -2,7 +2,7 @@ import { Null, PlainFile, ViewData } from '../lib/types';
 import File from '../base/file';
 import NodeList from '../base/nodelist';
 import View from './view';
-import { caseInsensitve, lastIndexOf } from '../lib/util';
+import { lastIndexOf } from '../lib/util';
 import { replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate, replaceTab } from '../lib/xml';
 import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './constants';
@@ -15,6 +15,10 @@ import COLOR_TMPL from './template/resource/color';
 import STYLE_TMPL from './template/resource/style';
 import DIMEN_TMPL from './template/resource/dimen';
 import DRAWABLE_TMPL from './template/resource/drawable';
+
+function caseInsensitve(a: string | string[], b: string | string[]) {
+    return (a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1);
+}
 
 export default class FileView<T extends View> extends File<T> {
     constructor() {
