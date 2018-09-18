@@ -18,7 +18,7 @@ export default class ListAndroid<T extends View> extends List<T> {
         const node = this.node;
         const parent = this.parent as T;
         const listStyle = this.node.data(EXT_NAME.LIST, 'listStyleType') || '0';
-        const parentLeft = convertInt(parent.css('paddingLeft')) + convertInt(parent.cssOriginal('marginLeft', true));
+        const parentLeft = convertInt(parent.css('paddingLeft')) + convertInt(parent.cssInitial('marginLeft', true));
         let columnCount = 0;
         let paddingLeft = node.marginLeft;
         node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
@@ -32,8 +32,8 @@ export default class ListAndroid<T extends View> extends List<T> {
         const floatItem =
             node.children.find(item =>
                 item.float === 'left' &&
-                convertInt(item.cssOriginal('marginLeft', true)) < 0 &&
-                Math.abs(convertInt(item.cssOriginal('marginLeft', true))) <= convertInt(item.documentParent.cssOriginal('marginLeft', true))
+                convertInt(item.cssInitial('marginLeft', true)) < 0 &&
+                Math.abs(convertInt(item.cssInitial('marginLeft', true))) <= convertInt(item.documentParent.cssInitial('marginLeft', true))
             ) as T;
         if (floatItem && listStyle === '0') {
             floatItem.parent = parent;

@@ -143,6 +143,13 @@ export type BoxStyle = {
     backgroundPosition: string;
 };
 
+export type InitialValues = {
+    bounds?: ClientRect,
+    linear?: ClientRect,
+    box?: ClientRect,
+    styleMap: StringMap
+};
+
 export type DisplaySettings = {
     autoSizePaddingAndBorderWidth: boolean;
     autoSizeBackgroundImage: boolean;

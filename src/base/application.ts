@@ -1,10 +1,10 @@
-import { ArrayIndex, LayoutMapX, LayoutMapY, Null, ObjectIndex, ObjectMap, PlainFile, ViewData } from '../lib/types';
+import { ArrayIndex, LayoutMapX, LayoutMapY, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertInt, formatPX, hasBit, hasValue, isNumber, isPercent, isUnit, optional, sortAsc, trimString } from '../lib/util';
+import { convertInt, formatPX, hasBit, hasValue, isNumber, optional, sortAsc, trimString } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementsBetweenSiblings, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -196,71 +196,61 @@ export default class Application<T extends Node> {
             }
         }
         if (this.cache.length > 0) {
-            const preAlignment: ObjectIndex<ObjectMap<Null<string>>> = {};
-            for (const node of this.cache.elements) {
-                const element = <HTMLElement> node.element;
-                preAlignment[node.id] = {};
-                const style = preAlignment[node.id];
-                const textAlign = node.css('textAlign');
-                switch (textAlign) {
-                    case 'center':
-                        if (element.tagName === 'BUTTON' || (<HTMLInputElement> element).type === 'button') {
+            for (const node of this.cache) {
+                if (!node.plainText) {
+                    const element = <HTMLElement> node.element;
+                    const preAlignment: StringMap = {};
+                    const textAlign = node.css('textAlign');
+                    switch (textAlign) {
+                        case 'center':
+                            if (element.tagName === 'BUTTON' || (<HTMLInputElement> element).type === 'button') {
+                                break;
+                            }
+                        case 'right':
+                        case 'end':
+                            preAlignment.textAlign = textAlign;
+                            element.style.textAlign = 'left';
                             break;
+                    }
+                    if (node.marginLeft < 0) {
+                        preAlignment.marginLeft = node.css('marginLeft');
+                        element.style.marginLeft = '0px';
+                    }
+                    if (node.marginTop < 0) {
+                        preAlignment.marginTop = node.css('marginTop');
+                        element.style.marginTop = '0px';
+                    }
+                    if (node.position === 'relative') {
+                        ['top', 'right', 'bottom', 'left'].forEach(value => {
+                            if (node.has(value)) {
+                                preAlignment[value] = node.styleMap[value];
+                                element.style[value] = 'auto';
+                            }
+                        });
+                    }
+                    if (node.overflowX || node.overflowY) {
+                        if (node.has('width')) {
+                            preAlignment.width = node.styleMap.width;
+                            element.style.width = 'auto';
                         }
-                    case 'right':
-                    case 'end':
-                        style.textAlign = textAlign;
-                        element.style.textAlign = 'left';
-                        break;
-                }
-                if (node.marginLeft < 0) {
-                    style.marginLeft = node.css('marginLeft');
-                    element.style.marginLeft = '0px';
-                }
-                if (node.marginTop < 0) {
-                    style.marginTop = node.css('marginTop');
-                    element.style.marginTop = '0px';
-                }
-                if (node.position === 'relative') {
-                    ['top', 'right', 'bottom', 'left'].forEach(value => {
-                        if (node.has(value)) {
-                            style[value] = node.styleMap[value];
-                            element.style[value] = 'auto';
+                        if (node.has('height')) {
+                            preAlignment.height = node.styleMap.height;
+                            element.style.height = 'auto';
                         }
-                    });
-                }
-                if (node.overflowX || node.overflowY) {
-                    if (node.has('width')) {
-                        style.width = node.styleMap.width;
-                        element.style.width = 'auto';
+                        preAlignment.overflow = node.style.overflow || '';
+                        element.style.overflow = 'visible';
                     }
-                    if (node.has('height')) {
-                        style.height = node.styleMap.height;
-                        element.style.height = 'auto';
+                    if (element.dir === 'rtl') {
+                        element.dir = 'ltr';
                     }
-                    style.overflow = node.style.overflow;
-                    element.style.overflow = 'visible';
-                }
-                if (element.dir === 'rtl') {
-                    element.dir = 'ltr';
-                }
-            }
-            for (const node of this.cache) {
-                node.setBounds();
-            }
-            for (const node of this.cache) {
-                const element = <HTMLElement> node.element;
-                const style = preAlignment[node.id];
-                if (style != null) {
-                    for (const attr in style) {
-                        element.style[attr] = style[attr];
+                    node.setBounds();
+                    for (const attr in preAlignment) {
+                        element.style[attr] = preAlignment[attr];
+                    }
+                    if (element.dir === 'ltr') {
+                        element.dir = 'rtl';
                     }
                 }
-                if (element.dir === 'ltr') {
-                    element.dir = 'rtl';
-                }
-            }
-            for (const node of this.cache) {
                 node.setMultiLine();
                 if (node.pageflow) {
                     const element = <HTMLInputElement> node.element;
@@ -369,7 +359,7 @@ export default class Application<T extends Node> {
                                 node.css('marginLeft', node.style.marginLeft as string);
                             }
                             node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
-                            const widthLeft: number = (node.has('width') ? node.toInt('width') : Math.max.apply(null, sectionRight.list.map(item => item.linear.width)));
+                            const widthLeft: number = (node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : Math.max.apply(null, sectionRight.list.map(item => item.bounds.width)));
                             const widthRight: number = Math.max.apply(null, sectionRight.list.map(item => Math.abs(item.toInt('right'))));
                             sectionLeft.each((item: T) => {
                                 if (item.pageflow && item.viewWidth === 0) {
@@ -635,7 +625,7 @@ export default class Application<T extends Node> {
                                         if (adjacent.alignedVertical(previousSibling, cleared)) {
                                             if (horizontal.length > 0) {
                                                 const firstNode = horizontal[0];
-                                                if (firstNode.floating && previousSibling.blockStatic && !cleared.has(adjacent) && adjacent.blockStatic) {
+                                                if (firstNode.floating && previousSibling.blockStatic && adjacent.blockStatic && horizontal.some((node, index) => index > 0 && cleared.has(node)) && !cleared.has(adjacent)) {
                                                     horizontal.push(adjacent);
                                                     continue;
                                                 }
@@ -689,7 +679,7 @@ export default class Application<T extends Node> {
                                         parentY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                     }
                                     else {
-                                        if (new Set(horizontal.map(node => node.float)).size === 1 && horizontal.some(node => isPercent(node.css('width'))) && horizontal.every(node => isPercent(node.css('width')) || isUnit(node.css('width')))) {
+                                        if (new Set(horizontal.map(node => node.float)).size === 1 && horizontal.some(node => node.has('width', CSS_STANDARD.PERCENT)) && horizontal.every(node => node.has('width', CSS_STANDARD.PERCENT) || node.has('width', CSS_STANDARD.UNIT))) {
                                             group = this.controllerHandler.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeConstraintLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
@@ -1270,10 +1260,9 @@ export default class Application<T extends Node> {
                         else {
                             content = this.writeLinearLayout(subgroup, basegroup, true);
                             if (floatRight && subgroup.children.some(node => node.marginLeft < 0)) {
-                                const children = this.sortByAlignment(subgroup.children.slice(), subgroup, NODE_ALIGNMENT.HORIZONTAL);
                                 const sorted: T[] = [];
                                 let marginRight = 0;
-                                children.reverse().forEach((node: T) => {
+                                subgroup.children.slice().forEach((node: T) => {
                                     let prepend = false;
                                     if (marginRight < 0) {
                                         if (Math.abs(marginRight) > node.bounds.width) {

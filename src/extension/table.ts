@@ -140,10 +140,10 @@ export default class Table<T extends Node> extends Extension<T> {
         else if (mapWidth.every(value => isUnit(value))) {
             const pxWidth = mapWidth.reduce((a, b) => a + parseInt(b), 0);
             if (isPercent(tableWidth) || pxWidth < node.viewWidth) {
-                mapWidth.forEach((value, index) => mapWidth[index] = `${(parseInt(value) / pxWidth) * 100}%`);
+                mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = `${(parseInt(value) / pxWidth) * 100}%`);
             }
             else if (tableWidth === 'auto') {
-                mapWidth.forEach((value, index) => mapWidth[index] = (mapBounds[index] == null ? 'undefined' : `${(mapBounds[index] / node.bounds.width) * 100}%`));
+                mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = (mapBounds[index] == null ? 'undefined' : `${(mapBounds[index] / node.bounds.width) * 100}%`));
             }
             else if (pxWidth > node.viewWidth) {
                 node.css('width', 'auto');
@@ -154,15 +154,14 @@ export default class Table<T extends Node> extends Extension<T> {
         }
         const mapPercent = mapWidth.reduce((a, b) => a + (isPercent(b) ? parseFloat(b) : 0), 0);
         const typeWidth = (() => {
-            const auto = mapWidth.every(value => value === 'auto');
-            const zeroWidth = mapWidth.every(value => value === '0px');
-            if ((auto || zeroWidth) && (node.cssOriginal('width') === 'auto' || !node.has('width')) && !multiLine) {
+            const sameWidth = mapWidth.every(value => value === mapWidth[0]);
+            if (sameWidth && node.has('width', CSS_STANDARD.AUTO, { map: 'initial' }) && !multiLine) {
                 return 0;
             }
-            else if (auto || mapWidth.some(value => isPercent(value))) {
+            else if ((sameWidth && mapWidth[0] === 'auto') || mapWidth.some(value => isPercent(value))) {
                 return 3;
             }
-            else if (mapWidth.every(value => value === '0px' || mapWidth[0] === value) && (node.viewWidth > 0 || isPercent(node.css('width')) || multiLine)) {
+            else if (sameWidth && (node.viewWidth > 0 || node.has('width', CSS_STANDARD.PERCENT) || multiLine)) {
                 return 2;
             }
             else if (mapWidth.every(value => isUnit(value) || value === 'auto')) {

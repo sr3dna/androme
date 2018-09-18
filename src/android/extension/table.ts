@@ -2,8 +2,8 @@
 import { ExtensionResult } from '../../extension/lib/types';
 import Table from '../../extension/table';
 import View from '../view';
-import { convertFloat, convertInt, formatPX, isPercent, trimEnd } from '../../lib/util';
-import { NODE_STANDARD } from '../../lib/constants';
+import { convertFloat, convertInt, formatPX, trimEnd } from '../../lib/util';
+import { CSS_STANDARD, NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 
 export default class TableAndroid<T extends View> extends Table<T> {
@@ -51,7 +51,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
                     }
                 }
             });
-            if (requireWidth && (node.viewWidth === 0 && !isPercent(node.css('width')))) {
+            if (requireWidth && (node.viewWidth === 0 && !node.has('width', CSS_STANDARD.PERCENT))) {
                 let widthParent = 0;
                 node.ascend(true).some(item => {
                     if (item.viewWidth > 0) {
@@ -106,8 +106,18 @@ export default class TableAndroid<T extends View> extends Table<T> {
         const node = this.node;
         const tableWidth = node.toInt('width');
         const boundsWidth = node.data(EXT_NAME.TABLE, 'boundsWidth');
-        if (!node.blockWidth && tableWidth > 0 && boundsWidth > tableWidth) {
-            node.android('layout_width', formatPX(boundsWidth));
+        if (!node.blockWidth && tableWidth > 0) {
+            if (boundsWidth > tableWidth) {
+                node.android('layout_width', formatPX(boundsWidth));
+            }
+            if (node.has('width', CSS_STANDARD.AUTO, { map: 'initial' })) {
+                if (node.renderChildren.every(item => item.inlineWidth)) {
+                    node.renderChildren.forEach(item => {
+                        item.android('layout_width', '0px');
+                        item.app('layout_columnWeight', '1');
+                    });
+                }
+            }
         }
     }
 }

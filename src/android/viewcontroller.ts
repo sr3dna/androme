@@ -198,7 +198,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     let multiLine = nodes.list.some((item, index) => (index > 0 && node.linear.top >= nodes.get(index - 1).linear.bottom) || item.multiLine);
                     let boxWidth = node.box.width;
                     if (node.renderParent.overflowX) {
-                        boxWidth = convertInt(node.renderParent.cssOriginal('width')) || node.viewWidth || boxWidth;
+                        boxWidth = node.renderParent.toInt('width', 0, { map: 'initial' }) || node.viewWidth || boxWidth;
                         multiLine = true;
                     }
                     else if (node.renderParent.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
@@ -217,7 +217,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     }
                     for (let i = 0; i < nodes.length; i++) {
                         const current = nodes.get(i);
-                        let dimension = current[(current.multiLine ? 'bounds' : 'linear')];
+                        let dimension = current.bounds;
                         if (i === 0) {
                             current.android(relativeParent['left'], 'true');
                             rowWidth += dimension.width;
@@ -249,7 +249,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 (!multiLine && (current.linear.top >= previous.linear.bottom || withinFraction(current.linear.left, node.box.left))) ||
                                 (siblings.length > 0 && siblings.some(element => isLineBreak(element))) ||
                                 (!connected && (
-                                    (multiLine && (!previous.floating || items.length > 1) && (Math.floor(rowWidth - current.marginLeft) + dimension.width > boxWidth)) ||
+                                    (multiLine && (!previous.floating || items.length > 1) && (rowWidth + dimension.width) > boxWidth) ||
                                     (current.multiLine && hasLineBreak(current.element))
                                )))
                             {
@@ -495,7 +495,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, current.toInt('right'));
                                         }
                                     }
-                                    if (current.left === 0 && current.right === 0 && !current.floating && !isPercent(current.css('width'))) {
+                                    if (current.left === 0 && current.right === 0 && !current.floating && !current.has('width', CSS_STANDARD.PERCENT)) {
                                         current.android('layout_width', 'match_parent');
                                     }
                                     if (current.top === 0 && current.bottom === 0) {
@@ -528,7 +528,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             mapDelete(current, 'right');
                                         }
                                         if (current.centerMarginHorizontal) {
-                                            if (node.viewWidth > 0 && !isPercent(current.css('width'))) {
+                                            if (node.viewWidth > 0 && !current.has('width', CSS_STANDARD.PERCENT)) {
                                                 current.android('layout_width', 'match_parent');
                                             }
                                             else if (current.inlineElement && current.viewWidth === 0) {
@@ -561,6 +561,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         mapDelete(current, 'right');
                                         current.android('layout_width', 'match_parent');
                                     }
+                                }
+                                const textAlign = current.cssParent('textAlign');
+                                if (textAlign === 'center' && !current.floating && !current.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) && ((!current.blockStatic && current.nodeType < NODE_STANDARD.INLINE) || (current.linearVertical && current.renderChildren.every(item => item.nodeType < NODE_STANDARD.INLINE && (!item.has('textAlign') || item.css('textAlign') === 'center'))))) {
+                                    this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                 }
                                 if (mapSibling(current, 'bottomTop')) {
                                     mapDelete(current, 'bottom');
@@ -855,7 +859,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                     chain.constraint[`margin${HV}`] = previous.stringId;
                                                 }
                                                 chain.constraint[`chain${HV}`] = true;
-                                                if (!chain.has(dimension) || isPercent(chain.css(dimension))) {
+                                                if (!chain.has(dimension) || chain.has(dimension, CSS_STANDARD.PERCENT)) {
                                                     const minWH = chain.styleMap[`min${WH}`];
                                                     const maxWH = chain.styleMap[`max${WH}`];
                                                     if (isUnit(minWH)) {
@@ -1225,7 +1229,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     topBottom: mapSibling(current, 'topBottom'),
                                     bottomTop: mapSibling(current, 'bottomTop'),
                                 };
-                                if ((top && bottom && (current.cssOriginal('marginTop') !== 'auto' && current.linear.bottom < maxBottom)) || (bottom && mapSibling(current, 'topBottom') && current.viewHeight > 0)) {
+                                if ((top && bottom && (!current.has('marginTop', CSS_STANDARD.AUTO) && current.linear.bottom < maxBottom)) || (bottom && mapSibling(current, 'topBottom') && current.viewHeight > 0)) {
                                     mapDelete(current, 'bottom');
                                     bottom = false;
                                 }
@@ -1482,13 +1486,13 @@ export default class ViewController<T extends View> extends Controller<T> {
                 container.documentParent = node.documentParent;
                 container.setNodeType(nodeName);
                 if (index === 0) {
-                    container.inherit(node, 'base', 'data', 'originalStyleMap', 'styleMap');
+                    container.inherit(node, 'base', 'data', 'initialStyleMap', 'styleMap');
                     container.parent = parent;
                     container.render(parent);
                 }
                 else {
                     container.inherit(node, 'dimensions');
-                    container.inherit(node, 'originalStyleMap', 'styleMap');
+                    container.inherit(node, 'initialStyleMap', 'styleMap');
                     if (previous != null) {
                         previous.css('overflow', 'visible scroll');
                         previous.css('overflowX', 'scroll');
@@ -1555,8 +1559,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                     let height = node.toInt('height');
                     const top = node.toInt('top');
                     const left = node.toInt('left');
-                    const percentWidth = isPercent(node.css('width'));
-                    const percentHeight = isPercent(node.css('height'));
+                    const percentWidth = node.has('width', CSS_STANDARD.PERCENT);
+                    const percentHeight = node.has('height', CSS_STANDARD.PERCENT);
                     let scaleType = '';
                     if (percentWidth || percentHeight) {
                         scaleType = (percentWidth && percentHeight ? 'fitXY' : 'fitCenter');

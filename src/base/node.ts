@@ -1,4 +1,4 @@
-import { BoxModel, ClientRect, DisplaySettings, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
+import { BoxModel, ClientRect, DisplaySettings, Flexbox, InitialValues, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasValue, hasBit, isPercent, isString, isUnit, search } from '../lib/util';
 import { assignBounds, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache } from '../lib/dom';
@@ -9,7 +9,6 @@ type T = Node;
 export default abstract class Node implements BoxModel {
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
-    public originalStyleMap: StringMap = {};
     public nodeId: string;
     public nodeType = 0;
     public alignmentType = NODE_ALIGNMENT.NONE;
@@ -21,6 +20,7 @@ export default abstract class Node implements BoxModel {
     public bounds: ClientRect;
     public linear: ClientRect;
     public overflow: number;
+    public initial: InitialValues;
     public excludeSection = APP_SECTION.NONE;
     public excludeProcedure = NODE_PROCEDURE.NONE;
     public excludeResource = NODE_RESOURCE.NONE;
@@ -122,7 +122,12 @@ export default abstract class Node implements BoxModel {
                 }
                 this.style = (<CSSStyleDeclaration> getElementCache(element, 'style')) || getComputedStyle(element);
                 this.styleMap = Object.assign({}, styleMap);
-                this.originalStyleMap = Object.assign({}, styleMap);
+                this.initial = {
+                    styleMap: Object.assign({}, styleMap)
+                };
+            }
+            else {
+                this.initial = { styleMap: {} };
             }
             if (this.id !== 0) {
                 setElementCache(element, 'node', this);
@@ -253,6 +258,14 @@ export default abstract class Node implements BoxModel {
     }
 
     public inherit(node: T, ...props: string[]) {
+        function copyMap(source: StringMap, destination: StringMap) {
+            for (const attr in source) {
+                if (source[attr] == null) {
+                    const value = source[attr];
+                    destination[attr] = value;
+                }
+            }
+        }
         for (const type of props) {
             switch (type) {
                 case 'base':
@@ -296,15 +309,15 @@ export default abstract class Node implements BoxModel {
                 case 'alignment':
                     ['position', 'display', 'verticalAlign', 'cssFloat', 'clear'].forEach(attr => {
                         this.styleMap[attr] = node.css(attr);
-                        this.originalStyleMap[attr] = node.cssOriginal(attr);
+                        this.initial.styleMap[attr] = node.cssInitial(attr);
                     });
                     if (node.css('marginLeft') === 'auto') {
                         this.styleMap.marginLeft = 'auto';
-                        this.originalStyleMap.marginLeft = 'auto';
+                        this.initial.styleMap.marginLeft = 'auto';
                     }
                     if (node.css('marginRight') === 'auto') {
                         this.styleMap.marginRight = 'auto';
-                        this.originalStyleMap.marginRight = 'auto';
+                        this.initial.styleMap.marginRight = 'auto';
                     }
                     break;
                 case 'style':
@@ -318,13 +331,10 @@ export default abstract class Node implements BoxModel {
                     this.css(style);
                     break;
                 case 'styleMap':
-                case 'originalStyleMap':
-                    for (const attr in node[type]) {
-                        if (this[type][attr] == null) {
-                            const value = node[type][attr];
-                            this[type][attr] = value;
-                        }
-                    }
+                    copyMap(node.styleMap, this.styleMap);
+                    break;
+                case 'initialStyleMap':
+                    copyMap(node.initial.styleMap, this.initial.styleMap);
                     break;
             }
         }
@@ -394,16 +404,16 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public cssOriginal(attr: string, complete = false) {
-        return this.originalStyleMap[attr] || (complete ? this.css(attr) : '');
+    public cssInitial(attr: string, complete = false) {
+        return this.initial.styleMap[attr] || (complete ? this.css(attr) : '');
     }
 
     public cssParent(attr: string, startChild = false, ignoreHidden = false) {
         let result = '';
-        if (this._element != null) {
-            let current = (startChild ? this : getNodeFromElement(this._element.parentElement));
+        if (this.baseElement != null) {
+            let current = (startChild ? this : getNodeFromElement(this.baseElement.parentElement));
             while (current != null) {
-                result = current.originalStyleMap[attr] || '';
+                result = current.initial.styleMap[attr] || '';
                 if (current.documentBody || result) {
                     if (ignoreHidden && !current.visible) {
                         result = '';
@@ -417,7 +427,7 @@ export default abstract class Node implements BoxModel {
     }
 
     public has(attr: string, checkType: number = 0, options?: StringMap) {
-        const value = this[(options != null && options.map === 'original' ? 'originalStyleMap' : 'styleMap')][attr];
+        const value = (options != null && options.map === 'initial' ? this.initial.styleMap : this.styleMap)[attr];
         if (hasValue(value)) {
             switch (value) {
                 case '0px':
@@ -450,6 +460,8 @@ export default abstract class Node implements BoxModel {
                             return isUnit(value);
                         case CSS_STANDARD.PERCENT:
                             return isPercent(value);
+                        case CSS_STANDARD.AUTO:
+                            return false;
                     }
                     return true;
             }
@@ -468,8 +480,8 @@ export default abstract class Node implements BoxModel {
         return false;
     }
 
-    public toInt(attr: string, defaultValue = 0) {
-        const value = this.styleMap[attr];
+    public toInt(attr: string, defaultValue = 0, options?: StringMap) {
+        const value = (options != null && options.map === 'initial' ? this.initial.styleMap : this.styleMap)[attr];
         return parseInt(value) || defaultValue;
     }
 
@@ -500,6 +512,9 @@ export default abstract class Node implements BoxModel {
                     [bounds] = getRangeClientRect(this._element);
                 }
                 this.bounds = bounds;
+                if (this.initial.bounds == null) {
+                    this.initial.bounds = assignBounds(bounds);
+                }
             }
         }
         if (this.bounds != null) {
@@ -530,12 +545,12 @@ export default abstract class Node implements BoxModel {
                 const right: number = Math.max.apply(null, this.children.map(node => node.linear.right));
                 const bottom: number = Math.max.apply(null, this.children.map(node => node.linear.bottom));
                 let calibrate = false;
-                if (right > this.box.right) {
+                if (right > this.bounds.right) {
                     this.bounds.right = right + (this.paddingRight + this.borderRightWidth);
                     this.bounds.width = this.bounds.right - this.bounds.left;
                     calibrate = true;
                 }
-                if (bottom > this.box.bottom) {
+                if (bottom > this.bounds.bottom) {
                     this.bounds.bottom = bottom + (this.paddingBottom + this.borderBottomWidth);
                     this.bounds.height = this.bounds.bottom - this.bounds.top;
                     calibrate = true;
@@ -547,26 +562,24 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public setDimensions(bounds = ['linear', 'box']) {
-        for (const dimension of bounds) {
-            const dimen = this[dimension];
-            if (this.multiLine || this.plainText) {
-                dimen.width = this.bounds.width;
-                if (!this.plainText) {
-                    switch (dimension) {
-                        case 'linear':
-                            dimen.width += (this.marginLeft > 0 ? this.marginLeft : 0) + this.marginRight;
-                            break;
-                        case 'box':
-                            dimen.width += (this.paddingLeft + this.borderLeftWidth) - (this.paddingRight + this.borderRightWidth);
-                            break;
-                    }
+    public setDimensions(region = ['linear', 'box']) {
+        for (const dimension of region) {
+            const bounds = this[dimension];
+            bounds.width = this.bounds.width;
+            if (!this.plainText) {
+                switch (dimension) {
+                    case 'linear':
+                        bounds.width += (this.marginLeft > 0 ? this.marginLeft : 0) + this.marginRight;
+                        break;
+                    case 'box':
+                        bounds.width -= this.paddingLeft + this.borderLeftWidth + this.paddingRight + this.borderRightWidth;
+                        break;
                 }
             }
-            else {
-                dimen.width = dimen.right - dimen.left;
+            bounds.height = bounds.bottom - bounds.top;
+            if (this.initial[dimension] == null) {
+                this.initial[dimension] = assignBounds(bounds);
             }
-            dimen.height = dimen.bottom - dimen.top;
         }
     }
 
@@ -582,11 +595,11 @@ export default abstract class Node implements BoxModel {
                 case 'IFRAME':
                     return;
                 default:
-                    if (this.viewWidth === 0 && !this.floating && this.inlineElement && this.textElement) {
+                    if ((this.viewWidth === 0 && !this.floating && this.inlineElement && this.textElement) || this.plainText) {
                         const [bounds, multiLine] = getRangeClientRect(this._element);
                         if (this.plainText) {
                             this.bounds = bounds;
-                            this.setDimensions();
+                            this.setBounds(true);
                         }
                         this.multiLine = multiLine;
                     }
@@ -606,7 +619,7 @@ export default abstract class Node implements BoxModel {
                     overflow === 'scroll' ||
                     overflowX === 'scroll' ||
                     (overflowX === 'auto' && this._element.clientWidth !== this._element.scrollWidth)
-                ))
+               ))
             {
                 this.overflow |= OVERFLOW_ELEMENT.HORIZONTAL;
             }
@@ -614,7 +627,7 @@ export default abstract class Node implements BoxModel {
                     overflow === 'scroll' ||
                     overflowY === 'scroll' ||
                     (overflowY === 'auto' && this._element.clientHeight !== this._element.scrollHeight)
-                ))
+               ))
             {
                 this.overflow |= OVERFLOW_ELEMENT.VERTICAL;
             }
@@ -879,10 +892,10 @@ export default abstract class Node implements BoxModel {
     }
 
     get viewWidth() {
-        return (this.inlineStatic || isPercent(this.styleMap.width) ? 0 : this.toInt('width') || this.toInt('minWidth'));
+        return (this.inlineStatic || this.has('width', CSS_STANDARD.PERCENT) ? 0 : this.toInt('width') || this.toInt('minWidth'));
     }
     get viewHeight() {
-        return (this.inlineStatic || isPercent(this.styleMap.height) ? 0 : this.toInt('height') || this.toInt('minHeight'));
+        return (this.inlineStatic || this.has('height', CSS_STANDARD.PERCENT) ? 0 : this.toInt('height') || this.toInt('minHeight'));
     }
 
     get lineHeight() {
@@ -996,7 +1009,7 @@ export default abstract class Node implements BoxModel {
     get inlineElement() {
         const position = this.position;
         const display = this.display;
-        return (this.inline || display.indexOf('inline') !== -1 || display === 'table-cell' || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignOrigin));
+        return (this.inline || display.indexOf('inline') !== -1 || display === 'table-cell' || this.floating || (!this.block && (position === 'absolute' || position === 'fixed') && this.alignOrigin));
     }
 
     get inlineStatic() {
@@ -1047,7 +1060,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get blockStatic() {
-        return (this.block && this.pageflow && this.siblingflow && (!this.floating || this.cssOriginal('width') === '100%'));
+        return (this.block && this.pageflow && this.siblingflow && (!this.floating || this.cssInitial('width') === '100%'));
     }
 
     get alignOrigin() {
@@ -1059,23 +1072,23 @@ export default abstract class Node implements BoxModel {
     }
 
     get autoMargin() {
-        return (this.originalStyleMap.marginLeft === 'auto' || this.originalStyleMap.marginRight === 'auto');
+        return (this.initial.styleMap.marginLeft === 'auto' || this.initial.styleMap.marginRight === 'auto');
     }
 
     get autoLeftMargin() {
-        return (this.originalStyleMap.marginLeft === 'auto' && this.originalStyleMap.marginRight !== 'auto');
+        return (this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight !== 'auto');
     }
 
     get autoRightMargin() {
-        return (this.originalStyleMap.marginLeft !== 'auto' && this.originalStyleMap.marginRight === 'auto');
+        return (this.initial.styleMap.marginLeft !== 'auto' && this.initial.styleMap.marginRight === 'auto');
     }
 
     get centerMarginHorizontal() {
-        return (this.originalStyleMap.marginLeft === 'auto' && this.originalStyleMap.marginRight === 'auto');
+        return (this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight === 'auto');
     }
 
     get centerMarginVertical() {
-        return (this.originalStyleMap.marginTop === 'auto' && this.originalStyleMap.marginBottom === 'auto');
+        return (this.initial.styleMap.marginTop === 'auto' && this.initial.styleMap.marginBottom === 'auto');
     }
 
     get floating() {
