@@ -457,6 +457,10 @@ export default abstract class Node implements BoxModel {
         return false;
     }
 
+    public isSet(obj: string, attr: string) {
+        return (this[obj] && this[obj][attr] != null ? hasValue(this[obj][attr]) : false);
+    }
+
     public hasBit(attr: string, bit: number) {
         if (this[attr] != null) {
             return hasBit(this[attr], bit);
@@ -747,8 +751,12 @@ export default abstract class Node implements BoxModel {
         return null;
     }
 
-    public isSet(obj: string, attr: string) {
-        return (this[obj] && this[obj][attr] != null ? hasValue(this[obj][attr]) : false);
+    public actualLeft(dimension = 'linear') {
+        return (this.companion != null ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left);
+    }
+
+    public actualRight(dimension = 'linear') {
+        return (this.companion != null ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right);
     }
 
     private boxDocument(region: string, direction: string) {
@@ -1147,41 +1155,36 @@ export default abstract class Node implements BoxModel {
     }
 
     get previousElementSibling() {
-        if (this._element != null) {
-            let element: Null<Element> = <Element> this._element.previousSibling;
-            while (element != null) {
-                if (isPlainText(element) || element instanceof HTMLElement || element.tagName === 'BR') {
-                    return element;
-                }
-                element = <Element> element.previousSibling;
+        let element = <Element> this.baseElement.previousSibling;
+        while (element != null) {
+            if (isPlainText(element) || element instanceof HTMLElement || element.tagName === 'BR') {
+                return element;
             }
+            element = <Element> element.previousSibling;
         }
         return null;
     }
     get nextElementSibling() {
-        if (this._element != null) {
-            let element: Null<Element> = <Element> this._element.nextSibling;
-            while (element != null) {
-                if (isPlainText(element) || element instanceof HTMLElement || element.tagName === 'BR') {
-                    return element;
-                }
-                element = <Element> element.nextSibling;
+        let element = <Element> this.baseElement.nextSibling;
+        while (element != null) {
+            if (isPlainText(element) || element instanceof HTMLElement || element.tagName === 'BR') {
+                return element;
             }
+            element = <Element> element.nextSibling;
         }
         return null;
     }
 
     get firstElementChild(): Null<Element> {
-        if (this.hasElement) {
-            for (let i = 0; i < this._element.childNodes.length; i++) {
-                const element = <Element> this._element.childNodes[i];
-                if (element.nodeName.charAt(0) === '#') {
-                    if (isPlainText(element)) {
-                        return element;
-                    }
+        const element = this.baseElement;
+        if (element instanceof HTMLElement) {
+            for (let i = 0; i < element.childNodes.length; i++) {
+                const childElement = <Element> element.childNodes[i];
+                if (childElement instanceof Element) {
+                    return childElement;
                 }
-                else if (element instanceof Element) {
-                    return element;
+                else if (isPlainText(childElement)) {
+                    return childElement;
                 }
             }
         }
@@ -1189,16 +1192,15 @@ export default abstract class Node implements BoxModel {
     }
 
     get lastElementChild(): Null<Element> {
-        if (this.hasElement) {
-            for (let i = this._element.childNodes.length - 1; i >= 0; i--) {
-                const element = <Element> this._element.childNodes[i];
-                if (element.nodeName.charAt(0) === '#') {
-                    if (isPlainText(element)) {
-                        return element;
-                    }
+        const element = this.baseElement;
+        if (element instanceof HTMLElement) {
+            for (let i = element.childNodes.length - 1; i >= 0; i--) {
+                const childElement = <Element> element.childNodes[i];
+                if (childElement instanceof Element) {
+                    return childElement;
                 }
-                else if (element instanceof Element) {
-                    return element;
+                else if (isPlainText(childElement)) {
+                    return childElement;
                 }
             }
         }

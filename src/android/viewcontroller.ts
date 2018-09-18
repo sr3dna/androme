@@ -1378,7 +1378,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     if (current.constraint.marginHorizontal != null) {
                         const item = this.findByStringId(current.constraint.marginHorizontal);
                         if (item) {
-                            const offset = current.linear.left - (item.companion != null && !item.companion.visible ? Math.max(item.linear.right, item.companion.linear.right) : item.linear.right);
+                            const offset = current.linear.left - item.actualRight();
                             if (offset >= 1) {
                                 current.modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
                             }
@@ -1677,7 +1677,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     }
                                     xml += this.renderNode(item as T, group, NODE_STANDARD.RADIO, true);
                                 }
-                                group.android('orientation', (NodeList.linearX(radiogroup) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL));
+                                group.android('orientation', (NodeList.linearX(radiogroup, false) ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL));
                                 group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
                                 if (checked !== '') {
                                     group.android('checkedButton', checked);
@@ -1918,16 +1918,11 @@ export default class ViewController<T extends View> extends Controller<T> {
 
     private parseAttributes(node: T) {
         if (node.dir === 'rtl') {
-            switch (node.controlName) {
-                case NODE_ANDROID.RADIO:
-                case NODE_ANDROID.CHECKBOX:
-                    node.android('layoutDirection', 'rtl');
-                    break;
-                default:
-                    if (node.renderChildren.length === 0) {
-                        node.android('textDirection', 'rtl');
-                    }
-                    break;
+            if (node.nodeType < NODE_STANDARD.INLINE) {
+                node.android('textDirection', 'rtl');
+            }
+            else if (node.renderChildren.length > 0) {
+                node.android('layoutDirection', 'rtl');
             }
         }
         for (const name in node.dataset) {

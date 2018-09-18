@@ -337,7 +337,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 backgroundPosition = backgroundPosition.filter(value => value !== '');
                 const method = METHOD_ANDROID['boxStyle'];
                 const companion = node.companion;
-                if (companion && !cssFromParent(companion.element, 'backgroundColor')) {
+                if (companion && companion.hasElement && !cssFromParent(companion.element, 'backgroundColor')) {
                     const boxStyle: BoxStyle = getElementCache(companion.element, 'boxStyle');
                     if (Array.isArray(boxStyle.backgroundColor) && boxStyle.backgroundColor.length > 0) {
                         stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);

@@ -151,7 +151,7 @@ export function cssParent(element: Element, attr: string, ...styles: string[]) {
 }
 
 export function cssFromParent(element: Element, attr: string) {
-    if (element && element.parentElement != null) {
+    if (element instanceof HTMLElement && element.parentElement != null) {
         const node = getNodeFromElement(element);
         const style = getStyle(element);
         return (style && style[attr] === getStyle(element.parentElement)[attr] && (node == null || node.styleMap[attr] == null));

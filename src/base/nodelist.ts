@@ -109,7 +109,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return nodes[0].documentParent;
     }
 
-    public static linearX<T extends Node>(list: T[]) {
+    public static linearX<T extends Node>(list: T[], traverse = true) {
         const nodes = list.filter(node => node.pageflow);
         switch (nodes.length) {
             case 0:
@@ -118,30 +118,33 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return true;
             default:
                 const parent = this.documentParent(nodes);
-                if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
-                    const cleared = NodeList.cleared(Array.from(parent.element.children).map(node => getNodeFromElement(node) as T).filter(node => node));
-                    const horizontal = nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
-                        if (index > 0) {
-                            if (node.companion && node.companion.documentParent === parent) {
-                                node = node.companion as T;
-                            }
-                            const previous = node.previousSibling();
-                            if (previous != null) {
-                                return !node.alignedVertical(previous, cleared);
-                            }
-                        }
-                        return true;
-                    });
-                    if (horizontal) {
-                        return nodes.every(node => {
-                            return !nodes.some(sibling => {
-                                if (sibling !== node && node.linear.top >= sibling.linear.bottom && node.intersectY(sibling.linear)) {
-                                    return true;
+                let horizontal = false;
+                if (traverse) {
+                    if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
+                        const cleared = NodeList.cleared(Array.from(parent.element.children).map(node => getNodeFromElement(node) as T).filter(node => node));
+                        horizontal = nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
+                            if (index > 0) {
+                                if (node.companion && node.companion.documentParent === parent) {
+                                    node = node.companion as T;
                                 }
-                                return false;
-                            });
+                                const previous = node.previousSibling();
+                                if (previous != null) {
+                                    return !node.alignedVertical(previous, cleared);
+                                }
+                            }
+                            return true;
                         });
                     }
+                }
+                if (horizontal || !traverse) {
+                    return nodes.every(node => {
+                        return !nodes.some(sibling => {
+                            if (sibling !== node && node.linear.top >= sibling.linear.bottom && node.intersectY(sibling.linear)) {
+                                return true;
+                            }
+                            return false;
+                        });
+                    });
                 }
                 return false;
         }

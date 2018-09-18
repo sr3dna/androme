@@ -3,7 +3,7 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, isPercent, isUnit, lastIndexOf, withinFraction } from '../lib/util';
 import { calculateBias, generateId, stripId } from './lib/util';
-import { getElementsBetweenSiblings, getNodeFromElement, getStyle } from '../lib/dom';
+import { getElementsBetweenSiblings, getNodeFromElement } from '../lib/dom';
 import API_ANDROID from './customizations';
 import parseRTL from './localization';
 import { BOX_STANDARD, CSS_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
@@ -1020,19 +1020,19 @@ export default class View extends Node {
 
     private bindWhiteSpace() {
         if (this.linearHorizontal || this.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL)) {
-            if (!(this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) || this.renderParent.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) && Array.from(this.documentParent.element.children).some(element => getStyle(element).cssFloat !== 'none'))) {
+            if (!this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
                 const textIndent = this.toInt('textIndent');
                 const valueBox = this.valueBox(BOX_STANDARD.PADDING_LEFT);
                 let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent')
                                                             : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
                 this.each((node: T) => {
                     if (!node.floating) {
-                        const width = Math.round(node.linear.left - right);
+                        const width = Math.round(node.actualLeft() - right);
                         if (width >= 1) {
                             node.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
                         }
                     }
-                    right = (node.companion != null && !node.companion.visible ? Math.max(node.linear.right, node.companion.linear.right) : node.linear.right);
+                    right = node.actualRight();
                 }, true);
             }
         }
@@ -1131,10 +1131,10 @@ export default class View extends Node {
     }
 
     get layoutHorizontal() {
-        return (this.linearHorizontal || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL) || new Set(this.renderChildren.map(node => node.linear.top)).size === 1);
+        return this.linearHorizontal || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL) || (this.renderChildren.length > 1 && new Set(this.renderChildren.map(node => node.linear.top)).size === 1);
     }
     get layoutVertical() {
-        return (this.linearVertical || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL));
+        return this.linearVertical || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL) || (this.renderChildren.length > 1 && new Set(this.renderChildren.map(node => node.linear.left)).size === 1);
     }
 
     get linearHorizontal() {

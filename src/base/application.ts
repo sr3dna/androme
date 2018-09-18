@@ -241,6 +241,9 @@ export default class Application<T extends Node> {
                     style.overflow = node.style.overflow;
                     element.style.overflow = 'visible';
                 }
+                if (element.dir === 'rtl') {
+                    element.dir = 'ltr';
+                }
             }
             for (const node of this.cache) {
                 node.setBounds();
@@ -252,6 +255,9 @@ export default class Application<T extends Node> {
                     for (const attr in style) {
                         element.style[attr] = style[attr];
                     }
+                }
+                if (element.dir === 'ltr') {
+                    element.dir = 'rtl';
                 }
             }
             for (const node of this.cache) {
@@ -270,12 +276,11 @@ export default class Application<T extends Node> {
                                             node.companion = label;
                                         }
                                         else if (labelParent && label.textElement) {
-                                            node.companion = labelParent;
+                                            node.companion = label;
                                             labelParent.renderAs = node;
                                         }
                                         if (node.companion != null) {
                                             label.hide();
-                                            node.setBounds(false);
                                             return true;
                                         }
                                     }
@@ -590,7 +595,6 @@ export default class Application<T extends Node> {
                         parentY.remove(nodeY);
                         nodeY.hide();
                         nodeY = nodeY.renderAs as T;
-                        nodeY.parent = parentY;
                     }
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE)) {
                         const linearVertical = parentY.linearVertical;
