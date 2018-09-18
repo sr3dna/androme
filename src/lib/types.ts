@@ -85,7 +85,9 @@ export type ObjectIndex<T> = {
 export type ArrayIndex<T> = {
     [key: number]: T;
     length: number;
-    filter<T>(callbackfn: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[];
+    push(...items: T[]): number;
+    forEach(callbackfn: (value: T, index: number, array: T[]) => void, thisArg?: any): void;
+    filter(callbackfn: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[];
 };
 
 export type ViewData<T> = {

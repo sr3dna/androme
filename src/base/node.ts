@@ -66,6 +66,7 @@ export default abstract class Node implements BoxModel {
     private _element: Element;
     private _parent: T;
     private _nodeName: string;
+    private _tagName: string;
     private _renderAs: T;
     private _renderDepth: number;
     private _pageflow: boolean;
@@ -699,10 +700,18 @@ export default abstract class Node implements BoxModel {
     }
 
     public removeElement() {
-        this._element = undefined as any;
+        if (this._element != null) {
+            if (this._nodeName == null) {
+                this._nodeName = this.nodeName;
+            }
+            if (this._tagName == null) {
+                this._tagName = this.tagName;
+            }
+            this._element = undefined as any;
+        }
     }
 
-    public previousSibling(lineBreak = true) {
+    public previousSibling(pageflow = false, lineBreak = true) {
         let element: Null<Element> = null;
         if (this._element != null) {
             element = <Element> this._element.previousSibling;
@@ -712,8 +721,8 @@ export default abstract class Node implements BoxModel {
             element = (list.length > 0 ? <Element> list[0].element.previousSibling : null);
         }
         while (element != null) {
-            const node = getNodeFromElement(element) as T;
-            if (node && node.siblingflow && (lineBreak || !node.lineBreak)) {
+            const node = getNodeFromElement(element);
+            if (node && ((!pageflow && node.siblingflow) || (pageflow && node.pageflow)) && (lineBreak || !node.lineBreak)) {
                 return node;
             }
             element = <Element> element.previousSibling;
@@ -721,7 +730,7 @@ export default abstract class Node implements BoxModel {
         return null;
     }
 
-    public nextSibling(lineBreak = true) {
+    public nextSibling(pageflow = false, lineBreak = true) {
         let element: Null<Element> = null;
         if (this._element != null) {
             element = <Element> this._element.nextSibling;
@@ -731,8 +740,8 @@ export default abstract class Node implements BoxModel {
             element = (list.length > 0 ? <Element> list[0].element.nextSibling : null);
         }
         while (element != null) {
-            const node = getNodeFromElement(element) as T;
-            if (node && node.siblingflow && (lineBreak || !node.lineBreak)) {
+            const node = getNodeFromElement(element);
+            if (node && ((!pageflow && node.siblingflow) || (pageflow && node.pageflow)) && (lineBreak || !node.lineBreak)) {
                 return node;
             }
             element = <Element> element.nextSibling;
@@ -800,7 +809,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get tagName() {
-        return this._element && (this._element.tagName || '');
+        return this._tagName || (this._element && this._element.tagName) || '';
     }
 
     get hasElement() {
@@ -1199,6 +1208,9 @@ export default abstract class Node implements BoxModel {
     }
 
     get center(): Point {
-        return { x: this.bounds.left + Math.floor(this.bounds.width / 2), y: this.bounds.top + Math.floor(this.actualHeight / 2)};
+        return {
+            x: this.bounds.left + Math.floor(this.bounds.width / 2),
+            y: this.bounds.top + Math.floor(this.actualHeight / 2)
+        };
     }
 }

@@ -1311,10 +1311,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         node.constraint.layoutHeight = true;
                                     }
                                     if (right && current.toInt('right') > 0) {
-                                        current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, current.toInt('right'));
+                                        current.modifyBox(BOX_STANDARD.MARGIN_RIGHT, Math.max(current.toInt('right') - node.paddingRight, 0));
                                     }
                                     if (bottom && current.toInt('bottom') > 0) {
-                                        current.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, current.toInt('bottom'));
+                                        current.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, Math.max(current.toInt('bottom') - node.paddingBottom, 0));
                                     }
                                     if (right && bottom) {
                                         if (node.documentRoot) {

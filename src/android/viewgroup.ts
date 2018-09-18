@@ -58,12 +58,12 @@ export default class ViewGroup<T extends View> extends View {
         this.setDimensions();
     }
 
-    public previousSibling(lineBreak = false) {
-        return (this.children.length > 0 ? this.children[0].previousSibling(lineBreak) : null);
+    public previousSibling(pageflow = false, lineBreak = false) {
+        return (this.children.length > 0 ? this.children[0].previousSibling(pageflow, lineBreak) : null);
     }
 
-    public nextSibling(lineBreak = false) {
-        return (this.children.length > 0 ? this.children[this.children.length - 1].nextSibling(lineBreak) : null);
+    public nextSibling(pageflow = false, lineBreak = false) {
+        return (this.children.length > 0 ? this.children[this.children.length - 1].nextSibling(pageflow, lineBreak) : null);
     }
 
     get pageflow() {

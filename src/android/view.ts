@@ -335,6 +335,14 @@ export default class View extends Node {
                         this.android('layout_width', 'wrap_content', false);
                         this.android('minWidth', styleMap.minWidth, false);
                     }
+                    if (!this.documentBody && this.has('maxWidth', CSS_STANDARD.UNIT) && this.layoutVertical) {
+                        const maxWidth = this.css('maxWidth');
+                        this.renderChildren.forEach(node => {
+                            if (node.is(NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
+                                node.android('maxWidth', maxWidth);
+                            }
+                        });
+                    }
                 }
                 if (this.android('layout_width') === '') {
                     const widthDefined = this.renderChildren.filter(node => (node.has('width', 0, { map: 'original' }) && !node.has('width', CSS_STANDARD.PERCENT) && !node.autoMargin));
@@ -416,6 +424,14 @@ export default class View extends Node {
                 if (this.has('minHeight', CSS_STANDARD.UNIT)) {
                     this.android('layout_height', 'wrap_content', false);
                     this.android('minHeight', styleMap.minHeight, false);
+                }
+                if (!this.documentBody && this.has('maxHeight', CSS_STANDARD.UNIT) && this.layoutHorizontal) {
+                    const maxHeight = this.css('maxHeight');
+                    this.renderChildren.forEach(node => {
+                        if (node.is(NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
+                            node.android('maxWidth', maxHeight);
+                        }
+                    });
                 }
             }
             if (this.android('layout_height') === '') {
@@ -1031,12 +1047,12 @@ export default class View extends Node {
                 let valid = false;
                 if (previous && !previous.hasElement) {
                     const previousSibling = (() => {
-                        let current = node.previousSibling(false);
+                        let current = node.previousSibling(false, false);
                         while (current != null) {
                             if (!current.excluded) {
                                 return current;
                             }
-                            current = current.previousSibling(false);
+                            current = current.previousSibling(false, false);
                         }
                         return null;
                     })();

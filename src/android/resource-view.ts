@@ -536,10 +536,30 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                         else {
                             if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
-                                image3.push({ image: backgroundImage[i], top, left, gravity, tileMode, tileModeX, tileModeY, width: '', height: '' });
+                                image3.push({
+                                    top,
+                                    left,
+                                    gravity,
+                                    tileMode,
+                                    tileModeX,
+                                    tileModeY,
+                                    width: '',
+                                    height: '',
+                                    image: backgroundImage[i]
+                                });
                             }
                             else {
-                                image2.push({ image: backgroundImage[i], top, left, gravity, tileMode, tileModeX, tileModeY, width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''), height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '') });
+                                image2.push({
+                                    top,
+                                    left,
+                                    gravity,
+                                    tileMode,
+                                    tileModeX,
+                                    tileModeY,
+                                    width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''),
+                                    height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : ''),
+                                    image: backgroundImage[i]
+                                });
                             }
                         }
                     }
@@ -856,10 +876,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const method = METHOD_ANDROID['optionArray'];
                 let result: string[] = [];
                 if (stored.stringArray != null) {
-                    result = stored.stringArray.map(value => {
-                        const name = ResourceView.addString(value);
-                        return (name !== '' ? `@string/${name}` : '');
-                    }).filter(name => name);
+                    result =
+                        stored.stringArray.map(value => {
+                            const name = ResourceView.addString(value);
+                            return (name !== '' ? `@string/${name}` : '');
+                        })
+                        .filter(name => name);
                 }
                 if (stored.numberArray != null) {
                     result = stored.numberArray;
