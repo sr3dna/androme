@@ -631,6 +631,9 @@ export default class View extends Node {
                     }
                 }
             }
+            if (this.blockStatic && renderParent.inlineHeight && this.documentParent.lastElementChild === this.element) {
+                this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), 'bottom'));
+            }
         }
         else if (floating !== '') {
             if (renderParent.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL)) {

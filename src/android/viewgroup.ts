@@ -66,8 +66,47 @@ export default class ViewGroup<T extends View> extends View {
         return (this.children.length > 0 ? this.children[this.children.length - 1].nextSibling(pageflow, lineBreak) : null);
     }
 
+    get inline() {
+        return this.children.every(node => node.inline);
+    }
+
     get pageflow() {
-        return this.children.some(node => node.pageflow);
+        return this.children.every(node => node.pageflow);
+    }
+
+    get siblingflow() {
+        return this.children.every(node => node.siblingflow);
+    }
+
+    get inlineElement() {
+        return this.hasBit('alignmentType', NODE_ALIGNMENT.SEGMENTED);
+    }
+
+    get inlineStatic() {
+        return this.children.every(node => node.inlineStatic);
+    }
+
+    get blockStatic() {
+        return this.children.every(node => node.blockStatic);
+    }
+
+    get floating() {
+        return this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT);
+    }
+
+    get float() {
+        if (this.floating) {
+            return (this.hasBit('alignmentType', NODE_ALIGNMENT.RIGHT) ? 'right' : 'left');
+        }
+        return 'none';
+    }
+
+    get baseline() {
+        return this.children.every(node => node.baseline);
+    }
+
+    get multiLine() {
+        return this.children.some(node => node.multiLine);
     }
 
     get display() {
@@ -96,10 +135,6 @@ export default class ViewGroup<T extends View> extends View {
             return null;
         }
         return cascade(this.children as T[]) || super.baseElement;
-    }
-
-    get inlineElement() {
-        return this.hasBit('alignmentType', NODE_ALIGNMENT.SEGMENTED);
     }
 
     get childrenBox() {

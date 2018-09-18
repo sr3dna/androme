@@ -1,4 +1,4 @@
-import { ObjectMap, Null } from '../.././lib/types';
+import { Null, ObjectMap } from '../.././lib/types';
 import SETTINGS from '../../settings';
 
 let ID: ObjectMap<string[]>;

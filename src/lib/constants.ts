@@ -1,8 +1,8 @@
 export enum APP_SECTION {
     NONE = 0,
     INCLUDE = 2,
-    EXTENSION = 4,
-    DOM_TRAVERSE = 8,
+    DOM_TRAVERSE = 4,
+    EXTENSION = 8,
     RENDER = 16,
     ALL = 30
 }
