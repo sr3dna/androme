@@ -473,7 +473,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                             }
                             if (absolute.length > 0) {
-                                node.setMinBounds();
+                                node.extendBounds();
                                 for (const current of absolute) {
                                     if (current.top != null && current.toInt('top') === 0) {
                                         current.anchor(mapLayout['top'], 'parent', AXIS_ANDROID.VERTICAL);
@@ -504,70 +504,79 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                             }
                             for (const current of nodes) {
-                                const leftRight = mapSibling(current, 'leftRight');
-                                if (leftRight) {
-                                    if (!current.constraint.horizontal) {
-                                        current.constraint.horizontal = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.HORIZONTAL);
-                                    }
-                                    current.constraint.marginHorizontal = leftRight;
-                                }
-                                const topBottom = mapSibling(current, 'topBottom');
-                                if (topBottom) {
-                                    if (!current.constraint.vertical) {
-                                        current.constraint.vertical = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.VERTICAL);
-                                    }
-                                    current.constraint.marginVertical = topBottom;
-                                    mapDelete(current, 'top');
-                                }
-                                if (mapParent(current, 'left') && mapParent(current, 'right')) {
-                                    if (current.autoMargin) {
-                                        if (current.autoLeftMargin) {
-                                            mapDelete(current, 'left');
+                                if (current.pageflow) {
+                                    const leftRight = mapSibling(current, 'leftRight');
+                                    if (leftRight) {
+                                        if (!current.constraint.horizontal) {
+                                            current.constraint.horizontal = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.HORIZONTAL);
                                         }
-                                        if (current.autoRightMargin) {
-                                            mapDelete(current, 'right');
+                                        current.constraint.marginHorizontal = leftRight;
+                                    }
+                                    const topBottom = mapSibling(current, 'topBottom');
+                                    if (topBottom) {
+                                        if (!current.constraint.vertical) {
+                                            current.constraint.vertical = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.VERTICAL);
                                         }
-                                        if (current.centerMarginHorizontal) {
-                                            if (node.viewWidth > 0 && !current.has('width', CSS_STANDARD.PERCENT)) {
-                                                current.android('layout_width', 'match_parent');
+                                        current.constraint.marginVertical = topBottom;
+                                        mapDelete(current, 'top');
+                                    }
+                                    if (mapParent(current, 'left') && mapParent(current, 'right')) {
+                                        if (current.autoMargin) {
+                                            if (current.autoLeftMargin) {
+                                                mapDelete(current, 'left');
                                             }
-                                            else if (current.inlineElement && current.viewWidth === 0) {
-                                                current.android('layout_width', 'wrap_content');
+                                            if (current.autoRightMargin) {
+                                                mapDelete(current, 'right');
+                                            }
+                                            if (current.centerMarginHorizontal) {
+                                                if (node.viewWidth > 0 && !current.has('width', CSS_STANDARD.PERCENT)) {
+                                                    current.android('layout_width', 'match_parent');
+                                                }
+                                                else if (current.inlineElement && current.viewWidth === 0) {
+                                                    current.android('layout_width', 'wrap_content');
+                                                }
                                             }
                                         }
-                                    }
-                                    else if (current.floating) {
-                                        mapDelete(current, (current.float === 'right' ? 'left' : 'right'));
-                                    }
-                                    else if (current.inlineElement) {
-                                        if (current.nodeType <= NODE_STANDARD.IMAGE) {
-                                            switch (current.css('textAlign')) {
-                                                case 'center':
-                                                    break;
-                                                case 'right':
-                                                case 'end' :
-                                                    mapDelete(current, 'left');
-                                                    break;
-                                                default:
-                                                    mapDelete(current, 'right');
-                                                    break;
+                                        else if (current.floating) {
+                                            mapDelete(current, (current.float === 'right' ? 'left' : 'right'));
+                                        }
+                                        else if (current.inlineElement) {
+                                            if (current.nodeType <= NODE_STANDARD.IMAGE) {
+                                                switch (current.css('textAlign')) {
+                                                    case 'center':
+                                                        break;
+                                                    case 'right':
+                                                    case 'end' :
+                                                        mapDelete(current, 'left');
+                                                        break;
+                                                    default:
+                                                        mapDelete(current, 'right');
+                                                        break;
+                                                }
+                                            }
+                                            else {
+                                                mapDelete(current, 'right');
                                             }
                                         }
                                         else {
                                             mapDelete(current, 'right');
+                                            current.android('layout_width', 'match_parent');
                                         }
                                     }
-                                    else {
-                                        mapDelete(current, 'right');
-                                        current.android('layout_width', 'match_parent');
+                                    if (mapSibling(current, 'bottomTop')) {
+                                        mapDelete(current, 'bottom');
                                     }
                                 }
-                                const textAlign = current.cssParent('textAlign');
-                                if (textAlign === 'center' && !current.floating && !current.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) && ((!current.blockStatic && current.nodeType < NODE_STANDARD.INLINE) || (current.linearVertical && current.renderChildren.every(item => item.nodeType < NODE_STANDARD.INLINE && (!item.has('textAlign') || item.css('textAlign') === 'center'))))) {
-                                    this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
-                                }
-                                if (mapSibling(current, 'bottomTop')) {
-                                    mapDelete(current, 'bottom');
+                                if (current.viewWidth > 0) {
+                                    const textAlign = current.cssParent('textAlign', true);
+                                    if (textAlign === 'right') {
+                                        current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
+                                        current.constraint.horizontal = true;
+                                    }
+                                    else if (textAlign === 'center') {
+                                        current.constraint.horizontal = false;
+                                        this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
+                                    }
                                 }
                             }
                             for (let i = 0; i < pageflow.length; i++) {
@@ -721,7 +730,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             }
                                         }
                                         return false;
-                                    }).forEach((current, level) => {
+                                    })
+                                    .forEach((current, level) => {
                                         const chainable: NodeList<T> = current.constraint[value];
                                         if (chainable.length > (flex.enabled ? 0 : 1)) {
                                             const inverse = (index === 0 ? 1 : 0);
@@ -1303,10 +1313,26 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                                 else {
                                     if (left && right && current.right == null && current.viewWidth > 0) {
-                                        mapDelete(current, 'right');
+                                        switch (current.cssParent('textAlign', true)) {
+                                            case 'center':
+                                            case 'right':
+                                            case 'end':
+                                                break;
+                                            default:
+                                                mapDelete(current, 'right');
+                                                break;
+                                        }
                                     }
                                     if (top && bottom && current.bottom == null && current.viewHeight > 0) {
-                                        mapDelete(current, 'bottom');
+                                        switch (current.css('verticalAlign')) {
+                                            case 'bottom':
+                                            case 'text-bottom':
+                                            case 'middle':
+                                                break;
+                                            default:
+                                                mapDelete(current, 'bottom');
+                                                break;
+                                        }
                                     }
                                     if (left && right && node.viewWidth === 0) {
                                         node.constraint.layoutWidth = true;
@@ -1491,6 +1517,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     container.render(parent);
                 }
                 else {
+                    container.init();
                     container.inherit(node, 'dimensions');
                     container.inherit(node, 'initialStyleMap', 'styleMap');
                     if (previous != null) {
@@ -1505,8 +1532,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                     container.css('overflowX', 'visible');
                     container.css('overflowY', 'scroll');
                     container.overflow = OVERFLOW_ELEMENT.VERTICAL;
-                    if (node.has('width', CSS_STANDARD.UNIT)) {
-                        container.css('width', formatPX(node.toInt('width') + node.paddingLeft + node.paddingRight));
+                    if (node.has('height', CSS_STANDARD.UNIT)) {
+                        container.css('height', formatPX(node.toInt('height') + node.paddingTop + node.paddingBottom));
                     }
                 }
                 container.resetBox(BOX_STANDARD.PADDING);

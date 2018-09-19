@@ -589,14 +589,12 @@ export default class Application<T extends Node> {
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE)) {
                         const linearVertical = parentY.linearVertical;
                         const extendHorizontal = (!nodeY.blockStatic && linearVertical && nodeY === parentY.children[parentY.children.length - 1]);
-                        if (nodeY.alignmentType === NODE_ALIGNMENT.NONE &&
-                            nodeY.pageflow && (
-                                (parentY.alignmentType === NODE_ALIGNMENT.NONE && (linearVertical || parentY.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE))) ||
+                        if (nodeY.pageflow &&
+                            !parentY.is(NODE_STANDARD.GRID) && !parentY.flex.enabled && !parentY.has('columnCount') &&
+                            current === '' && (
+                                (nodeY.alignmentType === NODE_ALIGNMENT.NONE && parentY.alignmentType === NODE_ALIGNMENT.NONE) ||
                                 extendHorizontal
-                            ) &&
-                            !parentY.flex.enabled &&
-                            !parentY.has('columnCount') &&
-                            current === '')
+                           ))
                         {
                             const horizontal: T[] = [];
                             const vertical: T[] = [];
@@ -611,10 +609,10 @@ export default class Application<T extends Node> {
                             for ( ; l < axisY.length; l++, m++) {
                                 const adjacent = axisY[l];
                                 if (adjacent.pageflow) {
-                                    const previousSibling = adjacent.previousSibling();
+                                    const previousSibling = adjacent.previousSibling() as T;
                                     const nextSibling = adjacent.nextSibling(true);
                                     if (m === 0 && nextSibling != null) {
-                                        if (adjacent.blockStatic || nextSibling.alignedVertical(adjacent, cleared, true)) {
+                                        if (adjacent.blockStatic || nextSibling.alignedVertically(adjacent, cleared, true)) {
                                             vertical.push(nodeY);
                                         }
                                         else {
@@ -622,27 +620,35 @@ export default class Application<T extends Node> {
                                         }
                                     }
                                     else if (previousSibling != null) {
-                                        if (adjacent.alignedVertical(previousSibling, cleared)) {
+                                        const verticalAlign = adjacent.alignedVertically(previousSibling, new Set(cleared.has(previousSibling) ? [previousSibling] : []));
+                                        if (verticalAlign || cleared.has(adjacent)) {
                                             if (horizontal.length > 0) {
-                                                const firstNode = horizontal[0];
-                                                if (firstNode.floating && previousSibling.blockStatic && adjacent.blockStatic && horizontal.some((node, index) => index > 0 && cleared.has(node)) && !cleared.has(adjacent)) {
+                                                const clear = adjacent.css('clear');
+                                                const floated = new Set(horizontal.map(node => node.float).filter(value => value !== 'none'));
+                                                if (cleared.has(adjacent) && floated.size === 2 && clear === 'both') {
+                                                    break;
+                                                }
+                                                const clearSize = horizontal.filter((node, index) => (index > 0 && cleared.has(node))).length + (cleared.has(adjacent) ? 1 : 0);
+                                                const clearLimit = (horizontal[0].floating ? 2 : 1);
+                                                if ((cleared.has(adjacent) && (floated.has(clear) || clear === 'both')) || extendVertical !== '') {
+                                                    if (clearSize === clearLimit && floated.size === clearLimit && ((adjacent.blockStatic && extendVertical !== '') || (cleared.has(adjacent) && clear !== 'both' && (extendVertical === '' || extendVertical === clear)))) {
+                                                        horizontal.push(adjacent);
+                                                        extendVertical = clear;
+                                                        continue;
+                                                    }
+                                                    break;
+                                                }
+                                                else if (!verticalAlign) {
                                                     horizontal.push(adjacent);
                                                     continue;
                                                 }
-                                                const clear = adjacent.css('clear');
-                                                const floated = new Set(horizontal.map(node => node.float).filter(value => value !== 'none'));
-                                                if (floated.size === 2 && clear !== 'both') {
-                                                    if (extendVertical !== '') {
-                                                        if (!cleared.has(adjacent) || (cleared.has(adjacent) && clear === extendVertical)) {
-                                                            horizontal.push(adjacent);
-                                                            continue;
-                                                        }
-                                                    }
-                                                    else if ((!adjacent.floating || l === axisY.length - 1) && cleared.has(adjacent) && firstNode.float === clear) {
-                                                        horizontal.push(adjacent);
-                                                        extendVertical = firstNode.float;
-                                                        continue;
-                                                    }
+                                                if (clearSize < clearLimit && !cleared.has(adjacent) && previousSibling.blockStatic && adjacent.blockStatic) {
+                                                    horizontal.push(adjacent);
+                                                    continue;
+                                                }
+                                                else if (floated.size > 0 && floated.size < clearLimit && adjacent.floating && !floated.has(adjacent.float)) {
+                                                    horizontal.push(adjacent);
+                                                    continue;
                                                 }
                                                 break;
                                             }
@@ -898,7 +904,7 @@ export default class Application<T extends Node> {
                                                     (!relativeWrap &&
                                                     children.some(node => {
                                                         const previous = node.previousSibling();
-                                                        if (previous && node.alignedVertical(previous, clearedChild)) {
+                                                        if (previous && node.alignedVertically(previous, clearedChild)) {
                                                             return true;
                                                         }
                                                         return false;
@@ -1068,8 +1074,8 @@ export default class Application<T extends Node> {
         let layers: LayerIndex = [];
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
-            if (node.floating || node.autoLeftMargin || node.autoRightMargin) {
-                if (node.float === 'right' || node.autoLeftMargin) {
+            if (node.floating) {
+                if (node.float === 'right') {
                     right.push(node);
                 }
                 else {
@@ -1078,6 +1084,12 @@ export default class Application<T extends Node> {
             }
             else if (node.centerMarginHorizontal) {
                 center.push(node);
+            }
+            else if (node.autoLeftMargin) {
+                right.push(node);
+            }
+            else if (node.autoRightMargin) {
+                left.push(node);
             }
             else {
                 inline.push(node);
@@ -1107,7 +1119,7 @@ export default class Application<T extends Node> {
                 return xml;
             }
             else {
-                if (NodeList.linearX(subleft) && !inline[inline.length - 1].blockStatic && this.isRelativeHorizontal(subleft, cleared)) {
+                if ((NodeList.linearX(subleft) || subleft.some(node => node.textElement && node.multiLine)) && !inline[inline.length - 1].blockStatic && this.isRelativeHorizontal(subleft, cleared)) {
                     xml = this.writeRelativeLayout(group, parent);
                     group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                     return xml;
@@ -1156,8 +1168,8 @@ export default class Application<T extends Node> {
                         }
                     }
                 }
-                if (node.floating || node.autoLeftMargin || node.autoRightMargin) {
-                    if (node.float === 'right' || node.autoLeftMargin) {
+                if (node.floating) {
+                    if (node.float === 'right') {
                         rightAbove.push(node);
                         if (node.floating) {
                             pendingFloat |= 4;
@@ -1172,6 +1184,22 @@ export default class Application<T extends Node> {
                 }
                 else if (node.centerMarginHorizontal) {
                     center.push(node);
+                }
+                else if (node.autoLeftMargin) {
+                    if (rightBelow.length > 0) {
+                        rightBelow.push(node);
+                    }
+                    else {
+                        rightAbove.push(node);
+                    }
+                }
+                else if (node.autoRightMargin) {
+                    if (leftBelow.length > 0) {
+                        leftBelow.push(node);
+                    }
+                    else {
+                        leftAbove.push(node);
+                    }
                 }
                 else {
                     switch (current) {

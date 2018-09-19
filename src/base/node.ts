@@ -258,100 +258,100 @@ export default abstract class Node implements BoxModel {
     }
 
     public inherit(node: T, ...props: string[]) {
-        function copyMap(source: StringMap, destination: StringMap) {
-            for (const attr in source) {
-                if (source[attr] == null) {
-                    const value = source[attr];
-                    destination[attr] = value;
+        if (this._initialized) {
+            function copyMap(source: StringMap, destination: StringMap) {
+                for (const attr in source) {
+                    if (source[attr] == null) {
+                        const value = source[attr];
+                        destination[attr] = value;
+                    }
                 }
             }
-        }
-        for (const type of props) {
-            switch (type) {
-                case 'base':
-                    this.style = node.style;
-                case 'dimensions':
-                    this.bounds = assignBounds(node.bounds);
-                    this.linear = assignBounds(node.linear);
-                    this.box = assignBounds(node.box);
-                    break;
-                case 'data':
-                    for (const obj in this._data) {
-                        for (const name in this._data[obj]) {
-                            const source = this._data[obj][name];
-                            if (typeof source === 'object' && source.inherit === true) {
-                                const destination = node.data(obj, name);
-                                if (destination) {
-                                    for (const attr in source) {
-                                        switch (typeof source[attr]) {
-                                            case 'number':
-                                                destination[attr] += source[attr];
-                                                break;
-                                            case 'boolean':
-                                                if (source[attr] === true) {
-                                                    destination[attr] = true;
-                                                }
-                                                break;
-                                            default:
-                                                destination[attr] = source[attr];
-                                                break;
+            for (const type of props) {
+                switch (type) {
+                    case 'base':
+                        this.style = node.style;
+                    case 'dimensions':
+                        this.bounds = assignBounds(node.bounds);
+                        this.linear = assignBounds(node.linear);
+                        this.box = assignBounds(node.box);
+                        break;
+                    case 'data':
+                        for (const obj in this._data) {
+                            for (const name in this._data[obj]) {
+                                const source = this._data[obj][name];
+                                if (typeof source === 'object' && source.inherit === true) {
+                                    const destination = node.data(obj, name);
+                                    if (destination) {
+                                        for (const attr in source) {
+                                            switch (typeof source[attr]) {
+                                                case 'number':
+                                                    destination[attr] += source[attr];
+                                                    break;
+                                                case 'boolean':
+                                                    if (source[attr] === true) {
+                                                        destination[attr] = true;
+                                                    }
+                                                    break;
+                                                default:
+                                                    destination[attr] = source[attr];
+                                                    break;
+                                            }
                                         }
                                     }
+                                    else {
+                                        node.data(obj, name, source);
+                                    }
+                                    delete this._data[obj][name];
                                 }
-                                else {
-                                    node.data(obj, name, source);
-                                }
-                                delete this._data[obj][name];
                             }
                         }
-                    }
-                    break;
-                case 'alignment':
-                    ['position', 'display', 'verticalAlign', 'cssFloat', 'clear'].forEach(attr => {
-                        this.styleMap[attr] = node.css(attr);
-                        this.initial.styleMap[attr] = node.cssInitial(attr);
-                    });
-                    if (node.css('marginLeft') === 'auto') {
-                        this.styleMap.marginLeft = 'auto';
-                        this.initial.styleMap.marginLeft = 'auto';
-                    }
-                    if (node.css('marginRight') === 'auto') {
-                        this.styleMap.marginRight = 'auto';
-                        this.initial.styleMap.marginRight = 'auto';
-                    }
-                    break;
-                case 'style':
-                    const style = { whiteSpace: node.css('whiteSpace') };
-                    for (const attr in node.style) {
-                        if (attr.startsWith('font') || attr.startsWith('color')) {
-                            const key = convertCamelCase(attr);
-                            style[key] = node.style[key];
+                        break;
+                    case 'alignment':
+                        ['position', 'display', 'verticalAlign', 'cssFloat', 'clear'].forEach(attr => {
+                            this.styleMap[attr] = node.css(attr);
+                            this.initial.styleMap[attr] = node.cssInitial(attr);
+                        });
+                        if (node.css('marginLeft') === 'auto') {
+                            this.styleMap.marginLeft = 'auto';
+                            this.initial.styleMap.marginLeft = 'auto';
                         }
-                    }
-                    this.css(style);
-                    break;
-                case 'styleMap':
-                    copyMap(node.styleMap, this.styleMap);
-                    break;
-                case 'initialStyleMap':
-                    copyMap(node.initial.styleMap, this.initial.styleMap);
-                    break;
+                        if (node.css('marginRight') === 'auto') {
+                            this.styleMap.marginRight = 'auto';
+                            this.initial.styleMap.marginRight = 'auto';
+                        }
+                        break;
+                    case 'style':
+                        const style = { whiteSpace: node.css('whiteSpace') };
+                        for (const attr in node.style) {
+                            if (attr.startsWith('font') || attr.startsWith('color')) {
+                                const key = convertCamelCase(attr);
+                                style[key] = node.style[key];
+                            }
+                        }
+                        this.css(style);
+                        break;
+                    case 'styleMap':
+                        copyMap(node.styleMap, this.styleMap);
+                        break;
+                    case 'initialStyleMap':
+                        copyMap(node.initial.styleMap, this.initial.styleMap);
+                        break;
+                }
             }
         }
     }
 
-    public alignedVertical(previous: T, cleared: Set<T>, firstNode = false) {
+    public alignedVertically(previous: T, cleared = new Set<T>(), firstNode = false) {
         if (this.documentParent === previous.documentParent) {
-            const next = this.nextSibling();
             const inlineStatic = (!this.inlineElement && !this.floating);
-            return (this.lineBreak ||
-                    previous.lineBreak ||
-                    cleared.has(this) ||
-                    (cleared.has(previous) && previous.floating && this.blockStatic) ||
-                    (previous.blockStatic && (this.blockStatic || inlineStatic || next == null || next.lineBreak || next.alignedVertical(this, cleared))) ||
-                    (previous.plainText && previous.multiLine && !this.parent.is(NODE_STANDARD.RELATIVE)) ||
-                    ((this.blockStatic || this.autoMargin) && (!previous.inlineElement || previous.autoMargin)) ||
+            return (previous.lineBreak ||
+                    this.lineBreak ||
+                    previous.blockStatic ||
+                    (!firstNode && cleared.has(this)) ||
+                    (previous.plainText && previous.multiLine && (this.parent && !this.parent.is(NODE_STANDARD.RELATIVE))) ||
                     (!previous.floating && (inlineStatic || this.autoMargin || this.blockStatic)) ||
+                    (this.blockStatic && (!previous.inlineElement || (cleared.has(previous) && previous.floating))) ||
                     (!firstNode && this.floating && previous.floating && this.linear.top >= previous.linear.bottom));
         }
         return false;
@@ -538,7 +538,7 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public setMinBounds() {
+    public extendBounds() {
         if (this.hasElement && this._element !== document.body) {
             const nodes = this.children.filter(node => !node.pageflow);
             if (nodes.length > 0) {
@@ -1009,7 +1009,7 @@ export default abstract class Node implements BoxModel {
     get inlineElement() {
         const position = this.position;
         const display = this.display;
-        return (this.inline || display.indexOf('inline') !== -1 || display === 'table-cell' || this.floating || (!this.block && (position === 'absolute' || position === 'fixed') && this.alignOrigin));
+        return (this.inline || display.indexOf('inline') !== -1 || display === 'table-cell' || this.floating || ((position === 'absolute' || position === 'fixed') && this.alignOrigin));
     }
 
     get inlineStatic() {
@@ -1060,7 +1060,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get blockStatic() {
-        return (this.block && this.pageflow && this.siblingflow && (!this.floating || this.cssInitial('width') === '100%'));
+        return (this.block && this.siblingflow && (!this.floating || this.cssInitial('width') === '100%'));
     }
 
     get alignOrigin() {
@@ -1072,23 +1072,23 @@ export default abstract class Node implements BoxModel {
     }
 
     get autoMargin() {
-        return (this.initial.styleMap.marginLeft === 'auto' || this.initial.styleMap.marginRight === 'auto');
+        return (this.block && !this.floating && (this.initial.styleMap.marginLeft === 'auto' || this.initial.styleMap.marginRight === 'auto'));
     }
 
     get autoLeftMargin() {
-        return (this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight !== 'auto');
+        return (this.block && !this.floating && this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight !== 'auto');
     }
 
     get autoRightMargin() {
-        return (this.initial.styleMap.marginLeft !== 'auto' && this.initial.styleMap.marginRight === 'auto');
+        return (this.block && !this.floating && this.initial.styleMap.marginLeft !== 'auto' && this.initial.styleMap.marginRight === 'auto');
     }
 
     get centerMarginHorizontal() {
-        return (this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight === 'auto');
+        return (this.block && !this.floating && this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight === 'auto');
     }
 
     get centerMarginVertical() {
-        return (this.initial.styleMap.marginTop === 'auto' && this.initial.styleMap.marginBottom === 'auto');
+        return (this.block && !this.floating && this.initial.styleMap.marginTop === 'auto' && this.initial.styleMap.marginBottom === 'auto');
     }
 
     get floating() {

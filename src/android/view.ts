@@ -862,27 +862,23 @@ export default class View extends Node {
             }
             else {
                 if (this.hasElement && !this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+                    const minWidth = convertInt(this.android('minWidth'));
+                    const minHeight = convertInt(this.android('minHeight'));
                     const tableElement = (this.tagName === 'TABLE');
                     const borderCollapse = ((renderParent.display === 'table' || renderParent.tagName === 'TABLE') && renderParent.css('borderCollapse') === 'collapse');
+                    const paddedWidth = this.paddingLeft + this.paddingRight + (!borderCollapse ? this.borderLeftWidth + this.borderRightWidth : 0);
+                    const paddedHeight = this.paddingTop + this.paddingBottom + (!borderCollapse ? this.borderTopWidth + this.borderBottomWidth : 0);
                     let resizedWidth = false;
                     let resizedHeight = false;
                     if (viewWidth > 0 &&
+
                         this.toInt('width', 0, { map: 'initial' }) > 0 &&
                         !(tableElement && this.has('width', CSS_STANDARD.PERCENT, { map: 'initial' })))
                     {
-                        const paddedWidth = this.paddingLeft + this.paddingRight + (!borderCollapse ? this.borderLeftWidth + this.borderRightWidth : 0);
                         if (!tableElement && paddedWidth > 0) {
                             this.android('layout_width', formatPX(viewWidth + paddedWidth));
                         }
                         resizedWidth = true;
-                    }
-                    const borderLeft = this.borderLeftWidth - (tableElement && resizedWidth ? this.paddingLeft : 0);
-                    const borderRight = this.borderRightWidth - (tableElement && resizedWidth ? this.paddingRight : 0);
-                    if (borderLeft > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_LEFT, borderLeft);
-                    }
-                    if (borderRight > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_RIGHT, borderRight);
                     }
                     if (viewHeight > 0 &&
                         this.toInt('height', 0, { map: 'initial' }) > 0 &&
@@ -892,20 +888,21 @@ export default class View extends Node {
                             this.lineHeight === this.toInt('height')
                        ))
                     {
-                        const paddedHeight = this.paddingTop + this.paddingBottom + (!borderCollapse ? this.borderTopWidth + this.borderBottomWidth : 0);
                         if (!tableElement && paddedHeight > 0) {
                             this.android('layout_height', formatPX(viewHeight + paddedHeight));
                         }
                         resizedHeight = true;
                     }
-                    const borderTop = this.borderTopWidth - (tableElement && resizedHeight ? this.paddingTop : 0);
-                    const borderBottom = this.borderBottomWidth - (tableElement && resizedHeight ? this.paddingBottom : 0);
-                    if (borderTop > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_TOP, borderTop);
+                    if (minWidth > 0 && !tableElement && paddedWidth > 0) {
+                        this.android('minWidth', formatPX(minWidth + paddedWidth));
                     }
-                    if (borderBottom > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, borderBottom);
+                    if (minHeight > 0 && !tableElement && paddedHeight > 0) {
+                        this.android('minHeight', formatPX(minHeight + paddedHeight));
                     }
+                    this.modifyBox(BOX_STANDARD.PADDING_TOP, this.borderTopWidth - (tableElement && resizedHeight ? this.paddingTop : 0));
+                    this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.borderBottomWidth - (tableElement && resizedHeight ? this.paddingBottom : 0));
+                    this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.borderRightWidth - (tableElement && resizedWidth ? this.paddingRight : 0));
+                    this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth - (tableElement && resizedWidth ? this.paddingLeft : 0));
                 }
             }
         }
@@ -1008,11 +1005,12 @@ export default class View extends Node {
         if (this.linearHorizontal || this.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL)) {
             if (!this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT)) {
                 const textIndent = this.toInt('textIndent');
+                const textAlign = this.css('textAlign');
                 const valueBox = this.valueBox(BOX_STANDARD.PADDING_LEFT);
                 let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent')
                                                             : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
-                this.each((node: T) => {
-                    if (!node.floating) {
+                this.each((node: T, index) => {
+                    if (!(node.floating || (index === 0 && textAlign !== 'left'))) {
                         const width = Math.round(node.actualLeft() - right);
                         if (width >= 1) {
                             node.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
