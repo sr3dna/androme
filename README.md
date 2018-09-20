@@ -101,6 +101,7 @@ androme.settings = {
     constraintCirclePositionAbsolute: false,
     constraintSupportNegativeLeftTop: true,
     constraintPercentAccuracy: 4, // eq: 1px
+    floatOverlapDisabled: false,
     collapseUnattributedElements: true,
     showAttributes: true,
     customizationsOverwritePrivilege: false,

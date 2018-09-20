@@ -2,6 +2,30 @@ import { BoxModel, ClientRect, Null } from './types';
 import Node from '../base/node';
 import { convertInt, hasValue, resolvePath } from './util';
 
+export function getClientRect() {
+    return {
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: 0,
+        height: 0
+    };
+}
+
+export function getBoxModel() {
+    return {
+        marginTop: 0,
+        marginRight: 0,
+        marginBottom: 0,
+        marginLeft: 0,
+        paddingTop: 0,
+        paddingRight: 0,
+        paddingBottom: 0,
+        paddingLeft: 0
+    };
+}
+
 export function setElementCache(element: Null<Element>, attr: string, data: any) {
     if (element != null) {
         element[`__${attr}`] = data;

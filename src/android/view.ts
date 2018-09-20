@@ -229,7 +229,7 @@ export default class View extends Node {
         if (children) {
             node.children = this.children.slice();
         }
-        node.inherit(this, 'base', 'styleMap');
+        node.inherit(this, 'initial', 'base', 'style', 'styleMap');
         return node;
     }
 
@@ -319,7 +319,7 @@ export default class View extends Node {
                             }
                         }
                         else {
-                            this.android('layout_width', (this.css('overflow') === 'visible' && renderChildren.length === 1 && !renderChildren[0].has('width', CSS_STANDARD.PERCENT) && renderChildren[0].toInt('width') >= this.toInt('width') ? renderChildren[0].styleMap.width : styleMap.width));
+                            this.android('layout_width', styleMap.width);
                         }
                     }
                     if (constraint.layoutWidth) {
@@ -380,7 +380,7 @@ export default class View extends Node {
                                     (this.documentParent.blockStatic && this.nodeType <= NODE_STANDARD.LINEAR && ((previousSibling == null || !previousSibling.floating) && (nextSibling == null || !nextSibling.floating))))
                                 ) ||
                                 (this.is(NODE_STANDARD.FRAME) && renderChildren.some(node => node.blockStatic && (node.centerMarginHorizontal || node.autoLeftMargin))) ||
-                                (!this.hasElement && renderChildren.length > 0 && renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !renderChildren.some(item => item.plainText && item.multiLine)))
+                                (!this.hasElement && this.length > 0 && renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !renderChildren.some(item => item.plainText && item.multiLine)))
                             {
                                 this.android('layout_width', 'match_parent');
                             }
@@ -463,11 +463,13 @@ export default class View extends Node {
 
     public setAlignment() {
         const renderParent = this.renderParent;
+        const textAlignParent = this.cssParent('textAlign');
         const obj = (renderParent.is(NODE_STANDARD.GRID) ? 'app' : 'android');
         const left = parseRTL('left');
         const right = parseRTL('right');
         let textAlign = this.styleMap.textAlign || '';
         let verticalAlign = '';
+        let floating = '';
         function mergeGravity(original?: Null<string>, ...alignment: string[]) {
             const direction = [...(original || '').split('|'), ...alignment].filter(value => value);
             switch (direction.length) {
@@ -549,6 +551,12 @@ export default class View extends Node {
                     return '';
             }
         }
+        function setTextAlign(value: string) {
+            if (textAlign === '' || value === right) {
+                return value;
+            }
+            return textAlign;
+        }
         if (!(this.floating || renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL))) {
             switch (this.styleMap.verticalAlign) {
                 case 'top':
@@ -580,13 +588,12 @@ export default class View extends Node {
                 setAutoMargin(this);
             }
         }
-        let floating = '';
-        if (this.hasBit('alignmentType', NODE_ALIGNMENT.SEGMENTED | NODE_ALIGNMENT.FLOAT) || this.linearHorizontal) {
-            if (this.hasBit('alignmentType', NODE_ALIGNMENT.LEFT) || this.renderChildren.some(node => node.float === 'left' || node.hasBit('alignmentType', NODE_ALIGNMENT.LEFT))) {
-                floating = left;
-            }
-            else if (this.hasBit('alignmentType', NODE_ALIGNMENT.RIGHT) || this.renderChildren.some(node => node.float === 'right' || node.hasBit('alignmentType', NODE_ALIGNMENT.RIGHT))) {
+        if (this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT) || this.linearHorizontal) {
+            if (this.hasBit('alignmentType', NODE_ALIGNMENT.RIGHT) || this.renderChildren.some(node => node.float === 'right' || node.hasBit('alignmentType', NODE_ALIGNMENT.RIGHT))) {
                 floating = right;
+            }
+            else if (this.hasBit('alignmentType', NODE_ALIGNMENT.LEFT) || this.renderChildren.some(node => node.hasBit('alignmentType', NODE_ALIGNMENT.LEFT))) {
+                floating = left;
             }
         }
         if (renderParent.tagName === 'TABLE') {
@@ -598,21 +605,7 @@ export default class View extends Node {
                 verticalAlign = 'center_vertical';
             }
         }
-        function setTextAlign(value: string) {
-            if (textAlign === '' || value === right) {
-                return value;
-            }
-            return textAlign;
-        }
-        if (this.linearHorizontal) {
-            if (this.blockWidth) {
-                textAlign = setTextAlign(floating);
-            }
-            else {
-                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), floating));
-            }
-        }
-        else if (renderParent.is(NODE_STANDARD.FRAME)) {
+        if (renderParent.is(NODE_STANDARD.FRAME)) {
             if (!setAutoMargin(this)) {
                 floating = floating || this.float;
                 if (floating !== 'none') {
@@ -631,11 +624,18 @@ export default class View extends Node {
             }
         }
         else if (floating !== '') {
-            if (renderParent.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL)) {
+            if (this.linearHorizontal) {
+                if (this.blockWidth) {
+                    textAlign = setTextAlign(floating);
+                }
+                else {
+                    this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), floating));
+                }
+            }
+            else if (renderParent.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL)) {
                 textAlign = setTextAlign(floating);
             }
         }
-        const textAlignParent = this.cssParent('textAlign');
         if (textAlignParent !== '' && parseRTL(textAlignParent) !== left) {
             if (renderParent.is(NODE_STANDARD.FRAME) &&
                 this.singleChild &&
@@ -745,7 +745,7 @@ export default class View extends Node {
                     }
                 }
                 if (settings.ellipsisOnTextOverflow &&
-                    renderChildren.length > 1 &&
+                    this.length > 1 &&
                     renderChildren.every(node => node.textElement && !node.floating))
                 {
                     renderChildren[renderChildren.length - 1].android('singleLine', 'true');
@@ -977,7 +977,7 @@ export default class View extends Node {
                     let label: Null<T> = null;
                     let current = this as T;
                     let parent = this.renderParent;
-                    while (parent instanceof View && parent.renderChildren.length > 0) {
+                    while (parent instanceof View && parent.length > 0) {
                         const index = parent.renderChildren.findIndex(item => item === current);
                         if (index > 0) {
                             label = parent.renderChildren[index - 1];
@@ -1021,49 +1021,33 @@ export default class View extends Node {
             }
         }
         else if (this.linearVertical) {
-            let bottom = this.box.top;
-            let previous: Null<T> = null;
-            const verified = new Set<T>();
-            function getMarginBottom(node: T) {
-                if (node.linearHorizontal && node.renderChildren.some(item => !item.floating)) {
-                    return node.renderChildren.filter(item => !item.floating).sort((a, b) => (a.linear.bottom < b.linear.bottom ? 1 : -1))[0].linear.bottom;
-                }
-                return node.linear.bottom;
-            }
             this.each((node: T) => {
+                const previous = node.previousSibling();
                 let valid = false;
-                if (previous && !previous.hasElement) {
-                    const previousSibling = (() => {
-                        let current = node.previousSibling(false, false);
-                        while (current != null) {
-                            if (!current.excluded) {
-                                return current;
-                            }
-                            current = current.previousSibling(false, false);
-                        }
-                        return null;
-                    })();
-                    if (previousSibling && previous.children.includes(previousSibling as T)) {
-                        previous = previousSibling as T;
-                    }
+                let bottom: number;
+                if (previous === null) {
+                    bottom = this.box.top;
                 }
-                getElementsBetweenSiblings((previous != null ? previous.baseElement : null), node.baseElement).forEach(element => {
-                    const collapsed = getNodeFromElement(element) as T;
-                    if (element.tagName === 'BR' || (collapsed && collapsed.excluded && (!verified.has(collapsed) || collapsed.blockStatic))) {
-                        if (collapsed != null) {
-                            verified.add(collapsed);
+                else {
+                    bottom = (() => {
+                        if (previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
+                            return node.renderChildren.filter(item => !item.floating).sort((a, b) => (a.linear.bottom < b.linear.bottom ? 1 : -1))[0].linear.bottom;
                         }
+                        return previous.linear.bottom;
+                    })();
+                }
+                getElementsBetweenSiblings((previous != null ? (!previous.hasElement && previous.length > 0 ? previous.lastElementChild : previous.baseElement) : null), node.baseElement).forEach(element => {
+                    const collapsed = getNodeFromElement(element) as T;
+                    if (collapsed && (collapsed.lineBreak || (collapsed.excluded && collapsed.blockStatic))) {
                         valid = true;
                     }
                 });
-                if (valid || (!node.hasElement && !node.plainText)) {
+                if (valid) {
                     const height = Math.round(node.linear.top - bottom);
                     if (height >= 1) {
                         node.modifyBox(BOX_STANDARD.MARGIN_TOP, height);
                     }
                 }
-                bottom = getMarginBottom(node);
-                previous = node;
             }, true);
         }
     }
@@ -1115,10 +1099,10 @@ export default class View extends Node {
     }
 
     get layoutHorizontal() {
-        return this.linearHorizontal || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL) || (this.renderChildren.length > 1 && new Set(this.renderChildren.map(node => node.linear.top)).size === 1);
+        return this.linearHorizontal || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.HORIZONTAL) || (this.length > 1 && new Set(this.renderChildren.map(node => node.linear.top)).size === 1);
     }
     get layoutVertical() {
-        return this.linearVertical || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL) || (this.renderChildren.length > 1 && new Set(this.renderChildren.map(node => node.linear.left)).size === 1);
+        return this.linearVertical || this.is(NODE_STANDARD.FRAME) || this.hasBit('alignmentType', NODE_ALIGNMENT.VERTICAL) || (this.length > 1 && new Set(this.renderChildren.map(node => node.linear.left)).size === 1);
     }
 
     get linearHorizontal() {

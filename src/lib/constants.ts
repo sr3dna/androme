@@ -34,7 +34,7 @@ export enum NODE_STANDARD {
 
 export enum NODE_ALIGNMENT {
     NONE = 0,
-    SINGLE = 2,
+    EXTENDABLE = 2,
     HORIZONTAL = 4,
     VERTICAL = 8,
     ABSOLUTE = 16,
@@ -45,7 +45,8 @@ export enum NODE_ALIGNMENT {
     TOP = 512,
     RIGHT = 1024,
     BOTTOM = 2048,
-    LEFT = 4096
+    LEFT = 4096,
+    SINGLE = 8192
 }
 
 export enum NODE_RESOURCE {
@@ -196,9 +197,3 @@ export const INLINE_ELEMENT = [
     'VAR',
     'PLAINTEXT'
 ];
-
-export const enum OVERFLOW_ELEMENT {
-    NONE = 0,
-    HORIZONTAL = 2,
-    VERTICAL = 4
-}

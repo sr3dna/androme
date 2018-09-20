@@ -1,7 +1,7 @@
 import { Null } from '../lib/types';
 import View from './view';
 import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/constants';
-import { assignBounds } from '../lib/dom';
+import { assignBounds, getNodeFromElement } from '../lib/dom';
 
 export default class ViewGroup<T extends View> extends View {
     public baseNode: T;
@@ -125,8 +125,8 @@ export default class ViewGroup<T extends View> extends View {
                 if (item.hasElement || item.plainText) {
                     return item.element;
                 }
-                else if (item.children.length > 0) {
-                    const element = cascade(item.children as T[]);
+                else if (item.length > 0) {
+                    const element = cascade(item.nodes as T[]);
                     if (element != null) {
                         return element;
                     }
@@ -134,7 +134,33 @@ export default class ViewGroup<T extends View> extends View {
             }
             return null;
         }
-        return cascade(this.children as T[]) || super.baseElement;
+        return cascade(this.nodes as T[]) || super.baseElement;
+    }
+
+    get firstElementChild() {
+        const element = this.documentParent.element;
+        if (element instanceof HTMLElement) {
+            for (let i = 0; i < element.childNodes.length; i++) {
+                const childElement = <Element> element.childNodes[i];
+                if (this.nodes.includes(getNodeFromElement(childElement) as T)) {
+                    return childElement;
+                }
+            }
+        }
+        return null;
+    }
+
+    get lastElementChild() {
+        const element = this.baseElement;
+        if (element instanceof HTMLElement) {
+            for (let i = element.childNodes.length - 1; i >= 0; i--) {
+                const childElement = <Element> element.childNodes[i];
+                if (this.nodes.includes(getNodeFromElement(childElement) as T)) {
+                    return childElement;
+                }
+            }
+        }
+        return null;
     }
 
     get childrenBox() {

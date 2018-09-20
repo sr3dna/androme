@@ -143,11 +143,13 @@ export type BoxStyle = {
     backgroundPosition: string;
 };
 
-export type InitialValues = {
-    bounds?: ClientRect,
+export type InitialValues<T> = {
+    readonly styleMap: StringMap,
+    readonly children: T[],
+    readonly bounds: ClientRect,
+    depth: number,
     linear?: ClientRect,
-    box?: ClientRect,
-    styleMap: StringMap
+    box?: ClientRect
 };
 
 export type DisplaySettings = {

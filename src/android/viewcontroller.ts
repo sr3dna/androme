@@ -9,7 +9,7 @@ import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/
 import { formatResource } from './extension/lib/util';
 import { getElementsBetweenSiblings, getRangeClientRect, hasLineBreak, isLineBreak } from '../lib/dom';
 import { formatPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
-import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, OVERFLOW_ELEMENT } from '../lib/constants';
+import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
 import parseRTL from './localization';
 import SETTINGS from '../settings';
@@ -567,7 +567,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         mapDelete(current, 'bottom');
                                     }
                                 }
-                                if (current.viewWidth > 0) {
+                                if (!flex.enabled && columnCount <= 1 && ((current.viewWidth > 0 && current.alignOrigin) || current.plainText)) {
                                     const textAlign = current.cssParent('textAlign', true);
                                     if (textAlign === 'right') {
                                         current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
@@ -1124,7 +1124,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 });
                             }
                         }
-                        else {
+                        else if (columnCount <= 1) {
                             for (const current of pageflow) {
                                 [['top', 'bottom', 'topBottom'], ['bottom', 'top', 'bottomTop']].forEach(direction => {
                                     if (mapParent(current, direction[1]) && mapSibling(current, direction[2]) == null) {
@@ -1512,26 +1512,24 @@ export default class ViewController<T extends View> extends Controller<T> {
                 container.documentParent = node.documentParent;
                 container.setNodeType(nodeName);
                 if (index === 0) {
-                    container.inherit(node, 'base', 'data', 'initialStyleMap', 'styleMap');
+                    container.inherit(node, 'initial', 'base', 'data', 'style', 'styleMap');
                     container.parent = parent;
                     container.render(parent);
                 }
                 else {
                     container.init();
                     container.inherit(node, 'dimensions');
-                    container.inherit(node, 'initialStyleMap', 'styleMap');
+                    container.inherit(node, 'initial', 'style', 'styleMap');
                     if (previous != null) {
                         previous.css('overflow', 'visible scroll');
                         previous.css('overflowX', 'scroll');
                         previous.css('overflowY', 'visible');
-                        previous.overflow = OVERFLOW_ELEMENT.HORIZONTAL;
                         container.parent = previous;
                         container.render(previous);
                     }
                     container.css('overflow', 'scroll visible');
                     container.css('overflowX', 'visible');
                     container.css('overflowY', 'scroll');
-                    container.overflow = OVERFLOW_ELEMENT.VERTICAL;
                     if (node.has('height', CSS_STANDARD.UNIT)) {
                         container.css('height', formatPX(node.toInt('height') + node.paddingTop + node.paddingBottom));
                     }
@@ -1550,7 +1548,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                 node.android('layout_height', 'wrap_content');
             }
             else {
-                scrollView[0].overflow = node.overflow;
                 node.android((node.overflowX ? 'layout_width' : 'layout_height'), 'wrap_content');
             }
             node.removeElement();
@@ -1952,7 +1949,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             if (node.nodeType < NODE_STANDARD.INLINE) {
                 node.android('textDirection', 'rtl');
             }
-            else if (node.renderChildren.length > 0) {
+            else if (node.length > 0) {
                 node.android('layoutDirection', 'rtl');
             }
         }

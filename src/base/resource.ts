@@ -144,7 +144,7 @@ export default abstract class Resource<T extends Node> {
         this.cache.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources)) {
                 const backgroundImage = this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
-                if (node.renderChildren.length > 0 ||
+                if (node.length > 0 ||
                     node.imageElement ||
                     node.tagName === 'HR' ||
                     (node.inlineText && !backgroundImage && node.element.innerHTML.trim() === '' && !['pre', 'pre-wrap'].includes(node.css('whiteSpace'))))

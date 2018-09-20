@@ -29,6 +29,7 @@ const SETTINGS = {
     constraintCirclePositionAbsolute: false,
     constraintSupportNegativeLeftTop: true,
     constraintPercentAccuracy: 4,
+    floatOverlapDisabled: false,
     collapseUnattributedElements: true,
     showAttributes: true,
     customizationsOverwritePrivilege: false,

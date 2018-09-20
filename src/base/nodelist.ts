@@ -11,18 +11,18 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public static cleared<T extends Node>(list: T[]) {
-        const nodes: Set<T> = new Set();
+        const nodes = new Map<T, string>();
         const floats = new Set();
         list.forEach(node => {
             const clear = node.css('clear');
             if (floats.size > 0) {
                 if (clear === 'both') {
+                    nodes.set(node, (floats.size === 2 ? 'both' : floats.values().next().value));
                     floats.clear();
-                    nodes.add(node);
                 }
                 else if (floats.has(clear)) {
                     floats.delete(clear);
-                    nodes.add(node);
+                    nodes.set(node, clear);
                 }
             }
             if (node.floating) {

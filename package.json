@@ -62,11 +62,9 @@
   },
   "devDependencies": {
     "@babel/core": "^7.1.0",
-    "@babel/plugin-proposal-class-properties": "^7.1.0",
-    "@babel/plugin-proposal-object-rest-spread": "^7.0.0",
     "@babel/preset-env": "^7.1.0",
     "rimraf": "^2.6.2",
-    "rollup": "^0.66.0",
+    "rollup": "^0.66.1",
     "rollup-plugin-babel": "^4.0.3",
     "rollup-plugin-babel-minify": "^6.0.0",
     "systemjs": "^0.21.4",

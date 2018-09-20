@@ -13,7 +13,7 @@ export function createPlaceholder<T extends View>(nextId: number, node: T, child
     for (const child of children) {
         child.parent = placeholder;
     }
-    placeholder.inherit(node, 'base');
+    placeholder.inherit(node, 'dimensions');
     placeholder.auto = false;
     placeholder.excludeResource |= NODE_RESOURCE.ALL;
     return placeholder;

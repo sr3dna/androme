@@ -164,7 +164,7 @@ export default class Table<T extends Node> extends Extension<T> {
             else if (sameWidth && (node.viewWidth > 0 || node.has('width', CSS_STANDARD.PERCENT) || multiLine)) {
                 return 2;
             }
-            else if (mapWidth.every(value => isUnit(value) || value === 'auto')) {
+            else if (mapWidth.every(value => (isUnit(value) && value !== '0px') || value === 'auto')) {
                 return 1;
             }
             else {

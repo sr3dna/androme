@@ -197,21 +197,22 @@ export default class Application<T extends Node> {
         }
         if (this.cache.length > 0) {
             for (const node of this.cache) {
-                if (!node.plainText) {
+                if (node.hasElement) {
                     const element = <HTMLElement> node.element;
                     const preAlignment: StringMap = {};
-                    const textAlign = node.css('textAlign');
-                    switch (textAlign) {
-                        case 'center':
-                            if (element.tagName === 'BUTTON' || (<HTMLInputElement> element).type === 'button') {
-                                break;
-                            }
-                        case 'right':
-                        case 'end':
-                            preAlignment.textAlign = textAlign;
-                            element.style.textAlign = 'left';
-                            break;
+                    const textAlign = ['right', 'end'];
+                    if (!(element.tagName === 'BUTTON' || (<HTMLInputElement> element).type === 'button')) {
+                        textAlign.push('center');
                     }
+                    textAlign.some(alignment => {
+                        const value = node.css('textAlign');
+                        if (value === alignment) {
+                            preAlignment.textAlign = value;
+                            element.style.textAlign = 'left';
+                            return true;
+                        }
+                        return false;
+                    });
                     if (node.marginLeft < 0) {
                         preAlignment.marginLeft = node.css('marginLeft');
                         element.style.marginLeft = '0px';
@@ -240,14 +241,16 @@ export default class Application<T extends Node> {
                         preAlignment.overflow = node.style.overflow || '';
                         element.style.overflow = 'visible';
                     }
+                    let direction = false;
                     if (element.dir === 'rtl') {
                         element.dir = 'ltr';
+                        direction = true;
                     }
                     node.setBounds();
                     for (const attr in preAlignment) {
                         element.style[attr] = preAlignment[attr];
                     }
-                    if (element.dir === 'ltr') {
+                    if (direction) {
                         element.dir = 'rtl';
                     }
                 }
@@ -422,6 +425,7 @@ export default class Application<T extends Node> {
                     }
                 });
                 node.sort();
+                node.initial.children.push(...node.children.slice());
             }
             this.cache.sortAsc('depth', 'id');
             this.createLayout(rootElement.dataset.viewName as string);
@@ -445,9 +449,7 @@ export default class Application<T extends Node> {
                 indexY.set(id, node);
             }
         }
-        if (this.cache.parent != null) {
-            setMapY(-1, 0, <T> this.cache.parent.parent);
-        }
+        setMapY(-1, 0, (<T> this.cache.parent).parent as T);
         for (const node of this.cache.visible) {
             const x = Math.floor(node.linear.left);
             if (mapX[node.depth] == null) {
@@ -463,7 +465,7 @@ export default class Application<T extends Node> {
             nodes.forEach(node => {
                 setMapY(-2, node.id, node);
                 node.children.forEach((child: T) => {
-                    const indexY = mapY.get(child.depth);
+                    const indexY = mapY.get(child.initial.depth);
                     if (indexY && indexY.has(child.id)) {
                         indexY.delete(child.id);
                     }
@@ -588,67 +590,98 @@ export default class Application<T extends Node> {
                     }
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE)) {
                         const linearVertical = parentY.linearVertical;
-                        const extendHorizontal = (!nodeY.blockStatic && linearVertical && nodeY === parentY.children[parentY.children.length - 1]);
                         if (nodeY.pageflow &&
-                            !parentY.is(NODE_STANDARD.GRID) && !parentY.flex.enabled && !parentY.has('columnCount') &&
-                            current === '' && (
+                            current === '' &&
+                            !parentY.flex.enabled &&
+                            !parentY.has('columnCount') &&
+                            !parentY.is(NODE_STANDARD.GRID) && (
                                 (nodeY.alignmentType === NODE_ALIGNMENT.NONE && parentY.alignmentType === NODE_ALIGNMENT.NONE) ||
-                                extendHorizontal
+                                nodeY.hasBit('alignmentType', NODE_ALIGNMENT.EXTENDABLE)
                            ))
                         {
+                            function floatSize(nodes: T[]) {
+                                return new Set(nodes.map(node => node.float).filter(value => value !== 'none'));
+                            }
+                            function clearDirection(nodes: T[], clearPartial: Map<T, string>) {
+                                return new Set<string>(nodes.map(node => clearPartial.has(node) ? clearPartial.get(node) as string : '').filter(value => value !== ''));
+                            }
                             const horizontal: T[] = [];
                             const vertical: T[] = [];
+                            const floatedOpen = new Set<string>(['left', 'right']);
                             let l = k;
                             let m = 0;
-                            if (extendHorizontal) {
+                            if (nodeY.hasBit('alignmentType', NODE_ALIGNMENT.EXTENDABLE)) {
                                 horizontal.push(nodeY);
                                 l++;
                                 m++;
                             }
-                            let extendVertical = '';
                             for ( ; l < axisY.length; l++, m++) {
                                 const adjacent = axisY[l];
                                 if (adjacent.pageflow) {
+                                    if (cleared.has(adjacent)) {
+                                        const float = cleared.get(adjacent) as string;
+                                        if (float === 'both') {
+                                            floatedOpen.clear();
+                                        }
+                                        else {
+                                            floatedOpen.delete(float);
+                                        }
+                                    }
+                                    if (adjacent.floating) {
+                                        floatedOpen.add(adjacent.float);
+                                    }
                                     const previousSibling = adjacent.previousSibling() as T;
                                     const nextSibling = adjacent.nextSibling(true);
                                     if (m === 0 && nextSibling != null) {
                                         if (adjacent.blockStatic || nextSibling.alignedVertically(adjacent, cleared, true)) {
-                                            vertical.push(nodeY);
+                                            vertical.push(adjacent);
                                         }
                                         else {
-                                            horizontal.push(nodeY);
+                                            horizontal.push(adjacent);
                                         }
                                     }
                                     else if (previousSibling != null) {
-                                        const verticalAlign = adjacent.alignedVertically(previousSibling, new Set(cleared.has(previousSibling) ? [previousSibling] : []));
-                                        if (verticalAlign || cleared.has(adjacent)) {
+                                        const floated = floatSize([...horizontal, ...vertical]);
+                                        const pending = [...horizontal, ...vertical, adjacent];
+                                        const clearedPartial = NodeList.cleared(pending);
+                                        const clearedPrevious = new Map<T, string>();
+                                        if (clearedPartial.has(previousSibling)) {
+                                            clearedPrevious.set(previousSibling, previousSibling.css('clear'));
+                                        }
+                                        const verticalAlign = adjacent.alignedVertically(previousSibling, clearedPrevious);
+                                        if (verticalAlign || clearedPartial.has(adjacent) || (SETTINGS.floatOverlapDisabled && previousSibling.floating && adjacent.blockStatic && floatedOpen.size === 2)) {
                                             if (horizontal.length > 0) {
-                                                const clear = adjacent.css('clear');
-                                                const floated = new Set(horizontal.map(node => node.float).filter(value => value !== 'none'));
-                                                if (cleared.has(adjacent) && floated.size === 2 && clear === 'both') {
-                                                    break;
-                                                }
-                                                const clearSize = horizontal.filter((node, index) => (index > 0 && cleared.has(node))).length + (cleared.has(adjacent) ? 1 : 0);
-                                                const clearLimit = (horizontal[0].floating ? 2 : 1);
-                                                if ((cleared.has(adjacent) && (floated.has(clear) || clear === 'both')) || extendVertical !== '') {
-                                                    if (clearSize === clearLimit && floated.size === clearLimit && ((adjacent.blockStatic && extendVertical !== '') || (cleared.has(adjacent) && clear !== 'both' && (extendVertical === '' || extendVertical === clear)))) {
-                                                        horizontal.push(adjacent);
-                                                        extendVertical = clear;
-                                                        continue;
+                                                if (!SETTINGS.floatOverlapDisabled) {
+                                                    const clearedDirection = clearDirection(pending, clearedPartial);
+                                                    let maxBottom: Null<number> = null;
+                                                    if (floated.size > 0) {
+                                                        maxBottom = Math.max.apply(null, horizontal.filter(node => node.floating).map(node => node.bounds.bottom));
                                                     }
-                                                    break;
-                                                }
-                                                else if (!verticalAlign) {
-                                                    horizontal.push(adjacent);
-                                                    continue;
-                                                }
-                                                if (clearSize < clearLimit && !cleared.has(adjacent) && previousSibling.blockStatic && adjacent.blockStatic) {
-                                                    horizontal.push(adjacent);
-                                                    continue;
-                                                }
-                                                else if (floated.size > 0 && floated.size < clearLimit && adjacent.floating && !floated.has(adjacent.float)) {
-                                                    horizontal.push(adjacent);
-                                                    continue;
+                                                    if (floatedOpen.size > 0 && !clearedDirection.has('both') && (maxBottom == null || adjacent.bounds.top < maxBottom)) {
+                                                        if (clearedPartial.has(adjacent)) {
+                                                            const clear = (clearedPartial.has(adjacent) ? clearedPartial.get(adjacent) : 'none') as string;
+                                                            if (clear !== 'none') {
+                                                                if (floatedOpen.size < 2 && floated.size === 2 && !adjacent.floating) {
+                                                                    horizontal.push(adjacent);
+                                                                    adjacent.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
+                                                                    continue;
+                                                                }
+                                                            }
+                                                            else if (floated.size < 2 && (!adjacent.floating || !floated.has(adjacent.float) || adjacent.float === horizontal[horizontal.length - 1].float)) {
+                                                                horizontal.push(adjacent);
+                                                                continue;
+                                                            }
+                                                            break;
+                                                        }
+                                                        else if (!verticalAlign) {
+                                                            horizontal.push(adjacent);
+                                                            continue;
+                                                        }
+                                                        if (floated.size > 0 && floated.size < 2 && (!adjacent.floating || floatedOpen.has(adjacent.float))) {
+                                                            horizontal.push(adjacent);
+                                                            continue;
+                                                        }
+                                                    }
                                                 }
                                                 break;
                                             }
@@ -662,7 +695,7 @@ export default class Application<T extends Node> {
                                             vertical.push(adjacent);
                                         }
                                         else {
-                                            if (vertical.length > 0 || extendVertical) {
+                                            if (vertical.length > 0 || horizontal.some(node => node.hasBit('alignmentType', NODE_ALIGNMENT.EXTENDABLE))) {
                                                 break;
                                             }
                                             horizontal.push(adjacent);
@@ -676,37 +709,44 @@ export default class Application<T extends Node> {
                             let group: Null<T> = null;
                             let groupXml = '';
                             if (horizontal.length > 1) {
-                                if (this.isFrameHorizontal(horizontal, cleared)) {
+                                const clearedPartial = NodeList.cleared(horizontal);
+                                if (this.isFrameHorizontal(horizontal, clearedPartial)) {
                                     group = this.controllerHandler.createGroup(parentY, nodeY, horizontal);
-                                    groupXml = this.writeFrameLayoutHorizontal(group, parentY, horizontal, cleared);
+                                    groupXml = this.writeFrameLayoutHorizontal(group, parentY, horizontal, clearedPartial);
                                 }
                                 else {
                                     if (horizontal.length === axisY.length) {
                                         parentY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                     }
                                     else {
-                                        if (new Set(horizontal.map(node => node.float)).size === 1 && horizontal.some(node => node.has('width', CSS_STANDARD.PERCENT)) && horizontal.every(node => node.has('width', CSS_STANDARD.PERCENT) || node.has('width', CSS_STANDARD.UNIT))) {
+                                        const floated = floatSize(horizontal);
+                                        if (floated.size === 1 && horizontal.some(node => node.has('width', CSS_STANDARD.PERCENT)) && horizontal.every(node => node.has('width', CSS_STANDARD.PERCENT) || node.has('width', CSS_STANDARD.UNIT))) {
                                             group = this.controllerHandler.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeConstraintLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.INLINE_WRAP;
                                         }
-                                        else if (this.isRelativeHorizontal(horizontal, cleared)) {
+                                        else if (this.isRelativeHorizontal(horizontal, clearedPartial)) {
                                             group = this.controllerHandler.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeRelativeLayout(group, parentY);
                                             group.alignmentType |= (horizontal.some(node => node.plainText && node.multiLine) ? NODE_ALIGNMENT.INLINE_WRAP : NODE_ALIGNMENT.HORIZONTAL);
                                         }
-                                        else if (horizontal.some(node => !node.parent.linearHorizontal)) {
+                                        else {
                                             group = this.controllerHandler.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeLinearLayout(group, parentY, true);
+                                            if (floated.size > 0) {
+                                                group.alignmentType |= NODE_ALIGNMENT.FLOAT;
+                                            }
                                             group.alignmentType |= (horizontal.every(node => node.float === 'right' || node.autoLeftMargin) ? NODE_ALIGNMENT.RIGHT : NODE_ALIGNMENT.LEFT);
                                         }
                                     }
                                 }
                             }
                             else if (vertical.length > 1) {
-                                if (!parentY.is(NODE_STANDARD.CONSTRAINT) && vertical.some(node => cleared.has(node) && node !== vertical[0]) && !vertical.every((node, index) => index === 0 || cleared.has(node))) {
+                                const floated = floatSize(vertical);
+                                const clearedPartial = NodeList.cleared(vertical);
+                                if (floated.size > 0 && clearedPartial.size > 0 && !(floated.size === 1 && vertical.slice(1, vertical.length - 1).every(node => clearedPartial.has(node)))) {
                                     group = this.controllerHandler.createGroup(parentY, nodeY, vertical);
-                                    groupXml = this.writeFrameLayoutVertical(group, parentY, vertical, cleared);
+                                    groupXml = this.writeFrameLayoutVertical(group, parentY, vertical, clearedPartial);
                                 }
                                 else {
                                     if (vertical.length === axisY.length) {
@@ -716,6 +756,10 @@ export default class Application<T extends Node> {
                                         group = this.controllerHandler.createGroup(parentY, nodeY, vertical);
                                         groupXml = this.writeLinearLayout(group, parentY, false);
                                         group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                                        const lastNode = vertical[vertical.length - 1];
+                                        if (!lastNode.blockStatic && l < axisY.length - 1) {
+                                            lastNode.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
+                                        }
                                     }
                                 }
                             }
@@ -805,9 +849,9 @@ export default class Application<T extends Node> {
                                 else if (!nodeY.documentRoot) {
                                     if (SETTINGS.collapseUnattributedElements &&
                                         nodeY.bounds.height === 0 &&
-                                        !backgroundVisible &&
                                         !hasValue(nodeY.element.id) &&
-                                        !hasValue(nodeY.dataset.ext))
+                                        !hasValue(nodeY.dataset.ext) &&
+                                        !backgroundVisible)
                                     {
                                         parentY.remove(nodeY);
                                         nodeY.hide();
@@ -892,10 +936,8 @@ export default class Application<T extends Node> {
                                                         }
                                                         else {
                                                             xml = this.writeLinearLayout(nodeY, parentY, true);
+                                                            nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                         }
-                                                    }
-                                                    else if (this.isFrameHorizontal(children, cleared)) {
-                                                        xml = this.writeFrameLayoutHorizontal(nodeY, parentY, nodeY.children as T[], cleared);
                                                     }
                                                 }
                                             }
@@ -919,7 +961,7 @@ export default class Application<T extends Node> {
                                         }
                                         if (xml === '') {
                                             if (relativeWrap) {
-                                                if (this.isFrameHorizontal(children, cleared)) {
+                                                if (this.isFrameHorizontal(children, cleared, true)) {
                                                     xml = this.writeFrameLayoutHorizontal(nodeY, parentY, children, cleared);
                                                 }
                                                 else {
@@ -1059,7 +1101,7 @@ export default class Application<T extends Node> {
         return this.controllerHandler.renderNode(node, parent, nodeName);
     }
 
-    public writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Set<T>) {
+    public writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>) {
         type LayerIndex = ArrayIndex<T[] | T[][]>;
         let xml = '';
         const inline: T[] = [];
@@ -1067,10 +1109,13 @@ export default class Application<T extends Node> {
         const right: T[] = [];
         const center: T[] = [];
         const inlineAbove: T[] = [];
+        const inlineBelow: T[] = [];
         const leftAbove: T[] = [];
         const rightAbove: T[] = [];
         const leftBelow: T[] = [];
         const rightBelow: T[] = [];
+        let leftSub: T[] | T[][] = [];
+        let rightSub: T[] | T[][] = [];
         let layers: LayerIndex = [];
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
@@ -1111,23 +1156,26 @@ export default class Application<T extends Node> {
             group.alignmentType |= NODE_ALIGNMENT.FLOAT | NODE_ALIGNMENT.RIGHT;
             return xml;
         }
-        else if (center.length === 0 && right.length === 0) {
-            const subleft = [...left, ...inline];
-            if (NodeList.linearY(subleft) && subleft.some(node => cleared.has(node))) {
+        else if (center.length === 0 && (left.length === 0 || right.length === 0)) {
+            const subgroup = (right.length === 0 ? [...left, ...inline] : [...inline, ...right]);
+            if (NodeList.linearY(subgroup) && subgroup.some(node => cleared.has(node))) {
                 xml = this.writeLinearLayout(group, parent, false);
                 group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                 return xml;
             }
             else {
-                if ((NodeList.linearX(subleft) || subleft.some(node => node.textElement && node.multiLine)) && !inline[inline.length - 1].blockStatic && this.isRelativeHorizontal(subleft, cleared)) {
+                if ((NodeList.linearX(subgroup) || subgroup.some(node => node.textElement && node.multiLine)) && !inline[inline.length - 1].blockStatic && this.isRelativeHorizontal(subgroup, cleared)) {
                     xml = this.writeRelativeLayout(group, parent);
                     group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                    if (right.length > 0) {
+                        group.alignmentType |= NODE_ALIGNMENT.RIGHT;
+                    }
                     return xml;
                 }
-                else {
-                    xml = this.writeLinearLayout(group, parent, true);
-                    layers = <LayerIndex> [left, inline];
-                    if (left.length > 0) {
+                else if (right.length === 0) {
+                    if (!SETTINGS.floatOverlapDisabled) {
+                        xml = this.writeLinearLayout(group, parent, true);
+                        layers = <LayerIndex> [left, inline];
                         group.alignmentType |= NODE_ALIGNMENT.FLOAT;
                     }
                 }
@@ -1139,8 +1187,8 @@ export default class Application<T extends Node> {
             center.length = 0;
             for (let i = 0; i < nodes.length; i++) {
                 const node = nodes[i];
-                if (i > 0 && cleared.has(node)) {
-                    const clear = node.css('clear');
+                if (cleared.has(node)) {
+                    const clear = cleared.get(node) as string;
                     if (hasBit(pendingFloat, (clear === 'right' ? 4 : 2)) || (pendingFloat !== 0 && clear === 'both')) {
                         switch (clear) {
                             case 'left':
@@ -1160,7 +1208,7 @@ export default class Application<T extends Node> {
                                         current = 'right';
                                         break;
                                     default:
-                                        current = '';
+                                        current = 'both';
                                         break;
                                 }
                                 pendingFloat = 0;
@@ -1202,71 +1250,100 @@ export default class Application<T extends Node> {
                     }
                 }
                 else {
-                    switch (current) {
-                        case 'left':
-                            leftBelow.push(node);
-                            break;
-                        case 'right':
-                            rightBelow.push(node);
-                            break;
-                        default:
+                    if (SETTINGS.floatOverlapDisabled) {
+                        if (current !== '') {
+                            inlineBelow.push(node);
+                        }
+                        else {
                             inlineAbove.push(node);
-                            break;
+                        }
+                    }
+                    else {
+                        switch (current) {
+                            case 'left':
+                                leftBelow.push(node);
+                                break;
+                            case 'right':
+                                rightBelow.push(node);
+                                break;
+                            default:
+                                inlineAbove.push(node);
+                                break;
+                        }
                     }
                 }
             }
-            xml = this.writeFrameLayout(group, parent, true);
-            let subleft: T[] | T[][] = [];
-            let subright: T[] | T[][] = [];
             if (leftAbove.length > 0 && leftBelow.length > 0) {
-                subleft = [leftAbove, leftBelow];
+                leftSub = [leftAbove, leftBelow];
+                if (leftBelow.length > 1) {
+                    leftBelow[0].alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
+                }
             }
             else if (leftAbove.length > 0) {
-                subleft = leftAbove;
+                leftSub = leftAbove;
             }
             if (rightAbove.length > 0 && rightBelow.length > 0) {
-                subright = [rightAbove, rightBelow];
+                rightSub = [rightAbove, rightBelow];
+                if (rightBelow.length > 1) {
+                    rightBelow[0].alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
+                }
             }
             else if (rightAbove.length > 0) {
-                subright = rightAbove;
+                rightSub = rightAbove;
             }
-            if (inlineAbove.length > 0) {
-                const float = nodes[0].float;
-                if (float === 'right' && rightBelow.length > 0) {
-                    subleft = [inlineAbove, leftAbove];
-                    layers.push(subleft, center, subright);
-                }
-                else if (float === 'left' && leftBelow.length > 0) {
-                    subright = [inlineAbove, rightAbove];
-                    layers.push(subright, center, subleft);
+            if (SETTINGS.floatOverlapDisabled) {
+                if (parent.linearVertical) {
+                    xml = formatPlaceholder(group.id);
+                    group.renderDepth--;
                 }
                 else {
-                    layers.push(inlineAbove, subleft, center, subright);
+                    xml = this.writeLinearLayout(group, parent, false);
                 }
+                layers.push(inlineAbove, [leftSub as T[], center, rightSub as T[]], inlineBelow);
             }
             else {
-                layers.push(subleft, center, subright);
+                xml = this.writeFrameLayout(group, parent, true);
+                if (inlineAbove.length > 0) {
+                    if (rightBelow.length > 0) {
+                        leftSub = [inlineAbove, leftAbove];
+                        layers.push(leftSub, center, rightSub);
+                    }
+                    else if (leftBelow.length > 0) {
+                        rightSub = [inlineAbove, rightAbove];
+                        layers.push(rightSub, center, leftSub);
+                    }
+                    else {
+                        layers.push(inlineAbove, leftSub, center, rightSub);
+                    }
+                    if (inlineAbove.length > 1) {
+                        inlineAbove[0].alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
+                    }
+                }
+                else {
+                    layers.push(leftSub, center, rightSub);
+                }
+                layers = layers.filter((item: any[]) => (item && item.length > 0));
             }
-            layers = layers.filter((item: any[]) => (item && item.length > 0));
             group.alignmentType |= NODE_ALIGNMENT.FLOAT;
-            if (subleft.length > 0) {
-                group.alignmentType |= NODE_ALIGNMENT.LEFT;
-            }
-            if (subright.length > 0) {
-                group.alignmentType |= NODE_ALIGNMENT.RIGHT;
-            }
         }
         if (layers.length > 0) {
             let floatgroup: Null<T> = null;
             layers.forEach((item, index) => {
                 if (Array.isArray(item[0])) {
-                    const layer = [...item[0] as T[], ...item[1] as T[]].sort(NodeList.siblingIndex);
+                    const layer: T[] = [];
+                    (item as T[][]).forEach(list => layer.push(...list));
+                    layer.sort(NodeList.siblingIndex);
                     floatgroup = this.controllerHandler.createGroup(group, layer[0], layer);
-                    xml = replacePlaceholder(xml, group.id, this.writeLinearLayout(floatgroup, group, false));
-                    floatgroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
-                    if (item[0] === rightAbove || item[1] === rightAbove) {
-                        floatgroup.alignmentType |= NODE_ALIGNMENT.RIGHT;
+                    if (SETTINGS.floatOverlapDisabled) {
+                        xml = replacePlaceholder(xml, group.id, this.writeFrameLayout(floatgroup, group, true));
                     }
+                    else {
+                        xml = replacePlaceholder(xml, group.id, this.writeLinearLayout(floatgroup, group, false));
+                        if ((item as T[][]).some(list => list === rightSub)) {
+                            floatgroup.alignmentType |= NODE_ALIGNMENT.RIGHT;
+                        }
+                    }
+                    floatgroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
                 }
                 else {
                     floatgroup = null;
@@ -1349,7 +1426,7 @@ export default class Application<T extends Node> {
         return xml;
     }
 
-    public writeFrameLayoutVertical(group: T, parent: T, nodes: T[], cleared: Set<T>) {
+    public writeFrameLayoutVertical(group: T, parent: T, nodes: T[], cleared: Map<T, string>) {
         let xml = this.writeLinearLayout(group, parent, false);
         if (group.blockStatic) {
             group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
@@ -1370,7 +1447,7 @@ export default class Application<T extends Node> {
         });
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
-            if (i > 0 && cleared.has(node)) {
+            if (cleared.has(node)) {
                 if (!node.floating) {
                     node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
                     rowsCurrent.push(current.slice());
@@ -1667,7 +1744,6 @@ export default class Application<T extends Node> {
             if (isElementVisible(element)) {
                 node = elementNode;
                 node.setExclusions();
-                node.setOverflow();
             }
             else {
                 elementNode.excluded = true;
@@ -1707,11 +1783,14 @@ export default class Application<T extends Node> {
         }
     }
 
-    private isFrameHorizontal(nodes: T[], cleared: Set<T>) {
-        return nodes.some(node => node.floating || node.autoMargin) && !nodes.every((node, index) => nodes[0].float === node.float && (index === 0 || !cleared.has(node)));
+    private isFrameHorizontal(nodes: T[], cleared: Map<T, string>, lineBreak = false) {
+        const float = new Set(nodes.map(node => node.float).filter(value => value !== 'none'));
+        const margin = nodes.filter(node => node.autoMargin);
+        const br = (lineBreak ? getElementsBetweenSiblings(nodes[0].baseElement, nodes[nodes.length - 1].baseElement).filter(element => element.tagName === 'BR').length : 0);
+        return (br === 0 && (float.size > 1 || cleared.size > 0 || margin.length > 0 || !NodeList.linearX(nodes)));
     }
 
-    private isRelativeHorizontal(nodes: T[], cleared: Set<T>) {
+    private isRelativeHorizontal(nodes: T[], cleared: Map<T, string>) {
         return (!nodes.some((node, index) => index !== 0 && cleared.has(node)) && (nodes.some(node => node.plainText && node.multiLine) || (nodes.some(node => node.imageElement) && nodes.some(node => node.textElement)) || nodes.every(node => !node.floating && node.textElement && node.alignOrigin && node.toInt('verticalAlign') >= 0)));
     }
 
