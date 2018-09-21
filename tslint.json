@@ -29,7 +29,8 @@
     "array-type": [true, "array"],
     "no-shadowed-variable": [true, { "function": false, "typeParameter": false } ],
     "interface-over-type-literal": false,
-    "triple-equals": [true, "allow-null-check", "allow-undefined-check"]
+    "triple-equals": [true, "allow-null-check", "allow-undefined-check"],
+    "label-position": false
   },
   "rulesDirectory": []
 }

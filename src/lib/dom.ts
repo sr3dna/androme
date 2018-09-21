@@ -48,27 +48,30 @@ export function getNodeFromElement<T extends Node>(element: Null<Element>): Null
     return getElementCache(element, 'node');
 }
 
-export function getRangeClientRect(element: Element): [ClientRect, boolean] {
+export function getRangeClientRect(element: Element): [Null<ClientRect>, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects());
-    const result = assignBounds(domRect[0]);
-    const top = new Set([result.top]);
-    const bottom = new Set([result.bottom]);
     let multiLine = false;
-    for (let i = 1 ; i < domRect.length; i++) {
-        const rect = domRect[i];
-        top.add(rect.top);
-        bottom.add(rect.bottom);
-        result.width += rect.width;
-        result.right = Math.max(rect.right, result.right);
-        result.height = Math.max(rect.height, result.height);
-    }
-    if (top.size > 1 && bottom.size > 1) {
-        result.top = Math.min.apply(null, Array.from(top));
-        result.bottom = Math.max.apply(null, Array.from(bottom));
-        if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
-            multiLine = true;
+    let result: Null<ClientRect> = null;
+    if (domRect.length > 0) {
+        result = assignBounds(domRect[0]);
+        const top = new Set([result.top]);
+        const bottom = new Set([result.bottom]);
+        for (let i = 1 ; i < domRect.length; i++) {
+            const rect = domRect[i];
+            top.add(rect.top);
+            bottom.add(rect.bottom);
+            result.width += rect.width;
+            result.right = Math.max(rect.right, result.right);
+            result.height = Math.max(rect.height, result.height);
+        }
+        if (top.size > 1 && bottom.size > 1) {
+            result.top = Math.min.apply(null, Array.from(top));
+            result.bottom = Math.max.apply(null, Array.from(bottom));
+            if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
+                multiLine = true;
+            }
         }
     }
     return [result, multiLine];

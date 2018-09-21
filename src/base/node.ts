@@ -1,6 +1,6 @@
 import { BoxModel, ClientRect, DisplaySettings, Flexbox, InitialValues, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasValue, hasBit, isPercent, isString, isUnit, search } from '../lib/util';
+import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isString, isUnit, searchObject } from '../lib/util';
 import { assignBounds, getBoxModel, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache } from '../lib/dom';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 
@@ -45,6 +45,7 @@ export default abstract class Node implements BoxModel {
     protected abstract _namespaces: Set<string>;
 
     private _element: Element;
+    private _baseElement: Element;
     private _parent: T;
     private _nodeName: string;
     private _tagName: string;
@@ -166,7 +167,7 @@ export default abstract class Node implements BoxModel {
         if (this[name] != null) {
             for (const attr of attrs) {
                 if (attr.indexOf('*') !== -1) {
-                    for (const [key] of search(this[name], attr)) {
+                    for (const [key] of searchObject(this[name], attr)) {
                         delete this[name][key];
                     }
                 }
@@ -325,15 +326,12 @@ export default abstract class Node implements BoxModel {
     }
 
     public alignedVertically(previous: T, cleared = new Map<T, string>(), firstNode = false) {
-        if (this.documentParent === previous.documentParent) {
-            const inlineStatic = (!this.inlineElement && !this.floating);
-            return (previous.lineBreak ||
-                    this.lineBreak ||
-                    previous.blockStatic ||
-                    (!firstNode && cleared.has(this)) ||
+        if (this.documentParent.baseElement === previous.documentParent.baseElement) {
+            return (previous.lineBreak || this.lineBreak ||
+                    previous.blockStatic || (this.blockStatic && (!previous.inlineElement || (cleared.has(previous) && previous.floating))) ||
                     (previous.plainText && previous.multiLine && (this.parent && !this.parent.is(NODE_STANDARD.RELATIVE))) ||
-                    (!previous.floating && (inlineStatic || this.autoMargin || this.blockStatic)) ||
-                    (this.blockStatic && (!previous.inlineElement || (cleared.has(previous) && previous.floating))) ||
+                    (!previous.floating && ((!this.inlineElement && !this.floating) || this.autoMargin || this.blockStatic)) ||
+                    (!firstNode && cleared.has(this)) ||
                     (!firstNode && this.floating && previous.floating && this.linear.top >= previous.linear.bottom));
         }
         return false;
@@ -402,7 +400,7 @@ export default abstract class Node implements BoxModel {
                     }
                     break;
                 }
-                current = getNodeFromElement(current.element.parentElement);
+                current = getNodeFromElement(current.baseElement.parentElement);
             }
         }
         return result;
@@ -486,14 +484,15 @@ export default abstract class Node implements BoxModel {
     public setBounds(calibrate = false) {
         if (this._element != null) {
             if (!calibrate) {
-                let bounds: ClientRect;
                 if (this.hasElement) {
-                    bounds = assignBounds(this._element.getBoundingClientRect());
+                    this.bounds = assignBounds(this._element.getBoundingClientRect());
                 }
                 else {
-                    [bounds] = getRangeClientRect(this._element);
+                     const bounds = getRangeClientRect(this._element);
+                     if (bounds[0] != null) {
+                        this.bounds = <ClientRect> bounds[0];
+                     }
                 }
-                this.bounds = bounds;
             }
         }
         if (this.bounds != null) {
@@ -577,11 +576,16 @@ export default abstract class Node implements BoxModel {
                 case 'IFRAME':
                     return;
                 default:
-                    if (this.plainText || (this.textElement && this.viewWidth === 0 && !this.floating)) {
+                    if (this.textElement) {
                         const [bounds, multiLine] = getRangeClientRect(this._element);
                         if (this.plainText) {
-                            this.bounds = bounds;
-                            this.setBounds(true);
+                            if (bounds != null) {
+                                this.bounds = bounds;
+                                this.setBounds(true);
+                            }
+                            else {
+                                this.hide();
+                            }
                         }
                         this.multiLine = multiLine;
                     }
@@ -680,22 +684,23 @@ export default abstract class Node implements BoxModel {
             if (this._tagName == null) {
                 this._tagName = this.tagName;
             }
+            this._baseElement = this._element;
             this._element = undefined as any;
         }
     }
 
-    public previousSibling(pageflow = false, lineBreak = true) {
+    public previousSibling(pageflow = false, lineBreak = true, excluded = true) {
         let element: Null<Element> = null;
         if (this._element != null) {
             element = <Element> this._element.previousSibling;
         }
-        else if (this.children.length > 0) {
-            const list = this.children.slice().filter(node => node.siblingflow).sort((a, b) => a.siblingIndex <= b.siblingIndex ? -1 : 1);
+        else if (this.initial.children.length > 0) {
+            const list = this.initial.children.filter(node => (pageflow ? node.pageflow : node.siblingflow));
             element = (list.length > 0 ? <Element> list[0].element.previousSibling : null);
         }
         while (element != null) {
             const node = getNodeFromElement(element);
-            if (node && ((!pageflow && node.siblingflow) || (pageflow && node.pageflow)) && (lineBreak || !node.lineBreak)) {
+            if (node && ((!pageflow && node.siblingflow) || (pageflow && node.pageflow)) && !(node.lineBreak && !lineBreak) && !(node.excluded && !excluded)) {
                 return node;
             }
             element = <Element> element.previousSibling;
@@ -703,18 +708,18 @@ export default abstract class Node implements BoxModel {
         return null;
     }
 
-    public nextSibling(pageflow = false, lineBreak = true) {
+    public nextSibling(pageflow = false, lineBreak = true, excluded = true) {
         let element: Null<Element> = null;
         if (this._element != null) {
             element = <Element> this._element.nextSibling;
         }
-        else if (this.children.length > 0) {
-            const list = this.children.slice().filter(node => node.siblingflow).sort((a, b) => a.siblingIndex <= b.siblingIndex ? 1 : -1);
+        else if (this.initial.children.length > 0) {
+            const list = this.initial.children.filter(node => (pageflow ? node.pageflow : node.siblingflow));
             element = (list.length > 0 ? <Element> list[0].element.nextSibling : null);
         }
         while (element != null) {
             const node = getNodeFromElement(element);
-            if (node && ((!pageflow && node.siblingflow) || (pageflow && node.pageflow)) && (lineBreak || !node.lineBreak)) {
+            if (node && ((!pageflow && node.siblingflow) || (pageflow && node.pageflow)) && (lineBreak || (!lineBreak && !node.lineBreak)) && (excluded || (!excluded && !node.excluded))) {
                 return node;
             }
             element = <Element> element.nextSibling;
@@ -780,6 +785,9 @@ export default abstract class Node implements BoxModel {
         if (value != null) {
             if (!value.children.includes(this)) {
                 value.children.push(this);
+                if (!value.hasElement && this.siblingIndex !== -1) {
+                    value.siblingIndex = Math.min(this.siblingIndex, value.siblingIndex);
+                }
             }
             if (this.initial.depth === -1) {
                 this.initial.depth = value.depth + 1;
@@ -809,7 +817,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get baseElement() {
-        return this.element;
+        return this._baseElement || this.element;
     }
 
     get tagName() {

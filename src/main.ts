@@ -1,7 +1,7 @@
 import { Image, Null, ObjectMap } from './lib/types';
 import Application from './base/application';
 import Extension from './base/extension';
-import { convertCamelCase, convertWord, hasValue, isPercent, optional, convertPX  } from './lib/util';
+import { convertCamelCase, convertPX, convertWord, hasValue, isPercent, optional } from './lib/util';
 import { getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
 import { convertRGB, getByColorName } from './lib/color';
 import { EXT_NAME } from './extension/lib/constants';

@@ -25,6 +25,8 @@
             padding: 0px;
         }
         #toolbar_demo {
+            background-image: url(../demos/images/android_header.jpg);
+            background-size: 100% 100%;
             overflow: hidden;
         }
         #toolbar_menu img {
@@ -54,7 +56,6 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
-            androme.ext('androme.widget.coordinator', { includes: false });
             androme.ext('androme.widget.toolbar', {
                 toolbar_demo: {
                     appBar: {}
@@ -85,7 +86,7 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" data-ext="androme.widget.coordinator">
-        <div id="toolbar_demo" data-ext="androme.widget.toolbar" style="background-image: url(../demos/images/android_header.jpg); background-size: 100% 100%">
+        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-exclude-section="DOM_TRAVERSE">
             <nav id="toolbar_menu" data-ext="androme.widget.menu">
                 <div
                     data-show-as-action="always"

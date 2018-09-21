@@ -3,7 +3,7 @@ import { Null, ObjectMap, StringMap } from './types';
 function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
     return list.sort((a: T, b: T) => {
         for (const attr of attrs) {
-            const result = compare(a, b, attr);
+            const result = compareObject(a, b, attr);
             if (result && result[0] !== result[1]) {
                 if (asc === 0) {
                     return (result[0] > result[1] ? 1 : -1);
@@ -273,7 +273,7 @@ export function lastIndexOf(value: string, char = '/') {
 
 export function sameValue(obj1: {}, obj2: {}, ...attrs: string[]) {
     for (const attr of attrs) {
-        const result = compare(obj1, obj2, attr);
+        const result = compareObject(obj1, obj2, attr);
         if (!result || result[0] !== result[1]) {
             return false;
         }
@@ -281,7 +281,7 @@ export function sameValue(obj1: {}, obj2: {}, ...attrs: string[]) {
     return true;
 }
 
-export function search(obj: ObjectMap<string>, value: string | StringMap) {
+export function searchObject(obj: ObjectMap<string>, value: string | StringMap) {
     const result: any[][] = [];
     if (typeof value === 'object') {
         for (const term in value) {
@@ -311,7 +311,7 @@ export function search(obj: ObjectMap<string>, value: string | StringMap) {
     return result;
 }
 
-export function compare(obj1: {}, obj2: {}, attr: string) {
+export function compareObject(obj1: {}, obj2: {}, attr: string) {
     const namespaces = attr.split('.');
     let current1: any = obj1;
     let current2: any = obj2;

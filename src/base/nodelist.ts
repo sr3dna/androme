@@ -10,6 +10,10 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return (a.siblingIndex <= b.siblingIndex ? -1 : 1);
     }
 
+    public static floated<T extends Node>(list: T[]) {
+        return new Set(list.map(node => node.float).filter(value => value !== 'none'));
+    }
+
     public static cleared<T extends Node>(list: T[]) {
         const nodes = new Map<T, string>();
         const floats = new Set();
@@ -106,15 +110,6 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         });
     }
 
-    public static documentParent<T extends Node>(nodes: T[]) {
-        for (let i = 0; i < nodes.length; i++) {
-            if (nodes[i].companion == null) {
-                return nodes[i].documentParent;
-            }
-        }
-        return nodes[0].documentParent;
-    }
-
     public static linearX<T extends Node>(list: T[], traverse = true) {
         const nodes = list.filter(node => node.pageflow);
         switch (nodes.length) {
@@ -127,7 +122,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 let horizontal = false;
                 if (traverse) {
                     if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
-                        const cleared = NodeList.cleared(Array.from(parent.element.children).map(node => getNodeFromElement(node) as T).filter(node => node));
+                        const cleared = NodeList.cleared(Array.from(parent.baseElement.children).map(node => getNodeFromElement(node) as T).filter(node => node));
                         horizontal = nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
                             if (index > 0) {
                                 if (node.companion && node.companion.documentParent === parent) {
@@ -166,7 +161,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             default:
                 const parent = this.documentParent(nodes);
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
-                    const cleared = NodeList.cleared(Array.from(parent.element.children).map(node => getNodeFromElement(node) as T).filter(node => node));
+                    const cleared = NodeList.cleared(Array.from(parent.baseElement.children).map(node => getNodeFromElement(node) as T).filter(node => node));
                     return nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
                         if (index > 0 && !node.lineBreak) {
                             if (node.companion && node.companion.documentParent === parent) {
@@ -182,6 +177,15 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 }
                 return false;
         }
+    }
+
+    private static documentParent<T extends Node>(nodes: T[]) {
+        for (const node of nodes) {
+            if (node.companion == null && (node.hasElement || node.plainText)) {
+                return node.documentParent;
+            }
+        }
+        return nodes[0].documentParent;
     }
 
     public delegateAppend?: (nodes: T[]) => void;
