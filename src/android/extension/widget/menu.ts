@@ -65,7 +65,7 @@ export default class Menu<T extends View> extends Nav<T> {
         node.excludeResource |= NODE_RESOURCE.ALL;
         node.excludeProcedure |= NODE_PROCEDURE.ALL;
         node.rendered = true;
-        node.cascade().forEach(item => item.renderExtensionChild.push(this));
+        node.cascade().forEach(item => this.subscribersChild.add(item as T));
         return { xml, complete: true };
     }
 

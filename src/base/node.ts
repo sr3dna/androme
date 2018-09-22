@@ -23,8 +23,7 @@ export default abstract class Node implements BoxModel {
     public excludeSection = APP_SECTION.NONE;
     public excludeProcedure = NODE_PROCEDURE.NONE;
     public excludeResource = NODE_RESOURCE.NONE;
-    public renderExtension: IExtension[] = [];
-    public renderExtensionChild: IExtension[] = [];
+    public renderExtension = new Set<IExtension>();
     public companion: T;
     public documentRoot = false;
     public auto = true;

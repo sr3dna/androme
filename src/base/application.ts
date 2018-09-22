@@ -74,8 +74,8 @@ export default class Application<T extends Node> {
         }
         this.appendRenderQueue();
         this.controllerHandler.setDimensions(this.viewData);
-        for (const node of this.cacheSession) {
-            for (const ext of node.renderExtension) {
+        for (const ext of this.extensions) {
+            for (const node of ext.subscribers) {
                 ext.setTarget(node);
                 ext.finalize();
             }
@@ -99,6 +99,10 @@ export default class Application<T extends Node> {
         this._currentIndex = -1;
         this.appName = '';
         this.renderQueue = {};
+        for (const ext of this.extensions) {
+            ext.subscribers.clear();
+            ext.subscribersChild.clear();
+        }
         this.closed = false;
     }
 
@@ -412,10 +416,6 @@ export default class Application<T extends Node> {
                     }
                 }
             }
-            for (const ext of this.extensions) {
-                ext.setTarget(rootNode);
-                ext.afterInit();
-            }
             for (const node of this.cache.elements) {
                 let i = 0;
                 Array.from(node.element.childNodes).forEach((element: Element) => {
@@ -429,6 +429,10 @@ export default class Application<T extends Node> {
             }
             this.cache.sortAsc('depth', 'id');
             this.createLayout(rootElement.dataset.viewName as string);
+            for (const ext of this.extensions) {
+                ext.setTarget(rootNode);
+                ext.afterInit();
+            }
             return true;
         }
         return false;
@@ -789,7 +793,13 @@ export default class Application<T extends Node> {
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION) && !nodeY.rendered) {
                         let next = false;
                         forloop2: {
-                            for (const ext of [...parentY.renderExtension, ...nodeY.renderExtensionChild]) {
+                            const subscribed: IExtension[] = [];
+                            for (const ext of this.extensions) {
+                                if (ext.subscribersChild.has(nodeY)) {
+                                    subscribed.push(ext);
+                                }
+                            }
+                            for (const ext of [...parentY.renderExtension, ...subscribed]) {
                                 ext.setTarget(nodeY, parentY);
                                 const result = ext.processChild();
                                 if (result.xml !== '') {
@@ -831,7 +841,10 @@ export default class Application<T extends Node> {
                             return false;
                         });
                         if (processed.length > 0) {
-                            nodeY.renderExtension.push(...processed);
+                            for (const ext of processed) {
+                                ext.subscribers.add(nodeY);
+                                nodeY.renderExtension.add(ext);
+                            }
                         }
                         if (next) {
                             continue;
@@ -1052,9 +1065,9 @@ export default class Application<T extends Node> {
             }
         }
         const root = this.cache.parent as T;
-        if (root.renderExtension.length === 0 || !root.isSet('dataset', 'target')) {
+        if (root.renderExtension.size === 0 || !root.isSet('dataset', 'target')) {
             const pathname = trimString((optional(root, 'dataset.folder') as string).trim(), '/');
-            this.updateLayout((!empty ? output : ''), pathname, (root.renderExtension.length > 0 && root.renderExtension.some(item => item.documentRoot)));
+            this.updateLayout((!empty ? output : ''), pathname, (root.renderExtension.size > 0 && Array.from(root.renderExtension).some(item => item.documentRoot)));
         }
         else {
             this._views.pop();
@@ -1065,7 +1078,7 @@ export default class Application<T extends Node> {
                 ext.afterRender();
             }
         }
-        else if (root.renderExtension.length === 0) {
+        else if (root.renderExtension.size === 0) {
             root.hide();
         }
         this.cache.list.sort((a: T, b: T) => {
@@ -1081,8 +1094,8 @@ export default class Application<T extends Node> {
             else if (a.renderDepth !== b.renderDepth) {
                 return (a.renderDepth < b.renderDepth ? -1 : 1);
             }
-            else if (a.documentParent.renderIndex !== b.documentParent.renderIndex) {
-                return (a.documentParent.renderIndex < b.documentParent.renderIndex ? -1 : 1);
+            else if (a.documentParent !== b.documentParent) {
+                return (a.documentParent.id < b.documentParent.id ? -1 : 1);
             }
             else {
                 return (a.renderIndex < b.renderIndex ? -1 : 1);
@@ -1553,8 +1566,8 @@ export default class Application<T extends Node> {
     }
 
     public appendRenderQueue() {
-        for (const node of this.cacheSession) {
-            for (const ext of node.renderExtension) {
+        for (const ext of this.extensions) {
+            for (const node of ext.subscribers) {
                 ext.setTarget(node);
                 ext.beforeInsert();
             }
@@ -1607,8 +1620,8 @@ export default class Application<T extends Node> {
             }
             value.content = this.controllerHandler.appendRenderQueue(value.content);
         }
-        for (const node of this.cacheSession) {
-            for (const ext of node.renderExtension) {
+        for (const ext of this.extensions) {
+            for (const node of ext.subscribers) {
                 ext.setTarget(node);
                 ext.afterInsert();
             }

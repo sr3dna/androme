@@ -4,6 +4,9 @@ import { BoxRect, Inheritable, LayoutMapX, LayoutMapY, ObjectMap } from '../../l
 type T = Node;
 
 export interface IExtension {
+    readonly dependencies: ExtensionDependency[];
+    readonly subscribers: Set<T>;
+    readonly subscribersChild: Set<T>;
     name: string;
     application: any;
     node: T;
@@ -11,7 +14,6 @@ export interface IExtension {
     element?: Element;
     tagNames: string[];
     options: ObjectMap<any>;
-    dependencies: ExtensionDependency[];
     documentRoot: boolean;
     setTarget(node: T, parent?: T, element?: Element): void;
     getData(): void;

@@ -692,7 +692,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             Resource.STORED.DRAWABLES.set(resourceName, xml);
                         }
                     }
-                    node.formatted(formatString(method['background'], resourceName), (node.renderExtension.length === 0));
+                    node.formatted(formatString(method['background'], resourceName), (node.renderExtension.size === 0));
                     if (backgroundImage.length > 0) {
                         node.data('RESOURCE', 'backgroundImage', true);
                         if (SETTINGS.autoSizeBackgroundImage &&
@@ -745,7 +745,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                 }
                 else if (getElementCache(node.element, 'fontStyle') == null && stored.backgroundColor.length > 0) {
-                    node.formatted(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension.length === 0));
+                    node.formatted(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension.size === 0));
                 }
             }
         });
@@ -870,7 +870,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const result = (node.imageElement ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
                 if (result !== '') {
                     const method = METHOD_ANDROID['imageSource'];
-                    node.formatted(formatString(method['src'], result), (node.renderExtension.length === 0));
+                    node.formatted(formatString(method['src'], result), (node.renderExtension.size === 0));
                     setElementCache(element, 'imageSource', result);
                 }
             }
@@ -911,7 +911,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     arrayName = `${node.nodeId}_array`;
                     Resource.STORED.ARRAYS.set(arrayName, result);
                 }
-                node.formatted(formatString(method['entries'], arrayName), (node.renderExtension.length === 0));
+                node.formatted(formatString(method['entries'], arrayName), (node.renderExtension.size === 0));
             }
         });
     }
@@ -962,7 +962,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 if (name !== '') {
                     const method = METHOD_ANDROID['valueString'];
                     if ((node.toInt('textIndent') + node.bounds.width) > 0) {
-                        node.formatted(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension.length === 0));
+                        node.formatted(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension.size === 0));
                     }
                 }
             }

@@ -30,55 +30,52 @@ export default class GridAndroid<T extends View> extends Grid<T> {
     }
 
     public afterRender() {
-        const extended: T[] = [];
-        this.application.cache.each((node: T) => {
-            if (node.renderExtension.includes(this)) {
-                extended.push(node);
-            }
-            else {
-                const parent = node.renderParent;
-                if (parent.is(NODE_STANDARD.GRID) && !(parent.display === 'table' && parent.css('borderCollapse') === 'collapse')) {
-                    const mainData = <GridData> parent.data(EXT_NAME.GRID, 'mainData');
-                    const cellData = <GridCellData> node.data(EXT_NAME.GRID, 'cellData');
-                    if (mainData && cellData) {
-                        const dimensions = getBoxSpacing(node.documentParent.element, true);
-                        const padding = mainData.padding;
-                        if (cellData.cellFirst) {
-                            padding.top = dimensions.paddingTop + dimensions.marginTop;
-                        }
-                        if (cellData.rowStart) {
-                            padding.left = Math.max(dimensions.marginLeft + dimensions.paddingLeft, padding.left);
-                        }
-                        if (cellData.rowEnd) {
-                            const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!cellData.cellLast ? dimensions.marginTop + dimensions.paddingTop : 0);
-                            if (heightBottom > 0) {
-                                if (cellData.cellLast) {
-                                    padding.bottom = heightBottom;
-                                }
-                                else {
-                                    this.application.controllerHandler.appendAfter(
-                                        node.id,
-                                        this.application.controllerHandler.renderNodeStatic(
-                                            NODE_STANDARD.SPACE,
-                                            node.renderDepth,
-                                            {
-                                                app: {
-                                                    layout_columnSpan: mainData.columnCount.toString()
-                                                }
-                                            },
-                                            'match_parent',
-                                            formatPX(heightBottom)
-                                        )
-                                    );
-                                }
+        for (const node of this.subscribers) {
+            if (!(node.display === 'table' && node.css('borderCollapse') === 'collapse')) {
+                const mainData = <GridData> node.data(EXT_NAME.GRID, 'mainData');
+                if (mainData) {
+                    node.each(item => {
+                        const cellData = <GridCellData> item.data(EXT_NAME.GRID, 'cellData');
+                        if (cellData) {
+                            const padding = mainData.padding;
+                            const dimensions = getBoxSpacing(item.documentParent.element, true);
+                            if (cellData.cellFirst) {
+                                padding.top = dimensions.paddingTop + dimensions.marginTop;
                             }
-                            padding.right = Math.max(dimensions.marginRight + dimensions.paddingRight, padding.right);
+                            if (cellData.rowStart) {
+                                padding.left = Math.max(dimensions.marginLeft + dimensions.paddingLeft, padding.left);
+                            }
+                            if (cellData.rowEnd) {
+                                const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!cellData.cellLast ? dimensions.marginTop + dimensions.paddingTop : 0);
+                                if (heightBottom > 0) {
+                                    if (cellData.cellLast) {
+                                        padding.bottom = heightBottom;
+                                    }
+                                    else {
+                                        this.application.controllerHandler.appendAfter(
+                                            item.id,
+                                            this.application.controllerHandler.renderNodeStatic(
+                                                NODE_STANDARD.SPACE,
+                                                item.renderDepth,
+                                                {
+                                                    app: {
+                                                        layout_columnSpan: mainData.columnCount.toString()
+                                                    }
+                                                },
+                                                'match_parent',
+                                                formatPX(heightBottom)
+                                            )
+                                        );
+                                    }
+                                }
+                                padding.right = Math.max(dimensions.marginRight + dimensions.paddingRight, padding.right);
+                            }
                         }
-                    }
+                    }, true);
                 }
             }
-        });
-        for (const node of extended) {
+        }
+        for (const node of this.subscribers) {
             const data = <GridData> node.data(EXT_NAME.GRID, 'mainData');
             if (data) {
                 node.modifyBox(BOX_STANDARD.PADDING_TOP, data.padding.top);
