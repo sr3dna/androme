@@ -376,7 +376,7 @@ export default abstract class Resource<T extends Node> {
     }
 
     protected borderVisible(border?: BorderAttribute) {
-        return (border && !(border.style === 'none' || border.width === '0px'));
+        return (border != null && !(border.style === 'none' || border.width === '0px'));
     }
 
     protected hasDrawableBackground(object?: BoxStyle) {

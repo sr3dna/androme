@@ -593,15 +593,64 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     });
                     const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
                     const radius = this.getShapeAttribute(stored, 'radius');
-                    if (stored.border != null && backgroundImage.length === 0 && stored.border.style !== 'groove' && stored.border.style !== 'ridge') {
-                        template = parseTemplate(SHAPERECTANGLE_TMPL);
-                        data = {
-                            '0': [{
-                                '1': this.getShapeAttribute(stored, 'stroke'),
-                                '2': backgroundColor,
-                                '3': radius
-                            }]
-                        };
+                    function createDoubleBorder(templateData: {}, border: BorderAttribute, top: boolean, right: boolean, bottom: boolean, left: boolean) {
+                        const width = parseInt(border.width);
+                        const baseWidth = Math.floor(width / 3);
+                        const remainder = width % 3;
+                        const leftWidth = baseWidth + (remainder === 2 ? 1 : 0);
+                        const rightWidth = baseWidth + (remainder === 2 ? 1 : 0);
+                        let leftTop = `-${formatPX(leftWidth + 1)}`;
+                        let rightBottom = `-${formatPX(leftWidth)}`;
+                        templateData['4'].push({
+                            'top': (top ? '' :  rightBottom),
+                            'right': (right ? '' :  leftTop),
+                            'bottom': (bottom ? '' :  rightBottom),
+                            'left': (left ? '' :  leftTop),
+                            '5': [{ width: formatPX(leftWidth), borderStyle: this.getBorderStyle(border) }],
+                            '6': radius
+                        });
+                        leftTop = `-${formatPX(width + 1)}`;
+                        rightBottom = `-${formatPX(width)}`;
+                        const indentWidth = `${formatPX(width - baseWidth)}`;
+                        templateData['4'].push({
+                            'top': (top ? indentWidth : leftTop),
+                            'right': (right ? indentWidth : rightBottom),
+                            'bottom': (bottom ? indentWidth : rightBottom),
+                            'left': (left ? indentWidth : leftTop),
+                            '5': [{ width: formatPX(rightWidth), borderStyle: this.getBorderStyle(border) }],
+                            '6': radius
+                        });
+                    }
+                    if (stored.border &&
+                        this.borderVisible(stored.border) && !(
+                            (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
+                            (parseInt(stored.border.width) > 2 && stored.border.style === 'double')
+                       ))
+                    {
+                        if (backgroundImage.length === 0) {
+                            template = parseTemplate(SHAPERECTANGLE_TMPL);
+                            data = {
+                                '0': [{
+                                    '1': this.getShapeAttribute(stored, 'stroke'),
+                                    '2': backgroundColor,
+                                    '3': radius
+                                }]
+                            };
+                        }
+                        else {
+                            template = parseTemplate(LAYERLIST_TMPL);
+                            data = {
+                                '0': [{
+                                    '1': backgroundColor,
+                                    '2': (image2.length > 0 ? image2 : false),
+                                    '3': (image3.length > 0 ? image3 : false),
+                                    '4': [{
+                                        '5': this.getShapeAttribute(stored, 'stroke'),
+                                        '6': radius
+                                    }]
+                                }]
+                            };
+                        }
                     }
                     else {
                         template = parseTemplate(LAYERLIST_TMPL);
@@ -615,19 +664,16 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }]
                         };
                         const root = getTemplateLevel(data, '0');
-                        if (stored.border && this.borderVisible(stored.border) && !(stored.border.style === 'groove' || stored.border.style === 'ridge')) {
-                            root['4'].push({
-                                '5': this.getShapeAttribute(stored, 'stroke'),
-                                '6': radius
-                            });
-                        }
-                        else {
-                            const borderVisible = borders.filter(item => this.borderVisible(item));
-                            const borderWidth = new Set(borderVisible.map(item => item.width));
-                            const borderStyle = new Set(borderVisible.map(item => this.getBorderStyle(item)));
-                            const borderInset = borderVisible.filter((item: BorderAttribute) => parseInt(item.width) > 1 && (item.style === 'groove' || item.style === 'ridge'));
-                            if (borderWidth.size === 1 && borderStyle.size === 1 && borderInset.length === 0) {
-                                const width = parseInt(borderWidth.values().next().value);
+                        const borderVisible = borders.filter(item => this.borderVisible(item));
+                        const borderWidth = new Set(borderVisible.map(item => item.width));
+                        const borderStyle = new Set(borderVisible.map(item => this.getBorderStyle(item)));
+                        const borderData = borderVisible[0];
+                        if (borderWidth.size === 1 && borderStyle.size === 1 && !(borderData.style === 'groove' || borderData.style === 'ridge')) {
+                            const width = parseInt(borderData.width);
+                            if (width > 2 && borderData.style === 'double') {
+                                createDoubleBorder.apply(this, [root, borderData, this.borderVisible(stored.borderTop), this.borderVisible(stored.borderRight), this.borderVisible(stored.borderBottom), this.borderVisible(stored.borderLeft)]);
+                            }
+                            else {
                                 const leftTop = `-${formatPX(width + 1)}`;
                                 const rightBottom = `-${formatPX(width)}`;
                                 root['4'].push({
@@ -639,38 +685,41 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     '6': radius
                                 });
                             }
-                            else {
-                                borders.forEach((item, index) => {
-                                    if (this.borderVisible(item)) {
-                                        const hasInset = (parseInt(item.width) > 1 && (item.style === 'groove' || item.style === 'ridge'));
-                                        const width = parseInt(item.width);
+                        }
+                        else {
+                            borders.forEach((item, index) => {
+                                if (this.borderVisible(item)) {
+                                    const width = parseInt(item.width);
+                                    if (width > 2 && item.style === 'double') {
+                                        createDoubleBorder.apply(this, [root, item, (index === 0), (index === 1), (index === 2), (index === 3)]);
+                                    }
+                                    else {
+                                        const hasInset = (width > 1 && (item.style === 'groove' || item.style === 'ridge'));
                                         const outsetWidth = (index === 1 ? Math.ceil(width / 2) : width);
                                         let leftTop = `-${formatPX(outsetWidth + 1)}`;
                                         let rightBottom = `-${formatPX(outsetWidth)}`;
-                                        const outset = {
+                                        root['4'].push({
                                             'top':  (index === 0 ? '' : leftTop),
                                             'right': (index === 1 ? '' : rightBottom),
                                             'bottom': (index === 2 ? '' : rightBottom),
                                             'left': (index === 3 ? '' : leftTop),
                                             '5': this.getShapeAttribute(<BoxStyle> { border: item }, 'stroke', index, hasInset),
                                             '6': radius
-                                        };
-                                        root['4'].push(outset);
+                                        });
                                         if (hasInset) {
                                             leftTop = `-${formatPX(width + 1)}`;
                                             rightBottom = `-${formatPX(width)}`;
-                                            const inset = {
+                                            root['7'].push({
                                                 'top':  (index === 0 ? '' : leftTop),
                                                 'right': (index === 1 ? '' : rightBottom),
                                                 'bottom': (index === 2 ? '' : rightBottom),
                                                 'left': (index === 3 ? '' : leftTop),
                                                 '8': this.getShapeAttribute(<BoxStyle> { border: item }, 'stroke', index, true, true)
-                                            };
-                                            root['7'].push(inset);
+                                            });
                                         }
                                     }
-                                });
-                            }
+                                }
+                            });
                         }
                         if (root['4'].length === 0) {
                             root['4'] = false;
@@ -778,7 +827,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             for (let node of nodes) {
                 let system = false;
                 const nodeId = node.id;
-                if (node.companion != null && (node.companion.textElement || node.companion.tagName === 'LABEL')) {
+                if (node.companion && (node.companion.textElement || node.companion.tagName === 'LABEL')) {
                     node = node.companion as T;
                 }
                 const element = node.element;
