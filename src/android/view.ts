@@ -320,7 +320,7 @@ export default class View extends Node {
                         }
                         else {
                             const viewWidth = convertInt(parent.android('layout_width'));
-                            this.android('layout_width', (viewWidth > 0 && this.viewWidth >= viewWidth ? 'match_parent' : styleMap.width));
+                            this.android('layout_width', (viewWidth > 0 && this.viewWidth >= viewWidth ? 'match_parent' : styleMap.width), (renderParent.tagName !== 'TABLE'));
                         }
                     }
                     if (constraint.layoutWidth) {
@@ -864,49 +864,54 @@ export default class View extends Node {
                     this.android('layout_height', formatPX(viewHeight + this.borderTopWidth + this.borderBottomWidth));
                 }
             }
+            else if (this.tagName === 'TABLE') {
+                const width = this.toInt('width');
+                if (!this.blockWidth && width > 0 && this.bounds.width > width) {
+                    this.android('layout_width', formatPX(this.bounds.width));
+                    if (this.has('width', CSS_STANDARD.AUTO, { map: 'initial' })) {
+                        if (this.renderChildren.every(node => node.inlineWidth)) {
+                            this.renderChildren.forEach(node => {
+                                node.android('layout_width', '0px');
+                                node.app('layout_columnWeight', '1');
+                            });
+                        }
+                    }
+                }
+            }
             else {
                 if (this.hasElement && !this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
-                    const minWidth = convertInt(this.android('minWidth'));
-                    const minHeight = convertInt(this.android('minHeight'));
-                    const tableElement = (this.tagName === 'TABLE');
-                    const borderCollapse = ((renderParent.display === 'table' || renderParent.tagName === 'TABLE') && renderParent.css('borderCollapse') === 'collapse');
-                    const paddedWidth = this.paddingLeft + this.paddingRight + (!borderCollapse ? this.borderLeftWidth + this.borderRightWidth : convertInt(this.css('borderWidth')));
-                    const paddedHeight = this.paddingTop + this.paddingBottom + (!borderCollapse ? this.borderTopWidth + this.borderBottomWidth : convertInt(this.css('borderWidth')));
-                    let resizedWidth = false;
-                    let resizedHeight = false;
-                    if (viewWidth > 0 &&
-
-                        this.toInt('width', 0, { map: 'initial' }) > 0 &&
-                        !(tableElement && this.has('width', CSS_STANDARD.PERCENT, { map: 'initial' })))
-                    {
-                        if (!tableElement && paddedWidth > 0) {
+                    if (!(this.renderParent.tagName === 'TABLE')) {
+                        const minWidth = convertInt(this.android('minWidth'));
+                        const minHeight = convertInt(this.android('minHeight'));
+                        const paddedWidth = this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
+                        const paddedHeight = this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth;
+                        if (viewWidth > 0 &&
+                            this.toInt('width', 0, { map: 'initial' }) > 0
+                            && paddedWidth > 0)
+                        {
                             this.android('layout_width', formatPX(viewWidth + paddedWidth));
                         }
-                        resizedWidth = true;
-                    }
-                    if (viewHeight > 0 &&
-                        this.toInt('height', 0, { map: 'initial' }) > 0 &&
-                        !(tableElement && this.has('height', CSS_STANDARD.PERCENT, { map: 'initial' })) && (
-                            this.lineHeight === 0 ||
-                            this.lineHeight < this.box.height ||
-                            this.lineHeight === this.toInt('height')
-                       ))
-                    {
-                        if (!tableElement && paddedHeight > 0) {
+                        if (viewHeight > 0 &&
+                            this.toInt('height', 0, { map: 'initial' }) > 0 &&
+                            paddedHeight > 0 && (
+                                this.lineHeight === 0 ||
+                                this.lineHeight < this.box.height ||
+                                this.lineHeight === this.toInt('height')
+                           ))
+                        {
                             this.android('layout_height', formatPX(viewHeight + paddedHeight));
                         }
-                        resizedHeight = true;
+                        if (minWidth > 0 && paddedWidth > 0) {
+                            this.android('minWidth', formatPX(minWidth + paddedWidth));
+                        }
+                        if (minHeight > 0 && paddedHeight > 0) {
+                            this.android('minHeight', formatPX(minHeight + paddedHeight));
+                        }
                     }
-                    if (minWidth > 0 && !tableElement && paddedWidth > 0) {
-                        this.android('minWidth', formatPX(minWidth + paddedWidth));
-                    }
-                    if (minHeight > 0 && !tableElement && paddedHeight > 0) {
-                        this.android('minHeight', formatPX(minHeight + paddedHeight));
-                    }
-                    this.modifyBox(BOX_STANDARD.PADDING_TOP, this.borderTopWidth - (tableElement && resizedHeight ? this.paddingTop : 0));
-                    this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.borderBottomWidth - (tableElement && resizedHeight ? this.paddingBottom : 0));
-                    this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.borderRightWidth - (tableElement && resizedWidth ? this.paddingRight : 0));
-                    this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth - (tableElement && resizedWidth ? this.paddingLeft : 0));
+                    this.modifyBox(BOX_STANDARD.PADDING_TOP, this.borderTopWidth);
+                    this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.borderRightWidth);
+                    this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.borderBottomWidth);
+                    this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
                 }
             }
         }
@@ -1034,26 +1039,26 @@ export default class View extends Node {
                     while (sibling && !this.initial.children.includes(sibling));
                     return sibling;
                 })();
-                let valid = false;
-                let bottom: number;
-                if (previous == null) {
-                    bottom = this.box.top;
-                }
-                else {
-                    bottom = (() => {
-                        if (previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
-                            return previous.renderChildren.filter(item => !item.floating).sort((a, b) => (a.linear.bottom < b.linear.bottom ? 1 : -1))[0].linear.bottom;
+                if (getElementsBetweenSiblings((previous != null ? (!previous.hasElement && previous.length > 0 ? previous.lastElementChild : previous.baseElement) : null), node.baseElement).some(element => {
+                        const collapsed = getNodeFromElement(element) as T;
+                        if (collapsed && (collapsed.lineBreak || (collapsed.excluded && collapsed.blockStatic))) {
+                            return true;
                         }
-                        return previous.linear.bottom;
-                    })();
-                }
-                getElementsBetweenSiblings((previous != null ? (!previous.hasElement && previous.length > 0 ? previous.lastElementChild : previous.baseElement) : null), node.baseElement).forEach(element => {
-                    const collapsed = getNodeFromElement(element) as T;
-                    if (collapsed && (collapsed.lineBreak || (collapsed.excluded && collapsed.blockStatic))) {
-                        valid = true;
+                        return false;
+                    }))
+                {
+                    let bottom: number;
+                    if (previous == null) {
+                        bottom = this.box.top;
                     }
-                });
-                if (valid) {
+                    else {
+                        bottom = (() => {
+                            if (previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
+                                return previous.renderChildren.filter(item => !item.floating).sort((a, b) => (a.linear.bottom < b.linear.bottom ? 1 : -1))[0].linear.bottom;
+                            }
+                            return previous.linear.bottom;
+                        })();
+                    }
                     const height = Math.round(node.linear.top - bottom);
                     if (height >= 1) {
                         node.modifyBox(BOX_STANDARD.MARGIN_TOP, height);

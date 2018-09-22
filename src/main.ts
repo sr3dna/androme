@@ -3,7 +3,7 @@ import Application from './base/application';
 import Extension from './base/extension';
 import { convertCamelCase, convertPX, convertWord, hasValue, isPercent, optional } from './lib/util';
 import { getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
-import { convertRGB, getByColorName } from './lib/color';
+import { formatRGB, getByColorName } from './lib/color';
 import { EXT_NAME } from './extension/lib/constants';
 import SETTINGS from './settings';
 
@@ -94,7 +94,7 @@ function setStyleMap() {
                             if (attr.toLowerCase().indexOf('color') !== -1) {
                                 const color = getByColorName(cssRule.style[attr]);
                                 if (color !== '') {
-                                    cssRule.style[attr] = convertRGB(color);
+                                    cssRule.style[attr] = formatRGB(color);
                                 }
                             }
                             const cssStyle = cssRule.style[attr];

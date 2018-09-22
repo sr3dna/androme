@@ -246,13 +246,13 @@ export function getColorNearest(value: string) {
 export function getByColorName(value: string) {
     for (const color in X11_CSS3) {
         if (color.toLowerCase() === value.trim().toLowerCase()) {
-            return X11_CSS3[color];
+            return <Color> X11_CSS3[color];
         }
     }
     return '';
 }
 
-export function convertRGB({ rgb }: Color) {
+export function formatRGB({ rgb }: Color) {
     return (rgb != null ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '');
 }
 
@@ -260,14 +260,14 @@ export function parseRGBA(value: string, opacity = '1'): string[] {
     if (value !== '') {
         const color = getByColorName(value);
         if (color !== '') {
-            return [color.hex, convertRGB(color), '1'];
+            return [color.hex, formatRGB(color), opacity];
         }
         const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9\.]{1,3}))?\)/);
         if (match && match.length >= 4 && match[4] !== '0') {
             if (match[4] == null) {
                 match[4] = opacity;
             }
-            return [`#${convertRGBtoHex(match[1])}${convertRGBtoHex(match[2])}${convertRGBtoHex(match[3])}`, match[0], (parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1')];
+            return [`#${convertRGBtoHex(match[1]) + convertRGBtoHex(match[2]) + convertRGBtoHex(match[3])}`, match[0], (parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1')];
         }
     }
     return [];
@@ -302,8 +302,18 @@ export function parseHex(value: string) {
             value = color[0];
         }
         if (value.charAt(0) === '#' && /^#[a-zA-Z0-9]{3,6}$/.test(value)) {
-            return (value.length === 4 ? parseRGBA(convertRGB(<Color> { rgb: convertHextoRGB(value) }))[0] : value);
+            return (value.length === 4 ? parseRGBA(formatRGB(<Color> { rgb: convertHextoRGB(value) }))[0] : value);
         }
     }
     return '';
+}
+
+export function reduceHexToRGB(value: string, percent: number) {
+    const rgb = convertHextoRGB(value);
+    if (rgb != null) {
+        const base = (percent < 0 ? 0 : 255);
+        percent = Math.abs(percent);
+        return `rgb(${Math.round((base - rgb.r) * percent) + rgb.r}, ${Math.round((base - rgb.g) * percent) + rgb.g}, ${Math.round((base - rgb.b) * percent) + rgb.b})`;
+    }
+    return value;
 }

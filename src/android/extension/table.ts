@@ -16,7 +16,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
         const node = this.node;
         const columnCount = convertInt(node.app('columnCount'));
         if (columnCount > 1) {
-            let requireWidth = node.data(EXT_NAME.TABLE, 'expand') || false;
+            let requireWidth = !!node.data(EXT_NAME.TABLE, 'expand');
             node.each((item: T) => {
                 if (item.css('width') === '0px') {
                     item.android('layout_width', '0px');
@@ -46,6 +46,9 @@ export default class TableAndroid<T extends View> extends Table<T> {
                         else {
                             if (item.textElement) {
                                 item.android('maxLines', '1');
+                            }
+                            if (item.has('width') && item.toInt('width') < item.bounds.width) {
+                                item.android('layout_width', formatPX(item.bounds.width));
                             }
                         }
                     }
@@ -100,24 +103,5 @@ export default class TableAndroid<T extends View> extends Table<T> {
             );
         }
         return { xml: '', complete: true };
-    }
-
-    public beforeInsert() {
-        const node = this.node;
-        const tableWidth = node.toInt('width');
-        const boundsWidth = node.data(EXT_NAME.TABLE, 'boundsWidth');
-        if (!node.blockWidth && tableWidth > 0) {
-            if (boundsWidth > tableWidth) {
-                node.android('layout_width', formatPX(boundsWidth));
-            }
-            if (node.has('width', CSS_STANDARD.AUTO, { map: 'initial' })) {
-                if (node.renderChildren.every(item => item.inlineWidth)) {
-                    node.renderChildren.forEach(item => {
-                        item.android('layout_width', '0px');
-                        item.app('layout_columnWeight', '1');
-                    });
-                }
-            }
-        }
     }
 }

@@ -375,11 +375,11 @@ export default abstract class Resource<T extends Node> {
         });
     }
 
-    protected borderVisible(border: BorderAttribute) {
+    protected borderVisible(border?: BorderAttribute) {
         return (border && !(border.style === 'none' || border.width === '0px'));
     }
 
-    protected hasDrawableBackground(object: BoxStyle) {
+    protected hasDrawableBackground(object?: BoxStyle) {
         return (object && (
                 this.borderVisible(object.borderTop) ||
                 this.borderVisible(object.borderRight) ||
@@ -389,16 +389,6 @@ export default abstract class Resource<T extends Node> {
                 object.borderRadius.length > 0
             )
         );
-    }
-
-    protected getBorderStyle(border: BorderAttribute) {
-        const result = { solid: `android:color="@color/${border.color}"` };
-        Object.assign(result, {
-            inset: result.solid,
-            dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
-            dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
-        });
-        return result[border.style] || result.solid;
     }
 
     private parseBorderStyle(value: string, node: T, attr: string): BorderAttribute {

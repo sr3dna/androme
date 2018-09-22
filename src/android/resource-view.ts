@@ -3,11 +3,11 @@ import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
 import NodeList from '../base/nodelist';
-import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, lastIndexOf, partition, trimString } from '../lib/util';
+import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, lastIndexOf, trimString } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setElementCache } from '../lib/dom';
-import { getColorNearest, parseHex, parseRGBA } from '../lib/color';
+import { getColorNearest, parseHex, parseRGBA, reduceHexToRGB } from '../lib/color';
 import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
 import SETTINGS from '../settings';
@@ -183,6 +183,15 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 colorName = Resource.STORED.COLORS.get(opaque) as string;
             }
             return colorName;
+        }
+        return '';
+    }
+
+    public static getColor(value: string) {
+        for (const [hex, name] of Resource.STORED.COLORS.entries()) {
+            if (name === value) {
+                return hex;
+            }
         }
         return '';
     }
@@ -584,7 +593,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     });
                     const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
                     const radius = this.getShapeAttribute(stored, 'radius');
-                    if (stored.border != null && backgroundImage.length === 0) {
+                    if (stored.border != null && backgroundImage.length === 0 && stored.border.style !== 'groove' && stored.border.style !== 'ridge') {
                         template = parseTemplate(SHAPERECTANGLE_TMPL);
                         data = {
                             '0': [{
@@ -606,56 +615,60 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }]
                         };
                         const root = getTemplateLevel(data, '0');
-                        if (stored.border && this.borderVisible(stored.border)) {
-                            if (stored.border.style === 'inset') {
-                                root['7'].push({
-                                    '8': this.getShapeAttribute(stored, 'stroke'),
-                                    '9': radius
-                                });
-                            }
-                            else {
-                                root['4'].push({
-                                    '5': this.getShapeAttribute(stored, 'stroke'),
-                                    '6': radius
-                                });
-                            }
+                        if (stored.border && this.borderVisible(stored.border) && !(stored.border.style === 'groove' || stored.border.style === 'ridge')) {
+                            root['4'].push({
+                                '5': this.getShapeAttribute(stored, 'stroke'),
+                                '6': radius
+                            });
                         }
                         else {
                             const borderVisible = borders.filter(item => this.borderVisible(item));
                             const borderWidth = new Set(borderVisible.map(item => item.width));
                             const borderStyle = new Set(borderVisible.map(item => this.getBorderStyle(item)));
-                            const [borderStandard, borderInset] = partition<BorderAttribute>(borders, (item: BorderAttribute) => item.style !== 'inset');
-                            if (borderWidth.size === 1 && borderStyle.size === 1) {
-                                const width = borderWidth.values().next().value;
-                                const bottomRight = `-${width}`;
-                                const topLeft = `-${formatPX(parseInt(width) + 1)}`;
-                                root[(borderInset.length > 0 ? '7' : '4')].push({
-                                    'top': (this.borderVisible(stored.borderTop) ? '' : topLeft),
-                                    'right': (this.borderVisible(stored.borderRight) ? '' : bottomRight),
-                                    'bottom': (this.borderVisible(stored.borderBottom) ? '' : bottomRight),
-                                    'left': (this.borderVisible(stored.borderLeft) ? '' : topLeft),
-                                    [(borderInset.length > 0 ? '8' : '5')]: [{ width, borderStyle: borderStyle.values().next().value }],
-                                    [(borderInset.length > 0 ? '9' : '6')]: radius
+                            const borderInset = borderVisible.filter((item: BorderAttribute) => parseInt(item.width) > 1 && (item.style === 'groove' || item.style === 'ridge'));
+                            if (borderWidth.size === 1 && borderStyle.size === 1 && borderInset.length === 0) {
+                                const width = parseInt(borderWidth.values().next().value);
+                                const leftTop = `-${formatPX(width + 1)}`;
+                                const rightBottom = `-${formatPX(width)}`;
+                                root['4'].push({
+                                    'top': (this.borderVisible(stored.borderTop) ? '' : leftTop),
+                                    'right': (this.borderVisible(stored.borderRight) ? '' : rightBottom),
+                                    'bottom': (this.borderVisible(stored.borderBottom) ? '' : rightBottom),
+                                    'left': (this.borderVisible(stored.borderLeft) ? '' : leftTop),
+                                    '5': this.getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
+                                    '6': radius
                                 });
                             }
                             else {
-                                [borderStandard, borderInset].forEach((group, index) => {
-                                    group.forEach((border, direction) => {
-                                        if (this.borderVisible(border)) {
-                                            const bottomRight = `-${border.width}`;
-                                            const topLeft = `-${formatPX(parseInt(border.width) + 1)}`;
-                                            const layer = {
-                                                'top': topLeft,
-                                                'right': bottomRight,
-                                                'bottom': bottomRight,
-                                                'left': topLeft,
-                                                [(index === 1 ? '8' : '5')]: [{ width: border.width, borderStyle: this.getBorderStyle(border) }],
-                                                [(index === 1 ? '9' : '6')]: radius
+                                borders.forEach((item, index) => {
+                                    if (this.borderVisible(item)) {
+                                        const hasInset = (parseInt(item.width) > 1 && (item.style === 'groove' || item.style === 'ridge'));
+                                        const width = parseInt(item.width);
+                                        const outsetWidth = (index === 1 ? Math.ceil(width / 2) : width);
+                                        let leftTop = `-${formatPX(outsetWidth + 1)}`;
+                                        let rightBottom = `-${formatPX(outsetWidth)}`;
+                                        const outset = {
+                                            'top':  (index === 0 ? '' : leftTop),
+                                            'right': (index === 1 ? '' : rightBottom),
+                                            'bottom': (index === 2 ? '' : rightBottom),
+                                            'left': (index === 3 ? '' : leftTop),
+                                            '5': this.getShapeAttribute(<BoxStyle> { border: item }, 'stroke', index, hasInset),
+                                            '6': radius
+                                        };
+                                        root['4'].push(outset);
+                                        if (hasInset) {
+                                            leftTop = `-${formatPX(width + 1)}`;
+                                            rightBottom = `-${formatPX(width)}`;
+                                            const inset = {
+                                                'top':  (index === 0 ? '' : leftTop),
+                                                'right': (index === 1 ? '' : rightBottom),
+                                                'bottom': (index === 2 ? '' : rightBottom),
+                                                'left': (index === 3 ? '' : leftTop),
+                                                '8': this.getShapeAttribute(<BoxStyle> { border: item }, 'stroke', index, true, true)
                                             };
-                                            layer[['top', 'right', 'bottom', 'left'][direction]] = '';
-                                            root[(index === 1 ? '7' : '4')].push(layer);
+                                            root['7'].push(inset);
                                         }
-                                    });
+                                    }
                                 });
                             }
                         }
@@ -1214,10 +1227,18 @@ export default class ResourceView<T extends View> extends Resource<T> {
         });
     }
 
-    private getShapeAttribute(stored: BoxStyle, name: string): any[] | boolean {
+    private getShapeAttribute(stored: BoxStyle, name: string, direction = -1, hasInset = false, isInset = false): any[] | boolean {
         switch (name) {
             case 'stroke':
-                return (stored.border && stored.border.width !== '0px' ? [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border) }] : false);
+                if (stored.border && stored.border.width !== '0px') {
+                    if (!hasInset || isInset) {
+                        return [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border, (isInset ? direction : -1)) }];
+                    }
+                    else if (hasInset) {
+                        return [{ width: formatPX(Math.ceil(parseInt(stored.border.width) / 2)), borderStyle: this.getBorderStyle(stored.border, direction, true) }];
+                    }
+                }
+                return false;
             case 'backgroundColor':
                 return (stored.backgroundColor.length !== 0 && stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false);
             case 'radius':
@@ -1235,5 +1256,71 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
         }
         return false;
+    }
+
+    private getBorderStyle(border: BorderAttribute, direction = -1, halfSize = false) {
+        const result = {
+            solid: `android:color="@color/${border.color}"`,
+            groove: '',
+            ridge: ''
+        };
+        Object.assign(result, {
+            double: result.solid,
+            inset: result.solid,
+            outset: result.solid,
+            dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
+            dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
+        });
+        if (parseInt(border.width) > 1 && (border.style === 'groove' || border.style === 'ridge')) {
+            let colorName = border.color;
+            let hexValue = ResourceView.getColor(colorName as string);
+            if (hexValue !== '') {
+                let opacity = '1';
+                if (hexValue.length === 9) {
+                    hexValue = `#{value.substring(3)}`;
+                    opacity = `0.${hexValue.substring(1, 3)}`;
+                }
+                const reduced = parseRGBA(reduceHexToRGB(hexValue, 0.3));
+                if (reduced.length > 0) {
+                    colorName = ResourceView.addColor(reduced[0], opacity);
+                }
+            }
+            const style1 = (halfSize ? 'groove' : 'ridge');
+            const style2 = (halfSize ? 'ridge' : 'groove');
+            const colorReduced = `android:color="@color/${colorName}"`;
+            if (border.style === style1) {
+                switch (direction) {
+                    case 0:
+                        result[style1] = result.solid;
+                        break;
+                    case 1:
+                        result[style1] = colorReduced;
+                        break;
+                    case 2:
+                        result[style1] = colorReduced;
+                        break;
+                    case 3:
+                        result[style1] = result.solid;
+                        break;
+                }
+            }
+            else {
+                switch (direction) {
+                    case 0:
+                        result[style2] = colorReduced;
+                        break;
+                    case 1:
+                        result[style2] = result.solid;
+                        break;
+                    case 2:
+                        result[style2] = result.solid;
+                        break;
+                    case 3:
+                        result[style2] = colorReduced;
+                        break;
+                }
+            }
+        }
+        return result[border.style] || result.solid;
     }
 }

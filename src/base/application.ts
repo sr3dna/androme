@@ -265,7 +265,7 @@ export default class Application<T extends Node> {
                                     const label = getNodeFromElement(sibling);
                                     const labelParent = (sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) : null);
                                     if (label && label.visible && label.pageflow) {
-                                        if (sibling.htmlFor !== '' && sibling.htmlFor === element.id) {
+                                        if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                             node.companion = label;
                                         }
                                         else if (labelParent && label.textElement) {
@@ -287,7 +287,7 @@ export default class Application<T extends Node> {
             const visible = this.cache.visible;
             for (const node of visible) {
                 if (!node.documentRoot) {
-                    let parent: Null<T> = node.getParentElementAsNode(SETTINGS.constraintSupportNegativeLeftTop) as T;
+                    let parent: Null<T> = node.getParentElementAsNode(SETTINGS.constraintSupportNegativeLeftTop, this.cache.parent as T) as T;
                     if (parent == null && !node.pageflow) {
                         parent = this.cache.parent;
                     }
@@ -671,9 +671,9 @@ export default class Application<T extends Node> {
                                                                 const clear = (clearedPartial.has(adjacent) ? clearedPartial.get(adjacent) : 'none') as string;
                                                                 if (clear !== 'none') {
                                                                     if (floatedOpen.size < 2 && floated.size === 2 && !adjacent.floating) {
-                                                                        horizontal.push(adjacent);
-                                                                        verticalExtended = true;
                                                                         adjacent.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
+                                                                        verticalExtended = true;
+                                                                        horizontal.push(adjacent);
                                                                         continue;
                                                                     }
                                                                 }
@@ -687,7 +687,7 @@ export default class Application<T extends Node> {
                                                                 horizontal.push(adjacent);
                                                                 continue;
                                                             }
-                                                            if (floated.size > 0 && floated.size < 2 && (!adjacent.floating || floatedOpen.has(adjacent.float))) {
+                                                            if (floated.size === 1 && (!adjacent.floating || floatedOpen.has(adjacent.float))) {
                                                                 horizontal.push(adjacent);
                                                                 continue;
                                                             }

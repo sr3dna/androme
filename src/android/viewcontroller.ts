@@ -508,72 +508,70 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     }
                                 }
                             }
-                            for (const current of nodes) {
-                                if (current.pageflow) {
-                                    const leftRight = mapSibling(current, 'leftRight');
-                                    if (leftRight) {
-                                        if (!current.constraint.horizontal) {
-                                            current.constraint.horizontal = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.HORIZONTAL);
-                                        }
-                                        current.constraint.marginHorizontal = leftRight;
+                            for (const current of pageflow) {
+                                const leftRight = mapSibling(current, 'leftRight');
+                                if (leftRight) {
+                                    if (!current.constraint.horizontal) {
+                                        current.constraint.horizontal = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.HORIZONTAL);
                                     }
-                                    const topBottom = mapSibling(current, 'topBottom');
-                                    if (topBottom) {
-                                        if (!current.constraint.vertical) {
-                                            current.constraint.vertical = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.VERTICAL);
-                                        }
-                                        current.constraint.marginVertical = topBottom;
-                                        mapDelete(current, 'top');
+                                    current.constraint.marginHorizontal = leftRight;
+                                }
+                                const topBottom = mapSibling(current, 'topBottom');
+                                if (topBottom) {
+                                    if (!current.constraint.vertical) {
+                                        current.constraint.vertical = flex.enabled || resolveAnchor(current, nodes, AXIS_ANDROID.VERTICAL);
                                     }
-                                    if (mapParent(current, 'left') && mapParent(current, 'right')) {
-                                        if (current.autoMargin) {
-                                            if (current.autoLeftMargin) {
-                                                mapDelete(current, 'left');
+                                    current.constraint.marginVertical = topBottom;
+                                    mapDelete(current, 'top');
+                                }
+                                if (mapParent(current, 'left') && mapParent(current, 'right')) {
+                                    if (current.autoMargin) {
+                                        if (current.autoLeftMargin) {
+                                            mapDelete(current, 'left');
+                                        }
+                                        if (current.autoRightMargin) {
+                                            mapDelete(current, 'right');
+                                        }
+                                        if (current.centerMarginHorizontal) {
+                                            if (node.viewWidth > 0 && !current.has('width', CSS_STANDARD.PERCENT)) {
+                                                current.android('layout_width', 'match_parent');
                                             }
-                                            if (current.autoRightMargin) {
-                                                mapDelete(current, 'right');
-                                            }
-                                            if (current.centerMarginHorizontal) {
-                                                if (node.viewWidth > 0 && !current.has('width', CSS_STANDARD.PERCENT)) {
-                                                    current.android('layout_width', 'match_parent');
-                                                }
-                                                else if (current.inlineElement && current.viewWidth === 0) {
-                                                    current.android('layout_width', 'wrap_content');
-                                                }
+                                            else if (current.inlineElement && current.viewWidth === 0) {
+                                                current.android('layout_width', 'wrap_content');
                                             }
                                         }
-                                        else if (current.floating) {
-                                            mapDelete(current, (current.float === 'right' ? 'left' : 'right'));
-                                        }
-                                        else if (current.inlineElement) {
-                                            if (current.nodeType <= NODE_STANDARD.IMAGE) {
-                                                switch (current.css('textAlign')) {
-                                                    case 'center':
-                                                        break;
-                                                    case 'right':
-                                                    case 'end' :
-                                                        mapDelete(current, 'left');
-                                                        break;
-                                                    default:
-                                                        mapDelete(current, 'right');
-                                                        break;
-                                                }
-                                            }
-                                            else {
-                                                mapDelete(current, 'right');
+                                    }
+                                    else if (current.floating) {
+                                        mapDelete(current, (current.float === 'right' ? 'left' : 'right'));
+                                    }
+                                    else if (current.inlineElement) {
+                                        if (current.nodeType <= NODE_STANDARD.IMAGE) {
+                                            switch (current.css('textAlign')) {
+                                                case 'center':
+                                                    break;
+                                                case 'right':
+                                                case 'end' :
+                                                    mapDelete(current, 'left');
+                                                    break;
+                                                default:
+                                                    mapDelete(current, 'right');
+                                                    break;
                                             }
                                         }
                                         else {
                                             mapDelete(current, 'right');
-                                            current.android('layout_width', 'match_parent');
                                         }
                                     }
-                                    if (mapSibling(current, 'bottomTop')) {
-                                        mapDelete(current, 'bottom');
+                                    else {
+                                        mapDelete(current, 'right');
+                                        current.android('layout_width', 'match_parent');
                                     }
                                 }
-                                if (!flex.enabled && columnCount === 0 && ((current.viewWidth > 0 && current.alignOrigin) || current.plainText || current.renderChildren.some(item => item.textElement))) {
-                                    const textAlign = current.cssParent('textAlign', true);
+                                if (mapSibling(current, 'bottomTop')) {
+                                    mapDelete(current, 'bottom');
+                                }
+                                if (current.plainText || (!current.hasElement && current.renderChildren.some(item => item.textElement))) {
+                                    const textAlign = current.cssParent('textAlign');
                                     if (textAlign === 'right') {
                                         current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
                                         current.constraint.horizontal = true;

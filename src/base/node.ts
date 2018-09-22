@@ -371,6 +371,14 @@ export default abstract class Node implements BoxModel {
         return (this[dimension].left >= rect.left && this[dimension].right <= rect.right);
     }
 
+    public outsideX(rect: ClientRect, dimension = 'linear') {
+        return (this[dimension].right < rect.left || this[dimension].left > rect.right);
+    }
+
+    public outsideY(rect: ClientRect, dimension = 'linear') {
+        return (this[dimension].bottom < rect.top || this[dimension].top > rect.bottom);
+    }
+
     public css(attr: string | object, value = ''): string {
         if (typeof attr === 'object') {
             Object.assign(this.styleMap, attr);
@@ -601,13 +609,14 @@ export default abstract class Node implements BoxModel {
         this.children.sort((a, b) => a.siblingIndex <= b.siblingIndex ? -1 : 1);
     }
 
-    public getParentElementAsNode(negative = false) {
+    public getParentElementAsNode(negative = false, containerDefault?: T) {
         if (this._element != null) {
             let parent = getNodeFromElement(this._element.parentElement);
             if (!this.pageflow) {
                 let found = false;
                 let previous: Null<T> = null;
                 let relativeParent: Null<T> = null;
+                let outside = false;
                 while (parent && parent.id !== 0) {
                     if (relativeParent == null && this.position === 'absolute') {
                         if (!['static', 'initial'].includes(parent.position)) {
@@ -618,8 +627,13 @@ export default abstract class Node implements BoxModel {
                                 (negative && Math.abs(top) <= parent.marginTop && Math.abs(left) <= parent.marginLeft) ||
                                 this.imageElement)
                             {
-                                found = true;
-                                break;
+                                if (negative && !parent.documentRoot && top !== 0 && left !== 0 && this.bottom == null && this.right == null && (this.outsideX(parent.linear) || this.outsideY(parent.linear))) {
+                                    outside = true;
+                                }
+                                else {
+                                    found = true;
+                                    break;
+                                }
                             }
                             relativeParent = parent;
                         }
@@ -640,8 +654,8 @@ export default abstract class Node implements BoxModel {
                     previous = parent;
                     parent = getNodeFromElement(parent.element.parentElement);
                 }
-                if (!found)  {
-                    parent = relativeParent;
+                if (!found) {
+                    parent = (outside && containerDefault != null ? containerDefault : relativeParent);
                 }
             }
             return parent;
@@ -950,19 +964,19 @@ export default abstract class Node implements BoxModel {
 
     get borderTopWidth() {
         const value = this.css('borderTopStyle');
-        return (value !== 'none' && (value !== 'inset' || this.tagName === 'HR') ? convertInt(this.css('borderTopWidth')) : 0);
+        return (value !== 'none' ? convertInt(this.css('borderTopWidth')) : 0);
     }
     get borderRightWidth() {
         const value = this.css('borderRightStyle');
-        return (value !== 'none' && (value !== 'inset' || this.tagName === 'HR') ? convertInt(this.css('borderRightWidth')) : 0);
+        return (value !== 'none' ? convertInt(this.css('borderRightWidth')) : 0);
     }
     get borderBottomWidth() {
         const value = this.css('borderBottomStyle');
-        return (value !== 'none' && (value !== 'inset' || this.tagName === 'HR') ? convertInt(this.css('borderBottomWidth')) : 0);
+        return (value !== 'none' ? convertInt(this.css('borderBottomWidth')) : 0);
     }
     get borderLeftWidth() {
         const value = this.css('borderLeftStyle');
-        return (value !== 'none' && (value !== 'inset' || this.tagName === 'HR') ? convertInt(this.css('borderLeftWidth')) : 0);
+        return (value !== 'none' ? convertInt(this.css('borderLeftWidth')) : 0);
     }
 
     get paddingTop() {
