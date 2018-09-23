@@ -61,16 +61,16 @@ export default abstract class File<T extends Node> {
                     body: JSON.stringify(files),
                     headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })
                 })
-                .then((res: Response) => res.json())
-                .then(json => {
-                    if (json) {
-                        if (json.zipname != null) {
-                            fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(json.zipname)}`)
+                .then((response: Response) => response.json())
+                .then(result => {
+                    if (result) {
+                        if (result.zipname != null) {
+                            fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(result.zipname)}`)
                                 .then((res: Response) => res.blob())
-                                .then(blob => this.downloadToDisk(blob, lastIndexOf(json.zipname)));
+                                .then(blob => this.downloadToDisk(blob, lastIndexOf(result.zipname)));
                         }
-                        else if (json.system != null) {
-                            alert(`${json.application}\n\n${json.system}`);
+                        else if (result.system != null) {
+                            alert(`${result.application}\n\n${result.system}`);
                         }
                     }
                 })

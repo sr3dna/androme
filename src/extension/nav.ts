@@ -25,13 +25,14 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
                 }
             }
             if (valid) {
-                Array.from(element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
-                    const style = getStyle(element);
-                    if (style.display === 'none') {
-                        setElementCache(item, 'andromeExternalDisplay', 'none');
-                        item.style.display = 'block';
-                    }
-                });
+                Array.from(element.querySelectorAll('NAV'))
+                    .forEach((item: HTMLElement) => {
+                        const style = getStyle(element);
+                        if (style.display === 'none') {
+                            setElementCache(item, 'andromeExternalDisplay', 'none');
+                            item.style.display = 'block';
+                        }
+                    });
                 this.application.elements.add(<HTMLElement> element);
             }
         }
@@ -41,13 +42,14 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
     public afterRender() {
         const node = this.node;
         if (this.included(node.element)) {
-            Array.from(node.element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
-                const display = getElementCache(item, 'andromeExternalDisplay');
-                if (display) {
-                    item.style.display = display;
-                    deleteElementCache(item, 'andromeExternalDisplay');
-                }
-            });
+            Array.from(node.element.querySelectorAll('NAV'))
+                .forEach((item: HTMLElement) => {
+                    const display = getElementCache(item, 'andromeExternalDisplay');
+                    if (display) {
+                        item.style.display = display;
+                        deleteElementCache(item, 'andromeExternalDisplay');
+                    }
+                });
         }
     }
 }

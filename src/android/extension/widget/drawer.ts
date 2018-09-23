@@ -22,11 +22,12 @@ export default class Drawer<T extends View> extends Extension<T> {
 
     public init(element: HTMLElement) {
         if (this.included(element) && element.children.length > 0) {
-            Array.from(element.children).forEach((item: HTMLElement) => {
-                if (item.tagName === 'NAV' && !includes(item.dataset.ext || '', EXT_NAME.EXTERNAL)) {
-                    item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
-                }
-            });
+            Array.from(element.children)
+                .forEach((item: HTMLElement) => {
+                    if (item.tagName === 'NAV' && !includes(item.dataset.ext, EXT_NAME.EXTERNAL)) {
+                        item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
+                    }
+                });
             this.application.elements.add(element);
             return true;
         }
@@ -70,7 +71,7 @@ export default class Drawer<T extends View> extends Extension<T> {
         const node = this.node;
         if (application.renderQueue[node.nodeId] != null) {
             const target = application.cacheSession.locate(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
-            if (target) {
+            if (target != null) {
                 application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
                 delete application.renderQueue[node.nodeId];
             }

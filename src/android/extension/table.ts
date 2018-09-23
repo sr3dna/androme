@@ -54,15 +54,19 @@ export default class TableAndroid<T extends View> extends Table<T> {
                     }
                 }
             });
-            if (requireWidth && (node.viewWidth === 0 && !node.has('width', CSS_STANDARD.PERCENT))) {
+            if (requireWidth &&
+                node.viewWidth === 0 &&
+                !node.has('width', CSS_STANDARD.PERCENT))
+            {
                 let widthParent = 0;
-                node.ascend(true).some(item => {
-                    if (item.viewWidth > 0) {
-                        widthParent = item.viewWidth;
-                        return true;
-                    }
-                    return false;
-                });
+                node.ascend(true)
+                    .some(item => {
+                        if (item.viewWidth > 0) {
+                            widthParent = item.viewWidth;
+                            return true;
+                        }
+                        return false;
+                    });
                 if (node.bounds.width >= widthParent) {
                     node.android('layout_width', 'match_parent');
                 }
@@ -93,9 +97,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
                     NODE_STANDARD.SPACE,
                     parent.renderDepth + 1,
                     {
-                        app: {
-                            layout_columnSpan: spaceSpan.toString()
-                        }
+                        app: { layout_columnSpan: spaceSpan.toString() }
                     },
                     'wrap_content',
                     'wrap_content'

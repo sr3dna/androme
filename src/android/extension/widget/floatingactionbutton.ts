@@ -2,7 +2,7 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import Button from '../../../extension/button';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { formatPX } from '../../../lib/util';
+import { formatPX, hasValue } from '../../../lib/util';
 import { overwriteDefault } from '../lib/util';
 import { parseRGBA } from '../../../lib/color';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
@@ -20,7 +20,9 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         const element = node.element;
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-        overwriteDefault(options, 'android', 'backgroundTint', (backgroundColor.length > 0 ? `@color/${ResourceView.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent'));
+        const target = hasValue(node.dataset.target);
+        overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceView.addColor(backgroundColor[0], backgroundColor[2])}`
+                                                                                          : '?attr/colorAccent');
         if (node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
             overwriteDefault(options, 'android', 'focusable', 'false');
         }
@@ -44,11 +46,10 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         if (src !== '') {
             overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
-        const target = node.isSet('dataset', 'target');
         const xml =
             this.application.controllerHandler.renderNodeStatic(
                 VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
-                (target ? -1 : parent.renderDepth + 1),
+                target ? -1 : parent.renderDepth + 1,
                 options,
                 'wrap_content',
                 'wrap_content',
@@ -113,7 +114,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         else {
             gravity.push('center_vertical');
         }
-        node.android('layout_gravity', (gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|')));
+        node.android('layout_gravity', gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|'));
         if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
             if (horizontalBias < 0.5) {
                 node.css('marginLeft', formatPX(Math.floor(node.bounds.left - parent.box.left)));

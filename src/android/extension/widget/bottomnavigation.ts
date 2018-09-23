@@ -24,7 +24,7 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
                 VIEW_SUPPORT.BOTTOM_NAVIGATION,
                 node.depth,
                 options,
-                (parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent'),
+                parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent',
                 'wrap_content',
                 node
             );

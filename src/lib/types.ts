@@ -82,6 +82,10 @@ export type ObjectIndex<T> = {
     [key: number]: T;
 };
 
+export type ObjectMapNested<T> = {
+    [key: string]: ObjectMap<T>;
+};
+
 export type ArrayIndex<T> = {
     [key: number]: T;
     length: number;

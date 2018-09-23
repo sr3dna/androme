@@ -17,7 +17,7 @@ import DIMEN_TMPL from './template/resource/dimen';
 import DRAWABLE_TMPL from './template/resource/drawable';
 
 function caseInsensitve(a: string | string[], b: string | string[]) {
-    return (a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1);
+    return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
 }
 
 export default class FileView<T extends View> extends File<T> {
@@ -30,7 +30,7 @@ export default class FileView<T extends View> extends File<T> {
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
             const view = views[i];
-            files.push(this.getLayoutFile(view.pathname, (i === 0 ? SETTINGS.outputActivityMainFileName : `${view.filename}.xml`), view.content));
+            files.push(this.getLayoutFile(view.pathname, i === 0 ? SETTINGS.outputActivityMainFileName : `${view.filename}.xml`, view.content));
         }
         const xml = this.resourceDrawableToXml();
         files.push(...this.parseFileDetails(this.resourceStringToXml()));
@@ -51,7 +51,7 @@ export default class FileView<T extends View> extends File<T> {
             const view = views[i];
             result[view.filename] = view.content;
             if (saveToDisk) {
-                files.push(this.getLayoutFile(view.pathname, (i === 0 ? SETTINGS.outputActivityMainFileName : `${view.filename}.xml`), view.content));
+                files.push(this.getLayoutFile(view.pathname, i === 0 ? SETTINGS.outputActivityMainFileName : `${view.filename}.xml`, view.content));
             }
         }
         if (saveToDisk) {
@@ -221,10 +221,13 @@ export default class FileView<T extends View> extends File<T> {
                     parent: style.parent || '',
                     '2': []
                 };
-                style.attributes.split(';').sort().forEach((attr: string) => {
-                    const [name2, value] = attr.split('=');
-                    styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
-                });
+                style.attributes
+                    .split(';')
+                    .sort()
+                    .forEach((attr: string) => {
+                        const [name2, value] = attr.split('=');
+                        styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
+                    });
                 root['1'].push(styleItem);
             }
             xml = insertTemplateData(template, data);
@@ -270,16 +273,25 @@ export default class FileView<T extends View> extends File<T> {
             };
             const root = data['0'];
             for (const [name, value] of this.stored.DRAWABLES.entries()) {
-                root.push({ name: `res/drawable/${name}.xml`, value});
+                root.push({
+                    name: `res/drawable/${name}.xml`,
+                    value
+                });
             }
             for (const [name, images] of this.stored.IMAGES.entries()) {
                 if (Object.keys(images).length > 1) {
                     for (const dpi in images) {
-                        root.push({ name: `res/drawable-${dpi}/${name}.${lastIndexOf(images[dpi], '.')}`, value: `<!-- image: ${images[dpi]} -->` });
+                        root.push({
+                            name: `res/drawable-${dpi}/${name}.${lastIndexOf(images[dpi], '.')}`,
+                            value: `<!-- image: ${images[dpi]} -->`
+                        });
                     }
                 }
                 else if (images['mdpi'] != null) {
-                    root.push({ name: `res/drawable/${name}.${lastIndexOf(images['mdpi'], '.')}`, value: `<!-- image: ${images['mdpi']} -->` });
+                    root.push({
+                        name: `res/drawable/${name}.${lastIndexOf(images['mdpi'], '.')}`,
+                        value: `<!-- image: ${images['mdpi']} -->`
+                    });
                 }
             }
             xml = insertTemplateData(template, data);

@@ -37,8 +37,8 @@ export default class GridAndroid<T extends View> extends Grid<T> {
                     node.each(item => {
                         const cellData = <GridCellData> item.data(EXT_NAME.GRID, 'cellData');
                         if (cellData) {
-                            const padding = mainData.padding;
                             const dimensions = getBoxSpacing(item.documentParent.element, true);
+                            const padding = mainData.padding;
                             if (cellData.cellFirst) {
                                 padding.top = dimensions.paddingTop + dimensions.marginTop;
                             }
@@ -58,9 +58,7 @@ export default class GridAndroid<T extends View> extends Grid<T> {
                                                 NODE_STANDARD.SPACE,
                                                 item.renderDepth,
                                                 {
-                                                    app: {
-                                                        layout_columnSpan: mainData.columnCount.toString()
-                                                    }
+                                                    app: { layout_columnSpan: mainData.columnCount.toString() }
                                                 },
                                                 'match_parent',
                                                 formatPX(heightBottom)

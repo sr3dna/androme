@@ -23,16 +23,20 @@ export default class Toolbar<T extends View> extends Extension<T> {
 
     public init(element: HTMLElement) {
         if (this.included(element)) {
-            Array.from(element.children).some((item: HTMLElement) => {
-                if (item.tagName === 'NAV' && !includes(item.dataset.ext, EXT_NAME.EXTERNAL)) {
-                    item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
-                    return true;
-                }
-                return false;
-            });
+            Array.from(element.children)
+                .some((item: HTMLElement) => {
+                    if (item.tagName === 'NAV' && !includes(item.dataset.ext, EXT_NAME.EXTERNAL)) {
+                        item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
+                        return true;
+                    }
+                    return false;
+                });
             if (hasValue(element.dataset.target)) {
                 const target = document.getElementById(element.dataset.target as string);
-                if (target && element.parentElement !== target && !includes(optional(target, 'dataset.ext') as string, WIDGET_NAME.COORDINATOR)) {
+                if (target &&
+                    element.parentElement !== target &&
+                    !includes(optional(target, 'dataset.ext'), WIDGET_NAME.COORDINATOR))
+                {
                     this.application.elements.add(element);
                 }
             }
@@ -41,63 +45,64 @@ export default class Toolbar<T extends View> extends Extension<T> {
     }
 
     public processNode(): ExtensionResult {
-        let xml = '';
         const controller = this.application.controllerHandler;
         const node = this.node;
         const parent = this.parent as T;
-        const target = node.isSet('dataset', 'target');
+        const target = hasValue(node.dataset.target);
         const options = Object.assign({}, this.options[node.element.id]);
         const optionsToolbar = Object.assign({}, options.toolbar);
         const optionsAppBar = Object.assign({}, options.appBar);
         const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
         const appBarChildren: T[] = [];
         const collapsingToolbarChildren: T[] = [];
-        const hasMenu = (locateExtension(node, WIDGET_NAME.MENU) != null);
+        const hasMenu = locateExtension(node, WIDGET_NAME.MENU) != null;
         const backgroundImage = node.has('backgroundImage');
-        let depth = (target ? 0 : node.depth);
+        let xml = '';
+        let depth = target ? 0 : node.depth;
         let children = node.children.filter(item => item.auto).length;
-        Array.from(node.element.children).forEach((element: HTMLElement) => {
-            if (element.tagName === 'IMG') {
-                if (hasValue(element.dataset.navigationIcon)) {
-                    const result = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
-                    if (result !== '') {
-                        overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
-                        if (getStyle(element).display !== 'none') {
-                            children--;
+        Array.from(node.element.children)
+            .forEach((element: HTMLElement) => {
+                if (element.tagName === 'IMG') {
+                    if (hasValue(element.dataset.navigationIcon)) {
+                        const result = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
+                        if (result !== '') {
+                            overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
+                            if (getStyle(element).display !== 'none') {
+                                children--;
+                            }
+                        }
+                    }
+                    if (hasValue(element.dataset.collapseIcon)) {
+                        const result = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
+                        if (result !== '') {
+                            overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
+                            if (getStyle(element).display !== 'none') {
+                                children--;
+                            }
                         }
                     }
                 }
-                if (hasValue(element.dataset.collapseIcon)) {
-                    const result = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
-                    if (result !== '') {
-                        overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
-                        if (getStyle(element).display !== 'none') {
-                            children--;
+                if (hasValue(element.dataset.target)) {
+                    children--;
+                }
+                else {
+                    const targetNode = getNodeFromElement(element) as T;
+                    if (targetNode != null) {
+                        switch (element.dataset.targetModule) {
+                            case 'appBar':
+                                appBarChildren.push(targetNode);
+                                children--;
+                                break;
+                            case 'collapsingToolbar':
+                                collapsingToolbarChildren.push(targetNode);
+                                children--;
+                                break;
                         }
                     }
                 }
-            }
-            if (hasValue(element.dataset.target)) {
-                children--;
-            }
-            else {
-                const targetNode = getNodeFromElement(element) as T;
-                if (targetNode) {
-                    switch (element.dataset.targetModule) {
-                        case 'appBar':
-                            appBarChildren.push(targetNode);
-                            children--;
-                            break;
-                        case 'collapsingToolbar':
-                            collapsingToolbarChildren.push(targetNode);
-                            children--;
-                            break;
-                    }
-                }
-            }
-        });
-        const collapsingToolbar = (options.collapsingToolbar != null || collapsingToolbarChildren.length > 0);
-        const appBar = (options.appBar != null || appBarChildren.length > 0 || collapsingToolbar);
+            });
+        const collapsingToolbar = options.collapsingToolbar != null || collapsingToolbarChildren.length > 0;
+        const appBar = options.appBar != null || appBarChildren.length > 0 || collapsingToolbar;
         let appBarOverlay = '';
         let popupOverlay = '';
         if (collapsingToolbar) {
@@ -140,7 +145,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 'match_parent',
                 'wrap_content',
                 node,
-                (children > 0)
+                children > 0
             );
         if (collapsingToolbar) {
             if (backgroundImage) {
@@ -182,7 +187,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
         let collapsingToolbarNode: Null<T> = null;
         if (appBar) {
             overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            overwriteDefault(optionsAppBar, 'android', 'layout_height', (node.viewHeight > 0 ? delimitDimens('appbar', 'height', formatPX(node.viewHeight)) : 'wrap_content'));
+            overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? delimitDimens('appbar', 'height', formatPX(node.viewHeight)) : 'wrap_content');
             overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
             if (hasMenu) {
                 if (optionsAppBar.android.theme != null) {
@@ -194,13 +199,13 @@ export default class Toolbar<T extends View> extends Extension<T> {
             else {
                 overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
-            appBarNode = createPlaceholder(this.application.cache.nextId, node, appBarChildren);
+            appBarNode = createPlaceholder(this.application.cache.nextId, node, appBarChildren) as T;
             appBarNode.nodeId = stripId(optionsAppBar.android.id);
             this.application.cache.append(appBarNode);
             outer =
                 controller.renderNodeStatic(
                     VIEW_SUPPORT.APPBAR,
-                    (target ? -1 : depth),
+                    target ? -1 : depth,
                     optionsAppBar,
                     'match_parent',
                     'wrap_content',
@@ -216,25 +221,28 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 }
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
-                collapsingToolbarNode = createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren);
-                collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
-                this.application.cache.append(collapsingToolbarNode);
-                const content =
-                    controller.renderNodeStatic(
-                        VIEW_SUPPORT.COLLAPSING_TOOLBAR,
-                        (target && !appBar ? -1 : depth),
-                        optionsCollapsingToolbar,
-                        'match_parent',
-                        'match_parent',
-                        collapsingToolbarNode,
-                        true
-                    );
-                outer = replacePlaceholder(outer, appBarNode.id, content);
+                collapsingToolbarNode = createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren) as T;
+                if (collapsingToolbarNode != null) {
+                    collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
+                    this.application.cache.append(collapsingToolbarNode);
+                    const content =
+                        controller.renderNodeStatic(
+                            VIEW_SUPPORT.COLLAPSING_TOOLBAR,
+                            target && !appBar ? -1 : depth,
+                            optionsCollapsingToolbar,
+                            'match_parent',
+                            'match_parent',
+                            collapsingToolbarNode,
+                            true
+                        );
+                    outer = replacePlaceholder(outer, appBarNode.id, content);
+                }
             }
         }
         if (appBarNode != null) {
-            xml = (collapsingToolbarNode != null ? replacePlaceholder(outer, collapsingToolbarNode.id, xml) : replacePlaceholder(outer, appBarNode.id, xml));
-            appBarNode.render((target ? appBarNode : parent));
+            xml = collapsingToolbarNode != null ? replacePlaceholder(outer, collapsingToolbarNode.id, xml)
+                                                : replacePlaceholder(outer, appBarNode.id, xml);
+            appBarNode.render(target ? appBarNode : parent);
             if (collapsingToolbarNode == null) {
                 node.parent = appBarNode;
             }
@@ -252,7 +260,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
             node.render(collapsingToolbarNode);
         }
         else {
-            node.render((target ? node : parent));
+            node.render(target ? node : parent);
         }
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
@@ -275,7 +283,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
             const options = Object.assign({}, this.options[node.element.id]);
             const optionsToolbar = Object.assign({}, options.toolbar);
             overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/${menu}`);
-            node.app('menu', optionsToolbar.app.menu as string);
+            node.app('menu', optionsToolbar.app.menu);
         }
     }
 

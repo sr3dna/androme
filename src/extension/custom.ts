@@ -11,10 +11,10 @@ export default class Custom<T extends Node> extends Extension<T> {
     }
 
     public processNode(): ExtensionResult {
-        let xml = '';
         const node = this.node;
         const parent = this.parent as T;
         const data = this.getData();
+        let xml = '';
         if (data.tag) {
             if (node.children.length > 0) {
                 xml = this.application.controllerHandler.renderGroup(node, parent, data.tag);
@@ -22,7 +22,7 @@ export default class Custom<T extends Node> extends Extension<T> {
             else {
                 xml = this.application.controllerHandler.renderNode(node, parent, data.tag);
             }
-            node.nodeType = (node.blockStatic ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE);
+            node.nodeType = node.blockStatic ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE;
         }
         if (data.tagChild) {
             node.each(item => {

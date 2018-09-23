@@ -36,7 +36,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
     }
 
     public is(node: T) {
-        return (node.hasElement && (this.tagNames.length === 0 || this.tagNames.includes(node.tagName)));
+        return node.hasElement && (this.tagNames.length === 0 || this.tagNames.includes(node.tagName));
     }
 
     public require(value: string, init = false) {
@@ -47,7 +47,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
         if (element == null) {
             element = <Element> this.element;
         }
-        return includes(optional(element, 'dataset.ext') as string, this.name);
+        return includes(optional(element, 'dataset.ext'), this.name);
     }
 
     public beforeInit(internal = false) {
@@ -70,7 +70,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
         if (!internal && this.included()) {
             this.dependencies.filter(item => item.init).forEach(item => {
                 const ext = this.application.getExtension(item.name);
-                if (ext) {
+                if (ext != null) {
                     ext.setTarget(this.node, this.parent, this.element);
                     ext.afterInit(true);
                 }
@@ -83,7 +83,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
         if (node && node.hasElement) {
             const ext: string = optional(node.element, 'dataset.ext');
             if (ext === '') {
-                return (this.tagNames.length > 0);
+                return this.tagNames.length > 0;
             }
             else {
                 return this.included();

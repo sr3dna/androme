@@ -15,7 +15,8 @@ export default abstract class List<T extends Node> extends Extension<T> {
         const children = this.node.children;
         const floated = new Set(children.slice(1).map(node => node.float));
         return (
-            super.condition() && children.length > 0 && (
+            super.condition() &&
+            children.length > 0 && (
                 children.every(node => node.blockStatic) ||
                 children.every(node => node.inlineElement) ||
                 children.every((node, index) => !node.floating && (index === 0 || index === children.length - 1 || node.blockStatic || (node.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic))) ||
@@ -27,11 +28,11 @@ export default abstract class List<T extends Node> extends Extension<T> {
     }
 
     public processNode(): ExtensionResult {
-        let xml = '';
         const node = this.node;
         const parent = this.parent as T;
+        let xml = '';
         if (NodeList.linearY(node.children)) {
-            xml = this.application.writeGridLayout(node, parent, (node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2));
+            xml = this.application.writeGridLayout(node, parent, node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2);
         }
         else {
             xml = this.application.writeLinearLayout(node, parent, true);
@@ -104,6 +105,6 @@ export default abstract class List<T extends Node> extends Extension<T> {
     }
 
     private hasSingleImage(node: T) {
-        return (node.css('backgroundImage') !== 'none' && node.css('backgroundRepeat') === 'no-repeat');
+        return node.css('backgroundImage') !== 'none' && node.css('backgroundRepeat') === 'no-repeat';
     }
 }

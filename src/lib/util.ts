@@ -1,15 +1,22 @@
 import { Null, ObjectMap, StringMap } from './types';
 
+const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+const NUMERALS = [
+    '', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
+    '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC',
+    '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'
+];
+
 function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
     return list.sort((a: T, b: T) => {
         for (const attr of attrs) {
             const result = compareObject(a, b, attr);
             if (result && result[0] !== result[1]) {
                 if (asc === 0) {
-                    return (result[0] > result[1] ? 1 : -1);
+                    return result[0] > result[1] ? 1 : -1;
                 }
                 else {
-                    return (result[0] < result[1] ? 1 : -1);
+                    return result[0] < result[1] ? 1 : -1;
                 }
             }
         }
@@ -20,14 +27,14 @@ function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
 export function partition<T>(list: T[], predicate: (value: T) => boolean): [T[], T[]] {
     const valid: T[] = [];
     const invalid: T[] = [];
-    list.forEach((node: T) => {
+    for (const node of list) {
         if (predicate(node)) {
             valid.push(node);
         }
         else {
             invalid.push(node);
         }
-    });
+    }
     return [valid, invalid];
 }
 
@@ -61,11 +68,11 @@ export function convertCamelCase(value: string, char = '-') {
 }
 
 export function convertWord(value: string) {
-    return (value ? value.replace(/[^\w]/g, '_').trim() : '');
+    return value ? value.replace(/[^\w]/g, '_').trim() : '';
 }
 
 export function capitalize(value: string, upper = true) {
-    return (value ? value.charAt(0)[(upper ? 'toUpperCase' : 'toLowerCase')]() + value.substring(1)[(upper ? 'toLowerCase' : 'toString')]() : '');
+    return value ? value.charAt(0)[(upper ? 'toUpperCase' : 'toLowerCase')]() + value.substring(1)[(upper ? 'toLowerCase' : 'toString')]() : '';
 }
 
 export function convertInt(value: any) {
@@ -79,22 +86,22 @@ export function convertFloat(value: any) {
 export function convertPX(value: any, fontSize: string) {
     if (hasValue(value)) {
         if (isNumber(value)) {
-            value = `${value}px`;
+            return `${Math.round(value)}px`;
         }
-        const match = value.match(/(pt|em)/);
-        value = parseFloat(value);
-        if (match) {
-            switch (match[0]) {
-                case 'pt':
-                    value *= (4 / 3);
-                    break;
-                case 'em':
-                    value *= convertInt(fontSize) || 16;
-                    break;
+        let result = parseFloat(value);
+        if (!isNaN(result)) {
+            const match = value.match(/(pt|em)/);
+            if (match) {
+                switch (match[0]) {
+                    case 'pt':
+                        result *= (4 / 3);
+                        break;
+                    case 'em':
+                        result *= convertInt(fontSize) || 16;
+                        break;
+                }
             }
-        }
-        if (!isNaN(value)) {
-            return `${value}px`;
+            return `${result}px`;
         }
     }
     return '0px';
@@ -114,39 +121,35 @@ export function replaceWhiteSpace(value: string) {
 
 export function formatPX(value: any) {
     value = parseFloat(value);
-    return `${(!isNaN(value) ? Math.ceil(value) : 0)}px`;
+    return `${!isNaN(value) ? Math.round(value) : 0}px`;
 }
 
 export function convertAlpha(value: number) {
-    const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     let result = '';
-    while (value >= alphabet.length) {
-        const base = Math.floor(value / alphabet.length);
-        if (base > 1 && base <= alphabet.length) {
-            result += alphabet.charAt(base - 1);
-            value -= base * alphabet.length;
+    while (value >= ALPHABET.length) {
+        const base = Math.floor(value / ALPHABET.length);
+        if (base > 1 && base <= ALPHABET.length) {
+            result += ALPHABET.charAt(base - 1);
+            value -= base * ALPHABET.length;
         }
-        else if (base > alphabet.length) {
-            result += convertAlpha(base * alphabet.length);
-            value -= base * alphabet.length;
+        else if (base > ALPHABET.length) {
+            result += convertAlpha(base * ALPHABET.length);
+            value -= base * ALPHABET.length;
         }
-        const index = value % alphabet.length;
-        result += alphabet.charAt(index);
-        value -= index + alphabet.length;
+        const index = value % ALPHABET.length;
+        result += ALPHABET.charAt(index);
+        value -= index + ALPHABET.length;
     }
-    result = alphabet.charAt(value) + result;
+    result = ALPHABET.charAt(value) + result;
     return result;
 }
 
 export function convertRoman(value: number) {
     let result = '';
     const digits = value.toString().split('');
-    const numerals = ['', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
-                      '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC',
-                      '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'];
     let i = 3;
     while (i--) {
-        result = (numerals[parseInt(digits.pop() || '') + (i * 10)] || '') + result;
+        result = (NUMERALS[parseInt(digits.pop() || '') + (i * 10)] || '') + result;
     }
     return 'M'.repeat(parseInt(digits.join(''))) + result;
 }
@@ -162,19 +165,19 @@ export function convertEnum(value: number, base: {}, derived: {}): string {
 }
 
 export function hasBit(value: number, type: number) {
-    return ((value & type) === type);
+    return (value & type) === type;
 }
 
 export function isNumber(value: string) {
     return /^-?[0-9]+(\.[0-9]+)?$/.test(value.toString().trim());
 }
 
-export function isString(value: string) {
-    return (typeof value === 'string' && value !== '');
+export function isString(value: any) {
+    return typeof value === 'string' && value !== '';
 }
 
 export function isUnit(value: string) {
-    return /^-?[0-9\.]+(px|pt|em)$/.test((value || '').trim());
+    return isString(value) ? /^-?[0-9\.]+(px|pt|em)$/.test(value.trim()) : false;
 }
 
 export function isPercent(value: string) {
@@ -182,31 +185,32 @@ export function isPercent(value: string) {
 }
 
 export function includes(source: Null<string>, value: string, delimiter = ',') {
-    return (source != null ? source.split(delimiter).map(segment => segment.trim()).includes(value) : false);
+    return source != null ? source.split(delimiter).map(segment => segment.trim()).includes(value)
+                          : false;
 }
 
 export function optional(obj: any, value: string, type?: string) {
     let valid = false;
     let result: any = null;
     if (obj != null) {
-        const attrs = value.split('.');
         result = obj;
+        const attrs = value.split('.');
         let i = 0;
         do {
-            result = (result[attrs[i]] != null ? result[attrs[i]] : null);
+            result = result[attrs[i]] != null ? result[attrs[i]] : null;
         }
         while (result != null && ++i < attrs.length && typeof result !== 'string' && typeof result !== 'number' && typeof result !== 'boolean');
-        valid = (result != null && i === attrs.length);
+        valid = result != null && i === attrs.length;
     }
     switch (type) {
         case 'object':
-            return (valid ? result : null);
+            return valid ? result : null;
         case 'number':
-            return (valid && !isNaN(parseInt(result)) ? parseInt(result) : 0);
+            return valid && !isNaN(parseInt(result)) ? parseInt(result) : 0;
         case 'boolean':
-            return (valid && result);
+            return valid && result === true;
         default:
-            return (valid ? result.toString() : '');
+            return valid ? result.toString() : '';
     }
 }
 
@@ -339,15 +343,15 @@ export function compareObject(obj1: {}, obj2: {}, attr: string) {
 }
 
 export function hasValue(value: any) {
-    return (typeof value !== 'undefined' && value !== null && value.toString().trim() !== '');
+    return typeof value !== 'undefined' && value !== null && value.toString().trim() !== '';
 }
 
 export function withinRange(a: number, b: number, n = 0) {
-    return (b >= (a - n) && b <= (a + n));
+    return b >= (a - n) && b <= (a + n);
 }
 
 export function withinFraction(lower: number, upper: number) {
-    return (lower === upper || Math.floor(lower) === Math.floor(upper) || Math.ceil(lower) === Math.ceil(upper) || Math.ceil(lower) === Math.floor(upper) || Math.floor(lower) === Math.ceil(upper));
+    return lower === upper || Math.floor(lower) === Math.floor(upper) || Math.ceil(lower) === Math.ceil(upper) || Math.ceil(lower) === Math.floor(upper) || Math.floor(lower) === Math.ceil(upper);
 }
 
 export function sortAsc<T>(list: T[], ...attrs: string[]) {

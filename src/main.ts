@@ -15,7 +15,6 @@ import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import API_ANDROID from './android/customizations';
 
 import External from './extension/external';
-
 import Custom from './android/extension/custom';
 import List from './android/extension/list';
 import Grid from './android/extension/grid';
@@ -84,74 +83,82 @@ function setStyleMap() {
                         attrs.add(convertCamelCase(attr));
                     }
                     const elements = document.querySelectorAll(cssRule.selectorText);
-                    Array.from(elements).forEach((element: HTMLElement) => {
-                        for (const attr of Array.from(element.style)) {
-                            attrs.add(convertCamelCase(attr));
-                        }
-                        const style = getStyle(element);
-                        const styleMap = {};
-                        for (const attr of attrs) {
-                            if (attr.toLowerCase().indexOf('color') !== -1) {
-                                const color = getByColorName(cssRule.style[attr]);
-                                if (color !== '') {
-                                    cssRule.style[attr] = formatRGB(color);
+                    Array.from(elements)
+                        .forEach((element: HTMLElement) => {
+                            for (const attr of Array.from(element.style)) {
+                                attrs.add(convertCamelCase(attr));
+                            }
+                            const style = getStyle(element);
+                            const styleMap = {};
+                            for (const attr of attrs) {
+                                if (attr.toLowerCase().indexOf('color') !== -1) {
+                                    const color = getByColorName(cssRule.style[attr]);
+                                    if (color !== '') {
+                                        cssRule.style[attr] = formatRGB(color);
+                                    }
+                                }
+                                const cssStyle = cssRule.style[attr];
+                                if (element.style[attr]) {
+                                    styleMap[attr] = element.style[attr];
+                                }
+                                else if (style[attr] === cssStyle) {
+                                    styleMap[attr] = style[attr];
+                                }
+                                else if (cssStyle) {
+                                    switch (attr) {
+                                        case 'fontSize':
+                                            styleMap[attr] = style[attr];
+                                            break;
+                                        case 'width':
+                                        case 'height':
+                                        case 'lineHeight':
+                                        case 'verticalAlign':
+                                        case 'columnGap':
+                                        case 'top':
+                                        case 'right':
+                                        case 'bottom':
+                                        case 'left':
+                                        case 'marginTop':
+                                        case 'marginRight':
+                                        case 'marginBottom':
+                                        case 'marginLeft':
+                                        case 'paddingTop':
+                                        case 'paddingRight':
+                                        case 'paddingBottom':
+                                        case 'paddingLeft':
+                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(cssStyle as string) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle, style.fontSize as string);
+                                            break;
+                                        default:
+                                            if (styleMap[attr] == null) {
+                                                styleMap[attr] = cssStyle;
+                                            }
+                                            break;
+                                    }
                                 }
                             }
-                            const cssStyle = cssRule.style[attr];
-                            if (element.style[attr]) {
-                                styleMap[attr] = element.style[attr];
-                            }
-                            else if (style[attr] === cssStyle) {
-                                styleMap[attr] = style[attr];
-                            }
-                            else if (cssStyle) {
-                                switch (attr) {
-                                    case 'fontSize':
-                                        styleMap[attr] = style[attr];
-                                        break;
-                                    case 'width':
-                                    case 'height':
-                                    case 'lineHeight':
-                                    case 'verticalAlign':
-                                    case 'top':
-                                    case 'right':
-                                    case 'bottom':
-                                    case 'left':
-                                    case 'marginTop':
-                                    case 'marginRight':
-                                    case 'marginBottom':
-                                    case 'marginLeft':
-                                    case 'paddingTop':
-                                    case 'paddingRight':
-                                    case 'paddingBottom':
-                                    case 'paddingLeft':
-                                        styleMap[attr] = (/^[A-Za-z\-]+$/.test(cssStyle as string) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle, style.fontSize as string));
-                                        break;
-                                    default:
-                                        if (styleMap[attr] == null) {
-                                            styleMap[attr] = cssStyle;
+                            if (SETTINGS.preloadImages &&
+                                hasValue(styleMap['backgroundImage']) &&
+                                styleMap['backgroundImage'] !== 'initial')
+                            {
+                                styleMap['backgroundImage']
+                                    .split(',')
+                                    .map(value => value.trim())
+                                    .forEach(value => {
+                                        const url = parseBackgroundUrl(value);
+                                        if (url !== '' && !IMAGE_CACHE.has(url)) {
+                                            IMAGE_CACHE.set(url, { width: 0, height: 0, url });
                                         }
-                                        break;
-                                }
+                                    });
                             }
-                        }
-                        if (SETTINGS.preloadImages && styleMap['backgroundImage'] != null && styleMap['backgroundImage'] !== 'initial') {
-                            styleMap['backgroundImage'].split(',').map(value => value.trim()).forEach(value => {
-                                const url = parseBackgroundUrl(value);
-                                if (url !== '' && !IMAGE_CACHE.has(url)) {
-                                    IMAGE_CACHE.set(url, { width: 0, height: 0, url });
-                                }
-                            });
-                        }
-                        const data = getElementCache(element, 'styleMap');
-                        if (data) {
-                            Object.assign(data, styleMap);
-                        }
-                        else {
-                            setElementCache(element, 'style', style);
-                            setElementCache(element, 'styleMap', styleMap);
-                        }
-                    });
+                            const data = getElementCache(element, 'styleMap');
+                            if (data != null) {
+                                Object.assign(data, styleMap);
+                            }
+                            else {
+                                setElementCache(element, 'style', style);
+                                setElementCache(element, 'styleMap', styleMap);
+                            }
+                        });
                 }
                 catch (error) {
                     if (!warning) {
@@ -217,7 +224,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                     element.id = `content_${main.size}`;
                 }
             }
-            const filename = (optional(element, 'dataset.filename') as string).trim().replace(/\.xml$/, '') || element.id;
+            const filename: string = optional(element, 'dataset.filename').trim().replace(/\.xml$/, '') || element.id;
             element.dataset.views = ((optional(element, 'dataset.views', 'number') as number) + 1).toString();
             element.dataset.viewName = convertWord(element.dataset.views !== '1' ? `${filename}_${element.dataset.views}` : filename);
             if (main.createNodeCache(element)) {
@@ -233,7 +240,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     }
     if (SETTINGS.preloadImages && rootElement != null) {
         for (const image of IMAGE_CACHE.values()) {
-            if (image.url && image.width === 0 && image.height === 0) {
+            if (image.width === 0 && image.height === 0 && image.url) {
                 const imageElement = <HTMLImageElement> document.createElement('IMG');
                 imageElement.src = image.url;
                 if (imageElement.complete && imageElement.naturalWidth > 0 && imageElement.naturalHeight > 0) {
@@ -251,14 +258,15 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     const images: HTMLImageElement[] =
         Array.from(main.elements).map(element => {
             const queue: HTMLImageElement[] = [];
-            Array.from(element.querySelectorAll('IMG')).forEach((image: HTMLImageElement) => {
-                if (image.complete) {
-                    setImageCache(image);
-                }
-                else {
-                    queue.push(image);
-                }
-            });
+            Array.from(element.querySelectorAll('IMG'))
+                .forEach((image: HTMLImageElement) => {
+                    if (image.complete) {
+                        setImageCache(image);
+                    }
+                    else {
+                        queue.push(image);
+                    }
+                });
             return queue;
         })
         .reduce((a, b) => a.concat(b), []);
@@ -268,10 +276,12 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     else {
         LOADING = true;
         const queue = images.map(image => {
-            return new Promise((resolve, reject) => {
-                image.onload = resolve;
-                image.onerror = reject;
-            });
+            return (
+                new Promise((resolve, reject) => {
+                    image.onload = resolve;
+                    image.onerror = reject;
+                })
+            );
         });
         Promise
             .all(queue)
@@ -279,12 +289,12 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 try {
                     result.forEach((evt: Event) => setImageCache(<HTMLImageElement> evt.srcElement));
                 }
-                catch (e) {
+                catch {
                 }
                 parseResume();
             })
             .catch((err: Event) => {
-                const message = (err.srcElement != null ? (<HTMLImageElement> err.srcElement).src : '');
+                const message = err.srcElement != null ? (<HTMLImageElement> err.srcElement).src : '';
                 if (!hasValue(message) || confirm(`FAIL: ${message}`)) {
                     parseResume();
                 }
@@ -309,11 +319,9 @@ export function registerExtension(ext: Extension<T>) {
 }
 
 export function configureExtension(name: string, options: {}) {
-    if (options != null) {
-        const ext = main.getExtension(name);
-        if (ext != null) {
-            Object.assign(ext.options, options);
-        }
+    const ext = main.getExtension(name);
+    if (ext != null && typeof options === 'object') {
+        Object.assign(ext.options, options);
     }
 }
 

@@ -102,6 +102,11 @@ const API_ANDROID: UserSupport = {
                 android: {
                     layout_marginTop: '-4px'
                 }
+            },
+            Button: {
+                android: {
+                    textAllCaps: 'false'
+                }
             }
         }
     }

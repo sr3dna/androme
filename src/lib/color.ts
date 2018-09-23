@@ -162,18 +162,23 @@ for (const i in X11_CSS3) {
     const x11: Color = X11_CSS3[i];
     for (const j in x11) {
         const rgb = convertHextoRGB(x11[j]);
-        if (rgb) {
+        if (rgb != null) {
             x11.rgb = rgb;
             x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
         }
-        HSL_SORTED.push({ name: i, rgb: x11.rgb, hex: x11.hex, hsl: x11.hsl });
+        HSL_SORTED.push({
+            name: i,
+            rgb: x11.rgb,
+            hex: x11.hex,
+            hsl: x11.hsl
+        });
     }
 }
 HSL_SORTED.sort(sortHSL);
 
 function convertHextoHSL(value: string) {
     const rgb = convertHextoRGB(value);
-    if (rgb) {
+    if (rgb != null) {
         return convertRGBtoHSL(rgb.r, rgb.g, rgb.b);
     }
     return null;
@@ -194,7 +199,7 @@ function convertRGBtoHSL(r: number, g: number, b: number) {
     }
     else {
         const d = max - min;
-        s = (l > 0.5 ? d / (2 - max - min) : d / (max + min));
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
         switch (max) {
             case r:
                 h = (g - b) / d + (g < b ? 6 : 0);
@@ -208,7 +213,11 @@ function convertRGBtoHSL(r: number, g: number, b: number) {
         }
         h /= 6;
     }
-    return { h: (h * 360), s: (s * 100), l: (l * 100) };
+    return {
+        h: (h * 360),
+        s: (s * 100),
+        l: (l * 100)
+    };
 }
 
 function sortHSL(a: Color, b: Color) {
@@ -220,7 +229,7 @@ function sortHSL(a: Color, b: Color) {
                 [c, d] = [a.hsl.l, b.hsl.l];
             }
         }
-        return (c >= d ? 1 : -1);
+        return c >= d ? 1 : -1;
     }
     return 0;
 }
@@ -233,8 +242,13 @@ export function getColorNearest(value: string) {
     }
     else {
         const hsl = convertHextoHSL(value);
-        if (hsl) {
-            result.push({ name: '', hsl, rgb: { r: -1, g: -1, b: -1 }, hex: '' });
+        if (hsl != null) {
+            result.push({
+                name: '',
+                hsl,
+                rgb: { r: -1, g: -1, b: -1 },
+                hex: ''
+            });
             result.sort(sortHSL);
             index = result.findIndex(item => item.name === '');
             return result[Math.min(index + 1, result.length - 1)];
@@ -253,7 +267,7 @@ export function getByColorName(value: string) {
 }
 
 export function formatRGB({ rgb }: Color) {
-    return (rgb != null ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '');
+    return rgb != null ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
 }
 
 export function parseRGBA(value: string, opacity = '1'): string[] {
@@ -267,7 +281,11 @@ export function parseRGBA(value: string, opacity = '1'): string[] {
             if (match[4] == null) {
                 match[4] = opacity;
             }
-            return [`#${convertRGBtoHex(match[1]) + convertRGBtoHex(match[2]) + convertRGBtoHex(match[3])}`, match[0], (parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1')];
+            return [
+                `#${convertRGBtoHex(match[1]) + convertRGBtoHex(match[2]) + convertRGBtoHex(match[3])}`,
+                match[0],
+                parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1'
+            ];
         }
     }
     return [];
@@ -289,7 +307,11 @@ export function convertHextoRGB(value: string) {
         value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
     }
     if (value.length === 6) {
-        return { r: parseInt(value.substring(0, 2), 16), g: parseInt(value.substring(2, 4), 16), b: parseInt(value.substring(4), 16) };
+        return {
+            r: parseInt(value.substring(0, 2), 16),
+            g: parseInt(value.substring(2, 4), 16),
+            b: parseInt(value.substring(4), 16)
+        };
     }
     return null;
 }
@@ -302,7 +324,7 @@ export function parseHex(value: string) {
             value = color[0];
         }
         if (value.charAt(0) === '#' && /^#[a-zA-Z0-9]{3,6}$/.test(value)) {
-            return (value.length === 4 ? parseRGBA(formatRGB(<Color> { rgb: convertHextoRGB(value) }))[0] : value);
+            return value.length === 4 ? parseRGBA(formatRGB(<Color> { rgb: convertHextoRGB(value) }))[0] : value;
         }
     }
     return '';
@@ -311,7 +333,7 @@ export function parseHex(value: string) {
 export function reduceHexToRGB(value: string, percent: number) {
     const rgb = convertHextoRGB(value);
     if (rgb != null) {
-        const base = (percent < 0 ? 0 : 255);
+        const base = percent < 0 ? 0 : 255;
         percent = Math.abs(percent);
         return `rgb(${Math.round((base - rgb.r) * percent) + rgb.r}, ${Math.round((base - rgb.g) * percent) + rgb.g}, ${Math.round((base - rgb.b) * percent) + rgb.b})`;
     }

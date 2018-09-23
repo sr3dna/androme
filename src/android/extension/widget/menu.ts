@@ -88,20 +88,21 @@ export default class Menu<T extends View> extends Nav<T> {
                     title = element.title.trim();
                 }
                 else {
-                    Array.from(node.element.childNodes).some((item: HTMLElement) => {
-                        if (item.nodeName === '#text') {
-                            title = (optional(item, 'textContent') as string).trim();
-                            if (title !== '') {
+                    Array.from(node.element.childNodes)
+                        .some((item: HTMLElement) => {
+                            if (item.nodeName === '#text') {
+                                title = optional(item, 'textContent').trim();
+                                if (title !== '') {
+                                    return true;
+                                }
+                                return false;
+                            }
+                            else if (item.tagName !== 'NAV') {
+                                title = item.innerText.trim();
                                 return true;
                             }
                             return false;
-                        }
-                        else if (item.tagName !== 'NAV') {
-                            title = item.innerText.trim();
-                            return true;
-                        }
-                        return false;
-                    });
+                        });
                 }
                 node.each(item => item.tagName !== 'NAV' && item.hide());
             }
@@ -140,7 +141,7 @@ export default class Menu<T extends View> extends Nav<T> {
                     }
                     else {
                         const image = node.children.find(item => item.imageElement);
-                        if (image) {
+                        if (image != null) {
                             src = ResourceView.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
                             if (src !== '') {
                                 options.android.icon = `@drawable/${src}`;
@@ -187,7 +188,7 @@ export default class Menu<T extends View> extends Nav<T> {
     public afterRender() {
         super.afterRender();
         if (this.included(this.node.element)) {
-            this.application.currentLayout.pathname = 'res/menu';
+            this.application.layoutProcessing.pathname = 'res/menu';
         }
     }
 
@@ -197,7 +198,7 @@ export default class Menu<T extends View> extends Nav<T> {
             if (value != null && validator[attr] != null) {
                 const match = value.match(validator[attr]);
                 if (match) {
-                    const namespace = ((this.options.appCompat == null || this.options.appCompat) && NAMESPACE_APP.includes(attr) ? 'app' : 'android');
+                    const namespace = (this.options.appCompat == null || this.options.appCompat) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
                     options[namespace][attr] = Array.from(new Set(match)).join('|');
                 }
             }
@@ -205,6 +206,6 @@ export default class Menu<T extends View> extends Nav<T> {
     }
 
     private hasInputType(node: T, value: string) {
-        return (node.children.length > 0 && node.children.some(item => (<HTMLInputElement> item.element).type === value));
+        return node.children.length > 0 && node.children.some(item => (<HTMLInputElement> item.element).type === value);
     }
 }

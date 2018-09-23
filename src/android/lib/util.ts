@@ -34,7 +34,7 @@ export function generateId(section: string, name: string) {
 }
 
 export function stripId(value: Null<string>) {
-    return (value != null ? value.replace(/@\+?id\//, '') : '');
+    return value != null ? value.replace(/@\+?id\//, '') : '';
 }
 
 export function convertDP(value: any, dpi = 160, font = false) {
@@ -42,7 +42,7 @@ export function convertDP(value: any, dpi = 160, font = false) {
         value = parseFloat(value);
         if (!isNaN(value)) {
             value /= (dpi / 160);
-            value = (value >= 1 || value === 0 ? Math.floor(value) : value.toFixed(2));
+            value = value >= 1 || value === 0 ? Math.floor(value) : value.toFixed(2);
             return value + (font ? 'sp' : 'dp');
         }
     }
@@ -50,7 +50,7 @@ export function convertDP(value: any, dpi = 160, font = false) {
 }
 
 export function delimitDimens(nodeName: string, attr: string, size: string) {
-    return (SETTINGS.dimensResourceValue ? `{%${nodeName.toLowerCase()},${attr},${size}}` : size);
+    return SETTINGS.dimensResourceValue ? `{%${nodeName.toLowerCase()},${attr},${size}}` : size;
 }
 
 export function replaceUnit(value: string, font = false) {
@@ -66,5 +66,12 @@ export function calculateBias(start: number, end: number, accurracy?: number) {
     if (accurracy == null) {
         accurracy = SETTINGS.constraintPercentAccuracy;
     }
-    return parseFloat(Math.max(start === 0 ? 0 : (end === 0 ? 1 : (start / (start + end))), 0).toFixed(accurracy));
+    return (
+        parseFloat(
+            Math.max(start === 0 ? 0
+                                 : (end === 0 ? 1
+                                              : (start / (start + end))), 0)
+                .toFixed(accurracy)
+        )
+    );
 }

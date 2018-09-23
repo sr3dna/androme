@@ -1,9 +1,9 @@
-import { ArrayIndex, BorderAttribute, BoxStyle, FontAttribute, Image, NameValue, Null, ObjectMap, StringMap, ViewData } from '../lib/types';
+import { BorderAttribute, BoxStyle, FontAttribute, Image, NameValue, Null, ObjectMap, ObjectMapNested, StringMap, ViewData } from '../lib/types';
 import Resource from '../base/resource';
 import File from '../base/file';
 import View from './view';
 import NodeList from '../base/nodelist';
-import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, lastIndexOf, trimString } from '../lib/util';
+import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, isString, lastIndexOf, trimString } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setElementCache } from '../lib/dom';
@@ -40,7 +40,7 @@ const METHOD_ANDROID = {
 };
 
 type StyleTag = {
-    name?: string;
+    name: string;
     attributes: string;
     ids: number[];
 };
@@ -57,7 +57,7 @@ type BackgroundImage = {
     height: string;
 };
 
-type StyleList = ArrayIndex<ObjectMap<number[]>>;
+type StyleList = ObjectMap<number[]>[];
 
 export default class ResourceView<T extends View> extends Resource<T> {
     public static addString(value: string, name = '') {
@@ -72,7 +72,15 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         return resourceName;
                     }
                 }
-                name = name.trim().replace(/[^a-zA-Z0-9]/g, '_').toLowerCase().replace(/_+/g, '_').split('_').slice(0, 4).join('_').replace(/_+$/g, '');
+                name =
+                    name.trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, '_')
+                    .replace(/_+/g, '_')
+                    .split('_')
+                    .slice(0, 4)
+                    .join('_')
+                    .replace(/_+$/g, '');
                 if (numeric || /^[0-9]/.test(name) || RESERVED_JAVA.includes(name)) {
                     name = `__${name}`;
                 }
@@ -94,35 +102,37 @@ export default class ResourceView<T extends View> extends Resource<T> {
         const images = {};
         if (srcset !== '') {
             const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-            srcset.split(',').forEach(value => {
-                const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                if (match) {
-                    if (match[2] == null) {
-                        match[2] = '1x';
+            srcset
+                .split(',')
+                .forEach(value => {
+                    const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                    if (match) {
+                        if (match[2] == null) {
+                            match[2] = '1x';
+                        }
+                        const image = filepath + lastIndexOf(match[1]);
+                        switch (match[2]) {
+                            case '0.75x':
+                                images['ldpi'] = image;
+                                break;
+                            case '1x':
+                                images['mdpi'] = image;
+                                break;
+                            case '1.5x':
+                                images['hdpi'] = image;
+                                break;
+                            case '2x':
+                                images['xhdpi'] = image;
+                                break;
+                            case '3x':
+                                images['xxhdpi'] = image;
+                                break;
+                            case '4x':
+                                images['xxxhdpi'] = image;
+                                break;
+                        }
                     }
-                    const image = filepath + lastIndexOf(match[1]);
-                    switch (match[2]) {
-                        case '0.75x':
-                            images['ldpi'] = image;
-                            break;
-                        case '1x':
-                            images['mdpi'] = image;
-                            break;
-                        case '1.5x':
-                            images['hdpi'] = image;
-                            break;
-                        case '2x':
-                            images['xhdpi'] = image;
-                            break;
-                        case '3x':
-                            images['xxhdpi'] = image;
-                            break;
-                        case '4x':
-                            images['xxxhdpi'] = image;
-                            break;
-                    }
-                }
-            });
+                });
         }
         if (images['mdpi'] == null) {
             images['mdpi'] = element.src;
@@ -163,13 +173,14 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public static addColor(value: string, opacity = '1') {
         value = value.toUpperCase().trim();
-        const opaque = (parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}` : value);
+        const opaque = parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}`
+                                               : value;
         if (value !== '') {
             let colorName = '';
             if (!Resource.STORED.COLORS.has(opaque)) {
                 const color = getColorNearest(value);
                 if (color !== '') {
-                    color.name = cameltoLowerCase(color.name as string);
+                    color.name = cameltoLowerCase(color.name);
                     if (value === color.hex && value === opaque) {
                         colorName = color.name;
                     }
@@ -230,27 +241,29 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 let valid = true;
                 for (let i = 0; i < children.length; i++) {
                     let found = false;
-                    children[i].combine('_', 'android').some(value => {
-                        if (value.startsWith('style=')) {
-                            if (i === 0) {
-                                style = value;
+                    children[i]
+                        .combine('_', 'android')
+                        .some(value => {
+                            if (value.startsWith('style=')) {
+                                if (i === 0) {
+                                    style = value;
+                                }
+                                else {
+                                    if (style === '' || value !== style) {
+                                        valid = false;
+                                        return true;
+                                    }
+                                }
+                                found = true;
                             }
                             else {
-                                if (style === '' || value !== style) {
-                                    valid = false;
-                                    return true;
+                                if (!map.has(value)) {
+                                    map.set(value, 0);
                                 }
+                                map.set(value, (map.get(value) as number) + 1);
                             }
-                            found = true;
-                        }
-                        else {
-                            if (!map.has(value)) {
-                                map.set(value, 0);
-                            }
-                            map.set(value, (map.get(value) as number) + 1);
-                        }
-                        return false;
-                    });
+                            return false;
+                        });
                     if (!valid || (style !== '' && !found)) {
                         valid = false;
                         break;
@@ -300,8 +313,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setBoxSpacing();
         this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)).each(node => {
             const stored: StringMap = getElementCache(node.element, 'boxSpacing');
-            if (stored) {
-                if (stored.marginLeft === stored.marginRight && node.alignParent('left') && node.alignParent('right') && !node.blockWidth && !(node.position === 'relative' && node.alignNegative)) {
+            if (stored != null) {
+                if (stored.marginLeft === stored.marginRight &&
+                    node.alignParent('left') &&
+                    node.alignParent('right') &&
+                    !node.blockWidth &&
+                    !(node.position === 'relative' && node.alignNegative))
+                {
                     node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
                     node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                 }
@@ -319,7 +337,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         super.setBoxStyle();
         this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE)).each(node => {
             const stored: BoxStyle = getElementCache(node.element, 'boxStyle');
-            if (stored) {
+            if (stored != null) {
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
@@ -346,7 +364,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 backgroundPosition = backgroundPosition.filter(value => value !== '');
                 const method = METHOD_ANDROID['boxStyle'];
                 const companion = node.companion;
-                if (companion && companion.hasElement && !cssFromParent(companion.element, 'backgroundColor')) {
+                if (companion &&
+                    companion.hasElement &&
+                    !cssFromParent(companion.element, 'backgroundColor'))
+                {
                     const boxStyle: BoxStyle = getElementCache(companion.element, 'boxStyle');
                     if (Array.isArray(boxStyle.backgroundColor) && boxStyle.backgroundColor.length > 0) {
                         stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
@@ -398,7 +419,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 tileMode = 'disabled';
                                 break;
                             case 'repeat':
-                                if (image == null || image.width < node.bounds.width || image.height < node.bounds.height) {
+                                if (image == null ||
+                                    image.width < node.bounds.width ||
+                                    image.height < node.bounds.height)
+                                {
                                     tileMode = 'repeat';
                                 }
                                 break;
@@ -544,7 +568,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             backgroundImage.length = 0;
                         }
                         else {
-                            if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
+                            if (gravity !== '' ||
+                                tileMode !== '' ||
+                                tileModeX !== '' ||
+                                tileModeY !== '')
+                            {
                                 image3.push({
                                     top,
                                     left,
@@ -602,10 +630,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         let leftTop = `-${formatPX(leftWidth + 1)}`;
                         let rightBottom = `-${formatPX(leftWidth)}`;
                         templateData['4'].push({
-                            'top': (top ? '' :  rightBottom),
-                            'right': (right ? '' :  leftTop),
-                            'bottom': (bottom ? '' :  rightBottom),
-                            'left': (left ? '' :  leftTop),
+                            'top': top ? '' :  rightBottom,
+                            'right': right ? '' :  leftTop,
+                            'bottom': bottom ? '' :  rightBottom,
+                            'left': left ? '' :  leftTop,
                             '5': [{ width: formatPX(leftWidth), borderStyle: this.getBorderStyle(border) }],
                             '6': radius
                         });
@@ -613,10 +641,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         rightBottom = `-${formatPX(width)}`;
                         const indentWidth = `${formatPX(width - baseWidth)}`;
                         templateData['4'].push({
-                            'top': (top ? indentWidth : leftTop),
-                            'right': (right ? indentWidth : rightBottom),
-                            'bottom': (bottom ? indentWidth : rightBottom),
-                            'left': (left ? indentWidth : leftTop),
+                            'top': top ? indentWidth : leftTop,
+                            'right': right ? indentWidth : rightBottom,
+                            'bottom': bottom ? indentWidth : rightBottom,
+                            'left': left ? indentWidth : leftTop,
                             '5': [{ width: formatPX(rightWidth), borderStyle: this.getBorderStyle(border) }],
                             '6': radius
                         });
@@ -642,8 +670,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             data = {
                                 '0': [{
                                     '1': backgroundColor,
-                                    '2': (image2.length > 0 ? image2 : false),
-                                    '3': (image3.length > 0 ? image3 : false),
+                                    '2': image2.length > 0 ? image2 : false,
+                                    '3': image3.length > 0 ? image3 : false,
                                     '4': [{
                                         '5': this.getShapeAttribute(stored, 'stroke'),
                                         '6': radius
@@ -657,8 +685,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         data = {
                             '0': [{
                                 '1': backgroundColor,
-                                '2': (image2.length > 0 ? image2 : false),
-                                '3': (image3.length > 0 ? image3 : false),
+                                '2': image2.length > 0 ? image2 : false,
+                                '3': image3.length > 0 ? image3 : false,
                                 '4': [],
                                 '7': []
                             }]
@@ -668,19 +696,29 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         const borderWidth = new Set(borderVisible.map(item => item.width));
                         const borderStyle = new Set(borderVisible.map(item => this.getBorderStyle(item)));
                         const borderData = borderVisible[0];
-                        if (borderWidth.size === 1 && borderStyle.size === 1 && !(borderData.style === 'groove' || borderData.style === 'ridge')) {
+                        if (borderWidth.size === 1 &&
+                            borderStyle.size === 1 &&
+                            !(borderData.style === 'groove' || borderData.style === 'ridge'))
+                        {
                             const width = parseInt(borderData.width);
                             if (width > 2 && borderData.style === 'double') {
-                                createDoubleBorder.apply(this, [root, borderData, this.borderVisible(stored.borderTop), this.borderVisible(stored.borderRight), this.borderVisible(stored.borderBottom), this.borderVisible(stored.borderLeft)]);
+                                createDoubleBorder.apply(this, [
+                                    root,
+                                    borderData,
+                                    this.borderVisible(stored.borderTop),
+                                    this.borderVisible(stored.borderRight),
+                                    this.borderVisible(stored.borderBottom),
+                                    this.borderVisible(stored.borderLeft)
+                                ]);
                             }
                             else {
                                 const leftTop = `-${formatPX(width + 1)}`;
                                 const rightBottom = `-${formatPX(width)}`;
                                 root['4'].push({
-                                    'top': (this.borderVisible(stored.borderTop) ? '' : leftTop),
-                                    'right': (this.borderVisible(stored.borderRight) ? '' : rightBottom),
-                                    'bottom': (this.borderVisible(stored.borderBottom) ? '' : rightBottom),
-                                    'left': (this.borderVisible(stored.borderLeft) ? '' : leftTop),
+                                    'top': this.borderVisible(stored.borderTop) ? '' : leftTop,
+                                    'right': this.borderVisible(stored.borderRight) ? '' : rightBottom,
+                                    'bottom': this.borderVisible(stored.borderBottom) ? '' : rightBottom,
+                                    'left': this.borderVisible(stored.borderLeft) ? '' : leftTop,
                                     '5': this.getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
                                     '6': radius
                                 });
@@ -691,18 +729,25 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 if (this.borderVisible(item)) {
                                     const width = parseInt(item.width);
                                     if (width > 2 && item.style === 'double') {
-                                        createDoubleBorder.apply(this, [root, item, (index === 0), (index === 1), (index === 2), (index === 3)]);
+                                        createDoubleBorder.apply(this, [
+                                            root,
+                                            item,
+                                            index === 0,
+                                            index === 1,
+                                            index === 2,
+                                            index === 3
+                                        ]);
                                     }
                                     else {
-                                        const hasInset = (width > 1 && (item.style === 'groove' || item.style === 'ridge'));
-                                        const outsetWidth = (index === 1 ? Math.ceil(width / 2) : width);
+                                        const hasInset = width > 1 && (item.style === 'groove' || item.style === 'ridge');
+                                        const outsetWidth = index === 1 ? Math.ceil(width / 2) : width;
                                         let leftTop = `-${formatPX(outsetWidth + 1)}`;
                                         let rightBottom = `-${formatPX(outsetWidth)}`;
                                         root['4'].push({
-                                            'top':  (index === 0 ? '' : leftTop),
-                                            'right': (index === 1 ? '' : rightBottom),
-                                            'bottom': (index === 2 ? '' : rightBottom),
-                                            'left': (index === 3 ? '' : leftTop),
+                                            'top':  index === 0 ? '' : leftTop,
+                                            'right': index === 1 ? '' : rightBottom,
+                                            'bottom': index === 2 ? '' : rightBottom,
+                                            'left': index === 3 ? '' : leftTop,
                                             '5': this.getShapeAttribute(<BoxStyle> { border: item }, 'stroke', index, hasInset),
                                             '6': radius
                                         });
@@ -710,10 +755,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                             leftTop = `-${formatPX(width + 1)}`;
                                             rightBottom = `-${formatPX(width)}`;
                                             root['7'].push({
-                                                'top':  (index === 0 ? '' : leftTop),
-                                                'right': (index === 1 ? '' : rightBottom),
-                                                'bottom': (index === 2 ? '' : rightBottom),
-                                                'left': (index === 3 ? '' : leftTop),
+                                                'top':  index === 0 ? '' : leftTop,
+                                                'right': index === 1 ? '' : rightBottom,
+                                                'bottom': index === 2 ? '' : rightBottom,
+                                                'left': index === 3 ? '' : leftTop,
                                                 '8': this.getShapeAttribute(<BoxStyle> { border: item }, 'stroke', index, true, true)
                                             });
                                         }
@@ -741,7 +786,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             Resource.STORED.DRAWABLES.set(resourceName, xml);
                         }
                     }
-                    node.formatted(formatString(method['background'], resourceName), (node.renderExtension.size === 0));
+                    node.formatted(formatString(method['background'], resourceName), node.renderExtension.size === 0);
                     if (backgroundImage.length > 0) {
                         node.data('RESOURCE', 'backgroundImage', true);
                         if (SETTINGS.autoSizeBackgroundImage &&
@@ -793,8 +838,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                     }
                 }
-                else if (getElementCache(node.element, 'fontStyle') == null && stored.backgroundColor.length > 0) {
-                    node.formatted(formatString(method['backgroundColor'], <string> stored.backgroundColor), (node.renderExtension.size === 0));
+                else if (getElementCache(node.element, 'fontStyle') == null && isString(stored.backgroundColor)) {
+                    node.formatted(formatString(method['backgroundColor'], stored.backgroundColor as string), node.renderExtension.size === 0);
                 }
             }
         });
@@ -803,24 +848,29 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public setFontStyle() {
         super.setFontStyle();
         const tagName: ObjectMap<T[]> = {};
-        this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE)).each(node => {
-            if (getElementCache(node.element, 'fontStyle')) {
-                if (tagName[node.nodeName] == null) {
-                    tagName[node.nodeName] = [];
+        this.cache
+            .filter(node =>
+                node.visible &&
+                !node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE)
+            )
+            .each(node => {
+                if (getElementCache(node.element, 'fontStyle')) {
+                    if (tagName[node.nodeName] == null) {
+                        tagName[node.nodeName] = [];
+                    }
+                    tagName[node.nodeName].push(node);
                 }
-                tagName[node.nodeName].push(node);
-            }
-            const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
-            if (match) {
-                const color = parseRGBA(match[1]);
-                if (color.length > 0) {
-                    node.android('shadowColor', `@color/${ResourceView.addColor(color[0], color[2])}`);
+                const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
+                if (match) {
+                    const color = parseRGBA(match[1]);
+                    if (color.length > 0) {
+                        node.android('shadowColor', `@color/${ResourceView.addColor(color[0], color[2])}`);
+                    }
+                    node.android('shadowDx', convertInt(match[2]).toString());
+                    node.android('shadowDy', convertInt(match[3]).toString());
+                    node.android('shadowRadius', convertInt(match[4]).toString());
                 }
-                node.android('shadowDx', convertInt(match[2]).toString());
-                node.android('shadowDy', convertInt(match[3]).toString());
-                node.android('shadowRadius', convertInt(match[4]).toString());
-            }
-        });
+            });
         for (const tag in tagName) {
             const nodes = new NodeList<T>(tagName[tag]);
             const sorted: StyleList = [];
@@ -836,7 +886,12 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     stored.backgroundColor = `@color/${ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
                 }
                 if (stored.fontFamily) {
-                    let fontFamily = stored.fontFamily.toLowerCase().split(',')[0].replace(/"/g, '').trim();
+                    let fontFamily =
+                        stored.fontFamily
+                        .toLowerCase()
+                        .split(',')[0]
+                        .replace(/"/g, '')
+                        .trim();
                     let fontStyle = '';
                     let fontWeight = '';
                     if (Array.isArray(stored.color) && stored.color.length > 0) {
@@ -845,7 +900,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     if (SETTINGS.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily] != null) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
-                    if ((FONT_ANDROID[fontFamily] != null && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) || (SETTINGS.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] != null && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]])) {
+                    if ((FONT_ANDROID[fontFamily] != null && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) ||
+                        (SETTINGS.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] != null && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]]))
+                    {
                         system = true;
                         stored.fontFamily = fontFamily;
                         if (stored.fontStyle === 'normal') {
@@ -865,7 +922,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                     if (!system) {
                         const fonts = Resource.STORED.FONTS.get(fontFamily) || {};
-                        Object.assign(fonts, { [`${fontStyle}-${fontWeight}`]: true });
+                        Object.assign(fonts, {
+                            [`${fontStyle}-${fontWeight}`]: true
+                        });
                         Resource.STORED.FONTS.set(fontFamily, fonts);
                     }
                 }
@@ -909,119 +968,127 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     public setImageSource() {
-        this.cache.filter(node =>
-            node.visible &&
-            (node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
-            !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)
-        ).each(node => {
-            const element = <HTMLImageElement> node.element;
-            if (getElementCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
-                const result = (node.imageElement ? ResourceView.addImageSrcSet(element) : ResourceView.addImage({ 'mdpi': element.src }));
-                if (result !== '') {
-                    const method = METHOD_ANDROID['imageSource'];
-                    node.formatted(formatString(method['src'], result), (node.renderExtension.size === 0));
-                    setElementCache(element, 'imageSource', result);
+        this.cache
+            .filter(node =>
+                node.visible &&
+                (node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
+                !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)
+            ).each(node => {
+                const element = <HTMLImageElement> node.element;
+                if (getElementCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
+                    const result = node.imageElement ? ResourceView.addImageSrcSet(element)
+                                                     : ResourceView.addImage({ 'mdpi': element.src });
+                    if (result !== '') {
+                        const method = METHOD_ANDROID['imageSource'];
+                        node.formatted(formatString(method['src'], result), node.renderExtension.size === 0);
+                        setElementCache(element, 'imageSource', result);
+                    }
                 }
-            }
-        });
+            });
     }
 
     public setOptionArray() {
         super.setOptionArray();
-        this.cache.filter(node =>
-            node.visible &&
-            node.tagName === 'SELECT' &&
-            !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
-        ).each(node => {
-            const stored: ObjectMap<string[]> = getElementCache(node.element, 'optionArray');
-            if (stored) {
-                const method = METHOD_ANDROID['optionArray'];
-                let result: string[] = [];
-                if (stored.stringArray != null) {
-                    result =
-                        stored.stringArray.map(value => {
-                            const name = ResourceView.addString(value);
-                            return (name !== '' ? `@string/${name}` : '');
-                        })
-                        .filter(name => name);
-                }
-                if (stored.numberArray != null) {
-                    result = stored.numberArray;
-                }
-                let arrayName = '';
-                const arrayValue = result.join('-');
-                for (const [storedName, storedResult] of Resource.STORED.ARRAYS.entries()) {
-                    if (arrayValue === storedResult.join('-')) {
-                        arrayName = storedName;
-                        break;
+        this.cache
+            .filter(node =>
+                node.visible &&
+                node.tagName === 'SELECT' &&
+                !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
+            ).each(node => {
+                const stored: ObjectMap<string[]> = getElementCache(node.element, 'optionArray');
+                if (stored != null) {
+                    const method = METHOD_ANDROID['optionArray'];
+                    let result: string[] = [];
+                    if (stored.stringArray != null) {
+                        result =
+                            stored.stringArray
+                                .map(value => {
+                                    const name = ResourceView.addString(value);
+                                    return (name !== '' ? `@string/${name}` : '');
+                                })
+                                .filter(name => name);
                     }
+                    if (stored.numberArray != null) {
+                        result = stored.numberArray;
+                    }
+                    let arrayName = '';
+                    const arrayValue = result.join('-');
+                    for (const [storedName, storedResult] of Resource.STORED.ARRAYS.entries()) {
+                        if (arrayValue === storedResult.join('-')) {
+                            arrayName = storedName;
+                            break;
+                        }
+                    }
+                    if (arrayName === '') {
+                        arrayName = `${node.nodeId}_array`;
+                        Resource.STORED.ARRAYS.set(arrayName, result);
+                    }
+                    node.formatted(formatString(method['entries'], arrayName), node.renderExtension.size === 0);
                 }
-                if (arrayName === '') {
-                    arrayName = `${node.nodeId}_array`;
-                    Resource.STORED.ARRAYS.set(arrayName, result);
-                }
-                node.formatted(formatString(method['entries'], arrayName), (node.renderExtension.size === 0));
-            }
-        });
+            });
     }
 
     public setValueString() {
         super.setValueString();
-        this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING)).each(node => {
-            const stored: NameValue = getElementCache(node.element, 'valueString');
-            if (stored) {
-                if (node.renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.INLINE_WRAP)) {
-                    if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                        const value = node.textContent;
-                        let leadingSpace = 0;
-                        for (let i = 0; value.length; i++) {
-                            switch (value.charCodeAt(i)) {
-                                case 32:
-                                    continue;
-                                case 160:
-                                    leadingSpace++;
-                                    continue;
+        this.cache
+            .filter(
+                node => node.visible &&
+                !node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING))
+            .each(node => {
+                const stored: NameValue = getElementCache(node.element, 'valueString');
+                if (stored != null) {
+                    if (node.renderParent.of(NODE_STANDARD.RELATIVE)) {
+                        if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
+                            const value = node.textContent;
+                            let leadingSpace = 0;
+                            for (let i = 0; i < value.length; i++) {
+                                switch (value.charCodeAt(i)) {
+                                    case 32:
+                                        continue;
+                                    case 160:
+                                        leadingSpace++;
+                                        continue;
+                                }
+                                break;
                             }
-                            break;
-                        }
-                        if (leadingSpace === 0) {
-                            stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
+                            if (leadingSpace === 0) {
+                                stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
+                            }
                         }
                     }
-                }
-                if (node.hasElement && node.is(NODE_STANDARD.TEXT)) {
-                    switch (node.css('fontVariant')) {
-                        case 'small-caps':
-                            stored.value = stored.value.toUpperCase();
-                            break;
-                    }
-                    const match = node.css('textDecoration').match(/(underline|line-through)/);
-                    if (match) {
-                        switch (match[0]) {
-                            case 'underline':
-                                stored.value = `<u>${stored.value}</u>`;
-                                break;
-                            case 'line-through':
-                                stored.value = `<strike>${stored.value}</strike>`;
+                    if (node.hasElement && node.is(NODE_STANDARD.TEXT)) {
+                        switch (node.css('fontVariant')) {
+                            case 'small-caps':
+                                stored.value = stored.value.toUpperCase();
                                 break;
                         }
+                        const match = node.css('textDecoration').match(/(underline|line-through)/);
+                        if (match) {
+                            switch (match[0]) {
+                                case 'underline':
+                                    stored.value = `<u>${stored.value}</u>`;
+                                    break;
+                                case 'line-through':
+                                    stored.value = `<strike>${stored.value}</strike>`;
+                                    break;
+                            }
+                        }
+                    }
+                    const name = ResourceView.addString(stored.value, stored.name);
+                    if (name !== '') {
+                        const method = METHOD_ANDROID['valueString'];
+                        if (node.toInt('textIndent') + node.bounds.width > 0) {
+                            node.formatted(formatString(method['text'], isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name), node.renderExtension.size === 0);
+                        }
                     }
                 }
-                const name = ResourceView.addString(stored.value, stored.name);
-                if (name !== '') {
-                    const method = METHOD_ANDROID['valueString'];
-                    if ((node.toInt('textIndent') + node.bounds.width) > 0) {
-                        node.formatted(formatString(method['text'], (isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name)), (node.renderExtension.size === 0));
-                    }
-                }
-            }
-        });
+            });
     }
 
-    public addTheme(template: string, data: {}, options: ObjectMap<any>) {
+    public addTheme(template: string, templateData: {}, options: ObjectMap<any>) {
         const map: ObjectMap<string> = parseTemplate(template);
         if (options.item != null) {
-            const root = getTemplateLevel(data, '0');
+            const root = getTemplateLevel(templateData, '0');
             for (const name in options.item) {
                 let value = options.item[name];
                 const hex = parseHex(value);
@@ -1031,40 +1098,45 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 root['1'].push({ name, value });
             }
         }
-        const xml = insertTemplateData(map, data);
+        const xml = insertTemplateData(map, templateData);
         this.addFile(options.output.path, options.output.file, xml);
     }
 
     private processFontStyle(viewData: ViewData<NodeList<T>>) {
-        const style = {};
-        const layout = {};
+        const style: ObjectMapNested<number[]> = {};
+        const layout: ObjectMapNested<number[]> = {};
+        const resource: ObjectMap<StyleTag[]> = {};
+        const inherit = new Set<string>();
+        const mapNode: ObjectMapNested<string[]> = {};
         for (const tag in this.tagStyle) {
             style[tag] = {};
             layout[tag] = {};
-            let sorted: StyleList =
-                this.tagStyle[tag].filter((item: ObjectMap<number[]>) => Object.keys(item).length > 0).sort((a, b) => {
-                    let maxA = 0;
-                    let maxB = 0;
-                    let countA = 0;
-                    let countB = 0;
-                    for (const attr in a) {
-                        maxA = Math.max(a[attr].length, maxA);
-                        countA += a[attr].length;
-                    }
-                    for (const attr in b) {
-                        if (b[attr] != null) {
-                            maxB = Math.max(b[attr].length, maxB);
-                            countB += b[attr].length;
-                        }
-                    }
-                    if (maxA !== maxB) {
-                        return (maxA > maxB ? -1 : 1);
-                    }
-                    else {
-                        return (countA >= countB ? -1 : 1);
-                    }
-                });
             const count = this.tagCount[tag];
+            let sorted: StyleList =
+                this.tagStyle[tag]
+                    .filter((item: ObjectMap<number[]>) => Object.keys(item).length > 0)
+                    .sort((a, b) => {
+                        let maxA = 0;
+                        let maxB = 0;
+                        let countA = 0;
+                        let countB = 0;
+                        for (const attr in a) {
+                            maxA = Math.max(a[attr].length, maxA);
+                            countA += a[attr].length;
+                        }
+                        for (const attr in b) {
+                            if (b[attr] != null) {
+                                maxB = Math.max(b[attr].length, maxB);
+                                countB += b[attr].length;
+                            }
+                        }
+                        if (maxA !== maxB) {
+                            return maxA > maxB ? -1 : 1;
+                        }
+                        else {
+                            return countA >= countB ? -1 : 1;
+                        }
+                    });
             do {
                 if (sorted.length === 1) {
                     for (const attr in sorted[0]) {
@@ -1084,7 +1156,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     for (let i = 0; i < sorted.length; i++) {
                         const filtered: ObjectMap<number[]> = {};
                         const combined: ObjectMap<Set<string>> = {};
-                        const deleteKeys = new Set();
+                        const deleteKeys = new Set<string>();
                         for (const attr1 in sorted[i]) {
                             if (sorted[i] == null) {
                                 continue;
@@ -1145,7 +1217,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     else {
                                         combined[index] = new Set([...attr1.split(';'), ...attr2.split(';')]);
                                     }
-                                    deleteKeys.add(attr1).add(attr2);
+                                    deleteKeys
+                                        .add(attr1)
+                                        .add(attr2);
                                 }
                             }
                         }
@@ -1156,7 +1230,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                         for (const index in combined) {
                             const attrs = Array.from(combined[index]).sort().join(';');
-                            const ids = index.split(',').map((value: string) => parseInt(value));
+                            const ids = index.split(',').map(value => parseInt(value));
                             this.deleteStyleAttribute(sorted, attrs, ids);
                             style[tag][attrs] = ids;
                         }
@@ -1178,17 +1252,30 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             delete sorted[i];
                         }
                     }
-                    sorted = (<any> sorted).filter((item: number[]) => item && item.length > 0);
+                    sorted =
+                        sorted.filter((item: ObjectMap<number[]>) => {
+                            if (item != null) {
+                                for (const attr in item) {
+                                    if (item[attr] && item[attr].length > 0) {
+                                        return true;
+                                    }
+                                }
+                            }
+                            return false;
+                        });
                 }
             }
             while (sorted.length > 0);
         }
-        const resource: ObjectMap<StyleTag[]> = {};
         for (const tagName in style) {
             const tag = style[tagName];
             const tagData: StyleTag[] = [];
             for (const attributes in tag) {
-                tagData.push({ attributes, ids: tag[attributes]});
+                tagData.push({
+                    name: '',
+                    attributes,
+                    ids: tag[attributes]
+                });
             }
             tagData.sort((a, b) => {
                 let [c, d] = [a.ids.length, b.ids.length];
@@ -1200,8 +1287,6 @@ export default class ResourceView<T extends View> extends Resource<T> {
             tagData.forEach((item, index) => item.name = capitalize(tagName) + (index > 0 ? `_${index}` : ''));
             resource[tagName] = tagData;
         }
-        const inherit = new Set();
-        const mapNode = {};
         for (const tagName in resource) {
             for (const group of resource[tagName]) {
                 for (const id of group.ids) {
@@ -1211,10 +1296,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     mapNode[id].styles.push(group.name);
                 }
             }
-            const tagData = layout[tagName];
+            const tagData = <ObjectMap<number[]>> layout[tagName];
             if (tagData != null) {
                 for (const attr in tagData) {
-                    for (const id of tagData[attr] as number[]) {
+                    for (const id of tagData[attr]) {
                         if (mapNode[id] == null) {
                             mapNode[id] = { styles: [], attributes: [] };
                         }
@@ -1225,9 +1310,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
         }
         for (const id in mapNode) {
             const node = viewData.cache.locate('id', parseInt(id));
-            if (node) {
-                const styles: string[] = mapNode[id].styles;
-                const attrs: string[] = mapNode[id].attributes;
+            if (node != null) {
+                const styles = mapNode[id].styles;
+                const attrs = mapNode[id].attributes;
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
                     node.attr('_', 'style', `@style/${styles.pop()}`);
@@ -1239,41 +1324,45 @@ export default class ResourceView<T extends View> extends Resource<T> {
         }
         for (const styles of inherit) {
             let parent = '';
-            styles.split('.').forEach((value: string) => {
-                const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
-                if (match) {
-                    const tagData = resource[match[1].toUpperCase()][(match[2] == null ? 0 : parseInt(match[2]))];
-                    Resource.STORED.STYLES.set(value, { parent, attributes: tagData.attributes });
-                    parent = value;
-                }
-            });
+            styles
+                .split('.')
+                .forEach(value => {
+                    const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
+                    if (match) {
+                        const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
+                        Resource.STORED.STYLES.set(value, { parent, attributes: tagData.attributes });
+                        parent = value;
+                    }
+                });
         }
     }
 
-    private deleteStyleAttribute(sorted: any, attrs: string, ids: number[]) {
-        attrs.split(';').forEach(value => {
-            for (let i = 0; i < sorted.length; i++) {
-                if (sorted[i] != null) {
-                    let index = -1;
-                    let key = '';
-                    for (const j in sorted[i]) {
-                        if (j === value) {
-                            index = i;
-                            key = j;
-                            i = sorted.length;
+    private deleteStyleAttribute(sorted: ObjectMap<number[]>[], attrs: string, ids: number[]) {
+        attrs
+            .split(';')
+            .forEach(value => {
+                for (let i = 0; i < sorted.length; i++) {
+                    if (sorted[i] != null) {
+                        let index = -1;
+                        let key = '';
+                        for (const j in sorted[i]) {
+                            if (j === value) {
+                                index = i;
+                                key = j;
+                                i = sorted.length;
+                                break;
+                            }
+                        }
+                        if (index !== -1) {
+                            sorted[index][key] = sorted[index][key].filter((id: number) => !ids.includes(id));
+                            if (sorted[index][key].length === 0) {
+                                delete sorted[index][key];
+                            }
                             break;
                         }
                     }
-                    if (index !== -1) {
-                        sorted[index][key] = sorted[index][key].filter((id: number) => !ids.includes(id));
-                        if (sorted[index][key].length === 0) {
-                            delete sorted[index][key];
-                        }
-                        break;
-                    }
                 }
-            }
-        });
+            });
     }
 
     private getShapeAttribute(stored: BoxStyle, name: string, direction = -1, hasInset = false, isInset = false): any[] | boolean {
@@ -1289,7 +1378,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
                 return false;
             case 'backgroundColor':
-                return (stored.backgroundColor.length !== 0 && stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false);
+                return stored.backgroundColor.length !== 0 && stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false;
             case 'radius':
                 if (stored.borderRadius.length === 1) {
                     if (stored.borderRadius[0] !== '0px') {
@@ -1334,39 +1423,73 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     colorName = ResourceView.addColor(reduced[0], opacity);
                 }
             }
-            const style1 = (halfSize ? 'groove' : 'ridge');
-            const style2 = (halfSize ? 'ridge' : 'groove');
             const colorReduced = `android:color="@color/${colorName}"`;
-            if (border.style === style1) {
-                switch (direction) {
-                    case 0:
-                        result[style1] = result.solid;
-                        break;
-                    case 1:
-                        result[style1] = colorReduced;
-                        break;
-                    case 2:
-                        result[style1] = colorReduced;
-                        break;
-                    case 3:
-                        result[style1] = result.solid;
-                        break;
+            if (border.style === 'groove') {
+                if (halfSize) {
+                    switch (direction) {
+                        case 0:
+                            result['groove'] = colorReduced;
+                            break;
+                        case 1:
+                            result['groove'] = colorReduced;
+                            break;
+                        case 2:
+                            result['groove'] = result.solid;
+                            break;
+                        case 3:
+                            result['groove'] = result.solid;
+                            break;
+                    }
+                }
+                else {
+                    switch (direction) {
+                        case 0:
+                            result['groove'] = result.solid;
+                            break;
+                        case 1:
+                            result['groove'] = result.solid;
+                            break;
+                        case 2:
+                            result['groove'] = colorReduced;
+                            break;
+                        case 3:
+                            result['groove'] = colorReduced;
+                            break;
+                    }
                 }
             }
             else {
-                switch (direction) {
-                    case 0:
-                        result[style2] = colorReduced;
-                        break;
-                    case 1:
-                        result[style2] = result.solid;
-                        break;
-                    case 2:
-                        result[style2] = result.solid;
-                        break;
-                    case 3:
-                        result[style2] = colorReduced;
-                        break;
+                if (halfSize) {
+                    switch (direction) {
+                        case 0:
+                            result['ridge'] = result.solid;
+                            break;
+                        case 1:
+                            result['ridge'] = result.solid;
+                            break;
+                        case 2:
+                            result['ridge'] = colorReduced;
+                            break;
+                        case 3:
+                            result['ridge'] = colorReduced;
+                            break;
+                    }
+                }
+                else {
+                    switch (direction) {
+                        case 0:
+                            result['ridge'] = colorReduced;
+                            break;
+                        case 1:
+                            result['ridge'] = colorReduced;
+                            break;
+                        case 2:
+                            result['ridge'] = result.solid;
+                            break;
+                        case 3:
+                            result['ridge'] = result.solid;
+                            break;
+                    }
                 }
             }
         }

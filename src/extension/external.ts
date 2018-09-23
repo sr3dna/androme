@@ -9,18 +9,16 @@ export default class External<T extends Node> extends Extension<T> {
     }
 
     public beforeInit(init = false) {
-        if (init || this.included()) {
-            if (this.element != null) {
-                if (getElementCache(this.element, 'andromeExternalDisplay') == null) {
-                    const display: string[] = [];
-                    let current: Null<HTMLElement> = <HTMLElement> this.element;
-                    while (current != null) {
-                        display.push(getStyle(current).display as string);
-                        current.style.display = 'block';
-                        current = current.parentElement;
-                    }
-                    setElementCache(this.element, 'andromeExternalDisplay', display);
+        if (this.element != null && (init || this.included())) {
+            if (getElementCache(this.element, 'andromeExternalDisplay') == null) {
+                const display: string[] = [];
+                let current: Null<HTMLElement> = <HTMLElement> this.element;
+                while (current != null) {
+                    display.push(getStyle(current).display as string);
+                    current.style.display = 'block';
+                    current = current.parentElement;
                 }
+                setElementCache(this.element, 'andromeExternalDisplay', display);
             }
         }
     }
@@ -33,20 +31,18 @@ export default class External<T extends Node> extends Extension<T> {
     }
 
     public afterInit(init = false) {
-        if (init || this.included()) {
-            if (this.element != null) {
-                const data = getElementCache(this.element, 'andromeExternalDisplay');
-                if (data) {
-                    const display: string[] = data;
-                    let current: Null<HTMLElement> = <HTMLElement> this.element;
-                    let i = 0;
-                    while (current != null) {
-                        current.style.display = display[i];
-                        current = current.parentElement;
-                        i++;
-                    }
-                    deleteElementCache(this.element, 'andromeExternalDisplay');
+        if (this.element != null && (init || this.included())) {
+            const data = getElementCache(this.element, 'andromeExternalDisplay');
+            if (data) {
+                const display: string[] = data;
+                let current: Null<HTMLElement> = <HTMLElement> this.element;
+                let i = 0;
+                while (current != null) {
+                    current.style.display = display[i];
+                    current = current.parentElement;
+                    i++;
                 }
+                deleteElementCache(this.element, 'andromeExternalDisplay');
             }
         }
     }

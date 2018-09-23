@@ -7,7 +7,7 @@ import NodeList from '../base/nodelist';
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
 import { NODE_ALIGNMENT, BOX_STANDARD } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
-import { getNodeFromElement } from '../lib/dom';
+import { getBoxRect, getNodeFromElement } from '../lib/dom';
 
 export default class Grid<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
@@ -30,15 +30,15 @@ export default class Grid<T extends Node> extends Extension<T> {
     }
 
     public processNode(mapX: LayoutMapX<T>): ExtensionResult {
-        let xml = '';
         const node = this.node;
         const parent = this.parent as T;
         const columnBalance = this.options.columnBalance;
+        let xml = '';
         let columns: T[][] = [];
         const mainData: GridData = {
+            padding: getBoxRect(),
             columnEnd: [],
-            columnCount: 0,
-            padding: { top: 0, right: 0, bottom: 0, left: 0 }
+            columnCount: 0
         };
         if (columnBalance) {
             const dimensions: number[][] = [];
@@ -50,17 +50,23 @@ export default class Grid<T extends Node> extends Extension<T> {
                 }
                 columns.push(children);
             });
-            const base = columns[
-                dimensions.findIndex((item: number[]) => {
-                    return (item === dimensions.reduce((a, b) => {
-                        if (a.length === b.length) {
-                            return (a.reduce((c, d) => c + d, 0) < b.reduce((c, d) => c + d, 0) ? a : b);
-                        }
-                        else {
-                            return (a.length < b.length ? a : b);
-                        }
-                    }));
-                })];
+            const base =
+                columns[
+                    dimensions.findIndex((item: number[]) => {
+                        const column =
+                            dimensions.reduce((a, b) => {
+                                if (a.length === b.length) {
+                                    const sumA = a.reduce((c, d) => c + d, 0);
+                                    const sumB = b.reduce((c, d) => c + d, 0);
+                                    return sumA < sumB ? a : b;
+                                }
+                                else {
+                                    return a.length < b.length ? a : b;
+                                }
+                            });
+                        return (item === column);
+                    })
+                ];
             if (base && base.length > 1) {
                 let maxIndex = -1;
                 let assigned: number[] = [];
@@ -119,7 +125,7 @@ export default class Grid<T extends Node> extends Extension<T> {
         }
         else {
             const nextMapX: ObjectIndex<T[]> = mapX[node.depth + 2];
-            const nextCoordsX = (nextMapX ? Object.keys(nextMapX) : []);
+            const nextCoordsX = nextMapX ? Object.keys(nextMapX) : [];
             const columnEnd: number[] = [];
             if (nextCoordsX.length > 1) {
                 const columnRight: number[] = [];
@@ -128,7 +134,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                     if (l === 0 && nextAxisX.length === 0) {
                         return { xml: '', complete: false };
                     }
-                    columnRight[l] = (l === 0 ? 0 : columnRight[l - 1]);
+                    columnRight[l] = l === 0 ? 0 : columnRight[l - 1];
                     for (let m = 0; m < nextAxisX.length; m++) {
                         const nextX = nextAxisX[m];
                         let [left, right] = [nextX.linear.left, nextX.linear.right];
@@ -136,7 +142,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                         if (index > 0 && nextX.element instanceof HTMLElement && nextX.float === 'right') {
                             nextX.element.style.cssFloat = 'left';
                             const bounds = nextX.element.getBoundingClientRect();
-                            if ((bounds.left - nextX.marginLeft) !== left) {
+                            if (bounds.left - nextX.marginLeft !== left) {
                                 [left, right] = [bounds.left - nextX.marginLeft, bounds.right + nextX.marginRight];
                                 for (let n = 1; n < columnRight.length; n++) {
                                     index = n;
@@ -147,7 +153,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                             }
                             nextX.element.style.cssFloat = 'right';
                         }
-                        function findRowIndex() {
+                        function getRowIndex() {
                             return columns[0].findIndex(item =>
                                 withinFraction(item.linear.top, nextX.linear.top) ||
                                 (nextX.linear.top >= item.linear.top && nextX.linear.bottom <= item.linear.bottom)
@@ -161,7 +167,7 @@ export default class Grid<T extends Node> extends Extension<T> {
                                 columns[index][m] = nextX;
                             }
                             else {
-                                const row = findRowIndex();
+                                const row = getRowIndex();
                                 if (row !== -1) {
                                     columns[index][row] = nextX;
                                 }
@@ -174,8 +180,8 @@ export default class Grid<T extends Node> extends Extension<T> {
                                 const maxRight = columns[current].reduce((a: number, b: T) => Math.max(a, b.linear.right), 0);
                                 if (left > minLeft && right > maxRight) {
                                     const filtered = columns.filter(item => item);
-                                    const row = findRowIndex();
-                                    if (row !== -1 && filtered[filtered.length - 1][row] == null) {
+                                    const rowIndex = getRowIndex();
+                                    if (rowIndex !== -1 && filtered[filtered.length - 1][rowIndex] == null) {
                                         columns[current].length = 0;
                                     }
                                 }
@@ -220,13 +226,13 @@ export default class Grid<T extends Node> extends Extension<T> {
             }
         }
         if (columns.length > 1 && columns[0].length === node.children.length) {
-            mainData.columnCount = (columnBalance ? columns[0].length : columns.length);
+            mainData.columnCount = columnBalance ? columns[0].length : columns.length;
             xml = this.application.writeGridLayout(node, parent, mainData.columnCount);
             node.children.length = 0;
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;
                 for (let m = 0, start = 0; m < columns[l].length; m++) {
-                    const item = columns[l][m] as T;
+                    const item = columns[l][m];
                     if (!(<any> item).spacer) {
                         item.parent.hide();
                         item.parent = node;
@@ -241,10 +247,10 @@ export default class Grid<T extends Node> extends Extension<T> {
                             rowStart: false
                         };
                         if (columnBalance) {
-                            data.rowStart = (m === 0);
-                            data.rowEnd = (m === columns[l].length - 1);
-                            data.cellFirst = (l === 0 && m === 0);
-                            data.cellLast = (l === columns.length - 1 && data.rowEnd);
+                            data.rowStart = m === 0;
+                            data.rowEnd = m === columns[l].length - 1;
+                            data.cellFirst = l === 0 && m === 0;
+                            data.cellLast = l === columns.length - 1 && data.rowEnd;
                             data.index = m;
                         }
                         else {
@@ -272,10 +278,10 @@ export default class Grid<T extends Node> extends Extension<T> {
                             }
                             data.rowSpan = rowSpan;
                             data.columnSpan = columnSpan;
-                            data.rowStart = (start++ === 0);
-                            data.rowEnd = (columnSpan + l === columns.length);
-                            data.cellFirst = (count++ === 0);
-                            data.cellLast = (data.rowEnd && m === columns[l].length - 1);
+                            data.rowStart = start++ === 0;
+                            data.rowEnd = columnSpan + l === columns.length;
+                            data.cellFirst = count++ === 0;
+                            data.cellLast = data.rowEnd && m === columns[l].length - 1;
                             data.index = l;
                             spacer = 0;
                         }
@@ -302,11 +308,11 @@ export default class Grid<T extends Node> extends Extension<T> {
     }
 
     public processChild(): ExtensionResult {
-        let xml = '';
         const node = this.node;
         const parent = this.parent as T;
         const mainData = <GridData> parent.data(EXT_NAME.GRID, 'mainData');
         const cellData = <GridCellData> node.data(EXT_NAME.GRID, 'cellData');
+        let xml = '';
         if (mainData && cellData) {
             let siblings: T[];
             if (this.options.columnBalance) {
@@ -315,11 +321,19 @@ export default class Grid<T extends Node> extends Extension<T> {
             else {
                 const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];
                 siblings =
-                    Array.from(node.documentParent.element.children).map(element => {
-                        const item = getNodeFromElement(element);
-                        return (item && item.visible && !item.excluded && !item.rendered && item.linear.left >= node.linear.right && item.linear.right <= columnEnd ? item : null);
-                    })
-                    .filter(item => item) as T[];
+                    Array.from(node.documentParent.element.children)
+                        .map(element => {
+                            const item = getNodeFromElement(element);
+                            return (
+                                item &&
+                                item.visible &&
+                                !item.excluded &&
+                                !item.rendered &&
+                                item.linear.left >= node.linear.right &&
+                                item.linear.right <= columnEnd ? item : null
+                            );
+                        })
+                        .filter(item => item) as T[];
             }
             if (siblings && siblings.length > 0) {
                 siblings.unshift(node);

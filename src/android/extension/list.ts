@@ -4,7 +4,7 @@ import List from '../../extension/list';
 import View from '../view';
 import { convertInt, formatPX } from '../../lib/util';
 import { delimitDimens } from '../lib/util';
-import { BOX_STANDARD, NODE_ALIGNMENT, NODE_STANDARD } from '../../lib/constants';
+import { BOX_STANDARD, NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';
 
@@ -36,14 +36,13 @@ export default class ListAndroid<T extends View> extends List<T> {
                 Math.abs(convertInt(item.cssInitial('marginLeft', true))) <= convertInt(item.documentParent.cssInitial('marginLeft', true))
             ) as T;
         if (floatItem && listStyle === '0') {
-            floatItem.parent = parent;
             let xml = '';
+            floatItem.parent = parent;
             if (floatItem.inlineText || floatItem.children.length === 0) {
                 xml = controller.renderNode(floatItem, parent, NODE_STANDARD.TEXT);
             }
-            else if (floatItem.children.every(item => item.pageflow && !item.floating)) {
+            else if (floatItem.children.every(item => item.pageflow)) {
                 xml = controller.renderGroup(floatItem, parent, NODE_STANDARD.RELATIVE);
-                floatItem.alignmentType = NODE_ALIGNMENT.INLINE_WRAP;
             }
             else {
                 xml = controller.renderGroup(floatItem, parent, NODE_STANDARD.CONSTRAINT);
@@ -59,8 +58,8 @@ export default class ListAndroid<T extends View> extends List<T> {
             }
         }
         else {
-            const columnWeight = (columnCount > 0 ? '0' : '');
-            const positionInside = (node.css('listStylePosition') === 'inside');
+            const columnWeight = columnCount > 0 ? '0' : '';
+            const positionInside = node.css('listStylePosition') === 'inside';
             const listStyleImage = !['', 'none'].includes(node.css('listStyleImage'));
             let image = '';
             let [left, top] = [0, 0];
@@ -68,7 +67,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 image = ResourceView.addImageURL(listStyle.image);
                 [left, top] = ResourceView.parseBackgroundPosition(listStyle.position, node.css('fontSize')).map(value => convertInt(value));
             }
-            const gravity = ((image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right');
+            const gravity = (image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right';
             if (gravity === '') {
                 paddingLeft += node.paddingLeft;
                 node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
@@ -77,7 +76,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 paddingLeft -= left;
             }
             paddingLeft = Math.max(paddingLeft, 20);
-            const minWidth = (paddingLeft > 0 ? delimitDimens(node.nodeName, parseRTL('min_width'), formatPX(paddingLeft)) : '');
+            const minWidth = paddingLeft > 0 ? delimitDimens(node.nodeName, parseRTL('min_width'), formatPX(paddingLeft)) : '';
             const paddingRight = (() => {
                 if (paddingLeft <= 24) {
                     return 6;
@@ -89,12 +88,12 @@ export default class ListAndroid<T extends View> extends List<T> {
                     return 10;
                 }
             })();
-            const paddingLeftValue = (gravity === '' && image === '' ? delimitDimens(node.nodeName, parseRTL('padding_left'), formatPX(paddingRight)) : '');
-            const paddingRightValue = (gravity === 'right' ? delimitDimens(node.nodeName, parseRTL('padding_right'), formatPX(paddingRight)) : '');
-            const marginLeftValue = (left > 0 ? delimitDimens(node.nodeName, parseRTL('margin_left'), formatPX(left)) : '');
+            const paddingLeftValue = gravity === '' && image === '' ? delimitDimens(node.nodeName, parseRTL('padding_left'), formatPX(paddingRight)) : '';
+            const paddingRightValue = gravity === 'right' ? delimitDimens(node.nodeName, parseRTL('padding_right'), formatPX(paddingRight)) : '';
+            const marginLeftValue = left > 0 ? delimitDimens(node.nodeName, parseRTL('margin_left'), formatPX(left)) : '';
             const options = {
                 android: {
-                    layout_marginTop: (node.marginTop + top > 0 ? delimitDimens(node.nodeName, 'margin_top', formatPX(node.marginTop + top)) : '')
+                    layout_marginTop: node.marginTop + top > 0 ? delimitDimens(node.nodeName, 'margin_top', formatPX(node.marginTop + top)) : ''
                 },
                 app: {
                     layout_columnWeight: columnWeight
@@ -112,17 +111,13 @@ export default class ListAndroid<T extends View> extends List<T> {
                                 [parseRTL('paddingLeft')]: paddingLeftValue,
                                 [parseRTL('paddingRight')]: paddingRightValue
                             },
-                            app: {
-                                layout_columnWeight: columnWeight
-                            }
+                            app: { layout_columnWeight: columnWeight }
                         },
                         'wrap_content',
                         'wrap_content'
                     )
                 );
-                Object.assign(options.android, {
-                    minWidth: delimitDimens(node.nodeName, parseRTL('min_width'), formatPX(24))
-                });
+                Object.assign(options.android, { minWidth: delimitDimens(node.nodeName, parseRTL('min_width'), formatPX(24)) });
             }
             else {
                 Object.assign(options.android, {
@@ -144,19 +139,17 @@ export default class ListAndroid<T extends View> extends List<T> {
                     Object.assign(options.android, {
                         src: `@drawable/${image}`,
                         baselineAlignBottom: 'true',
-                        scaleType: (!positionInside && gravity === 'right' ? 'fitEnd' : 'fitStart')
+                        scaleType: !positionInside && gravity === 'right' ? 'fitEnd' : 'fitStart'
                     });
                 }
                 else {
-                    Object.assign(options.android, {
-                        text: (listStyle !== '0' ? listStyle : '')
-                    });
+                    Object.assign(options.android, { text: listStyle !== '0' ? listStyle : '' });
                 }
                 controller.prependBefore(
                     node.id,
                     controller.renderNodeStatic(
-                        (image !== '' ? NODE_STANDARD.IMAGE
-                                      : (listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE)),
+                        image !== '' ? NODE_STANDARD.IMAGE
+                                     : listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE,
                         parent.renderDepth + 1,
                         options,
                         'wrap_content',

@@ -4,7 +4,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import { convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
-import { getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, cssFromParent, setElementCache } from '../lib/dom';
+import { cssFromParent, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE } from '../lib/constants';
 import SETTINGS from '../settings';
@@ -23,7 +23,7 @@ export default abstract class Resource<T extends Node> {
 
     public static insertStoredAsset(asset: string, name: string, value: any) {
         const stored: Map<string, any> = Resource.STORED[asset];
-        if (stored) {
+        if (stored != null) {
             let storedName = '';
             for (const [storedKey, storedValue] of stored.entries()) {
                 if (JSON.stringify(value) === JSON.stringify(storedValue)) {
@@ -126,12 +126,20 @@ export default abstract class Resource<T extends Node> {
                         result[i] = '';
                     }
                 }
-                if (result.backgroundColor.length > 0 && !node.has('backgroundColor') && (node.cssParent('backgroundColor', false, true) === result.backgroundColor[1] || (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')))) {
+                if (result.backgroundColor.length > 0 &&
+                    !node.has('backgroundColor') && (
+                        node.cssParent('backgroundColor', false, true) === result.backgroundColor[1] ||
+                        (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))
+                   ))
+                {
                     result.backgroundColor.length = 0;
                 }
                 if (result.borderTop.style !== 'none') {
                     const borderTop = JSON.stringify(result.borderTop);
-                    if (borderTop === JSON.stringify(result.borderRight) && borderTop === JSON.stringify(result.borderBottom) && borderTop === JSON.stringify(result.borderLeft)) {
+                    if (borderTop === JSON.stringify(result.borderRight) &&
+                        borderTop === JSON.stringify(result.borderBottom) &&
+                        borderTop === JSON.stringify(result.borderLeft))
+                    {
                         result.border = result.borderTop;
                     }
                 }
@@ -147,7 +155,7 @@ export default abstract class Resource<T extends Node> {
                 if (node.length > 0 ||
                     node.imageElement ||
                     node.tagName === 'HR' ||
-                    (node.inlineText && !backgroundImage && node.element.innerHTML.trim() === '' && !['pre', 'pre-wrap'].includes(node.css('whiteSpace'))))
+                    (node.inlineText && !backgroundImage && !['pre', 'pre-wrap'].includes(node.css('whiteSpace')) && node.element.innerHTML.trim() === ''))
                 {
                     return;
                 }
@@ -219,36 +227,6 @@ export default abstract class Resource<T extends Node> {
         });
     }
 
-    public setOptionArray() {
-        this.cache.filter(node => node.visible && node.tagName === 'SELECT' && !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)).each(node => {
-            const element = <HTMLSelectElement> node.element;
-            if (getElementCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
-                const stringArray: string[] = [];
-                let numberArray: Null<string[]> = [];
-                for (let i = 0; i < element.children.length; i++) {
-                    const item = <HTMLOptionElement> element.children[i];
-                    const value = item.text.trim();
-                    if (value !== '') {
-                        if (!SETTINGS.numberResourceValue && numberArray != null && stringArray.length === 0 && isNumber(value)) {
-                            numberArray.push(value);
-                        }
-                        else {
-                            if (numberArray && numberArray.length > 0) {
-                                i = -1;
-                                numberArray = null;
-                                continue;
-                            }
-                            if (value !== '') {
-                                stringArray.push(value);
-                            }
-                        }
-                    }
-                }
-                setElementCache(element, 'optionArray', { stringArray: (stringArray.length > 0 ? stringArray : null), numberArray: (numberArray && numberArray.length > 0 ? numberArray : null) });
-            }
-        });
-    }
-
     public setValueString() {
         function parseWhiteSpace(node: T, value: string): [string, boolean] {
             if (node.multiLine) {
@@ -278,9 +256,9 @@ export default abstract class Resource<T extends Node> {
             }
             return [value, true];
         }
-        this.cache.filter(node => node.visible && !node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING)).each(node => {
+        this.cache.visible.each(node => {
             const element = node.element;
-            if (getElementCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (getElementCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources)) {
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
@@ -317,7 +295,10 @@ export default abstract class Resource<T extends Node> {
                         value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
-                    else if (element.innerText.trim() === '' && this.hasDrawableBackground(<BoxStyle> getElementCache(element, 'boxStyle'))) {
+                    else if (
+                        element.innerText.trim() === '' &&
+                        this.hasDrawableBackground(<BoxStyle> getElementCache(element, 'boxStyle')))
+                    {
                         value = replaceEntity(element.innerText);
                         performTrim = false;
                     }
@@ -333,34 +314,44 @@ export default abstract class Resource<T extends Node> {
                         const previousSibling = node.previousSibling();
                         const nextSibling = node.nextSibling();
                         let previousSpaceEnd = false;
-                        if (previousSibling == null || previousSibling.multiLine || previousSibling.lineBreak) {
+                        if (previousSibling == null ||
+                            previousSibling.multiLine ||
+                            previousSibling.lineBreak)
+                        {
                             value = value.replace(/^\s+/, '');
                         }
                         else {
-                            previousSpaceEnd = /\s+$/.test(((<HTMLElement> previousSibling.element).innerText || previousSibling.element.textContent) as string);
+                            previousSpaceEnd = /\s+$/.test((<HTMLElement> previousSibling.element).innerText || previousSibling.element.textContent || '');
                         }
                         if (inlineTrim) {
                             const original = value;
                             value = value.trim();
-                            if (previousSibling && !previousSibling.block && !previousSibling.lineBreak && !previousSpaceEnd && /^\s+/.test(original)) {
+                            if (previousSibling &&
+                                !previousSibling.block &&
+                                !previousSibling.lineBreak &&
+                                !previousSpaceEnd && /^\s+/.test(original))
+                            {
                                 value = '&#160;' + value;
                             }
-                            if (nextSibling && !nextSibling.lineBreak && /\s+$/.test(original)) {
+                            if (nextSibling &&
+                                !nextSibling.lineBreak &&
+                                /\s+$/.test(original))
+                            {
                                 value = value + '&#160;';
                             }
                         }
                         else {
                             if (!/^\s+$/.test(value)) {
-                                value = value.replace(/^\s+/, (previousSibling && (
+                                value = value.replace(/^\s+/, (
+                                    previousSibling && (
                                         previousSibling.block ||
                                         previousSibling.lineBreak ||
                                         (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) ||
-                                        (node.multiLine && (
-                                            hasLineBreak(element) ||
-                                            node.renderParent.renderParent.linearHorizontal
-                                        ))) ? '' : '&#160;')
-                                    );
-                                value = value.replace(/\s+$/, (nextSibling == null || nextSibling.lineBreak ? '' : '&#160;'));
+                                        (node.multiLine && hasLineBreak(element))
+                                    ) ? ''
+                                      : '&#160;'
+                                ));
+                                value = value.replace(/\s+$/, nextSibling == null || nextSibling.lineBreak ? '' : '&#160;');
                             }
                             else if (value.length > 0) {
                                 value = '&#160;' + value.substring(1);
@@ -375,8 +366,46 @@ export default abstract class Resource<T extends Node> {
         });
     }
 
+    public setOptionArray() {
+        this.cache
+            .filter(node =>
+                node.visible &&
+                node.tagName === 'SELECT' &&
+                !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
+            ).each(node => {
+                const element = <HTMLSelectElement> node.element;
+                if (getElementCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
+                    const stringArray: string[] = [];
+                    let numberArray: Null<string[]> = [];
+                    for (let i = 0; i < element.children.length; i++) {
+                        const item = <HTMLOptionElement> element.children[i];
+                        const value = item.text.trim();
+                        if (value !== '') {
+                            if (!SETTINGS.numberResourceValue && numberArray != null && stringArray.length === 0 && isNumber(value)) {
+                                numberArray.push(value);
+                            }
+                            else {
+                                if (numberArray && numberArray.length > 0) {
+                                    i = -1;
+                                    numberArray = null;
+                                    continue;
+                                }
+                                if (value !== '') {
+                                    stringArray.push(value);
+                                }
+                            }
+                        }
+                    }
+                    setElementCache(element, 'optionArray', {
+                        stringArray: stringArray.length > 0 ? stringArray : null,
+                        numberArray: numberArray && numberArray.length > 0 ? numberArray : null
+                    });
+                }
+            });
+    }
+
     protected borderVisible(border?: BorderAttribute) {
-        return (border != null && !(border.style === 'none' || border.width === '0px'));
+        return border != null && !(border.style === 'none' || border.width === '0px');
     }
 
     protected hasDrawableBackground(object?: BoxStyle) {
@@ -398,11 +427,11 @@ export default abstract class Resource<T extends Node> {
         }
         const style = node.css(`${attr}Style`) || 'none';
         let width = node.css(`${attr}Width`) || '1px';
-        const color = (style !== 'none' ? parseRGBA(colorMap, node.css('opacity')) : []);
+        const color = style !== 'none' ? parseRGBA(colorMap, node.css('opacity')) : [];
         if (style === 'inset' && width === '0px') {
             width = '1px';
         }
-        return { style, width, color: (color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0']) };
+        return { style, width, color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0'] };
     }
 
     private parseBorderRadius(value: string, node: T) {
@@ -413,7 +442,7 @@ export default abstract class Resource<T extends Node> {
             node.css('borderBottomRightRadius')
         ];
         if (top === right && right === bottom && bottom === left) {
-            return (top === '' || top === '0px' ? [] : [top]);
+            return top === '' || top === '0px' ? [] : [top];
         }
         else {
             return [top, right, bottom, left];
@@ -433,7 +462,7 @@ export default abstract class Resource<T extends Node> {
                     return [];
                 }
                 if (match[1] === 'auto' || match[2] === 'auto') {
-                    return [(match[1] === 'auto' ? '' : convertPX(match[1], fontSize)), (match[2] === 'auto' ? '' : convertPX(match[2], fontSize))];
+                    return [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
                 }
                 else if (isPercent(match[1]) && match[3] == null) {
                     return [match[1], match[2]];

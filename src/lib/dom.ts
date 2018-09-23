@@ -2,6 +2,15 @@ import { BoxModel, ClientRect, Null } from './types';
 import Node from '../base/node';
 import { convertInt, hasValue, resolvePath } from './util';
 
+export function getBoxRect() {
+    return {
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0
+    };
+}
+
 export function getClientRect() {
     return {
         top: 0,
@@ -33,7 +42,7 @@ export function setElementCache(element: Null<Element>, attr: string, data: any)
 }
 
 export function getElementCache(element: Null<Element>, attr: string) {
-    return (element != null ? element[`__${attr}`] : null);
+    return element != null ? element[`__${attr}`] : null;
 }
 
 export function deleteElementCache(element: Null<Element>, ...attrs: string[]) {
@@ -93,10 +102,10 @@ export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclarat
         if (cache) {
             const node = getNodeFromElement(element);
             const style = getElementCache(element, 'style');
-            if (style) {
+            if (style != null) {
                 return style;
             }
-            else if (node) {
+            else if (node != null) {
                 if (node.style != null) {
                     return node.style;
                 }
@@ -217,7 +226,10 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
 }
 
 export function isPlainText(element: Null<Element>, whiteSpace = false) {
-    if (element != null && element.nodeName === '#text' && element.textContent) {
+    if (element &&
+        element.nodeName === '#text' &&
+        element.textContent)
+    {
         if (whiteSpace) {
             const value = element.textContent;
             let valid = false;
@@ -233,10 +245,10 @@ export function isPlainText(element: Null<Element>, whiteSpace = false) {
                         break;
                 }
             }
-            return (valid && value !== '');
+            return valid && value !== '';
         }
         else {
-            return (element.textContent.trim() !== '');
+            return element.textContent.trim() !== '';
         }
     }
     return false;
@@ -245,7 +257,7 @@ export function isPlainText(element: Null<Element>, whiteSpace = false) {
 export function hasLineBreak(element: Null<Element>) {
     if (element != null) {
         const node = getNodeFromElement(element);
-        const fromParent = (element.nodeName === '#text');
+        const fromParent = element.nodeName === '#text';
         let whiteSpace = '';
         if (node != null) {
             whiteSpace = node.css('whiteSpace');
@@ -283,7 +295,7 @@ export function getElementsBetweenSiblings(firstElement: Null<Element>, secondEl
         const parentElement = secondElement.parentElement;
         if (parentElement != null) {
             const elements = <Element[]> Array.from(parentElement.childNodes);
-            const firstIndex = (firstElement != null ? elements.findIndex(element => element === firstElement) : 0);
+            const firstIndex = firstElement != null ? elements.findIndex(element => element === firstElement) : 0;
             const secondIndex = elements.findIndex(element => element === secondElement);
             if (firstIndex !== -1 && secondIndex !== -1 && firstIndex !== secondIndex) {
                 let result = elements.slice(Math.min(firstIndex, secondIndex) + 1, Math.max(firstIndex, secondIndex));
@@ -321,7 +333,10 @@ export function isElementVisible(element: Element) {
             }
             if (typeof element.getBoundingClientRect === 'function') {
                 const bounds = element.getBoundingClientRect();
-                if ((bounds.width !== 0 && bounds.height !== 0) || hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
+                if ((bounds.width !== 0 && bounds.height !== 0) ||
+                    hasValue(element.dataset.ext) ||
+                    getStyle(element).clear !== 'none')
+                {
                     return true;
                 }
                 else {
@@ -336,12 +351,19 @@ export function isElementVisible(element: Element) {
                     }
                     if (valid) {
                         if (element.children.length > 0) {
-                            return Array.from(element.children).some((item: Element) => {
-                                const style = getStyle(item);
-                                const float = style.cssFloat;
-                                const position = style.position;
-                                return ((position !== 'static' && position !== 'initial') || float === 'left' || float === 'right');
-                            });
+                            return (
+                                Array.from(element.children)
+                                    .some((item: Element) => {
+                                        const style = getStyle(item);
+                                        const float = style.cssFloat;
+                                        const position = style.position;
+                                        return (
+                                            (position !== 'static' && position !== 'initial') ||
+                                            float === 'left' ||
+                                            float === 'right'
+                                        );
+                                    })
+                            );
                         }
                     }
                 }

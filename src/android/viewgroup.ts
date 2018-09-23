@@ -60,11 +60,11 @@ export default class ViewGroup<T extends View> extends View {
     }
 
     public previousSibling(pageflow = false, lineBreak = true, excluded = true) {
-        return (this.children.length > 0 ? this.children[0].previousSibling(pageflow, lineBreak, excluded) : null);
+        return this.children.length > 0 ? this.children[0].previousSibling(pageflow, lineBreak, excluded) : null;
     }
 
     public nextSibling(pageflow = false, lineBreak = true, excluded = true) {
-        return (this.children.length > 0 ? this.children[this.children.length - 1].nextSibling(pageflow, lineBreak, excluded) : null);
+        return this.children.length > 0 ? this.children[this.children.length - 1].nextSibling(pageflow, lineBreak, excluded) : null;
     }
 
     get inline() {
@@ -115,7 +115,11 @@ export default class ViewGroup<T extends View> extends View {
             return this.css('display');
         }
         else {
-            return (this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.INLINE_WRAP) || this.children.some(node => (node.block && !node.floating)) ? 'block' : (this.children.every(node => node.inline) ? 'inline' : 'inline-block'));
+            return (
+                this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.PERCENT) ||
+                this.children.some(node => node.block && !node.floating) ? 'block'
+                                                                         : this.children.every(node => node.inline) ? 'inline' : 'inline-block'
+            );
         }
     }
 

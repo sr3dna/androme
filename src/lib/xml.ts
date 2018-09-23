@@ -1,12 +1,12 @@
 import { ObjectMap, Null } from './types';
-import { repeat, replaceWhiteSpace } from './util';
+import { isString, repeat, replaceWhiteSpace } from './util';
 
 export function formatPlaceholder(id: string | number, symbol = ':') {
     return `{${symbol + id.toString()}}`;
 }
 
 export function replacePlaceholder(value: string, id: string | number, content: string, before = false) {
-    const placeholder = (typeof id === 'number' ? formatPlaceholder(id) : id);
+    const placeholder = typeof id === 'number' ? formatPlaceholder(id) : id;
     return value.replace(placeholder, (before ? placeholder : '') + content + (before ? '' : placeholder));
 }
 
@@ -17,16 +17,21 @@ export function removePlaceholders(value: string) {
 export function replaceIndent(value: string, depth: number) {
     if (depth >= 0) {
         let indent = -1;
-        return value.split('\n').map(line => {
-            const match = /^({.*?})(\t*)(<.*)/.exec(line);
-            if (match) {
-                if (indent === -1) {
-                    indent = match[2].length;
-                }
-                return match[1] + repeat(depth + (match[2].length - indent)) + match[3];
-            }
-            return line;
-        }).join('\n');
+        return (
+            value
+                .split('\n')
+                .map(line => {
+                    const match = /^({.*?})(\t*)(<.*)/.exec(line);
+                    if (match) {
+                        if (indent === -1) {
+                            indent = match[2].length;
+                        }
+                        return match[1] + repeat(depth + (match[2].length - indent)) + match[3];
+                    }
+                    return line;
+                })
+                .join('\n')
+        );
     }
     return value;
 }
@@ -34,13 +39,15 @@ export function replaceIndent(value: string, depth: number) {
 export function replaceTab(value: string, spaces = 4, preserve = false) {
     if (spaces > 0) {
         if (preserve) {
-            value = value.split('\n').map(line => {
-                const match = line.match(/^(\t+)(.*)$/);
-                if (match) {
-                    return ' '.repeat(spaces * match[1].length) + match[2];
-                }
-                return line;
-            }).join('\n');
+            value = value.split('\n')
+                .map(line => {
+                    const match = line.match(/^(\t+)(.*)$/);
+                    if (match) {
+                        return ' '.repeat(spaces * match[1].length) + match[2];
+                    }
+                    return line;
+                })
+                .join('\n');
         }
         else {
             value = value.replace(/\t/g, ' '.repeat(spaces));
@@ -102,7 +109,7 @@ export function parseTemplate(template: string) {
 }
 
 export function insertTemplateData(template: ObjectMap<string>, data: {}, index?: string, include?: {}, exclude?: {}) {
-    let output = (index != null ? template[index] : '');
+    let output = index != null ? template[index] : '';
     if (data['#include'] != null) {
         include = data['#include'];
         delete data['#include'];
@@ -125,10 +132,10 @@ export function insertTemplateData(template: ObjectMap<string>, data: {}, index?
         else {
             value = data[i];
         }
-        if (value != null && value !== '') {
-            output = (index != null ? output.replace(new RegExp(`{[%@&]*${i}}`, 'g'), value) : value.trim());
+        if (isString(value)) {
+            output = index != null ? output.replace(new RegExp(`{[%@&]*${i}}`, 'g'), value) : value.trim();
         }
-        else if (new RegExp(`{%${i}}`).test(output) || value === false) {
+        else if (value === false || new RegExp(`{%${i}}`).test(output)) {
             output = output.replace(`{%${i}}`, '');
         }
         else if (new RegExp(`{&${i}}`).test(output)) {

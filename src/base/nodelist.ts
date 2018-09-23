@@ -7,7 +7,7 @@ export type FindPredicate<T> = (value: T, index?: number) => boolean;
 
 export default class NodeList<T extends Node> implements Iterable<T> {
     public static siblingIndex<T extends Node>(a: T, b: T) {
-        return (a.siblingIndex <= b.siblingIndex ? -1 : 1);
+        return a.siblingIndex <= b.siblingIndex ? -1 : 1;
     }
 
     public static floated<T extends Node>(list: T[]) {
@@ -21,7 +21,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             const clear = node.css('clear');
             if (floats.size > 0) {
                 if (clear === 'both') {
-                    nodes.set(node, (floats.size === 2 ? 'both' : floats.values().next().value));
+                    nodes.set(node, floats.size === 2 ? 'both' : floats.values().next().value);
                     floats.clear();
                 }
                 else if (floats.has(clear)) {
@@ -42,17 +42,19 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             return baseline;
         }
         else if (alignInput) {
-            baseline = list.filter(node => node.baseline).sort((a, b) => {
-                let nodeTypeA = a.nodeType;
-                let nodeTypeB = b.nodeType;
-                if (a.linearHorizontal) {
-                    nodeTypeA = Math.min.apply(null, a.children.map(item => (item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE)));
-                }
-                if (b.linearHorizontal) {
-                    nodeTypeB = Math.min.apply(null, b.children.map(item => (item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE)));
-                }
-                return (nodeTypeA <= nodeTypeB ? -1 : 1);
-            });
+            baseline =
+                list.filter(node => node.baseline)
+                    .sort((a, b) => {
+                        let nodeTypeA = a.nodeType;
+                        let nodeTypeB = b.nodeType;
+                        if (a.linearHorizontal) {
+                            nodeTypeA = Math.min.apply(null, a.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                        }
+                        if (b.linearHorizontal) {
+                            nodeTypeB = Math.min.apply(null, b.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                        }
+                        return nodeTypeA <= nodeTypeB ? -1 : 1;
+                    });
         }
         else {
             const lineHeight: number = Math.max.apply(null, list.map(node => node.lineHeight));
@@ -61,38 +63,44 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 const result = list.filter(node => node.lineHeight === lineHeight);
                 return (result.length === list.length ? result.filter(node => node.hasElement) : result).filter(node => node.baseline);
             }
-            baseline = list.filter(node => node.baseline).sort((a, b) => {
-                const fontSizeA = convertInt(a.css('fontSize'));
-                const fontSizeB = convertInt(b.css('fontSize'));
-                const heightA = a.bounds.height;
-                const heightB = b.bounds.height;
-                if (a.imageElement && b.imageElement) {
-                    return (heightA >= heightB ? -1 : 1);
-                }
-                else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
-                    return -1;
-                }
-                else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
-                    return 1;
-                }
-                else if (!a.imageElement && !b.imageElement) {
-                    if (fontSizeA === fontSizeB && heightA === heightB) {
-                        if (a.hasElement && !b.hasElement) {
+            baseline =
+                list.filter(node => node.baselineInside)
+                    .sort((a, b) => {
+                        const fontSizeA = convertInt(a.css('fontSize'));
+                        const fontSizeB = convertInt(b.css('fontSize'));
+                        const heightA = a.bounds.height;
+                        const heightB = b.bounds.height;
+                        if (a.imageElement && b.imageElement) {
+                            return heightA >= heightB ? -1 : 1;
+                        }
+                        else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
                             return -1;
                         }
-                        else if (!a.hasElement && b.hasElement) {
+                        else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
                             return 1;
                         }
-                        else {
-                            return (a.siblingIndex <= b.siblingIndex ? -1 : 1);
+                        else if (!a.imageElement && !b.imageElement) {
+                            if (fontSizeA === fontSizeB && heightA === heightB) {
+                                if (a.hasElement && !b.hasElement) {
+                                    return -1;
+                                }
+                                else if (!a.hasElement && b.hasElement) {
+                                    return 1;
+                                }
+                                else {
+                                    return a.siblingIndex <= b.siblingIndex ? -1 : 1;
+                                }
+                            }
+                            else if (
+                                fontSizeA !== fontSizeB &&
+                                fontSizeA !== 0 &&
+                                fontSizeB !== 0)
+                            {
+                                return fontSizeA > fontSizeB ? -1 : 1;
+                            }
                         }
-                    }
-                    else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
-                        return (fontSizeA > fontSizeB ? -1 : 1);
-                    }
-                }
-                return (heightA >= heightB ? -1 : 1);
-            });
+                        return heightA >= heightB ? -1 : 1;
+                    });
         }
         let fontFamily: string;
         let fontSize: string;
@@ -105,7 +113,15 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 return true;
             }
             else {
-                return (node.css('fontFamily') === fontFamily && node.css('fontSize') === fontSize && node.css('fontWeight') === fontWeight && ((node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) || node.bounds.height === baseline[0].bounds.height) && node.nodeName === baseline[0].nodeName);
+                return (
+                    node.css('fontFamily') === fontFamily &&
+                    node.css('fontSize') === fontSize &&
+                    node.css('fontWeight') === fontWeight &&
+                    node.nodeName === baseline[0].nodeName && (
+                        (node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) ||
+                        node.bounds.height === baseline[0].bounds.height
+                    )
+                );
             }
         });
     }
@@ -122,25 +138,37 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 let horizontal = false;
                 if (traverse) {
                     if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
-                        const cleared = NodeList.cleared(Array.from(parent.baseElement.children).map(node => getNodeFromElement(node) as T).filter(node => node));
-                        horizontal = nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
-                            if (index > 0) {
-                                if (node.companion && node.companion.documentParent === parent) {
-                                    node = node.companion as T;
-                                }
-                                const previous = node.previousSibling();
-                                if (previous != null) {
-                                    return !node.alignedVertically(previous, cleared);
-                                }
-                            }
-                            return true;
-                        });
+                        const cleared =
+                            NodeList.cleared(
+                                Array.from(parent.baseElement.children)
+                                    .map(node => getNodeFromElement(node) as T)
+                                    .filter(node => node)
+                            );
+                        horizontal =
+                            nodes
+                                .slice()
+                                .sort(NodeList.siblingIndex)
+                                .every((node, index) => {
+                                    if (index > 0) {
+                                        if (node.companion && node.companion.documentParent === parent) {
+                                            node = node.companion as T;
+                                        }
+                                        const previous = node.previousSibling();
+                                        if (previous != null) {
+                                            return !node.alignedVertically(previous, cleared);
+                                        }
+                                    }
+                                    return true;
+                                });
                     }
                 }
                 if (horizontal || !traverse) {
                     return nodes.every(node => {
                         return !nodes.some(sibling => {
-                            if (sibling !== node && node.linear.top >= sibling.linear.bottom && node.intersectY(sibling.linear)) {
+                            if (sibling !== node &&
+                                node.linear.top >= sibling.linear.bottom &&
+                                node.intersectY(sibling.linear))
+                            {
                                 return true;
                             }
                             return false;
@@ -161,19 +189,29 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             default:
                 const parent = this.documentParent(nodes);
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
-                    const cleared = NodeList.cleared(Array.from(parent.baseElement.children).map(node => getNodeFromElement(node) as T).filter(node => node));
-                    return nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
-                        if (index > 0 && !node.lineBreak) {
-                            if (node.companion && node.companion.documentParent === parent) {
-                                node = node.companion as T;
-                            }
-                            const previous = node.previousSibling();
-                            if (previous != null) {
-                                return node.alignedVertically(previous, cleared);
-                            }
-                        }
-                        return true;
-                    });
+                    const cleared =
+                        NodeList.cleared(
+                            Array.from(parent.baseElement.children)
+                                .map(node => getNodeFromElement(node) as T)
+                                .filter(node => node)
+                        );
+                    return (
+                        nodes
+                            .slice()
+                            .sort(NodeList.siblingIndex)
+                            .every((node, index) => {
+                                if (index > 0 && !node.lineBreak) {
+                                    if (node.companion && node.companion.documentParent === parent) {
+                                        node = node.companion as T;
+                                    }
+                                    const previous = node.previousSibling();
+                                    if (previous != null) {
+                                        return node.alignedVertically(previous, cleared);
+                                    }
+                                }
+                                return true;
+                            })
+                    );
                 }
                 return false;
         }
@@ -181,7 +219,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
 
     private static documentParent<T extends Node>(nodes: T[]) {
         for (const node of nodes) {
-            if (node.companion == null && (node.hasElement || node.plainText)) {
+            if (node.companion == null && node.domElement) {
                 return node.documentParent;
             }
         }
@@ -231,7 +269,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
 
     public append(...nodes: T[]) {
         this._list.push(...nodes);
-        if (this.delegateAppend != null) {
+        if (typeof this.delegateAppend === 'function') {
             this.delegateAppend.call(this, nodes);
         }
     }

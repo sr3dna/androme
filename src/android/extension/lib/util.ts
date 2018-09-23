@@ -1,14 +1,15 @@
 import { Null, StringMap } from '../../../lib/types';
 import ResourceView from '../../resource-view';
 import View from '../../view';
-import { hasValue, includes, isNumber, optional } from '../../../lib/util';
-import { getNodeFromElement } from '../../../lib/dom';
+import { includes, isNumber, optional } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../lib/constants';
 import SETTINGS from '../../../settings';
 
-export function createPlaceholder<T extends View>(nextId: number, node: T, children: T[] = []) {
-    const placeholder = new View(nextId, node.api, node.element) as T;
+type T = View;
+
+export function createPlaceholder(nextId: number, node: T, children: T[] = []) {
+    const placeholder = new View(nextId, node.api, node.element);
     placeholder.parent = node.parent;
     for (const child of children) {
         child.parent = placeholder;
@@ -19,21 +20,8 @@ export function createPlaceholder<T extends View>(nextId: number, node: T, child
     return placeholder;
 }
 
-export function locateExtension<T extends View>(node: T, extension: string): Null<Element> {
-    return <Element> Array.from(node.element.children).find((element: Element) => includes(optional(element, 'dataset.ext') as string, extension));
-}
-
-export function getTargetDepth(id: string) {
-    const node = getNodeFromElement(document.getElementById(id));
-    if (node) {
-        if (hasValue(node.dataset.include)) {
-            return (hasValue(node.dataset.includeMerge) ? 1 : 0);
-        }
-        else {
-            return node.depth;
-        }
-    }
-    return -1;
+export function locateExtension(node: T, extension: string): Null<Element> {
+    return <Element> Array.from(node.element.children).find((element: Element) => includes(optional(element, 'dataset.ext'), extension));
 }
 
 export function formatResource(options: {}) {
