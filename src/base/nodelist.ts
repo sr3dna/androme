@@ -73,6 +73,15 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                         if (a.imageElement && b.imageElement) {
                             return heightA >= heightB ? -1 : 1;
                         }
+                        else if (a.nodeType !== b.nodeType && (a.nodeType < NODE_STANDARD.TEXT || b.nodeType < NODE_STANDARD.TEXT)) {
+                            if (a.textElement || a.imageElement) {
+                                return -1;
+                            }
+                            else if (b.textElement || b.imageElement) {
+                                return 1;
+                            }
+                            return a.nodeType < b.nodeType ? -1 : 1;
+                        }
                         else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
                             return -1;
                         }

@@ -782,7 +782,7 @@ export default class View extends Node {
                     this.android('baselineAligned', 'false');
                 }
                 else {
-                    const alignInput = renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT);
+                    const alignInput = renderParent.is(NODE_STANDARD.GRID) && renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT);
                     if (renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
                         renderParent.android('baselineAlignedChildIndex') !== '' ||
                         alignInput)
@@ -958,12 +958,10 @@ export default class View extends Node {
                     if (this.bounds.width > width) {
                         this.android('layout_width', formatPX(this.bounds.width));
                     }
-                    if (this.has('width', CSS_STANDARD.AUTO, { map: 'initial' })) {
-                        if (renderChildren.every(node => node.inlineWidth)) {
-                            for (const node of renderChildren) {
-                                node.android('layout_width', '0px');
-                                node.app('layout_columnWeight', '1');
-                            }
+                    if (this.has('width', CSS_STANDARD.AUTO, { map: 'initial' }) && renderChildren.every(node => node.inlineWidth)) {
+                        for (const node of renderChildren) {
+                            node.android('layout_width', '0px');
+                            node.app('layout_columnWeight', '1');
                         }
                     }
                 }
@@ -971,7 +969,7 @@ export default class View extends Node {
             }
             else {
                 if (this.hasElement && !this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
-                    if (!(this.renderParent.tagName === 'TABLE' || this.css('boxSizing') === 'border-box')) {
+                    if (!(renderParent.tagName === 'TABLE' || this.css('boxSizing') === 'border-box')) {
                         const minWidth = convertInt(this.android('minWidth'));
                         const minHeight = convertInt(this.android('minHeight'));
                         const paddedWidth = this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
@@ -1001,15 +999,15 @@ export default class View extends Node {
                     }
                     borderWidth = true;
                 }
-                if (borderWidth) {
-                    this.modifyBox(BOX_STANDARD.PADDING_TOP, this.borderTopWidth);
-                    this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.borderRightWidth);
-                    this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.borderBottomWidth);
-                    this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
-                }
+            }
+            if (borderWidth) {
+                this.modifyBox(BOX_STANDARD.PADDING_TOP, this.borderTopWidth);
+                this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.borderRightWidth);
+                this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.borderBottomWidth);
+                this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
             }
         }
-        if (!renderParent.linearHorizontal && !this.plainText) {
+        if (!this.plainText && !renderParent.linearHorizontal) {
             const offset = this.lineHeight - this.actualHeight;
             if (offset > 0) {
                 this.modifyBox(BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));
@@ -1027,7 +1025,7 @@ export default class View extends Node {
                     !!this.data('RESOURCE', 'backgroundImage'))
                 {
                     let found = false;
-                    renderParent.renderChildren.some(node => {
+                    renderParent.renderChildren.some((node: T) => {
                         if (node === this) {
                             found = true;
                         }
@@ -1174,7 +1172,7 @@ export default class View extends Node {
                                 return (
                                     previous.renderChildren
                                         .filter(item => !item.floating)
-                                        .sort((a, b) => (a.linear.bottom < b.linear.bottom ? 1 : -1))[0]
+                                        .sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0]
                                         .linear.bottom
                                 );
                             }

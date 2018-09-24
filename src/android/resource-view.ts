@@ -511,7 +511,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                                         top = xy;
                                                     }
                                                 }
-                                                gravity = mergeGravity(gravity, (index === 0 ? 'left' : 'top'));
+                                                gravity = mergeGravity(gravity, index === 0 ? 'left' : 'top');
                                             }
                                         });
                                     }
@@ -740,7 +740,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     }
                                     else {
                                         const hasInset = width > 1 && (item.style === 'groove' || item.style === 'ridge');
-                                        const outsetWidth = index === 1 ? Math.ceil(width / 2) : width;
+                                        const outsetWidth = hasInset ? Math.ceil(width / 2) : width;
                                         let leftTop = `-${formatPX(outsetWidth + 1)}`;
                                         let rightBottom = `-${formatPX(outsetWidth)}`;
                                         root['4'].push({
@@ -922,9 +922,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                     if (!system) {
                         const fonts = Resource.STORED.FONTS.get(fontFamily) || {};
-                        Object.assign(fonts, {
-                            [`${fontStyle}-${fontWeight}`]: true
-                        });
+                        fonts[`${fontStyle}-${fontWeight}`] = true;
                         Resource.STORED.FONTS.set(fontFamily, fonts);
                     }
                 }
@@ -1141,11 +1139,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 if (sorted.length === 1) {
                     for (const attr in sorted[0]) {
                         const value = sorted[0][attr];
-                        if (value.length > 2) {
-                            style[tag][attr] = value;
-                        }
-                        else {
+                        if (value.length === 1) {
                             layout[tag][attr] = value;
+                        }
+                        else if (value.length > 1) {
+                            style[tag][attr] = value;
                         }
                     }
                     sorted.length = 0;
@@ -1154,25 +1152,25 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     const styleKey: ObjectMap<number[]> = {};
                     const layoutKey: ObjectMap<number[]> = {};
                     for (let i = 0; i < sorted.length; i++) {
+                        if (sorted[i] == null) {
+                            continue;
+                        }
                         const filtered: ObjectMap<number[]> = {};
                         const combined: ObjectMap<Set<string>> = {};
                         const deleteKeys = new Set<string>();
                         for (const attr1 in sorted[i]) {
-                            if (sorted[i] == null) {
-                                continue;
-                            }
                             const ids: number[] = sorted[i][attr1];
                             let revalidate = false;
                             if (ids == null || ids.length === 0) {
                                 continue;
                             }
                             else if (ids.length === count) {
-                                styleKey[attr1] = ids;
+                                styleKey[attr1] = ids.slice();
                                 sorted[i] = {};
                                 revalidate = true;
                             }
                             else if (ids.length === 1) {
-                                layoutKey[attr1] = ids;
+                                layoutKey[attr1] = ids.slice();
                                 sorted[i][attr1] = [];
                                 revalidate = true;
                             }
@@ -1180,7 +1178,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 const found: ObjectMap<number[]> = {};
                                 let merged = false;
                                 for (let j = 0; j < sorted.length; j++) {
-                                    if (i !== j) {
+                                    if (i !== j && sorted[j] != null) {
                                         for (const attr in sorted[j]) {
                                             const compare = sorted[j][attr];
                                             if (compare.length > 0) {
@@ -1297,7 +1295,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
             }
             const tagData = <ObjectMap<number[]>> layout[tagName];
-            if (tagData != null) {
+            if (tagData) {
                 for (const attr in tagData) {
                     for (const id of tagData[attr]) {
                         if (mapNode[id] == null) {

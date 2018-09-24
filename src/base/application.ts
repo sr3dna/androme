@@ -4,9 +4,9 @@ import Controller from './controller';
 import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
-import { convertInt, formatPX, hasBit, hasValue, isNumber, optional, sortAsc, trimString } from '../lib/util';
+import { convertInt, formatPX, hasBit, hasValue, isNumber, optional, sortAsc, trimString, isUnit } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
-import { cssParent, deleteElementCache, getElementsBetweenSiblings, getElementCache, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
+import { cssParent, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import SETTINGS from '../settings';
 
@@ -72,16 +72,16 @@ export default class Application<T extends Node> {
                 node.applyCustomizations(SETTINGS.customizationsOverwritePrivilege);
             }
         }
+        this.controllerHandler.setBoxSpacing(this.viewData);
         this.appendRenderQueue();
-        this.controllerHandler.setDimensions(this.viewData);
+        this.resourceHandler.finalize(this.viewData);
+        this.controllerHandler.finalize(this.viewData);
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
                 ext.setTarget(node);
                 ext.finalize();
             }
         }
-        this.resourceHandler.finalize(this.viewData);
-        this.controllerHandler.finalize(this.viewData);
         this.closed = true;
     }
 
@@ -207,13 +207,13 @@ export default class Application<T extends Node> {
                 if (node.hasElement) {
                     const element = <HTMLElement> node.element;
                     const preAlignment: StringMap = {};
-                    const textAlign = ['right', 'end'];
-                    if (!(element.tagName === 'BUTTON' || (<HTMLInputElement> element).type === 'button')) {
-                        textAlign.push('center');
+                    const textAlign = node.css('textAlign');
+                    const textDirection = ['right', 'end'];
+                    if (element.tagName !== 'BUTTON' && (<HTMLInputElement> element).type !== 'button') {
+                        textDirection.push('center');
                     }
-                    textAlign.some(alignment => {
-                        const value = node.css('textAlign');
-                        if (value === alignment) {
+                    textDirection.some(value => {
+                        if (value === textAlign) {
                             preAlignment.textAlign = value;
                             element.style.textAlign = 'left';
                             return true;
@@ -775,7 +775,7 @@ export default class Application<T extends Node> {
                                             groupXml = this.writeConstraintLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.PERCENT;
                                         }
-                                        else if (this.isRelativeHorizontal(horizontal)) {
+                                        else if (this.isRelativeHorizontal(horizontal, cleared)) {
                                             group = this.controllerHandler.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeRelativeLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
@@ -1016,14 +1016,14 @@ export default class Application<T extends Node> {
                                                         xml = this.writeConstraintLayout(nodeY, parentY);
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                     }
-                                                    else if (this.isRelativeHorizontal(children)) {
+                                                    else if (this.isRelativeHorizontal(children, cleared)) {
                                                         xml = this.writeRelativeLayout(nodeY, parentY);
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                     }
                                                 }
                                                 if (xml === '') {
                                                     if (floated.size === 0 || !floated.has('right')) {
-                                                        if (this.isRelativeHorizontal(children)) {
+                                                        if (this.isRelativeHorizontal(children, cleared)) {
                                                             xml = this.writeRelativeLayout(nodeY, parentY);
                                                             nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                         }
@@ -1253,7 +1253,7 @@ export default class Application<T extends Node> {
             }
         }
         if (inline.length === nodes.length) {
-            if (this.isRelativeHorizontal(inline)) {
+            if (this.isRelativeHorizontal(inline, cleared)) {
                 xml = this.writeRelativeLayout(group, parent);
                 group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                 return xml;
@@ -1276,11 +1276,8 @@ export default class Application<T extends Node> {
                 group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                 return xml;
             }
-            else {
-                if (this.isRelativeHorizontal(subgroup) &&
-                    (inline.length > 0 && !inline[inline.length - 1].blockStatic) &&
-                    (NodeList.linearX(subgroup) || subgroup.some(node => node.textElement && node.multiLine)))
-                {
+            else if (cleared.size === 0) {
+                if (this.isRelativeHorizontal(subgroup, cleared)) {
                     xml = this.writeRelativeLayout(group, parent);
                     group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                     if (right.length > 0) {
@@ -1473,7 +1470,7 @@ export default class Application<T extends Node> {
                         const subgroup = this.controllerHandler.createGroup(basegroup, section[0], section);
                         const floatLeft = section.some(node => node.float === 'left');
                         const floatRight = section.some(node => node.float === 'right');
-                        if (this.isRelativeHorizontal(section) && ![center, right, rightAbove].includes(section)) {
+                        if (this.isRelativeHorizontal(section, cleared) && ![center, right, rightAbove].includes(section)) {
                             content = this.writeRelativeLayout(subgroup, basegroup);
                             subgroup.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                         }
@@ -1912,17 +1909,21 @@ export default class Application<T extends Node> {
         );
     }
 
-    private isRelativeHorizontal(nodes: T[]) {
+    private isRelativeHorizontal(nodes: T[], cleared: Map<T, string>) {
         const floated = NodeList.floated(nodes);
-        const coordX = new Set(nodes.filter(node => node.floating).map(node => node.linear.top));
+        const [floating, pageflow] = new NodeList(nodes).partition(node => node.floating);
+        const flowIndex = pageflow.length > 0 ? Math.min.apply(null, pageflow.list.map(node => node.siblingIndex)) : Number.MAX_VALUE;
+        const floatIndex = floating.length > 0 ? Math.max.apply(null, floating.list.map(node => node.siblingIndex)) : -1;
         return (
-            (nodes.some(node => node.textElement) || !NodeList.linearX(nodes)) &&
-            nodes.every(node => node.toInt('verticalAlign') >= 0) &&
-            (floated.size === 0 || (floated.size === 1 && coordX.size === 1)) && (
-                nodes.some(node => node.plainText && node.multiLine) ||
-                nodes.some(node => node.imageElement) ||
-                nodes.every(node => node.textElement && node.baseline) ||
-                nodes.every(node => ['baseline', 'initial', 'unset', 'top', 'middle', 'bottom', 'sub', 'super'].includes(node.css('verticalAlign')))
+            (floated.size === 0 || !floated.has('right')) &&
+            (pageflow.length === 0 || floating.length === 0 || floatIndex < flowIndex) &&
+            nodes.every(node => {
+                const verticalAlign = node.css('verticalAlign');
+                return ['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(verticalAlign) || (isUnit(verticalAlign) && parseInt(verticalAlign) >= 0);
+            }) && (
+                nodes.some(node => node.textElement && node.baseline) ||
+                nodes.some(node => node.imageElement || (node.plainText && node.multiLine)) ||
+                (nodes.every(node => node.pageflow) && cleared.size === 0 && !NodeList.linearX(nodes))
             )
         );
     }

@@ -29,32 +29,32 @@ export default class ListAndroid<T extends View> extends List<T> {
         else if (parent.children[0] === node) {
             paddingLeft += parentLeft;
         }
-        const floatItem =
+        const ordinal =
             node.children.find(item =>
                 item.float === 'left' &&
                 convertInt(item.cssInitial('marginLeft', true)) < 0 &&
                 Math.abs(convertInt(item.cssInitial('marginLeft', true))) <= convertInt(item.documentParent.cssInitial('marginLeft', true))
             ) as T;
-        if (floatItem && listStyle === '0') {
+        if (ordinal && listStyle === '0') {
             let xml = '';
-            floatItem.parent = parent;
-            if (floatItem.inlineText || floatItem.children.length === 0) {
-                xml = controller.renderNode(floatItem, parent, NODE_STANDARD.TEXT);
+            ordinal.parent = parent;
+            if (ordinal.inlineText || ordinal.children.length === 0) {
+                xml = controller.renderNode(ordinal, parent, NODE_STANDARD.TEXT);
             }
-            else if (floatItem.children.every(item => item.pageflow)) {
-                xml = controller.renderGroup(floatItem, parent, NODE_STANDARD.RELATIVE);
+            else if (ordinal.children.every(item => item.pageflow)) {
+                xml = controller.renderGroup(ordinal, parent, NODE_STANDARD.RELATIVE);
             }
             else {
-                xml = controller.renderGroup(floatItem, parent, NODE_STANDARD.CONSTRAINT);
+                xml = controller.renderGroup(ordinal, parent, NODE_STANDARD.CONSTRAINT);
             }
             controller.prependBefore(node.id, xml);
             if (columnCount === 3) {
                 node.app('layout_columnSpan', '2');
             }
-            paddingLeft += floatItem.marginLeft;
-            floatItem.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
-            if (floatItem.viewWidth === 0 && paddingLeft > 0) {
-                floatItem.android('minWidth', formatPX(paddingLeft));
+            paddingLeft += ordinal.marginLeft;
+            ordinal.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
+            if (ordinal.viewWidth === 0 && paddingLeft > 0) {
+                ordinal.android('minWidth', formatPX(paddingLeft));
             }
         }
         else {
@@ -93,7 +93,10 @@ export default class ListAndroid<T extends View> extends List<T> {
             const marginLeftValue = left > 0 ? delimitDimens(node.nodeName, parseRTL('margin_left'), formatPX(left)) : '';
             const options = {
                 android: {
-                    layout_marginTop: node.marginTop + top > 0 ? delimitDimens(node.nodeName, 'margin_top', formatPX(node.marginTop + top)) : ''
+                    fontFamily: node.css('fontFamily'),
+                    textStyle: node.css('fontStyle'),
+                    textSize: node.css('fontSize'),
+                    textColor: node.css('color')
                 },
                 app: {
                     layout_columnWeight: columnWeight
@@ -143,7 +146,9 @@ export default class ListAndroid<T extends View> extends List<T> {
                     });
                 }
                 else {
-                    Object.assign(options.android, { text: listStyle !== '0' ? listStyle : '' });
+                    Object.assign(options.android, {
+                        text: listStyle !== '0' ? listStyle : ''
+                    });
                 }
                 controller.prependBefore(
                     node.id,
@@ -164,9 +169,43 @@ export default class ListAndroid<T extends View> extends List<T> {
         return { xml: '', complete: true };
     }
 
-    public afterInsert() {
+    public beforeInsert() {
         const node = this.node;
         if (node.is(NODE_STANDARD.GRID)) {
+            const columnCount = node.app('columnCount');
+            const children = node.renderChildren;
+            for (let i = 0; i < children.length; i++) {
+                const current = children[i];
+                const previous = children[i - 1];
+                let spaceHeight = 0;
+                if (previous != null) {
+                    spaceHeight += convertInt(previous.android('layout_marginBottom'));
+                    previous.delete('android', 'layout_marginBottom');
+                    previous.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, null);
+                }
+                spaceHeight += convertInt(current.android('layout_marginTop'));
+                current.delete('android', 'layout_marginTop');
+                current.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
+                this.application.controllerHandler.prependBefore(
+                    current.id,
+                    this.application.controllerHandler.renderNodeStatic(
+                        NODE_STANDARD.SPACE,
+                        current.renderDepth,
+                        {
+                            app: { layout_columnSpan: columnCount.toString() }
+                        },
+                        'match_parent',
+                        formatPX(spaceHeight)
+                    ),
+                    0
+                );
+            }
+        }
+    }
+
+    public afterInsert() {
+        const node = this.node;
+        if (node.is(NODE_STANDARD.GRID) && node.blockStatic && !node.has('width')) {
             node.android('layout_width', 'match_parent');
         }
     }

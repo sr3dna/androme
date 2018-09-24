@@ -93,10 +93,10 @@ androme.settings = {
     preloadImages: true,
     autoSizeBackgroundImage: true,
     autoSizePaddingAndBorderWidth: true,
+    whitespaceHorizontalOffset: 3.5, // Chrome/Safari/Edge: 3.5 | Firefox: 3
+    whitespaceVerticalOffset: 16,  // 1em
     constraintChainDisabled: false,
-    constraintWhitespaceHorizontalOffset: 4, // Chrome/Safari/Edge: 3.5 | Firefox: 3
-    constraintWhitespaceVerticalOffset: 16,  // 1em
-    constraintChainPackedHorizontalOffset: 4,
+    constraintChainPackedHorizontalOffset: 3.5,
     constraintChainPackedVerticalOffset: 16,
     constraintCirclePositionAbsolute: false,
     constraintSupportNegativeLeftTop: true,

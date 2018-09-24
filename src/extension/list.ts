@@ -98,10 +98,11 @@ export default abstract class List<T extends Node> extends Extension<T> {
         return { xml, complete: true };
     }
 
-    public beforeInsert() {
-        const node = this. node;
-        node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
-        node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
+    public afterRender() {
+        for (const node of this.subscribers) {
+            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
+            node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
+        }
     }
 
     private hasSingleImage(node: T) {

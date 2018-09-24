@@ -1,7 +1,7 @@
 import { BoxModel, ClientRect, DisplaySettings, Flexbox, InitialValues, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isString, isUnit, searchObject } from '../lib/util';
-import { assignBounds, getBoxModel, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, setElementCache } from '../lib/dom';
+import { assignBounds, getBoxModel, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache } from '../lib/dom';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 
 type T = Node;
@@ -600,8 +600,10 @@ export default abstract class Node implements BoxModel {
                             }
                             this.multiLine = multiLine;
                         }
-                        else if ((this.viewWidth === 0 && this.blockStatic) || this.display === 'table-cell' || hasLineBreak(this._element)) {
-                            this.multiLine = multiLine;
+                        else {
+                            if (this.viewWidth === 0 && (this.blockStatic || this.display === 'table-cell')) {
+                                this.multiLine = multiLine;
+                            }
                         }
                     }
                     break;

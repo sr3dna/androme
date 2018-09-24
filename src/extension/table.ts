@@ -185,10 +185,13 @@ export default class Table<T extends Node> extends Extension<T> {
                 return 3;
             }
             if (mapWidth.every(value => value === mapWidth[0])) {
-                if (mapWidth[0] === 'auto') {
-                    return 3;
+                if (multiLine) {
+                    return node.children.some(td => td.has('height')) ? 2 : 3;
                 }
-                if (node.viewWidth > 0 || node.has('width', CSS_STANDARD.PERCENT) || multiLine) {
+                if (mapWidth[0] === 'auto') {
+                    return node.has('width') ? 3 : 0;
+                }
+                if (node.viewWidth > 0 || node.has('width', CSS_STANDARD.PERCENT)) {
                     return 2;
                 }
             }
