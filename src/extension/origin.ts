@@ -41,11 +41,10 @@ export default class Origin<T extends Node> extends Extension<T> {
                         }
                     }
                     else {
-                        const left = convertInt(current.left);
+                        const left = convertInt(current.left) + current.marginLeft;
                         const right = convertInt(current.right);
                         if (left < 0) {
-                            if (node.marginLeft >= left) {
-                                current.css('left', formatPX(left + node.marginLeft));
+                            if (node.marginLeft >= Math.abs(left)) {
                                 leftType = 2;
                             }
                         }
@@ -78,22 +77,22 @@ export default class Origin<T extends Node> extends Extension<T> {
                 const marginLeftType: number = Math.max.apply(null, marginLeft);
                 if (marginLeftType > 0) {
                     node.each((current: T, index: number) => {
-                        if (marginLeft[index] !== 2 && (marginLeftType === 2 || (current.pageflow && !current.plainText && marginLeft.includes(1)))) {
-                            if (marginLeft[index] === 1) {
-                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
-                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, current.marginLeft + node.marginLeft, false, true);
-                            }
-                            else {
-                                current.modifyBox(BOX_STANDARD.MARGIN_LEFT, node.marginLeft, false, true);
+                        if (marginLeft[index] === 2) {
+                            const left = current.toInt('left') + node.marginLeft;
+                            current.css('left', formatPX(Math.max(left, 0)));
+                            if (left < 0) {
+                                current.css('marginLeft', formatPX(current.marginLeft + left));
+                                this.modifyMarginLeft(current, left);
                             }
                         }
+                        else if (marginLeftType === 2 || (current.pageflow && !current.plainText && marginLeft.includes(1))) {
+                            this.modifyMarginLeft(current, node.marginLeft);
+                        }
                     });
-                    const width = node.toInt('width');
-                    if (width > 0) {
-                        node.css('width', formatPX(width + node.marginLeft));
+                    if (node.has('width', CSS_STANDARD.UNIT)) {
+                        node.css('width', formatPX(node.toInt('width') + node.marginLeft));
                     }
-                    node.bounds.left -= node.marginLeft;
-                    node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null, false, true);
+                    this.modifyMarginLeft(node, node.marginLeft, true);
                 }
             }
             if (!node.pageflow && node.children.length > 0 && node.children.some(item => !item.pageflow)) {
@@ -115,5 +114,12 @@ export default class Origin<T extends Node> extends Extension<T> {
                 }
             }
         }
+    }
+
+    private modifyMarginLeft(node: T, offset: number, parent = false) {
+        node.bounds.left -= offset;
+        node.bounds.width += Math.max(node.marginLeft < 0 ? node.marginLeft + offset : offset, 0);
+        node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))));
+        node.setBounds(true);
     }
 }

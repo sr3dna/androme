@@ -54,7 +54,6 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     public finalize(data: ViewData<NodeList<T>>) {
-        this.setDimensions(data);
         this.setAttributes(data);
         for (const value of [...data.views, ...data.includes]) {
             value.content = removePlaceholders(value.content).replace(/\n\n/g, '\n');
@@ -138,6 +137,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     const rows: T[][] = [];
                     const baseline: T[] = [];
                     const textIndent = node.toInt('textIndent');
+                    const noWrap = node.css('whiteSpace') === 'nowrap';
                     const floatAligned = nodes.list.some(item => item.floating);
                     let boxWidth = node.box.width;
                     if (node.renderParent.overflowX) {
@@ -149,15 +149,16 @@ export default class ViewController<T extends View> extends Controller<T> {
                         boxWidth = maxRight - minLeft;
                     }
                     else {
-                        const floatLeftEnd =
+                        const floatEnd =
                             Math.max.apply(null,
                                 node.documentParent.initial.children
                                     .filter(item => item.float === 'left' && item.siblingIndex < node.siblingIndex)
                                     .map(item => item.linear.right));
-                        if (nodes.list.some(item => item.linear.left === floatLeftEnd)) {
-                            boxWidth = node.box.right - floatLeftEnd;
+                        if (nodes.list.some(item => item.linear.left === floatEnd)) {
+                            boxWidth = node.box.right - floatEnd;
                         }
                     }
+                    boxWidth = Math.ceil(boxWidth);
                     let rowWidth = 0;
                     let rowPaddingLeft = 0;
                     let rowPreviousLeft: Null<T> = null;
@@ -184,9 +185,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                             if (!node.inline && textIndent > 0) {
                                 current.modifyBox(BOX_STANDARD.MARGIN_LEFT, textIndent);
                             }
-                            if (SETTINGS.ellipsisOnTextOverflow && rowPaddingLeft > 0) {
-                                this.checkSingleLine(current, true);
-                            }
                             if (!current.siblingflow ||
                                 (current.floating && current.position === 'relative') ||
                                 (current.multiLine && textIndent < 0))
@@ -199,17 +197,18 @@ export default class ViewController<T extends View> extends Controller<T> {
                             const items = rows[rows.length - 1];
                             const siblings = getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
                             const viewGroup = current instanceof ViewGroup && !current.hasAlign(NODE_ALIGNMENT.SEGMENTED);
-                            const previousSibling = current.previousSibling() as T;
+                            const previousSibling = current.previousSibling();
                             let connected = false;
                             if (i === 1 && previous.textElement && current.textElement) {
                                 connected = siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(current.textContent);
                             }
-                            if (!connected &&
+                            if (!noWrap &&
+                                !connected &&
                                 (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && (
-                                    (current.float !== 'right' && rowWidth + (i > 1 ? current.marginLeft + dimension.width - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) : 0) > boxWidth) ||
+                                    (current.float !== 'right' && rowWidth + current.marginLeft + dimension.width - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
                                     (current.multiLine && hasLineBreak(current.element)) ||
                                     (previous.multiLine && previous.textContent.trim() !== '' && !/^\s*\n+/.test(previous.textContent) && !/\n+\s*$/.test(previous.textContent) && hasLineBreak(previous.element)) ||
-                                    previousSibling.lineBreak ||
+                                    (previousSibling && previousSibling.lineBreak) ||
                                     current.blockStatic ||
                                     cleared.has(current) ||
                                     viewGroup ||
@@ -249,13 +248,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 }
                                 if (SETTINGS.ellipsisOnTextOverflow &&
                                     previous != null &&
-                                    (items.length > 1 || previous.linearHorizontal))
+                                    previous.linearHorizontal)
                                 {
-                                    let lastChild = previous;
-                                    if (previous.linearHorizontal) {
-                                        lastChild = previous.children[previous.children.length - 1] as T;
-                                    }
-                                    this.checkSingleLine(lastChild, true);
+                                    this.checkSingleLine(previous.children[previous.children.length - 1] as T, true);
                                 }
                                 if (rowPaddingLeft > 0) {
                                     current.modifyBox(BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
@@ -268,10 +263,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 rows.push([current]);
                             }
                             else {
-                                if (i === 1 &&
-                                    rowPaddingLeft > 0 &&
-                                    !previous.plainText)
-                                {
+                                if (i === 1 && rowPaddingLeft > 0 && !previous.plainText) {
                                     current.anchor(sideParent, 'true');
                                     current.modifyBox(BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
                                 }
@@ -287,7 +279,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 items.push(current);
                             }
                         }
-                        rowWidth += dimension.width + current.marginLeft + current.marginRight + (previous != null && !previous.floating && !previous.plainText && !current.floating && !current.plainText ? SETTINGS.whitespaceHorizontalOffset : 0);
+                        rowWidth += dimension.width + current.marginLeft + current.marginRight +
+                                    (previous != null && !previous.floating && !previous.plainText && previous.textContent.trim() !== '' && !current.floating && !current.plainText && current.textContent.trim() !== '' ? SETTINGS.whitespaceHorizontalOffset : 0);
                         if (!floatAligned) {
                             baseline.push(current);
                         }
@@ -315,11 +308,15 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                         });
                     }
-                    if (SETTINGS.ellipsisOnTextOverflow && (rows.length === 1 || node.hasAlign(NODE_ALIGNMENT.HORIZONTAL))) {
+                    if (SETTINGS.ellipsisOnTextOverflow &&
+                        (rows.length === 1 || node.hasAlign(NODE_ALIGNMENT.HORIZONTAL)) &&
+                        !node.ascend(true).some(item => item.is(NODE_STANDARD.GRID)))
+                    {
+                        const widthParent = !node.ascend().some(parent => parent.hasWidth);
                         for (let i = 1; i < nodes.length; i++) {
                             const item = nodes.get(i);
                             if (!item.multiLine && !item.floating && (!item.alignParent('left') || rows.length === 1)) {
-                                this.checkSingleLine(item);
+                                this.checkSingleLine(item, false, widthParent);
                             }
                         }
                     }
@@ -1645,12 +1642,12 @@ export default class ViewController<T extends View> extends Controller<T> {
             case 'IMG': {
                 if (!recursive) {
                     const element = <HTMLImageElement> node.element;
-                    let width = node.toInt('width');
-                    let height = node.toInt('height');
                     const top = node.toInt('top');
                     const left = node.toInt('left');
                     const percentWidth = node.has('width', CSS_STANDARD.PERCENT);
                     const percentHeight = node.has('height', CSS_STANDARD.PERCENT);
+                    let width = node.toInt('width');
+                    let height = node.toInt('height');
                     let scaleType = '';
                     if (percentWidth || percentHeight) {
                         scaleType = percentWidth && percentHeight ? 'fitXY' : 'fitCenter';
@@ -1917,7 +1914,7 @@ export default class ViewController<T extends View> extends Controller<T> {
     public renderMerge(name: string, value: string[]) {
         let xml = value.join('');
         if (this._merge[name]) {
-            const node = new View(0, 0);
+            const node = new View(0, 0) as T;
             node.documentRoot = true;
             xml =
                 this.renderNodeStatic(
@@ -1926,7 +1923,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     {},
                     '',
                     '',
-                    node as T,
+                    node,
                     true
                 )
                 .replace('{:0}', xml);
@@ -1948,7 +1945,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
     }
 
-    private setDimensions(data: ViewData<NodeList<T>>) {
+    public setDimensions(data: ViewData<NodeList<T>>) {
         function addToGroup(nodeName: string, node: T, dimen: string, attr?: string, value?: string) {
             const group: ObjectMap<T[]> = groups[nodeName];
             let name = dimen;
@@ -1991,7 +1988,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             }
         }
         if (SETTINGS.dimensResourceValue) {
-            const resource = <Map<string, string>> Resource.STORED.DIMENS;
+            const resource = <Map<string, string>> Resource.STORED.dimens;
             for (const nodeName in groups) {
                 const group: ObjectMap<T[]> = groups[nodeName];
                 for (const name in group) {
@@ -2014,7 +2011,7 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     private parseDimensions(content: string) {
-        const resource = <Map<string, string>> Resource.STORED.DIMENS;
+        const resource = <Map<string, string>> Resource.STORED.dimens;
         const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
         let match: Null<RegExpExecArray>;
         while ((match = pattern.exec(content)) != null) {
@@ -2336,7 +2333,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                     }
                 }
-
                 if (unaligned.length > 0) {
                     const realign =
                         unaligned
@@ -2363,8 +2359,14 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
     }
 
-    private checkSingleLine(node: T, nowrap = false) {
-        if (node.textElement && (nowrap || (!node.hasWidth && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1))) {
+    private checkSingleLine(node: T, nowrap = false, flexParent = false) {
+        if (node &&
+            node.textElement && (
+                nowrap ||
+                flexParent ||
+                (!node.hasWidth && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1)
+           ))
+        {
             node.android('singleLine', 'true');
         }
     }

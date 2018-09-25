@@ -114,7 +114,7 @@ export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclarat
                 }
             }
         }
-        if (element.nodeName.charAt(0) !== '#') {
+        if (element.nodeName && element.nodeName.charAt(0) !== '#') {
             const style = getComputedStyle(element);
             setElementCache(element, 'style', style);
             return style;

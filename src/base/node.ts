@@ -1,7 +1,7 @@
 import { BoxModel, ClientRect, DisplaySettings, Flexbox, InitialValues, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isString, isUnit, searchObject } from '../lib/util';
-import { assignBounds, getBoxModel, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache } from '../lib/dom';
+import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject } from '../lib/util';
+import { assignBounds, getBoxModel, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 
 type T = Node;
@@ -79,7 +79,7 @@ export default abstract class Node implements BoxModel {
     public abstract setBoxSpacing(): void;
     public abstract applyCustomizations(overwrite: boolean): void;
     public abstract applyOptimizations(options: DisplaySettings): void;
-    public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean, bounds?: boolean): void;
+    public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     public abstract valueBox(region: number): string[];
     public abstract clone(id?: number, children?: boolean): T;
 
@@ -140,9 +140,6 @@ export default abstract class Node implements BoxModel {
     public attr(obj: string, attr: string, value = '', overwrite = true): string {
         const name = `_${obj || '_'}`;
         if (hasValue(value)) {
-            if (!isString(value)) {
-                value = value.toString();
-            }
             if (this[name] == null) {
                 this._namespaces.add(obj);
                 this[name] = {};
@@ -150,7 +147,7 @@ export default abstract class Node implements BoxModel {
             if (!overwrite && this[name][attr] != null) {
                 return '';
             }
-            this[name][attr] = value;
+            this[name][attr] = value.toString();
         }
         return this[name][attr] || '';
     }
@@ -216,9 +213,9 @@ export default abstract class Node implements BoxModel {
         return this._data[obj] != null ? this._data[obj][attr] : null;
     }
 
-    public ascend(element = false) {
+    public ascend(xml = false) {
         const result: T[] = [];
-        const attr = element ? 'documentParent' : 'parent';
+        const attr = xml ? 'parent' : 'documentParent';
         let current: T = this[attr];
         while (current != null && current.id !== 0) {
             result.push(current);
@@ -600,7 +597,7 @@ export default abstract class Node implements BoxModel {
                             this.multiLine = multiLine;
                         }
                         else {
-                            if (!this.hasWidth && (this.blockStatic || this.display === 'table-cell')) {
+                            if (!this.hasWidth && (this.blockStatic || this.display === 'table-cell' || hasLineBreak(this._element))) {
                                 this.multiLine = multiLine;
                             }
                         }
@@ -682,7 +679,7 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public resetBox(region: number, node?: T, negative = false, bounds = false) {
+    public resetBox(region: number, node?: T, negative = false) {
         const attrs: string[] = [];
         if (hasBit(region, BOX_STANDARD.MARGIN)) {
             attrs.push('marginTop', 'marginRight', 'marginBottom', 'marginLeft');
@@ -693,7 +690,7 @@ export default abstract class Node implements BoxModel {
         for (const attr of attrs) {
             this._boxReset[attr] = 1;
             if (node != null) {
-                node.modifyBox(attr, this[attr], negative, bounds);
+                node.modifyBox(attr, this[attr], negative);
             }
         }
     }

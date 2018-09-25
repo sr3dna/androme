@@ -1,7 +1,7 @@
 import { DisplaySettings, Null, ObjectMap, StringMap } from '../lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, lastIndexOf, withinFraction } from '../lib/util';
+import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, lastIndexOf, isString, withinFraction } from '../lib/util';
 import { calculateBias, generateId, stripId } from './lib/util';
 import { getElementsBetweenSiblings, getNodeFromElement } from '../lib/dom';
 import API_ANDROID from './customizations';
@@ -100,14 +100,10 @@ export default class View extends Node {
         return false;
     }
 
-    public modifyBox(region: number | string, offset: number | null, negative = false, bounds = false) {
+    public modifyBox(region: number | string, offset: number | null, negative = false) {
         const name = typeof region === 'number' ? convertEnum(region, BOX_STANDARD, BOX_ANDROID) : '';
-        if (offset !== 0 && (
-                name !== '' ||
-                (typeof region === 'string' && region !== '')
-           ))
-        {
-            const attr = typeof region === 'string' ? region : name.replace('layout_', '');
+        if (offset !== 0 && (name !== '' || isString(region))) {
+            const attr = isString(region) ? region : name.replace('layout_', '');
             if (this._boxReset[attr] != null) {
                 if (offset == null) {
                     this._boxReset[attr] = 1;
@@ -117,35 +113,6 @@ export default class View extends Node {
                     if (!negative) {
                         this._boxAdjustment[attr] = Math.max(0, this._boxAdjustment[attr]);
                     }
-                }
-                if (bounds && offset) {
-                    switch (attr) {
-                        case 'marginTop':
-                            this.linear.top -= offset;
-                            break;
-                        case 'marginRight':
-                            this.linear.right += offset;
-                            break;
-                        case 'marginBottom':
-                            this.linear.bottom += offset;
-                            break;
-                        case 'marginLeft':
-                            this.linear.left -= offset;
-                            break;
-                        case 'paddingTop':
-                            this.box.top += offset;
-                            break;
-                        case 'paddingRight':
-                            this.box.right -= offset;
-                            break;
-                        case 'paddingBottom':
-                            this.box.bottom -= offset;
-                            break;
-                        case 'paddingLeft':
-                            this.box.left += offset;
-                            break;
-                    }
-                    this.setDimensions([attr.indexOf('margin') !== -1 ? 'linear' : 'box']);
                 }
             }
         }
@@ -405,7 +372,7 @@ export default class View extends Node {
                                 (this.linearVertical && !this.floating && !this.autoMargin) ||
                                 (this.hasElement && this.blockStatic && (
                                     this.documentParent.documentBody ||
-                                    this.ascend(true).every(node => node.blockStatic) ||
+                                    this.ascend().every(node => node.blockStatic) ||
                                     (this.documentParent.blockStatic && this.nodeType <= NODE_STANDARD.LINEAR && ((previousSibling == null || !previousSibling.floating) && (nextSibling == null || !nextSibling.floating)))
                                 )) ||
                                 (this.is(NODE_STANDARD.FRAME) && renderChildren.some(node => node.blockStatic && (node.autoMarginHorizontal || node.autoMarginLeft))) ||
@@ -774,17 +741,17 @@ export default class View extends Node {
             }
             if (linearHorizontal) {
                 if (!renderChildren.some(node => node.imageElement && node.baseline) && (
-                        renderChildren.some(node => node.floating || !node.siblingflow) ||
-                        this.hasAlign(NODE_ALIGNMENT.FLOAT)
+                        this.hasAlign(NODE_ALIGNMENT.FLOAT) ||
+                        renderChildren.some(node => node.floating || !node.siblingflow)
                    ))
                 {
                     this.android('baselineAligned', 'false');
                 }
                 else {
                     const alignInput = renderParent.is(NODE_STANDARD.GRID) && renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT);
-                    if (renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
+                    if (alignInput ||
                         renderParent.android('baselineAlignedChildIndex') !== '' ||
-                        alignInput)
+                        renderChildren.some(node => !node.alignOrigin || !node.baseline))
                     {
                         const baseline = NodeList.textBaseline(renderChildren, alignInput);
                         if (baseline.length > 0) {
@@ -793,15 +760,16 @@ export default class View extends Node {
                     }
                 }
                 if (this.hasElement && Array.from(this.element.children).every(element => renderChildren.includes(getNodeFromElement(element) as T) || element.tagName === 'BR')) {
-                    const inline = renderChildren.filter(node => !node.floating);
-                    if (inline.every(node => node.baseline || node.has('verticalAlign', CSS_STANDARD.UNIT))) {
-                        const marginTop: number = Math.max.apply(null, inline.map(node => node.toInt('verticalAlign')));
-                        const marginBottom = Math.min.apply(null, inline.map(node => node.toInt('verticalAlign')));
+                    const pageflow = renderChildren.filter(node => !node.floating);
+                    if (pageflow.every(node => node.baseline || node.has('verticalAlign', CSS_STANDARD.UNIT))) {
+                        const marginTop: number = Math.max.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
+                        const marginBottom = Math.min.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
+                        const imageHighest = Math.max.apply(null, pageflow.map(node => node.imageElement && node.toInt('verticalAlign') > 0 ? node.bounds.height : 0));
                         if (marginTop > 0 && marginBottom < 0) {
-                            inline.forEach(node => {
+                            pageflow.forEach(node => {
                                 const offset = node.toInt('verticalAlign');
                                 if (offset === 0) {
-                                    node.modifyBox(BOX_STANDARD.PADDING_TOP, marginTop);
+                                    node.modifyBox(BOX_STANDARD.PADDING_TOP, Math.max(imageHighest, marginTop));
                                     node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, Math.abs(marginBottom));
                                 }
                                 else {
@@ -817,17 +785,14 @@ export default class View extends Node {
                     renderChildren.every(node => node.textElement && !node.floating))
                 {
                     const node = renderChildren[renderChildren.length - 1];
-                    if (node.textElement && node.textContent.trim().split(String.fromCharCode(32)).length > 1 && !node.multiLine) {
+                    if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
                         node.android('singleLine', 'true');
                     }
                 }
             }
         }
         if (this.pageflow) {
-            if (!renderParent.documentBody &&
-                renderParent.blockStatic &&
-                this.documentParent === renderParent)
-            {
+            if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
                 [['firstElementChild', 'Top', BOX_STANDARD.MARGIN_TOP, BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', BOX_STANDARD.MARGIN_BOTTOM, BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, number, number], index: number) => {
                     const node = getNodeFromElement(renderParent[item[0]]);
                     if (node &&
@@ -999,20 +964,13 @@ export default class View extends Node {
                 this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
             }
         }
-        if (!this.plainText && !renderParent.linearHorizontal) {
-            const offset = this.lineHeight - this.actualHeight;
-            if (offset > 0) {
-                this.modifyBox(BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));
-                this.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
-            }
-        }
         if (this.position === 'relative' || renderParent.is(NODE_STANDARD.FRAME)) {
             const top = this.toInt('top');
             const bottom = this.toInt('bottom');
             const left = this.toInt('left');
             if (top !== 0) {
                 if (top < 0 &&
-                    renderParent.is(NODE_STANDARD.RELATIVE) &&
+                    renderParent.is(NODE_STANDARD.RELATIVE, NODE_STANDARD.LINEAR) &&
                     this.floating &&
                     !!this.data('RESOURCE', 'backgroundImage'))
                 {
@@ -1046,6 +1004,13 @@ export default class View extends Node {
                 else {
                     this.modifyBox(BOX_STANDARD.MARGIN_LEFT, left, true);
                 }
+            }
+        }
+        if (!this.plainText && !renderParent.linearHorizontal) {
+            const offset = (this.lineHeight + this.toInt('verticalAlign')) - this.actualHeight;
+            if (offset > 0) {
+                this.modifyBox(BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));
+                this.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
             }
         }
         if (this.inline && !this.floating) {

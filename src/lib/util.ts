@@ -168,11 +168,11 @@ export function hasBit(value: number, type: number) {
     return (value & type) === type;
 }
 
-export function isNumber(value: string) {
+export function isNumber(value: string | number): value is number {
     return /^-?[0-9]+(\.[0-9]+)?$/.test(value.toString().trim());
 }
 
-export function isString(value: any) {
+export function isString(value: any): value is string {
     return typeof value === 'string' && value !== '';
 }
 

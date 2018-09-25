@@ -90,7 +90,7 @@ export default class FileView<T extends View> extends File<T> {
 
     public resourceStringToXml(saveToDisk = false) {
         let xml = '';
-        this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort(caseInsensitve));
+        this.stored.strings = new Map([...this.stored.strings.entries()].sort(caseInsensitve));
         const template = parseTemplate(STRING_TMPL);
         const data: {} = {
             '0': [{
@@ -98,10 +98,10 @@ export default class FileView<T extends View> extends File<T> {
             }]
         };
         const root = getTemplateLevel(data, '0');
-        if (this.appName !== '' && !this.stored.STRINGS.has('app_name')) {
+        if (this.appName !== '' && !this.stored.strings.has('app_name')) {
             root['1'].push({ name: 'app_name', value: this.appName });
         }
-        for (const [name, value] of this.stored.STRINGS.entries()) {
+        for (const [name, value] of this.stored.strings.entries()) {
             root['1'].push({ name, value });
         }
         xml = insertTemplateData(template, data);
@@ -114,8 +114,8 @@ export default class FileView<T extends View> extends File<T> {
 
     public resourceStringArrayToXml(saveToDisk = false) {
         let xml = '';
-        this.stored.ARRAYS = new Map([...this.stored.ARRAYS.entries()].sort());
-        if (this.stored.ARRAYS.size > 0) {
+        this.stored.arrays = new Map([...this.stored.arrays.entries()].sort());
+        if (this.stored.arrays.size > 0) {
             const template = parseTemplate(STRINGARRAY_TMPL);
             const data: {} = {
                 '0': [{
@@ -123,7 +123,7 @@ export default class FileView<T extends View> extends File<T> {
                 }]
             };
             const root = getTemplateLevel(data, '0');
-            for (const [name, values] of this.stored.ARRAYS.entries()) {
+            for (const [name, values] of this.stored.arrays.entries()) {
                 const arrayItem: {} = {
                     name,
                     '2': []
@@ -145,10 +145,10 @@ export default class FileView<T extends View> extends File<T> {
 
     public resourceFontToXml(saveToDisk = false) {
         let xml = '';
-        this.stored.FONTS = new Map([...this.stored.FONTS.entries()].sort());
-        if (this.stored.FONTS.size > 0) {
+        this.stored.fonts = new Map([...this.stored.fonts.entries()].sort());
+        if (this.stored.fonts.size > 0) {
             const template = parseTemplate(FONT_TMPL);
-            for (const [name, font] of this.stored.FONTS.entries()) {
+            for (const [name, font] of this.stored.fonts.entries()) {
                 const data = {
                     '#include': {},
                     '#exclude': {},
@@ -181,8 +181,8 @@ export default class FileView<T extends View> extends File<T> {
 
     public resourceColorToXml(saveToDisk = false) {
         let xml = '';
-        if (this.stored.COLORS.size > 0) {
-            this.stored.COLORS = new Map([...this.stored.COLORS.entries()].sort());
+        if (this.stored.colors.size > 0) {
+            this.stored.colors = new Map([...this.stored.colors.entries()].sort());
             const template = parseTemplate(COLOR_TMPL);
             const data: {} = {
                 '0': [{
@@ -190,7 +190,7 @@ export default class FileView<T extends View> extends File<T> {
                 }]
             };
             const root = getTemplateLevel(data, '0');
-            for (const [name, value] of this.stored.COLORS.entries()) {
+            for (const [name, value] of this.stored.colors.entries()) {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);
@@ -204,8 +204,8 @@ export default class FileView<T extends View> extends File<T> {
 
     public resourceStyleToXml(saveToDisk = false) {
         let xml = '';
-        if (this.stored.STYLES.size > 0) {
-            this.stored.STYLES = new Map([...this.stored.STYLES.entries()].sort(caseInsensitve));
+        if (this.stored.styles.size > 0) {
+            this.stored.styles = new Map([...this.stored.styles.entries()].sort(caseInsensitve));
             const template = parseTemplate(STYLE_TMPL);
             const data: {} = {
                 '0': [{
@@ -213,7 +213,7 @@ export default class FileView<T extends View> extends File<T> {
                 }]
             };
             const root = getTemplateLevel(data, '0');
-            for (const [name1, style] of this.stored.STYLES.entries()) {
+            for (const [name1, style] of this.stored.styles.entries()) {
                 const styleItem: {} = {
                     name1,
                     parent: style.parent || '',
@@ -240,8 +240,8 @@ export default class FileView<T extends View> extends File<T> {
 
     public resourceDimenToXml(saveToDisk = false) {
         let xml = '';
-        this.stored.DIMENS = new Map([...this.stored.DIMENS.entries()].sort());
-        if (this.stored.DIMENS.size > 0) {
+        this.stored.dimens = new Map([...this.stored.dimens.entries()].sort());
+        if (this.stored.dimens.size > 0) {
             const template = parseTemplate(DIMEN_TMPL);
             const data: {} = {
                 '0': [{
@@ -249,7 +249,7 @@ export default class FileView<T extends View> extends File<T> {
                 }]
             };
             const root = getTemplateLevel(data, '0');
-            for (const [name, value] of this.stored.DIMENS.entries()) {
+            for (const [name, value] of this.stored.dimens.entries()) {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);
@@ -264,19 +264,19 @@ export default class FileView<T extends View> extends File<T> {
 
     public resourceDrawableToXml(saveToDisk = false) {
         let xml = '';
-        if (this.stored.DRAWABLES.size > 0 || this.stored.IMAGES.size > 0) {
+        if (this.stored.drawables.size > 0 || this.stored.images.size > 0) {
             const template = parseTemplate(DRAWABLE_TMPL);
             const data: {} = {
                 '0': []
             };
             const root = data['0'];
-            for (const [name, value] of this.stored.DRAWABLES.entries()) {
+            for (const [name, value] of this.stored.drawables.entries()) {
                 root.push({
                     name: `res/drawable/${name}.xml`,
                     value
                 });
             }
-            for (const [name, images] of this.stored.IMAGES.entries()) {
+            for (const [name, images] of this.stored.images.entries()) {
                 if (Object.keys(images).length > 1) {
                     for (const dpi in images) {
                         root.push({

@@ -69,7 +69,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             }
             const numeric = isNumber(value);
             if (SETTINGS.numberResourceValue || !numeric) {
-                for (const [resourceName, resourceValue] of Resource.STORED.STRINGS.entries()) {
+                for (const [resourceName, resourceValue] of Resource.STORED.strings.entries()) {
                     if (resourceValue === value) {
                         return resourceName;
                     }
@@ -89,10 +89,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 else if (name === '') {
                     name = `__symbol${Math.ceil(Math.random() * 100000)}`;
                 }
-                if (Resource.STORED.STRINGS.has(name)) {
+                if (Resource.STORED.strings.has(name)) {
                     name = generateId('strings', `${name}_1`);
                 }
-                Resource.STORED.STRINGS.set(name, value);
+                Resource.STORED.strings.set(name, value);
             }
             return name;
         }
@@ -155,7 +155,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 case 'ico':
                 case 'jpg':
                 case 'png':
-                    src = Resource.insertStoredAsset('IMAGES', prefix + src, images);
+                    src = Resource.insertStoredAsset('images', prefix + src, images);
                     break;
                 default:
                     src = '';
@@ -179,7 +179,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                                : value;
         if (value !== '') {
             let colorName = '';
-            if (!Resource.STORED.COLORS.has(opaque)) {
+            if (!Resource.STORED.colors.has(opaque)) {
                 const color = getColorNearest(value);
                 if (color !== '') {
                     color.name = cameltoLowerCase(color.name);
@@ -189,11 +189,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     else {
                         colorName = generateId('color', `${color.name}_1`);
                     }
-                    Resource.STORED.COLORS.set(opaque, colorName);
+                    Resource.STORED.colors.set(opaque, colorName);
                 }
             }
             else {
-                colorName = Resource.STORED.COLORS.get(opaque) as string;
+                colorName = Resource.STORED.colors.get(opaque) as string;
             }
             return colorName;
         }
@@ -201,7 +201,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     }
 
     public static getColor(value: string) {
-        for (const [hex, name] of Resource.STORED.COLORS.entries()) {
+        for (const [hex, name] of Resource.STORED.colors.entries()) {
             if (name === value) {
                 return hex;
             }
@@ -307,7 +307,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             }
         }
         for (const name in styles) {
-            Resource.STORED.STYLES.set(name, { attributes: styles[name].join(';') });
+            Resource.STORED.styles.set(name, { attributes: styles[name].join(';') });
         }
     }
 
@@ -522,7 +522,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     break;
                             }
                             if (gravity !== '' && image && image.width > 0 && image.height > 0) {
-                                if (tileMode === 'repeat' || tileModeY === 'repeat') {
+                                if (tileModeY === 'repeat') {
                                     let backgroundWidth = node.viewWidth;
                                     if (backgroundWidth > 0) {
                                         if (SETTINGS.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
@@ -554,7 +554,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                         }
                                     }
                                 }
-                                if (tileMode === 'repeat' || tileModeX === 'repeat') {
+                                if (tileModeX === 'repeat') {
                                     let backgroundHeight = node.viewHeight;
                                     if (backgroundHeight > 0) {
                                         if (SETTINGS.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
@@ -850,7 +850,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                     if (template) {
                         const xml = insertTemplateData(template, data);
-                        for (const [name, value] of Resource.STORED.DRAWABLES.entries()) {
+                        for (const [name, value] of Resource.STORED.drawables.entries()) {
                             if (value === xml) {
                                 resourceName = name;
                                 break;
@@ -858,7 +858,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         }
                         if (resourceName === '') {
                             resourceName = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
-                            Resource.STORED.DRAWABLES.set(resourceName, xml);
+                            Resource.STORED.drawables.set(resourceName, xml);
                         }
                     }
                     node.formatted(formatString(method['background'], resourceName), node.renderExtension.size === 0);
@@ -996,9 +996,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         delete stored.fontWeight;
                     }
                     if (!system) {
-                        const fonts = Resource.STORED.FONTS.get(fontFamily) || {};
+                        const fonts = Resource.STORED.fonts.get(fontFamily) || {};
                         fonts[`${fontStyle}-${fontWeight}`] = true;
-                        Resource.STORED.FONTS.set(fontFamily, fonts);
+                        Resource.STORED.fonts.set(fontFamily, fonts);
                     }
                 }
                 const method = METHOD_ANDROID['fontStyle'];
@@ -1086,7 +1086,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                     let arrayName = '';
                     const arrayValue = result.join('-');
-                    for (const [storedName, storedResult] of Resource.STORED.ARRAYS.entries()) {
+                    for (const [storedName, storedResult] of Resource.STORED.arrays.entries()) {
                         if (arrayValue === storedResult.join('-')) {
                             arrayName = storedName;
                             break;
@@ -1094,7 +1094,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     }
                     if (arrayName === '') {
                         arrayName = `${node.nodeId}_array`;
-                        Resource.STORED.ARRAYS.set(arrayName, result);
+                        Resource.STORED.arrays.set(arrayName, result);
                     }
                     node.formatted(formatString(method['entries'], arrayName), node.renderExtension.size === 0);
                 }
@@ -1403,7 +1403,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                     if (match) {
                         const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
-                        Resource.STORED.STYLES.set(value, { parent, attributes: tagData.attributes });
+                        Resource.STORED.styles.set(value, { parent, attributes: tagData.attributes });
                         parent = value;
                     }
                 });

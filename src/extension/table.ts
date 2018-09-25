@@ -1,7 +1,7 @@
 import { ExtensionResult } from './lib/types';
 import Extension from '../base/extension';
 import Node from '../base/node';
-import { convertFloat, convertInt, formatPX, isPercent, isUnit } from '../lib/util';
+import { convertFloat, convertInt, formatPX, hasBit, isPercent, isUnit } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
 import { cssInherit, getStyle } from '../lib/dom';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
@@ -146,7 +146,6 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         }
         const columnCount: number = Math.max.apply(null, columnIndex);
         let rowCount = table.length;
-        let borderInside = false;
         if (mapWidth.every(value => isPercent(value)) && mapWidth.reduce((a, b) => a + parseFloat(b), 0) > 1) {
             let percentTotal = 100;
             mapWidth.forEach((value, index) => {
@@ -221,6 +220,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             td.css('width', formatPX(td.bounds.width));
         }
         columnIndex = new Array(table.length).fill(0);
+        let borderInside = 0;
         for (let i = 0; i < table.length; i++) {
             const tr = table[i];
             const children = tr.children.slice();
@@ -242,8 +242,25 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 if (!td.has('verticalAlign')) {
                     td.css('verticalAlign', 'middle');
                 }
-                if (td.has('borderStyle') && td.toInt('borderWidth') > 0) {
-                    borderInside = true;
+                if (i === 0) {
+                    if (td.has('borderTopStyle') && convertInt(td.css('borderTopWidth')) > 0) {
+                        borderInside |= 2;
+                    }
+                }
+                if (j === 0) {
+                    if (td.has('borderLeftStyle') && convertInt(td.css('borderLeftWidth')) > 0) {
+                        borderInside |= 4;
+                    }
+                }
+                if (j === children.length - 1) {
+                    if (td.has('borderRightStyle') && convertInt(td.css('borderRightWidth')) > 0) {
+                        borderInside |= 8;
+                    }
+                }
+                if (i === table.length - 1) {
+                    if (td.has('borderBottomStyle') && convertInt(td.css('borderBottomWidth')) > 0) {
+                        borderInside |= 16;
+                    }
                 }
                 const columnWidth = mapWidth[columnIndex[i]];
                 if (columnWidth !== 'undefined') {
@@ -316,12 +333,12 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             }
             tr.hide();
         }
-        if (borderCollapse && borderInside) {
+        if (borderCollapse && borderInside !== 0) {
             node.css({
-                borderTopWidth: '0px',
-                borderRightWidth: '0px',
-                borderBottomWidth: '0px',
-                borderLeftWidth: '0px'
+                borderTopWidth: hasBit(borderInside, 2) ? '0px' : '',
+                borderRightWidth: hasBit(borderInside, 8) ? '0px' : '',
+                borderBottomWidth: hasBit(borderInside, 16) ? '0px' : '',
+                borderLeftWidth: hasBit(borderInside, 4) ? '0px' : ''
             });
         }
         xml = this.application.writeGridLayout(node, parent, columnCount, rowCount);

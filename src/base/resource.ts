@@ -1,4 +1,4 @@
-import { BorderAttribute, BoxStyle, FontAttribute, Image, Null, ResourceMap, ViewData } from '../lib/types';
+import { BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap, ViewData } from '../lib/types';
 import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
@@ -11,14 +11,14 @@ import SETTINGS from '../settings';
 
 export default abstract class Resource<T extends Node> {
     public static STORED: ResourceMap = {
-        STRINGS: new Map(),
-        ARRAYS: new Map(),
-        FONTS: new Map(),
-        COLORS: new Map(),
-        STYLES: new Map(),
-        DIMENS: new Map(),
-        DRAWABLES: new Map(),
-        IMAGES: new Map()
+        strings: new Map(),
+        arrays: new Map(),
+        fonts: new Map(),
+        colors: new Map(),
+        styles: new Map(),
+        dimens: new Map(),
+        drawables: new Map(),
+        images: new Map()
     };
 
     public static insertStoredAsset(asset: string, name: string, value: any) {
@@ -70,14 +70,9 @@ export default abstract class Resource<T extends Node> {
     }
 
     public reset() {
-        Resource.STORED.STRINGS = new Map();
-        Resource.STORED.ARRAYS = new Map();
-        Resource.STORED.FONTS = new Map();
-        Resource.STORED.STYLES = new Map();
-        Resource.STORED.DRAWABLES = new Map();
-        Resource.STORED.COLORS = new Map();
-        Resource.STORED.DIMENS = new Map();
-        Resource.STORED.IMAGES = new Map();
+        for (const name in Resource.STORED) {
+            Resource.STORED[name] = new Map();
+        }
         this.file.reset();
     }
 
@@ -102,7 +97,7 @@ export default abstract class Resource<T extends Node> {
     public setBoxStyle() {
         this.cache.elements.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (getElementCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources)) {
-                const result: any = {
+                const result: ObjectMap<any> = {
                     borderTop: this.parseBorderStyle,
                     borderRight: this.parseBorderStyle,
                     borderBottom: this.parseBorderStyle,
@@ -114,16 +109,16 @@ export default abstract class Resource<T extends Node> {
                     backgroundRepeat: true,
                     backgroundPosition: true
                 };
-                for (const i in result) {
-                    const value = node.css(i);
-                    if (typeof result[i] === 'function') {
-                        result[i] = result[i](value, node, i);
+                for (const attr in result) {
+                    const value = node.css(attr);
+                    if (typeof result[attr] === 'function') {
+                        result[attr] = result[attr](value, node, attr);
                     }
-                    else if (result[i] === true) {
-                        result[i] = value;
+                    else if (result[attr] === true) {
+                        result[attr] = value;
                     }
                     else {
-                        result[i] = '';
+                        result[attr] = '';
                     }
                 }
                 if (result.backgroundColor.length > 0 &&
@@ -314,10 +309,7 @@ export default abstract class Resource<T extends Node> {
                         const previousSibling = node.previousSibling();
                         const nextSibling = node.nextSibling();
                         let previousSpaceEnd = false;
-                        if (previousSibling == null ||
-                            previousSibling.multiLine ||
-                            previousSibling.lineBreak)
-                        {
+                        if (previousSibling == null || previousSibling.multiLine || previousSibling.lineBreak) {
                             value = value.replace(/^\s+/, '');
                         }
                         else {
@@ -333,10 +325,7 @@ export default abstract class Resource<T extends Node> {
                             {
                                 value = '&#160;' + value;
                             }
-                            if (nextSibling &&
-                                !nextSibling.lineBreak &&
-                                /\s+$/.test(original))
-                            {
+                            if (nextSibling && !nextSibling.lineBreak && /\s+$/.test(original)) {
                                 value = value + '&#160;';
                             }
                         }
@@ -349,9 +338,9 @@ export default abstract class Resource<T extends Node> {
                                         (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) ||
                                         (node.multiLine && hasLineBreak(element))
                                     ) ? ''
-                                      : '&#160;'
-                                ));
-                                value = value.replace(/\s+$/, nextSibling == null || nextSibling.lineBreak ? '' : '&#160;');
+                                      : '&#160;')
+                                );
+                                value = value.replace(/\s+$/, nextSibling != null && nextSibling.lineBreak ? '' : '&#160;');
                             }
                             else if (value.length > 0) {
                                 value = '&#160;' + value.substring(1);

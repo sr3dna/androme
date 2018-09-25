@@ -74,6 +74,7 @@ export default class Application<T extends Node> {
         }
         this.controllerHandler.setBoxSpacing(this.viewData);
         this.appendRenderQueue();
+        this.controllerHandler.setDimensions(this.viewData);
         this.resourceHandler.finalize(this.viewData);
         this.controllerHandler.finalize(this.viewData);
         for (const ext of this.extensions) {
@@ -549,11 +550,7 @@ export default class Application<T extends Node> {
                                                         if (floated.size > 0) {
                                                             maxBottom = Math.max.apply(null, horizontal.filter(node => node.floating).map(node => node.bounds.bottom));
                                                         }
-                                                        if (floatedOpen.size > 0 && !clearedDirection.has('both') && (
-                                                                maxBottom == null ||
-                                                                adjacent.bounds.top < maxBottom
-                                                           ))
-                                                        {
+                                                        if (floatedOpen.size > 0 && !clearedDirection.has('both') && (maxBottom == null || adjacent.bounds.top < maxBottom)) {
                                                             if (clearedPartial.has(adjacent)) {
                                                                 const clear = clearedPartial.has(adjacent) ? clearedPartial.get(adjacent) as string : 'none';
                                                                 if (clear !== 'none') {
@@ -1263,7 +1260,15 @@ export default class Application<T extends Node> {
                         }
                     }
                     else if (node.autoMargin) {
-                        inlineBelow.push(node);
+                        if (node.autoMarginLeft && rightBelow.length > 0) {
+                            rightBelow.push(node);
+                        }
+                        else if (node.autoMarginRight && leftBelow.length > 0) {
+                            leftBelow.push(node);
+                        }
+                        else {
+                            inlineBelow.push(node);
+                        }
                     }
                     else {
                         switch (current) {

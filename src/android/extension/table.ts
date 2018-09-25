@@ -56,7 +56,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
             });
             if (requireWidth && !node.hasWidth) {
                 let widthParent = 0;
-                node.ascend(true)
+                node.ascend()
                     .some(item => {
                         if (item.hasWidth) {
                             widthParent = item.bounds.width;

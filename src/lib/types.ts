@@ -108,14 +108,14 @@ export type LayoutMapX<T> = {
 export type LayoutMapY<T> = Map<number, Map<number, T>>;
 
 export type ResourceMap = {
-    STRINGS: Map<string, string>;
-    ARRAYS: Map<string, string[]>;
-    FONTS: Map<string, {}>;
-    COLORS: Map<string, string>;
-    STYLES: Map<string, any>;
-    DIMENS: Map<string, string>;
-    DRAWABLES: Map<string, string>;
-    IMAGES: Map<string, {}>;
+    strings: Map<string, string>;
+    arrays: Map<string, string[]>;
+    fonts: Map<string, {}>;
+    colors: Map<string, string>;
+    styles: Map<string, any>;
+    dimens: Map<string, string>;
+    drawables: Map<string, string>;
+    images: Map<string, {}>;
 };
 
 export type BorderAttribute = {
