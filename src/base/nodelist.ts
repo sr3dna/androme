@@ -16,21 +16,23 @@ export default class NodeList<T extends Node> implements Iterable<T> {
 
     public static cleared<T extends Node>(list: T[]) {
         const nodes = new Map<T, string>();
-        const floats = new Set();
+        const floated = new Set();
         list.forEach(node => {
-            const clear = node.css('clear');
-            if (floats.size > 0) {
-                if (clear === 'both') {
-                    nodes.set(node, floats.size === 2 ? 'both' : floats.values().next().value);
-                    floats.clear();
+            if (node.siblingflow) {
+                const clear = node.css('clear');
+                if (floated.size > 0) {
+                    if (clear === 'both') {
+                        nodes.set(node, floated.size === 2 ? 'both' : floated.values().next().value);
+                        floated.clear();
+                    }
+                    else if (floated.has(clear)) {
+                        floated.delete(clear);
+                        nodes.set(node, clear);
+                    }
                 }
-                else if (floats.has(clear)) {
-                    floats.delete(clear);
-                    nodes.set(node, clear);
+                if (node.floating) {
+                    floated.add(node.float);
                 }
-            }
-            if (node.floating) {
-                floats.add(node.float);
             }
         });
         return nodes;
@@ -114,25 +116,27 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         let fontFamily: string;
         let fontSize: string;
         let fontWeight: string;
-        return baseline.filter((node, index) => {
-            if (index === 0) {
-                fontFamily = node.css('fontFamily');
-                fontSize = node.css('fontSize');
-                fontWeight = node.css('fontWeight');
-                return true;
-            }
-            else {
-                return (
-                    node.css('fontFamily') === fontFamily &&
-                    node.css('fontSize') === fontSize &&
-                    node.css('fontWeight') === fontWeight &&
-                    node.nodeName === baseline[0].nodeName && (
-                        (node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) ||
-                        node.bounds.height === baseline[0].bounds.height
-                    )
-                );
-            }
-        });
+        return (
+            baseline.filter((node, index) => {
+                if (index === 0) {
+                    fontFamily = node.css('fontFamily');
+                    fontSize = node.css('fontSize');
+                    fontWeight = node.css('fontWeight');
+                    return true;
+                }
+                else {
+                    return (
+                        node.css('fontFamily') === fontFamily &&
+                        node.css('fontSize') === fontSize &&
+                        node.css('fontWeight') === fontWeight &&
+                        node.nodeName === baseline[0].nodeName && (
+                            (node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) ||
+                            node.bounds.height === baseline[0].bounds.height
+                        )
+                    );
+                }
+            })
+        );
     }
 
     public static linearX<T extends Node>(list: T[], traverse = true) {

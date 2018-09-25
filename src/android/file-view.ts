@@ -91,25 +91,23 @@ export default class FileView<T extends View> extends File<T> {
     public resourceStringToXml(saveToDisk = false) {
         let xml = '';
         this.stored.STRINGS = new Map([...this.stored.STRINGS.entries()].sort(caseInsensitve));
-        if (this.stored.STRINGS.size > 0) {
-            const template = parseTemplate(STRING_TMPL);
-            const data: {} = {
-                '0': [{
-                    '1': []
-                }]
-            };
-            const root = getTemplateLevel(data, '0');
-            if (this.appName !== '' && !this.stored.STRINGS.has('app_name')) {
-                root['1'].push({ name: 'app_name', value: this.appName });
-            }
-            for (const [name, value] of this.stored.STRINGS.entries()) {
-                root['1'].push({ name, value });
-            }
-            xml = insertTemplateData(template, data);
-            xml = replaceTab(xml, SETTINGS.insertSpaces, true);
-            if (saveToDisk) {
-                this.saveToDisk(this.parseFileDetails(xml));
-            }
+        const template = parseTemplate(STRING_TMPL);
+        const data: {} = {
+            '0': [{
+                '1': []
+            }]
+        };
+        const root = getTemplateLevel(data, '0');
+        if (this.appName !== '' && !this.stored.STRINGS.has('app_name')) {
+            root['1'].push({ name: 'app_name', value: this.appName });
+        }
+        for (const [name, value] of this.stored.STRINGS.entries()) {
+            root['1'].push({ name, value });
+        }
+        xml = insertTemplateData(template, data);
+        xml = replaceTab(xml, SETTINGS.insertSpaces, true);
+        if (saveToDisk) {
+            this.saveToDisk(this.parseFileDetails(xml));
         }
         return xml;
     }

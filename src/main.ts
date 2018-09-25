@@ -15,7 +15,9 @@ import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 import API_ANDROID from './android/customizations';
 
 import External from './extension/external';
+import Origin from './extension/origin';
 import Custom from './android/extension/custom';
+import Accessibility from './android/extension/accessibility';
 import List from './android/extension/list';
 import Grid from './android/extension/grid';
 import Table from './android/extension/table';
@@ -34,7 +36,9 @@ const ROOT_CACHE: Set<HTMLElement> = new Set();
 const IMAGE_CACHE: Map<string, Image> = new Map();
 const EXTENSIONS: ObjectMap<Extension<T>> = {
     [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
+    [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN),
     [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM),
+    [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY),
     [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL', 'DL', 'DIV']),
     [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
     [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),

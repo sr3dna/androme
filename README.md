@@ -75,7 +75,9 @@ These settings are available in the global variable "androme" to customize your 
 androme.settings = {
     builtInExtensions: [
         'androme.external',
+        'androme.origin',
         'androme.custom',
+        'androme.accessibility',
         'androme.list',
         'androme.table',
         'androme.grid',
@@ -388,7 +390,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol63006"
+                    android:text="@string/__symbol92867"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -409,7 +411,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                         style="@style/Select.Linearlayout_1" />
                     <Spinner
                         android:id="@+id/year0"
-                        android:entries="@array/year0_array"
+                        android:entries="@array/year1_array"
                         android:layout_marginStart="@dimen/select_margin_start"
                         style="@style/Select.Linearlayout_1" />
                 </LinearLayout>
@@ -429,7 +431,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                         style="@style/Select.Linearlayout_1" />
                     <Spinner
                         android:id="@+id/year1"
-                        android:entries="@array/year0_array"
+                        android:entries="@array/year1_array"
                         android:layout_marginStart="@dimen/select_margin_start"
                         style="@style/Select.Linearlayout_1" />
                 </LinearLayout>
@@ -449,7 +451,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                         style="@style/Select.Linearlayout_1" />
                     <Spinner
                         android:id="@+id/year2"
-                        android:entries="@array/year0_array"
+                        android:entries="@array/year1_array"
                         android:layout_marginStart="@dimen/select_margin_start"
                         style="@style/Select.Linearlayout_1" />
                 </LinearLayout>
@@ -538,7 +540,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol63006"
+                    android:text="@string/__symbol92867"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -975,7 +977,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol63006"
+                    android:text="@string/__symbol92867"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1106,7 +1108,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol63006">):</string>
+    <string name="__symbol92867">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1142,7 +1144,7 @@ The attributes "include" and "include-end" can only be applied to elements which
 ```xml
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string-array name="branch_update_array">
+    <string-array name="branch_array">
         <item>0</item>
         <item>1</item>
         <item>2</item>
@@ -1246,11 +1248,11 @@ The attributes "include" and "include-end" can only be applied to elements which
         <item>@string/variant</item>
         <item>@string/predefined</item>
     </string-array>
-    <string-array name="series_1_array">
+    <string-array name="series_array">
         <item>@string/__00_inactive</item>
         <item>@string/__01_active</item>
     </string-array>
-    <string-array name="subset_1_array">
+    <string-array name="typeofentry_array">
         <item>0</item>
         <item>1</item>
     </string-array>
@@ -1259,7 +1261,7 @@ The attributes "include" and "include-end" can only be applied to elements which
         <item>1</item>
         <item>2</item>
     </string-array>
-    <string-array name="year0_array">
+    <string-array name="year1_array">
         <item>2001</item>
         <item>2002</item>
         <item>2003</item>

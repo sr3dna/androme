@@ -45,7 +45,8 @@ export enum NODE_ALIGNMENT {
     RIGHT = 512,
     BOTTOM = 1024,
     LEFT = 2048,
-    SINGLE = 4096
+    SINGLE = 4096,
+    SPACE = 8192
 }
 
 export enum NODE_RESOURCE {
@@ -90,11 +91,12 @@ export enum BOX_STANDARD {
 
 export enum CSS_STANDARD {
     NONE = 0,
-    UNIT,
-    AUTO,
-    LEFT,
-    BASELINE,
-    PERCENT
+    UNIT = 2,
+    AUTO = 4,
+    LEFT = 8,
+    BASELINE = 16,
+    PERCENT = 32,
+    ZERO = 64,
 }
 
 export const MAP_ELEMENT = {

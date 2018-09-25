@@ -6,7 +6,7 @@ import { EXT_NAME } from './lib/constants';
 import { cssInherit, getStyle } from '../lib/dom';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
 
-export default class Table<T extends Node> extends Extension<T> {
+export default abstract class Table<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }
@@ -191,7 +191,7 @@ export default class Table<T extends Node> extends Extension<T> {
                 if (mapWidth[0] === 'auto') {
                     return node.has('width') ? 3 : 0;
                 }
-                if (node.viewWidth > 0 || node.has('width', CSS_STANDARD.PERCENT)) {
+                if (node.hasWidth) {
                     return 2;
                 }
             }
@@ -200,7 +200,7 @@ export default class Table<T extends Node> extends Extension<T> {
             }
             return 0;
         })();
-        if (multiLine || (typeWidth === 2 && node.viewWidth === 0)) {
+        if (multiLine || (typeWidth === 2 && !node.hasWidth)) {
             node.data(EXT_NAME.TABLE, 'expand', true);
         }
         const caption = node.children.find(item => item.tagName === 'CAPTION');

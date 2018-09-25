@@ -9,7 +9,7 @@ import { NODE_ALIGNMENT, BOX_STANDARD } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 import { getBoxRect, getNodeFromElement } from '../lib/dom';
 
-export default class Grid<T extends Node> extends Extension<T> {
+export default abstract class Grid<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
         super(name, tagNames, options);
     }

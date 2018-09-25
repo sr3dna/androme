@@ -4,7 +4,8 @@ import List from '../../extension/list';
 import View from '../view';
 import { convertInt, formatPX } from '../../lib/util';
 import { delimitDimens } from '../lib/util';
-import { BOX_STANDARD, NODE_STANDARD } from '../../lib/constants';
+import { BOX_STANDARD, NODE_ALIGNMENT, NODE_STANDARD } from '../../lib/constants';
+import { NODE_ANDROID } from '../constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 import parseRTL from '../localization';
 
@@ -53,7 +54,7 @@ export default class ListAndroid<T extends View> extends List<T> {
             }
             paddingLeft += ordinal.marginLeft;
             ordinal.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
-            if (ordinal.viewWidth === 0 && paddingLeft > 0) {
+            if (!ordinal.hasWidth && paddingLeft > 0) {
                 ordinal.android('minWidth', formatPX(paddingLeft));
             }
         }
@@ -88,26 +89,31 @@ export default class ListAndroid<T extends View> extends List<T> {
                     return 10;
                 }
             })();
-            const paddingLeftValue = gravity === '' && image === '' ? delimitDimens(node.nodeName, parseRTL('padding_left'), formatPX(paddingRight)) : '';
-            const paddingRightValue = gravity === 'right' ? delimitDimens(node.nodeName, parseRTL('padding_right'), formatPX(paddingRight)) : '';
-            const marginLeftValue = left > 0 ? delimitDimens(node.nodeName, parseRTL('margin_left'), formatPX(left)) : '';
+            let paddingLeftValue = gravity === '' && image === '' ? formatPX(paddingRight) : '';
+            let paddingRightValue = gravity === 'right' ? formatPX(paddingRight) : '';
+            let marginLeftValue = left > 0 ? formatPX(left) : '';
             const options = {
-                android: {
-                    fontFamily: node.css('fontFamily'),
-                    textStyle: node.css('fontStyle'),
-                    textSize: node.css('fontSize'),
-                    textColor: node.css('color')
-                },
+                android: {},
                 app: {
                     layout_columnWeight: columnWeight
                 }
             };
             if (positionInside) {
+                if (paddingLeftValue !== '') {
+                    paddingLeftValue = delimitDimens(node.nodeName, parseRTL('padding_left'), paddingLeftValue);
+                }
+                if (paddingRightValue !== '') {
+                    paddingRightValue = delimitDimens(node.nodeName, parseRTL('padding_right'), paddingRightValue);
+                }
+                if (marginLeftValue !== '') {
+                    marginLeftValue = delimitDimens(node.nodeName, parseRTL('margin_left'), marginLeftValue);
+                }
                 controller.prependBefore(
                     node.id,
                     controller.renderNodeStatic(
                         NODE_STANDARD.SPACE,
-                        parent.renderDepth + 1, {
+                        parent.renderDepth + 1,
+                        {
                             android: {
                                 minWidth,
                                 [parseRTL('layout_marginLeft')]: marginLeftValue,
@@ -120,7 +126,9 @@ export default class ListAndroid<T extends View> extends List<T> {
                         'wrap_content'
                     )
                 );
-                Object.assign(options.android, { minWidth: delimitDimens(node.nodeName, parseRTL('min_width'), formatPX(24)) });
+                Object.assign(options.android, {
+                    minWidth: delimitDimens(node.nodeName, parseRTL('min_width'), formatPX(24))
+                });
             }
             else {
                 Object.assign(options.android, {
@@ -150,6 +158,13 @@ export default class ListAndroid<T extends View> extends List<T> {
                         text: listStyle !== '0' ? listStyle : ''
                     });
                 }
+                const companion = new View(this.application.cache.nextId, node.api, document.createElement('SPAN')) as T;
+                companion.alignmentType = NODE_ALIGNMENT.SPACE;
+                companion.nodeName = `${node.tagName}_ORDINAL`;
+                companion.setNodeType(NODE_ANDROID.SPACE);
+                companion.inherit(node, 'style');
+                node.companion = companion;
+                this.application.cache.append(companion);
                 controller.prependBefore(
                     node.id,
                     controller.renderNodeStatic(
@@ -158,7 +173,8 @@ export default class ListAndroid<T extends View> extends List<T> {
                         parent.renderDepth + 1,
                         options,
                         'wrap_content',
-                        'wrap_content'
+                        'wrap_content',
+                        companion
                     )
                 );
             }
@@ -179,26 +195,34 @@ export default class ListAndroid<T extends View> extends List<T> {
                 const previous = children[i - 1];
                 let spaceHeight = 0;
                 if (previous != null) {
-                    spaceHeight += convertInt(previous.android('layout_marginBottom'));
-                    previous.delete('android', 'layout_marginBottom');
-                    previous.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, null);
+                    const marginBottom = convertInt(previous.android('layout_marginBottom'));
+                    if (marginBottom > 0) {
+                        spaceHeight += convertInt(previous.android('layout_marginBottom'));
+                        previous.delete('android', 'layout_marginBottom');
+                        previous.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, null);
+                    }
                 }
-                spaceHeight += convertInt(current.android('layout_marginTop'));
-                current.delete('android', 'layout_marginTop');
-                current.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
-                this.application.controllerHandler.prependBefore(
-                    current.id,
-                    this.application.controllerHandler.renderNodeStatic(
-                        NODE_STANDARD.SPACE,
-                        current.renderDepth,
-                        {
-                            app: { layout_columnSpan: columnCount.toString() }
-                        },
-                        'match_parent',
-                        formatPX(spaceHeight)
-                    ),
-                    0
-                );
+                const marginTop = convertInt(current.android('layout_marginTop'));
+                if (marginTop > 0) {
+                    spaceHeight += marginTop;
+                    current.delete('android', 'layout_marginTop');
+                    current.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
+                }
+                if (spaceHeight > 0) {
+                    this.application.controllerHandler.prependBefore(
+                        current.id,
+                        this.application.controllerHandler.renderNodeStatic(
+                            NODE_STANDARD.SPACE,
+                            current.renderDepth,
+                            {
+                                app: { layout_columnSpan: columnCount.toString() }
+                            },
+                            'match_parent',
+                            formatPX(spaceHeight)
+                        ),
+                        0
+                    );
+                }
             }
         }
     }

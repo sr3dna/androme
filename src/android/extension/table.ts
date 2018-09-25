@@ -3,7 +3,7 @@ import { ExtensionResult } from '../../extension/lib/types';
 import Table from '../../extension/table';
 import View from '../view';
 import { convertFloat, convertInt, formatPX, trimEnd } from '../../lib/util';
-import { CSS_STANDARD, NODE_STANDARD } from '../../lib/constants';
+import { NODE_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 
 export default class TableAndroid<T extends View> extends Table<T> {
@@ -54,15 +54,12 @@ export default class TableAndroid<T extends View> extends Table<T> {
                     }
                 }
             });
-            if (requireWidth &&
-                node.viewWidth === 0 &&
-                !node.has('width', CSS_STANDARD.PERCENT))
-            {
+            if (requireWidth && !node.hasWidth) {
                 let widthParent = 0;
                 node.ascend(true)
                     .some(item => {
-                        if (item.viewWidth > 0) {
-                            widthParent = item.viewWidth;
+                        if (item.hasWidth) {
+                            widthParent = item.bounds.width;
                             return true;
                         }
                         return false;

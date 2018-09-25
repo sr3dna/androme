@@ -3,7 +3,9 @@ import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
 const SETTINGS = {
     builtInExtensions: [
         'androme.external',
+        'androme.origin',
         'androme.custom',
+        'androme.accessibility',
         'androme.list',
         'androme.table',
         'androme.grid',

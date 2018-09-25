@@ -80,7 +80,7 @@ export default class ViewGroup<T extends View> extends View {
     }
 
     get inlineElement() {
-        return this.hasBit('alignmentType', NODE_ALIGNMENT.SEGMENTED);
+        return this.hasAlign(NODE_ALIGNMENT.SEGMENTED);
     }
 
     get inlineStatic() {
@@ -92,12 +92,12 @@ export default class ViewGroup<T extends View> extends View {
     }
 
     get floating() {
-        return this.hasBit('alignmentType', NODE_ALIGNMENT.FLOAT);
+        return this.hasAlign(NODE_ALIGNMENT.FLOAT);
     }
 
     get float() {
         if (this.floating) {
-            return (this.hasBit('alignmentType', NODE_ALIGNMENT.RIGHT) ? 'right' : 'left');
+            return (this.hasAlign(NODE_ALIGNMENT.RIGHT) ? 'right' : 'left');
         }
         return 'none';
     }

@@ -48,6 +48,8 @@ type StyleTag = {
 type BackgroundImage = {
     image: string;
     top: string;
+    right: string;
+    bottom: string;
     left: string;
     gravity: string;
     tileMode: string;
@@ -403,6 +405,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         let tileModeX = '';
                         let tileModeY = '';
                         let [left, top] = ResourceView.parseBackgroundPosition(backgroundPosition[i], node.css('fontSize'));
+                        let right = '';
+                        let bottom = '';
                         const image = backgroundDimensions[i];
                         switch (backgroundRepeat[i]) {
                             case 'repeat-x':
@@ -502,13 +506,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                                 gravity = mergeGravity(gravity, value);
                                             }
                                             else {
-                                                const xy = convertPX(value, node.css('fontSize'));
-                                                if (xy !== '0px') {
+                                                const leftTop = convertPX(value, node.css('fontSize'));
+                                                if (leftTop !== '0px') {
                                                     if (index === 0) {
-                                                        left = xy;
+                                                        left = leftTop;
                                                     }
                                                     else {
-                                                        top = xy;
+                                                        top = leftTop;
                                                     }
                                                 }
                                                 gravity = mergeGravity(gravity, index === 0 ? 'left' : 'top');
@@ -516,6 +520,72 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                         });
                                     }
                                     break;
+                            }
+                            if (gravity !== '' && image && image.width > 0 && image.height > 0) {
+                                if (tileMode === 'repeat' || tileModeY === 'repeat') {
+                                    let backgroundWidth = node.viewWidth;
+                                    if (backgroundWidth > 0) {
+                                        if (SETTINGS.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+                                            backgroundWidth = node.viewWidth + node.paddingLeft + node.paddingRight;
+                                        }
+                                    }
+                                    else {
+                                        backgroundWidth = node.bounds.width - (node.borderLeftWidth + node.borderRightWidth);
+                                    }
+                                    if (image.width < backgroundWidth) {
+                                        const layoutWidth = convertInt(node.android('layout_width'));
+                                        if (gravity.indexOf('left') !== -1) {
+                                            right = formatPX(backgroundWidth - image.width);
+                                            if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
+                                                node.android('layout_width', formatPX(node.bounds.width));
+                                            }
+                                        }
+                                        else if (gravity.indexOf('right') !== -1) {
+                                            left = formatPX(backgroundWidth - image.width);
+                                            if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
+                                                node.android('layout_width', formatPX(node.bounds.width));
+                                            }
+                                        }
+                                        else if (gravity === 'center' || gravity.indexOf('center_horizontal') !== -1) {
+                                            right = formatPX(Math.floor((backgroundWidth - image.width) / 2));
+                                            if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
+                                                node.android('layout_width', formatPX(node.bounds.width));
+                                            }
+                                        }
+                                    }
+                                }
+                                if (tileMode === 'repeat' || tileModeX === 'repeat') {
+                                    let backgroundHeight = node.viewHeight;
+                                    if (backgroundHeight > 0) {
+                                        if (SETTINGS.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+                                            backgroundHeight = node.viewHeight + node.paddingTop + node.paddingBottom;
+                                        }
+                                    }
+                                    else {
+                                        backgroundHeight = node.bounds.height - (node.borderTopWidth + node.borderBottomWidth);
+                                    }
+                                    if (image.height < backgroundHeight) {
+                                        const layoutHeight = convertInt(node.android('layout_height'));
+                                        if (gravity.indexOf('top') !== -1) {
+                                            bottom = formatPX(backgroundHeight - image.height);
+                                            if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
+                                                node.android('layout_height', formatPX(node.bounds.height));
+                                            }
+                                        }
+                                        else if (gravity.indexOf('bottom') !== -1) {
+                                            top = formatPX(backgroundHeight - image.height);
+                                            if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
+                                                node.android('layout_height', formatPX(node.bounds.height));
+                                            }
+                                        }
+                                        else if (gravity === 'center' || gravity.indexOf('center_vertical') !== -1) {
+                                            bottom = formatPX(Math.floor((backgroundHeight - image.height) / 2));
+                                            if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
+                                                node.android('layout_height', formatPX(node.bounds.height));
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                         if (stored.backgroundSize.length > 0) {
@@ -575,6 +645,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             {
                                 image3.push({
                                     top,
+                                    right,
+                                    bottom,
                                     left,
                                     gravity,
                                     tileMode,
@@ -588,6 +660,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             else {
                                 image2.push({
                                     top,
+                                    right,
+                                    bottom,
                                     left,
                                     gravity,
                                     tileMode,
@@ -675,7 +749,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                     '4': [{
                                         '5': this.getShapeAttribute(stored, 'stroke'),
                                         '6': radius
-                                    }]
+                                    }],
+                                    '7': false
                                 }]
                             };
                         }
@@ -805,11 +880,11 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             if (sizeParent.width === 0) {
                                 let current = node;
                                 while (current != null && !current.documentBody) {
-                                    if (current.viewWidth > 0) {
-                                        sizeParent.width = current.viewWidth;
+                                    if (current.hasWidth) {
+                                        sizeParent.width = current.bounds.width;
                                     }
-                                    if (current.viewHeight > 0) {
-                                        sizeParent.height = current.viewHeight;
+                                    if (current.hasHeight) {
+                                        sizeParent.height = current.bounds.height;
                                     }
                                     if (!current.pageflow || (sizeParent.width > 0 && sizeParent.height > 0)) {
                                         break;
@@ -847,7 +922,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
 
     public setFontStyle() {
         super.setFontStyle();
-        const tagName: ObjectMap<T[]> = {};
+        const nodeName: ObjectMap<T[]> = {};
         this.cache
             .filter(node =>
                 node.visible &&
@@ -855,10 +930,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
             )
             .each(node => {
                 if (getElementCache(node.element, 'fontStyle')) {
-                    if (tagName[node.nodeName] == null) {
-                        tagName[node.nodeName] = [];
+                    if (nodeName[node.nodeName] == null) {
+                        nodeName[node.nodeName] = [];
                     }
-                    tagName[node.nodeName].push(node);
+                    nodeName[node.nodeName].push(node);
                 }
                 const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
                 if (match) {
@@ -871,8 +946,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     node.android('shadowRadius', convertInt(match[4]).toString());
                 }
             });
-        for (const tag in tagName) {
-            const nodes = new NodeList<T>(tagName[tag]);
+        for (const tag in nodeName) {
+            const nodes = new NodeList<T>(nodeName[tag]);
             const sorted: StyleList = [];
             for (let node of nodes) {
                 let system = false;
@@ -888,9 +963,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 if (stored.fontFamily) {
                     let fontFamily =
                         stored.fontFamily
-                        .toLowerCase()
                         .split(',')[0]
                         .replace(/"/g, '')
+                        .toLowerCase()
                         .trim();
                     let fontStyle = '';
                     let fontWeight = '';
@@ -1035,7 +1110,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             .each(node => {
                 const stored: NameValue = getElementCache(node.element, 'valueString');
                 if (stored != null) {
-                    if (node.renderParent.of(NODE_STANDARD.RELATIVE)) {
+                    if (node.renderParent.is(NODE_STANDARD.RELATIVE)) {
                         if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                             const value = node.textContent;
                             let leadingSpace = 0;

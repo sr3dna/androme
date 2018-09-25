@@ -77,7 +77,6 @@ export default abstract class Node implements BoxModel {
     public abstract setLayout(width?: number, height?: number): void;
     public abstract setAlignment(): void;
     public abstract setBoxSpacing(): void;
-    public abstract setAccessibility(): void;
     public abstract applyCustomizations(overwrite: boolean): void;
     public abstract applyOptimizations(options: DisplaySettings): void;
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean, bounds?: boolean): void;
@@ -130,7 +129,7 @@ export default abstract class Node implements BoxModel {
     public of(nodeType: number, ...alignmentType: number[]) {
         if (this.nodeType === nodeType) {
             for (const value of alignmentType) {
-                if (this.hasBit('alignmentType', value)) {
+                if (this.hasAlign(value)) {
                     return true;
                 }
             }
@@ -327,12 +326,16 @@ export default abstract class Node implements BoxModel {
     public alignedVertically(previous: T, cleared = new Map<T, string>(), firstNode = false) {
         if (this.documentParent.baseElement === previous.documentParent.baseElement) {
             return (
-                (previous.lineBreak || this.lineBreak ||
-                previous.blockStatic || (this.blockStatic && (!previous.inlineElement || (cleared.has(previous) && previous.floating))) ||
+                this.lineBreak ||
+                previous.lineBreak ||
+                previous.blockStatic ||
+                (previous.float === 'left' && this.autoMarginRight) ||
+                (previous.float === 'right' && this.autoMarginLeft) ||
+                (!previous.floating && ((!this.inlineElement && !this.floating) || this.blockStatic)) ||
                 (previous.plainText && previous.multiLine && (this.parent && !this.parent.is(NODE_STANDARD.RELATIVE))) ||
-                (!previous.floating && ((!this.inlineElement && !this.floating) || this.autoMargin || this.blockStatic)) ||
+                (this.blockStatic && (!previous.inlineElement || (cleared.has(previous) && previous.floating))) ||
                 (!firstNode && cleared.has(this)) ||
-                (!firstNode && this.floating && previous.floating && this.linear.top >= previous.linear.bottom))
+                (!firstNode && this.floating && previous.floating && this.linear.top >= previous.linear.bottom)
             );
         }
         return false;
@@ -415,24 +418,27 @@ export default abstract class Node implements BoxModel {
         return result;
     }
 
-    public has(attr: string, checkType: number = 0, options?: StringMap) {
+    public has(attr: string, checkType: number = 0, options?: ObjectMap<any> ) {
         const value = (options && options.map === 'initial' ? this.initial.styleMap : this.styleMap)[attr];
         if (hasValue(value)) {
             switch (value) {
                 case '0px':
-                case 'none':
+                    if (hasBit(checkType, CSS_STANDARD.ZERO)) {
+                        return true;
+                    }
                 case 'left':
-                    if (checkType === CSS_STANDARD.LEFT) {
+                    if (hasBit(checkType, CSS_STANDARD.LEFT)) {
                         return true;
                     }
                 case 'baseline':
-                    if (checkType === CSS_STANDARD.BASELINE) {
+                    if (hasBit(checkType, CSS_STANDARD.BASELINE)) {
                         return true;
                     }
                 case 'auto':
-                    if (checkType === CSS_STANDARD.AUTO) {
+                    if (hasBit(checkType, CSS_STANDARD.AUTO)) {
                         return true;
                     }
+                case 'none':
                 case 'initial':
                 case 'normal':
                 case 'transparent':
@@ -440,19 +446,32 @@ export default abstract class Node implements BoxModel {
                     return false;
                 default:
                     if (options != null) {
-                        if (value === options.not) {
-                            return false;
+                        if (options.not != null) {
+                            if (Array.isArray(options.not)) {
+                                for (const exclude of options.not) {
+                                    if (value === exclude) {
+                                        return false;
+                                    }
+                                }
+                            }
+                            else {
+                                if (value === options.not) {
+                                    return false;
+                                }
+                            }
                         }
                     }
-                    switch (checkType) {
-                        case CSS_STANDARD.UNIT:
-                            return isUnit(value);
-                        case CSS_STANDARD.PERCENT:
-                            return isPercent(value);
-                        case CSS_STANDARD.AUTO:
-                            return false;
+                    let result = checkType === 0;
+                    if (hasBit(checkType, CSS_STANDARD.UNIT) && isUnit(value)) {
+                        result = true;
                     }
-                    return true;
+                    if (hasBit(checkType, CSS_STANDARD.PERCENT) && isPercent(value)) {
+                        result = true;
+                    }
+                    if (hasBit(checkType, CSS_STANDARD.AUTO)) {
+                        result = false;
+                    }
+                    return result;
             }
         }
         return false;
@@ -462,9 +481,9 @@ export default abstract class Node implements BoxModel {
         return this[obj] && this[obj][attr] != null ? hasValue(this[obj][attr]) : false;
     }
 
-    public hasBit(attr: string, bit: number) {
+    public hasBit(attr: string, value: number) {
         if (this[attr] != null) {
-            return hasBit(this[attr], bit);
+            return hasBit(this[attr], value);
         }
         return false;
     }
@@ -472,6 +491,10 @@ export default abstract class Node implements BoxModel {
     public toInt(attr: string, defaultValue = 0, options?: StringMap) {
         const value = (options && options.map === 'initial' ? this.initial.styleMap : this.styleMap)[attr];
         return parseInt(value) || defaultValue;
+    }
+
+    public hasAlign(value: number) {
+        return this.hasBit('alignmentType', value);
     }
 
     public setExclusions() {
@@ -531,30 +554,6 @@ export default abstract class Node implements BoxModel {
         }
     }
 
-    public extendBounds() {
-        if (this.hasElement && this._element !== document.body) {
-            const nodes = this.children.filter(node => !node.pageflow);
-            if (nodes.length > 0) {
-                const right: number = Math.max.apply(null, this.children.map(node => node.linear.right));
-                const bottom: number = Math.max.apply(null, this.children.map(node => node.linear.bottom));
-                let calibrate = false;
-                if (right > this.bounds.right) {
-                    this.bounds.right = right + (this.paddingRight + this.borderRightWidth);
-                    this.bounds.width = this.bounds.right - this.bounds.left;
-                    calibrate = true;
-                }
-                if (bottom > this.bounds.bottom) {
-                    this.bounds.bottom = bottom + (this.paddingBottom + this.borderBottomWidth);
-                    this.bounds.height = this.bounds.bottom - this.bounds.top;
-                    calibrate = true;
-                }
-                if (calibrate) {
-                    this.setBounds(true);
-                }
-            }
-        }
-    }
-
     public setDimensions(region = ['linear', 'box']) {
         for (const dimension of region) {
             const bounds = this[dimension];
@@ -601,7 +600,7 @@ export default abstract class Node implements BoxModel {
                             this.multiLine = multiLine;
                         }
                         else {
-                            if (this.viewWidth === 0 && (this.blockStatic || this.display === 'table-cell')) {
+                            if (!this.hasWidth && (this.blockStatic || this.display === 'table-cell')) {
                                 this.multiLine = multiLine;
                             }
                         }
@@ -751,11 +750,11 @@ export default abstract class Node implements BoxModel {
     }
 
     public actualLeft(dimension = 'linear') {
-        return (this.companion != null ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left);
+        return (this.companion && this.companion[dimension] != null ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left);
     }
 
     public actualRight(dimension = 'linear') {
-        return (this.companion != null ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right);
+        return (this.companion && this.companion[dimension] != null ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right);
     }
 
     private boxAttribute(region: string, direction: string) {
@@ -918,6 +917,13 @@ export default abstract class Node implements BoxModel {
     }
     get viewHeight() {
         return this.inlineStatic || this.has('height', CSS_STANDARD.PERCENT) ? 0 : this.toInt('height') || this.toInt('minHeight');
+    }
+
+    get hasWidth() {
+        return !this.inlineStatic ? this.has('width', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT, { map: 'initial', not: ['0px', '0%'] }) || this.toInt('minWidth') > 0 : false;
+    }
+    get hasHeight() {
+        return !this.inlineStatic ? this.has('height', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT, { map: 'initial', not: ['0px', '0%'] }) || this.toInt('minHeight') > 0 : false;
     }
 
     get lineHeight() {
@@ -1094,23 +1100,23 @@ export default abstract class Node implements BoxModel {
     }
 
     get autoMargin() {
-        return !this.floating && (this.initial.styleMap.marginLeft === 'auto' || this.initial.styleMap.marginRight === 'auto');
+        return this.blockStatic && (this.initial.styleMap.marginLeft === 'auto' || this.initial.styleMap.marginRight === 'auto');
     }
 
-    get autoLeftMargin() {
-        return !this.floating && this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight !== 'auto';
+    get autoMarginLeft() {
+        return this.blockStatic && this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight !== 'auto';
     }
 
-    get autoRightMargin() {
-        return !this.floating && this.initial.styleMap.marginLeft !== 'auto' && this.initial.styleMap.marginRight === 'auto';
+    get autoMarginRight() {
+        return this.blockStatic && this.initial.styleMap.marginLeft !== 'auto' && this.initial.styleMap.marginRight === 'auto';
     }
 
-    get centerMarginHorizontal() {
-        return !this.floating && this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight === 'auto';
+    get autoMarginHorizontal() {
+        return this.blockStatic && this.initial.styleMap.marginLeft === 'auto' && this.initial.styleMap.marginRight === 'auto';
     }
 
-    get centerMarginVertical() {
-        return !this.floating && this.initial.styleMap.marginTop === 'auto' && this.initial.styleMap.marginBottom === 'auto';
+    get autoMarginVertical() {
+        return this.blockStatic && this.initial.styleMap.marginTop === 'auto' && this.initial.styleMap.marginBottom === 'auto';
     }
 
     get floating() {
