@@ -38,21 +38,18 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return nodes;
     }
 
-    public static textBaseline<T extends Node>(list: T[], alignInput = false, excludeImage = false) {
-        let baseline: T[] = list.filter(node => node.imageElement && node.baseline);
-        if (!excludeImage && baseline.length > 0) {
-            return baseline;
-        }
-        else if (alignInput) {
+    public static textBaseline<T extends Node>(list: T[], alignInput = false) {
+        let baseline: T[] = [];
+        if (alignInput) {
             baseline =
                 list.filter(node => node.baseline)
                     .sort((a, b) => {
                         let nodeTypeA = a.nodeType;
                         let nodeTypeB = b.nodeType;
-                        if (a.linearHorizontal) {
+                        if (a.layoutHorizontal) {
                             nodeTypeA = Math.min.apply(null, a.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
                         }
-                        if (b.linearHorizontal) {
+                        if (b.layoutHorizontal) {
                             nodeTypeB = Math.min.apply(null, b.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
                         }
                         return nodeTypeA <= nodeTypeB ? -1 : 1;
@@ -90,7 +87,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                         else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
                             return 1;
                         }
-                        else if (!a.imageElement && !b.imageElement) {
+                        else {
                             if (fontSizeA === fontSizeB && heightA === heightB) {
                                 if (a.hasElement && !b.hasElement) {
                                     return -1;
@@ -273,9 +270,12 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         this.clear();
     }
 
-    public get(index?: number): T {
+    public get(index: number): T {
         if (index == null) {
             return this._list[this._list.length - 1];
+        }
+        if (index < 0) {
+            return this._list[this._list.length + index];
         }
         return this._list[index];
     }

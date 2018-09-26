@@ -55,7 +55,7 @@ export default class ViewGroup<T extends View> extends View {
             this.bounds.height = this.bounds.bottom - this.bounds.top;
         }
         this.linear = assignBounds(this.bounds);
-        this.box  = assignBounds(this.bounds);
+        this.box = assignBounds(this.bounds);
         this.setDimensions();
     }
 

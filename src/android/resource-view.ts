@@ -689,7 +689,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 return 1;
                             }
                             else {
-                                return (b.tileModeX === 'repeat' || b.tileModeY === 'repeat' ? 1 : -1);
+                                return b.tileModeX === 'repeat' || b.tileModeY === 'repeat' ? 1 : -1;
                             }
                         }
                     });
@@ -800,46 +800,47 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }
                         }
                         else {
-                            borders.forEach((item, index) => {
-                                if (this.borderVisible(item)) {
-                                    const width = parseInt(item.width);
-                                    if (width > 2 && item.style === 'double') {
+                            for (let i = 0; i < borders.length; i++) {
+                                const border = borders[i];
+                                if (this.borderVisible(border)) {
+                                    const width = parseInt(border.width);
+                                    if (width > 2 && border.style === 'double') {
                                         createDoubleBorder.apply(this, [
                                             root,
-                                            item,
-                                            index === 0,
-                                            index === 1,
-                                            index === 2,
-                                            index === 3
+                                            border,
+                                            i === 0,
+                                            i === 1,
+                                            i === 2,
+                                            i === 3
                                         ]);
                                     }
                                     else {
-                                        const hasInset = width > 1 && (item.style === 'groove' || item.style === 'ridge');
+                                        const hasInset = width > 1 && (border.style === 'groove' || border.style === 'ridge');
                                         const outsetWidth = hasInset ? Math.ceil(width / 2) : width;
                                         let leftTop = `-${formatPX(outsetWidth + 1)}`;
                                         let rightBottom = `-${formatPX(outsetWidth)}`;
                                         root['4'].push({
-                                            'top':  index === 0 ? '' : leftTop,
-                                            'right': index === 1 ? '' : rightBottom,
-                                            'bottom': index === 2 ? '' : rightBottom,
-                                            'left': index === 3 ? '' : leftTop,
-                                            '5': this.getShapeAttribute(<BoxStyle> { border: item }, 'stroke', index, hasInset),
+                                            'top':  i === 0 ? '' : leftTop,
+                                            'right': i === 1 ? '' : rightBottom,
+                                            'bottom': i === 2 ? '' : rightBottom,
+                                            'left': i === 3 ? '' : leftTop,
+                                            '5': this.getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
                                             '6': radius
                                         });
                                         if (hasInset) {
                                             leftTop = `-${formatPX(width + 1)}`;
                                             rightBottom = `-${formatPX(width)}`;
                                             root['7'].push({
-                                                'top':  index === 0 ? '' : leftTop,
-                                                'right': index === 1 ? '' : rightBottom,
-                                                'bottom': index === 2 ? '' : rightBottom,
-                                                'left': index === 3 ? '' : leftTop,
-                                                '8': this.getShapeAttribute(<BoxStyle> { border: item }, 'stroke', index, true, true)
+                                                'top':  i === 0 ? '' : leftTop,
+                                                'right': i === 1 ? '' : rightBottom,
+                                                'bottom': i === 2 ? '' : rightBottom,
+                                                'left': i === 3 ? '' : leftTop,
+                                                '8': this.getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true)
                                             });
                                         }
                                     }
                                 }
-                            });
+                            }
                         }
                         if (root['4'].length === 0) {
                             root['4'] = false;
@@ -871,10 +872,10 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT))
                         {
                             const sizeParent: Image = { width: 0, height: 0 };
-                            backgroundDimensions.forEach(image => {
-                                if (image != null) {
-                                    sizeParent.width = Math.max(sizeParent.width, image.width);
-                                    sizeParent.height = Math.max(sizeParent.height, image.height);
+                            backgroundDimensions.forEach(item => {
+                                if (item != null) {
+                                    sizeParent.width = Math.max(sizeParent.width, item.width);
+                                    sizeParent.height = Math.max(sizeParent.height, item.height);
                                 }
                             });
                             if (sizeParent.width === 0) {

@@ -53,6 +53,7 @@ export default abstract class Node implements BoxModel {
     private _pageflow: boolean;
     private _multiLine: boolean;
     private _lineHeight: number;
+    private _overflow: number;
     private _inlineText: boolean;
     private _data: ObjectMap<any> = {};
     private _initialized = false;
@@ -778,27 +779,29 @@ export default abstract class Node implements BoxModel {
     }
 
     private getOverflow() {
-        let result = 0;
-        if (this.hasElement) {
-            const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
-            if (this.toInt('width') > 0 && (
-                    overflow === 'scroll' ||
-                    overflowX === 'scroll' ||
-                    (overflowX === 'auto' && this._element.clientWidth !== this._element.scrollWidth)
-               ))
-            {
-                result |= NODE_ALIGNMENT.HORIZONTAL;
-            }
-            if (this.toInt('height') > 0 && (
-                    overflow === 'scroll' ||
-                    overflowY === 'scroll' ||
-                    (overflowY === 'auto' && this._element.clientHeight !== this._element.scrollHeight)
-               ))
-            {
-                result |= NODE_ALIGNMENT.VERTICAL;
+        if (this._overflow == null) {
+            this._overflow = 0;
+            if (this.hasElement) {
+                const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
+                if (this.toInt('width') > 0 && (
+                        overflow === 'scroll' ||
+                        overflowX === 'scroll' ||
+                        (overflowX === 'auto' && this._element.clientWidth !== this._element.scrollWidth)
+                ))
+                {
+                    this._overflow |= NODE_ALIGNMENT.HORIZONTAL;
+                }
+                if (this.toInt('height') > 0 && (
+                        overflow === 'scroll' ||
+                        overflowY === 'scroll' ||
+                        (overflowY === 'auto' && this._element.clientHeight !== this._element.scrollHeight)
+                ))
+                {
+                    this._overflow |= NODE_ALIGNMENT.VERTICAL;
+                }
             }
         }
-        return result;
+        return this._overflow;
     }
 
     set parent(value) {
@@ -1039,7 +1042,7 @@ export default abstract class Node implements BoxModel {
     }
 
     get inlineStatic() {
-        return this.inline && !this.floating && this.tagName !== 'IMG';
+        return this.inline && !this.floating && !this.imageElement;
     }
 
     get inlineText() {

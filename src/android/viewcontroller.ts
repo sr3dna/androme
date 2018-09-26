@@ -4,7 +4,7 @@ import NodeList from '../base/nodelist';
 import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
-import { capitalize, convertInt, convertEnum, formatPX, hasValue, indexOf, isPercent, isUnit, optional, repeat, sameValue, searchObject, sortAsc, withinFraction, withinRange } from '../lib/util';
+import { capitalize, convertEnum, convertInt, formatPX, hasValue, indexOf, isPercent, isUnit, optional, repeat, sameValue, searchObject, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
 import { getElementsBetweenSiblings, getRangeClientRect, hasLineBreak, isLineBreak } from '../lib/dom';
@@ -36,7 +36,6 @@ const MAP_LAYOUT = {
 };
 
 const MAP_CHAIN = {
-    direction: ['horizontalChain', 'verticalChain'],
     leftTop: ['left', 'top'],
     rightBottom: ['right', 'bottom'],
     rightLeftBottomTop: ['rightLeft', 'bottomTop'],
@@ -126,10 +125,10 @@ export default class ViewController<T extends View> extends Controller<T> {
             return true;
         }
         for (const node of this.cache.visible) {
-            constraint = node.is(NODE_STANDARD.CONSTRAINT);
             relative = node.is(NODE_STANDARD.RELATIVE);
+            constraint = node.is(NODE_STANDARD.CONSTRAINT);
             const flex = node.flex;
-            if (constraint || relative || flex.enabled) {
+            if (relative || constraint || flex.enabled) {
                 const nodes = new NodeList<T>(node.renderChildren.filter(item => item.auto) as T[], node);
                 const cleared = NodeList.cleared(node.initial.children);
                 if (relative) {
@@ -280,7 +279,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                         }
                         rowWidth += dimension.width + current.marginLeft + current.marginRight +
-                                    (previous != null && !previous.floating && !previous.plainText && previous.textContent.trim() !== '' && !current.floating && !current.plainText && current.textContent.trim() !== '' ? SETTINGS.whitespaceHorizontalOffset : 0);
+                                    (previous && !previous.floating && !previous.plainText && previous.textContent.trim() !== '' && !current.floating && !current.plainText && current.textContent.trim() !== '' ? SETTINGS.whitespaceHorizontalOffset : 0);
                         if (!floatAligned) {
                             baseline.push(current);
                         }
@@ -324,7 +323,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 else {
                     mapLayout = MAP_LAYOUT.constraint;
                     if (node.hasAlign(NODE_ALIGNMENT.HORIZONTAL)) {
-                        const optimal =  NodeList.textBaseline(nodes.list, false, true)[0];
+                        const optimal =  NodeList.textBaseline(nodes.list)[0];
                         const baseline = nodes.list.filter(item => item.textElement && item.baseline);
                         const image = nodes.list.filter(item => item.imageElement && item.baseline);
                         if (image.length > 0) {
@@ -727,14 +726,16 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     return horizontalChain.length === pageflow.length || verticalChain.length === pageflow.length;
                                 });
                             }
-                            MAP_CHAIN.direction.forEach((value, index) => {
-                                const connected = flexbox.length > 0 ? flexbox
-                                                                     : pageflow.list.slice().sort((a, b) => (a.constraint[value] != null ? a.constraint[value].length : 0) >= (b.constraint[value] != null ? b.constraint[value].length : 0) ? -1 : 1);
+                            ['horizontalChain', 'verticalChain'].forEach((value, index) => {
+                                const connected: T[] = flexbox.length > 0 ? flexbox
+                                                                          : pageflow.list
+                                                                                .slice()
+                                                                                .sort((a, b) => (a.constraint[value] ? a.constraint[value].length : 0) >= (b.constraint[value] ? b.constraint[value].length : 0) ? -1 : 1);
                                 if (connected.length > 0) {
-                                    const connectedRows: NodeList<T>[]  = [];
                                     const mapId = new Set<string>();
+                                    const connectedRows: NodeList<T>[]  = [];
                                     connected
-                                        .filter((current: T) => {
+                                        .filter(current => {
                                             if (current.constraint[value] instanceof NodeList) {
                                                 const id = (<NodeList<T>> current.constraint[value]).list.map(item => item.id).join('-');
                                                 if (!mapId.has(id)) {
@@ -767,39 +768,38 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                 }
                                                 chainable.parent = node;
                                                 const first = chainable.get(0);
-                                                const last = chainable.get();
-                                                let maxOffset = -1;
+                                                const last = chainable.get(-1);
                                                 let disconnected = false;
                                                 let marginDelete = false;
-                                                const attrs = index === 0 ? [AXIS_ANDROID.HORIZONTAL, 'left', 'leftRight', 'top', AXIS_ANDROID.VERTICAL, 'viewWidth', 'right', 'marginHorizontal']
-                                                                          : [AXIS_ANDROID.VERTICAL, 'top', 'topBottom', 'left', AXIS_ANDROID.HORIZONTAL, 'viewHeight', 'bottom', 'marginVertical'];
+                                                let maxOffset = -1;
                                                 for (let i = 0; i < chainable.length; i++) {
                                                     const item = chainable.get(i);
                                                     if (i === 0) {
-                                                        if (!mapParent(item, attrs[1])) {
+                                                        if (!mapParent(item, index === 0 ? 'left' : 'top')) {
                                                             disconnected = true;
                                                             break;
                                                         }
                                                     }
                                                     else {
-                                                        if (mapSibling(item, attrs[2]) == null) {
+                                                        if (mapSibling(item, index === 0 ? 'leftRight' : 'topBottom') == null) {
                                                             disconnected = true;
                                                             break;
                                                         }
                                                     }
                                                 }
                                                 if (!disconnected) {
-                                                    if (chainable.list.every(item => sameValue(first, item, `linear.${attrs[3]}`))) {
+                                                    const direction = index === 0 ? 'top' : 'left';
+                                                    if (chainable.list.every(item => sameValue(first, item, `linear.${direction}`))) {
                                                         for (let j = 1; j < chainable.length; j++) {
                                                             const item = chainable.get(j);
-                                                            if (!item.constraint[attrs[4]]) {
-                                                                item.anchor(mapLayout[attrs[3]], first.stringId, attrs[4]);
+                                                            if (!item.constraint[orientation]) {
+                                                                item.anchor(mapLayout[direction], first.stringId, orientation);
                                                             }
                                                         }
                                                     }
-                                                    if (!flex.enabled && node[attrs[5]] === 0) {
-                                                        mapDelete(last, attrs[6]);
-                                                        last.constraint[attrs[7]] = mapSibling(last, attrs[2]);
+                                                    if (!flex.enabled && !node[index === 0 ? 'hasWidth' : 'hasHeight']) {
+                                                        mapDelete(last, index === 0 ? 'right' : 'bottom');
+                                                        last.constraint[index === 0 ? 'marginHorizontal' : 'marginVertical'] = mapSibling(last, index === 0 ? 'leftRight' : 'topBottom');
                                                     }
                                                 }
                                                 if (percentage) {
@@ -1010,7 +1010,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                     first.app(chainStyle, 'packed');
                                                 }
                                                 else if (!flex.enabled && columnCount > 0) {
-                                                    first.app(chainStyle, (index === 0 ? 'spread_inside' : 'packed'));
+                                                    first.app(chainStyle, index === 0 ? 'spread_inside' : 'packed');
                                                 }
                                                 else {
                                                     const alignLeft = withinFraction(node.box.left, first.linear.left);
@@ -1018,10 +1018,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                     const alignTop = withinFraction(node.box.top, first.linear.top);
                                                     const alignBottom = withinFraction(last.linear.bottom, node.box.bottom);
                                                     if ((orientation === AXIS_ANDROID.HORIZONTAL && alignLeft && alignRight) || (orientation === AXIS_ANDROID.VERTICAL && alignTop && alignBottom)) {
-                                                        if (chainable.length > 2 || flex.enabled) {
+                                                        if (flex.enabled || chainable.length > 2) {
                                                             if (!flex.enabled && node.inlineElement) {
                                                                 first.app(chainStyle, 'packed');
-                                                                first.app(`layout_constraint${HV}_bias`, (index === 0 && node.float === 'right' ? '1' : '0'));
+                                                                first.app(`layout_constraint${HV}_bias`, index === 0 && node.float === 'right' ? '1' : '0');
                                                             }
                                                             else {
                                                                 first.app(chainStyle, 'spread_inside');
@@ -1074,8 +1074,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                         });
                                                         for (const inner of chainable) {
                                                             for (const outer of pageflow) {
-                                                                const horizontal: NodeList<T> = outer.constraint.horizontalChain;
-                                                                const vertical: NodeList<T> = outer.constraint.verticalChain;
+                                                                const horizontal = outer.constraint.horizontalChain;
+                                                                const vertical = outer.constraint.verticalChain;
                                                                 if (horizontal &&
                                                                     horizontal.length > 0 &&
                                                                     horizontal.locate('id', inner.id))
@@ -1388,16 +1388,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                 break;
                                         }
                                     }
-                                    if (left &&
-                                        right &&
-                                        !node.hasWidth)
-                                    {
+                                    if (left && right && !node.hasWidth) {
                                         node.constraint.layoutWidth = true;
                                     }
-                                    if (top &&
-                                        bottom &&
-                                        !node.hasHeight)
-                                    {
+                                    if (top && bottom && !node.hasHeight) {
                                         node.constraint.layoutHeight = true;
                                     }
                                     if (right && current.toInt('right') > 0) {
@@ -1467,7 +1461,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 for (const current of nodes) {
                     if (current.constraint.marginHorizontal != null) {
                         const item = this.findByStringId(current.constraint.marginHorizontal);
-                        if (item) {
+                        if (item != null) {
                             const offset = current.linear.left - item.actualRight();
                             if (offset >= 1) {
                                 current.modifyBox(BOX_STANDARD.MARGIN_LEFT, offset);
@@ -1476,7 +1470,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                     }
                     if (current.constraint.marginVertical != null) {
                         const item = this.findByStringId(current.constraint.marginVertical);
-                        if (item) {
+                        if (item != null) {
                             const offset = current.linear.top - item.linear.bottom;
                             if (offset >= 1) {
                                 current.modifyBox(BOX_STANDARD.MARGIN_TOP, offset);
@@ -1554,20 +1548,20 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
         node.setNodeType(viewName);
         if (node.overflowX || node.overflowY) {
-            const scrollType: string[] = [];
+            const overflow: string[] = [];
             if (node.overflowX && node.overflowY) {
-                scrollType.push(NODE_ANDROID.SCROLL_HORIZONTAL, NODE_ANDROID.SCROLL_VERTICAL);
+                overflow.push(NODE_ANDROID.SCROLL_HORIZONTAL, NODE_ANDROID.SCROLL_VERTICAL);
             }
             else {
                 if (node.overflowX) {
-                    scrollType.push(NODE_ANDROID.SCROLL_HORIZONTAL);
+                    overflow.push(NODE_ANDROID.SCROLL_HORIZONTAL);
                 }
                 if (node.overflowY) {
-                    scrollType.push(NODE_ANDROID.SCROLL_VERTICAL);
+                    overflow.push(NODE_ANDROID.SCROLL_VERTICAL);
                 }
             }
             let previous: Null<T> = null;
-            const scrollView = scrollType.map((nodeName, index) => {
+            const scrollView = overflow.map((nodeName, index) => {
                 const container = new View(this.cache.nextId, SETTINGS.targetAPI, index === 0 ? node.element : undefined) as T;
                 container.nodeName = node.nodeName;
                 container.documentParent = node.documentParent;
@@ -1642,8 +1636,6 @@ export default class ViewController<T extends View> extends Controller<T> {
             case 'IMG': {
                 if (!recursive) {
                     const element = <HTMLImageElement> node.element;
-                    const top = node.toInt('top');
-                    const left = node.toInt('left');
                     const percentWidth = node.has('width', CSS_STANDARD.PERCENT);
                     const percentHeight = node.has('height', CSS_STANDARD.PERCENT);
                     let width = node.toInt('width');
@@ -1691,26 +1683,42 @@ export default class ViewController<T extends View> extends Controller<T> {
                     if ((width > 0 && height === 0) || (width === 0 && height > 0)) {
                         node.android('adjustViewBounds', 'true');
                     }
-                    if (top < 0 || left < 0) {
-                        const container = new View(this.cache.nextId, SETTINGS.targetAPI, node.element) as T;
-                        container.excludeProcedure |= NODE_PROCEDURE.ALL;
-                        container.excludeResource |= NODE_RESOURCE.ALL;
-                        container.android('layout_width', width > 0 ? formatPX(width) : 'wrap_content');
-                        container.android('layout_height', height > 0 ? formatPX(height) : 'wrap_content');
-                        container.setBounds();
-                        container.setNodeType(NODE_ANDROID.FRAME);
-                        container.render(parent);
-                        if (left < 0) {
-                            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, left, true);
-                            container.css('left', '0px');
+                    if (!node.pageflow) {
+                        const left = node.toInt('left');
+                        const top = node.toInt('top');
+                        if (left < 0 || top < 0) {
+                            const container = new View(this.cache.nextId, SETTINGS.targetAPI, node.element) as T;
+                            container.excludeProcedure |= NODE_PROCEDURE.ALL;
+                            container.excludeResource |= NODE_RESOURCE.ALL;
+                            container.android('layout_width', width > 0 ? formatPX(width) : 'wrap_content');
+                            container.android('layout_height', height > 0 ? formatPX(height) : 'wrap_content');
+                            container.setBounds();
+                            container.setNodeType(NODE_ANDROID.FRAME);
+                            container.render(parent);
+                            if (left < 0) {
+                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, left, true);
+                                container.css('left', '0px');
+                            }
+                            if (top < 0) {
+                                node.modifyBox(BOX_STANDARD.MARGIN_TOP, top, true);
+                                container.css('top', '0px');
+                            }
+                            node.parent = container;
+                            this.cache.append(container);
+                            return (
+                                this.getEnclosingTag(
+                                    container.renderDepth,
+                                    NODE_ANDROID.FRAME,
+                                    container.id,
+                                    this.renderNode(node, container, nodeName, true)
+                                )
+                            );
                         }
-                        if (top < 0) {
-                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, top, true);
-                            container.css('top', '0px');
+                    }
+                    else {
+                        if (node.linearHorizontal && node.baseline) {
+                            node.android('baselineAlignBottom', 'true');
                         }
-                        node.parent = container;
-                        this.cache.append(container);
-                        return this.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, this.renderNode(node, container, nodeName, true));
                     }
                 }
                 break;
@@ -1835,6 +1843,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                 }
                 if (node.has('maxHeight', CSS_STANDARD.UNIT)) {
                     node.android('maxHeight', node.css('maxHeight'));
+                }
+                if (node.css('whiteSpace') === 'nowrap') {
+                    node.android('singleLine', 'true');
                 }
                 break;
             case NODE_ANDROID.LINE:
@@ -2011,7 +2022,7 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     private parseDimensions(content: string) {
-        const resource = <Map<string, string>> Resource.STORED.dimens;
+        const resource = Resource.STORED.dimens;
         const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
         let match: Null<RegExpExecArray>;
         while ((match = pattern.exec(content)) != null) {
@@ -2151,7 +2162,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                 opposite = (
                     node.float === 'right' ||
                     (node.left == null && node.right != null) ||
-                    (node.is(NODE_STANDARD.TEXT) && node.css('textAlign') === 'right') ||
+                    (node.textElement && node.css('textAlign') === 'right') ||
                     node.alignParent('right')
                 );
             }
@@ -2210,9 +2221,9 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 if (withinFraction(node.bounds[LT] + offset, item.bounds[LT])) {
                                     node.anchor(map[
                                         index === 1 &&
-                                        node.is(NODE_STANDARD.TEXT) &&
+                                        node.textElement &&
                                         node.baseline &&
-                                        item.is(NODE_STANDARD.TEXT) &&
+                                        item.textElement &&
                                         item.baseline ? 'baseline' : LT], item.stringId, value, true);
                                     return true;
                                 }
@@ -2280,7 +2291,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     'wrap_content',
                                     'wrap_content'
                                 );
-                            const stringId = options['stringId'];
+                            const stringId: string = options['stringId'];
                             this.appendAfter(node.id, xml);
                             node.anchor(map[LT], stringId, value, true);
                             node.delete('app', map[RB]);
@@ -2304,33 +2315,51 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     private adjustBaseline(nodes: T[]) {
-        if (nodes.length > 1 && nodes.some(node => node.textElement && node.baseline)) {
-            const baseline = NodeList.textBaseline(nodes.filter(node => node.toInt('top') === 0 && node.toInt('bottom') === 0));
+        if (nodes.length > 1) {
+            const baseline = NodeList.textBaseline(nodes.filter(node => node.baseline && node.toInt('top') === 0 && node.toInt('bottom') === 0));
             if (baseline.length > 0) {
                 const unaligned: T[] = [];
+                const mapLayout = MAP_LAYOUT.relative;
+                const alignWith = baseline[0];
+                let baseExcluded: Null<T> = null;
                 for (const node of nodes) {
-                    if (!baseline.includes(node)) {
+                    if (node !== alignWith) {
                         if (node.baseline && (
                                 node.nodeType <= NODE_STANDARD.INLINE ||
                                 (node.linearHorizontal && node.renderChildren.some(item => item.textElement && item.baseline))
                            ))
                         {
-                            const alignWith = baseline[0];
                             if (node.alignOrigin) {
-                                node.android(MAP_LAYOUT.relative[(node.is(NODE_STANDARD.BUTTON) ? 'bottom' : 'baseline')], alignWith.stringId);
+                                node.android(mapLayout[(node.imageElement || node.is(NODE_STANDARD.BUTTON) ? 'bottom' : 'baseline')], alignWith.stringId);
                             }
-                            else {
-                                if (alignWith.position === 'relative' &&
-                                    node.bounds.height < alignWith.bounds.height &&
-                                    node.lineHeight === 0)
-                                {
-                                    node.android(MAP_LAYOUT.relative[(convertInt(alignWith.top) > 0 ? 'top' : 'bottom')], alignWith.stringId);
-                                }
+                            else if (
+                                alignWith.position === 'relative' &&
+                                node.bounds.height < alignWith.bounds.height &&
+                                node.lineHeight === 0)
+                            {
+                                node.android(mapLayout[convertInt(alignWith.top) > 0 ? 'top' : 'bottom'], alignWith.stringId);
                             }
                         }
                         else {
                             unaligned.push(node);
                         }
+                        if (alignWith.imageElement && (baseExcluded == null || node.bounds.height > baseExcluded.bounds.height)) {
+                            baseExcluded = node;
+                        }
+                    }
+                }
+                if (baseExcluded != null) {
+                    if (!baseExcluded.imageElement) {
+                        baseExcluded.delete('android', mapLayout['baseline']);
+                    }
+                    else if (baseExcluded.bounds.height > alignWith.bounds.height) {
+                        baseExcluded.delete('android', mapLayout['bottom']);
+                    }
+                    else {
+                        baseExcluded = null;
+                    }
+                    if (baseExcluded != null) {
+                        alignWith.android(mapLayout['bottom'], baseExcluded.stringId);
                     }
                 }
                 if (unaligned.length > 0) {

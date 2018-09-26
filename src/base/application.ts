@@ -1856,7 +1856,7 @@ export default class Application<T extends Node> {
                     (['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(verticalAlign) || (isUnit(verticalAlign) && parseInt(verticalAlign) >= 0))
                 );
             }) && (
-                visible.some(node => (node.textElement && node.baseline) || (node.plainText && node.multiLine)) ||
+                visible.some(node => ((node.textElement || node.imageElement) && node.baseline) || (node.plainText && node.multiLine)) ||
                 (!linearX && nodes.every(node => node.pageflow && node.inlineElement))
             )
         );

@@ -1,6 +1,7 @@
-import { Null } from '../../lib/types';
 import Accessibility from '../../extension/accessibility';
 import View from '../view';
+import { hasValue } from '../../lib/util';
+import { getNodeFromElement } from '../../lib/dom';
 import { NODE_PROCEDURE } from '../../lib/constants';
 import { NODE_ANDROID } from '../constants';
 
@@ -16,21 +17,21 @@ export default class AccessibilityAndroid<T extends View> extends Accessibility<
                 switch (node.controlName) {
                     case NODE_ANDROID.EDIT:
                         if (node.companion == null) {
-                            let label: Null<T> = null;
-                            let parent = node.renderParent;
-                            let current = node as T;
-                            while (parent instanceof View && parent.length > 0) {
-                                const index = parent.renderChildren.findIndex(item => item === current);
-                                if (index > 0) {
-                                    label = parent.renderChildren[index - 1] as T;
-                                    break;
+                            [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
+                                const label = getNodeFromElement(sibling) as T;
+                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) as T : null;
+                                if (label && label.visible && label.pageflow) {
+                                    if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
+                                        label.android('labelFor', node.stringId);
+                                        return true;
+                                    }
+                                    else if (label.textElement && labelParent != null) {
+                                        labelParent.android('labelFor', node.stringId);
+                                        return true;
+                                    }
                                 }
-                                current = parent as T;
-                                parent = parent.renderParent;
-                            }
-                            if (label && label.textElement && (<HTMLLabelElement> label.element).htmlFor === node.element.id) {
-                                label.android('labelFor', node.stringId);
-                            }
+                                return false;
+                            });
                         }
                     case NODE_ANDROID.SELECT:
                     case NODE_ANDROID.CHECKBOX:

@@ -1,4 +1,5 @@
-import { DisplaySettings, Null, ObjectMap, StringMap } from '../lib/types';
+import { DisplaySettings, Null, StringMap } from '../lib/types';
+import { Constraint } from './lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, lastIndexOf, isString, withinFraction } from '../lib/util';
@@ -30,7 +31,7 @@ export default class View extends Node {
 
     public readonly renderChildren: T[] = [];
     public children: T[] = [];
-    public constraint: ObjectMap<any> = { current: {} };
+    public constraint: Constraint<T>;
 
     protected _namespaces = new Set(['android', 'app']);
 
@@ -43,6 +44,7 @@ export default class View extends Node {
         element?: Element)
     {
         super(id, element);
+        this.constraint = { current: {} } as any;
     }
 
     public attr(obj: string, attr: string, value = '', overwrite = true) {
@@ -78,7 +80,11 @@ export default class View extends Node {
     }
 
     public anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean) {
-        if (arguments.length === 1 || this.constraint.current[position] == null || !this.constraint.current[position].overwrite || (orientation && !this.constraint[orientation])) {
+        if (arguments.length === 1 ||
+            this.constraint.current[position] == null ||
+            !this.constraint.current[position].overwrite ||
+            (orientation && !this.constraint[orientation]))
+        {
             if (overwrite == null) {
                 overwrite = adjacent === 'parent' || adjacent === 'true';
             }
@@ -520,7 +526,7 @@ export default class View extends Node {
             }
         }
         function setAutoMargin(node: T) {
-            if (node.inlineWidth || node.hasWidth) {
+            if (!node.blockWidth) {
                 const alignment: string[] = [];
                 const marginLeft = node.css('marginLeft') === 'auto';
                 const marginRight = node.css('marginRight') === 'auto';
@@ -630,7 +636,7 @@ export default class View extends Node {
             if (!setAutoMargin(this)) {
                 floating = floating || this.float;
                 if (floating !== 'none') {
-                    if (renderParent.inlineWidth || (!renderParent.documentRoot && this.singleChild)) {
+                    if (renderParent.inlineWidth || (this.singleChild && !renderParent.documentRoot)) {
                         renderParent.android('layout_gravity', mergeGravity(renderParent.android('layout_gravity'), parseRTL(floating)));
                     }
                     else {
@@ -706,7 +712,7 @@ export default class View extends Node {
                         this.android(value, formatPX(top));
                     }
                     else {
-                        if (!(index === 0 && this.renderParent.is(NODE_STANDARD.GRID))) {
+                        if (!(this.renderParent.is(NODE_STANDARD.GRID) && index === 0)) {
                             if (top !== 0 && top === bottom) {
                                 this.delete('android', `${value}Top`, `${value}Bottom`);
                                 this.android(`${value}Vertical`, formatPX(top));
@@ -728,16 +734,15 @@ export default class View extends Node {
         if (this.is(NODE_STANDARD.LINEAR)) {
             const linearHorizontal = this.linearHorizontal;
             if (this.blockWidth && !this.blockStatic) {
-                [[linearHorizontal, this.inlineElement, 'width'], [!linearHorizontal, true, 'height']]
-                    .forEach((value: [boolean, boolean, string]) => {
-                        const attr = `inline${capitalize(value[2])}`;
-                        if (value[0] &&
-                            value[1] &&
-                            !this[attr] && renderChildren.every(node => node[attr]))
-                        {
-                            this.android(`layout_${value[2]}`, 'wrap_content');
-                        }
-                    });
+                [[linearHorizontal, this.inlineElement, 'width'], [!linearHorizontal, true, 'height']].forEach((value: [boolean, boolean, string]) => {
+                    const attr = `inline${capitalize(value[2])}`;
+                    if (value[0] &&
+                        value[1] &&
+                        !this[attr] && renderChildren.every(node => node[attr]))
+                    {
+                        this.android(`layout_${value[2]}`, 'wrap_content');
+                    }
+                });
             }
             if (linearHorizontal) {
                 if (!renderChildren.some(node => node.imageElement && node.baseline) && (
@@ -748,7 +753,7 @@ export default class View extends Node {
                     this.android('baselineAligned', 'false');
                 }
                 else {
-                    const alignInput = renderParent.is(NODE_STANDARD.GRID) && renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT);
+                    const alignInput = renderParent.is(NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline);
                     if (alignInput ||
                         renderParent.android('baselineAlignedChildIndex') !== '' ||
                         renderChildren.some(node => !node.alignOrigin || !node.baseline))
@@ -809,7 +814,7 @@ export default class View extends Node {
                     }
                 });
             }
-            if (this.blockStatic && this.hasElement) {
+            if (this.hasElement && this.blockStatic) {
                 for (let i = 0; i < this.element.children.length; i++) {
                     const element = this.element.children[i];
                     const node = getNodeFromElement(element);
@@ -1025,17 +1030,6 @@ export default class View extends Node {
                     renderParent.android('layout_height', formatPX(renderParent.bounds.height + this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth));
                 }
             }
-        }
-        if (this.textElement && this.css('whiteSpace') === 'nowrap') {
-            this.android('singleLine', 'true');
-        }
-        if (this.imageElement && (
-                this.baseline ||
-                renderParent.linearHorizontal ||
-                renderParent.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL)
-           ))
-        {
-            this.android('baselineAlignBottom', 'true');
         }
     }
 
