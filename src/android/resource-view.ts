@@ -1482,22 +1482,23 @@ export default class ResourceView<T extends View> extends Resource<T> {
             dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
             dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
         });
-        if (parseInt(border.width) > 1 && (border.style === 'groove' || border.style === 'ridge')) {
+        const groove = border.style === 'groove';
+        if (parseInt(border.width) > 1 && (groove || border.style === 'ridge')) {
             let colorName = border.color;
             let hexValue = ResourceView.getColor(colorName as string);
             if (hexValue !== '') {
                 let opacity = '1';
                 if (hexValue.length === 9) {
-                    hexValue = `#{value.substring(3)}`;
+                    hexValue = `#${hexValue.substring(3)}`;
                     opacity = `0.${hexValue.substring(1, 3)}`;
                 }
-                const reduced = parseRGBA(reduceHexToRGB(hexValue, 0.3));
+                const reduced = parseRGBA(reduceHexToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
                 if (reduced.length > 0) {
                     colorName = ResourceView.addColor(reduced[0], opacity);
                 }
             }
             const colorReduced = `android:color="@color/${colorName}"`;
-            if (border.style === 'groove') {
+            if (groove) {
                 if (halfSize) {
                     switch (direction) {
                         case 0:

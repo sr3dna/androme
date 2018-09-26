@@ -1097,9 +1097,12 @@ export default class Application<T extends Node> {
                     inline.push(node);
                 }
             }
-            if (inline.length === nodes.length) {
-                group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                if (this.isRelativeHorizontal(inline, cleared)) {
+            if (inline.length === nodes.length || left.length === nodes.length || right.length === nodes.length) {
+                group.alignmentType |= inline.length > 0 ? NODE_ALIGNMENT.HORIZONTAL : NODE_ALIGNMENT.FLOAT;
+                if (right.length > 0) {
+                    group.alignmentType |= NODE_ALIGNMENT.RIGHT;
+                }
+                if (this.isRelativeHorizontal(nodes, cleared)) {
                     xml = this.writeRelativeLayout(group, parent);
                     return xml;
                 }
@@ -1107,14 +1110,6 @@ export default class Application<T extends Node> {
                     xml = this.writeLinearLayout(group, parent, true);
                     return xml;
                 }
-            }
-            else if (left.length === nodes.length || right.length === nodes.length) {
-                xml = this.writeLinearLayout(group, parent, true);
-                group.alignmentType |= NODE_ALIGNMENT.FLOAT;
-                if (right.length > 0) {
-                    group.alignmentType |= NODE_ALIGNMENT.RIGHT;
-                }
-                return xml;
             }
             else if (left.length === 0 || right.length === 0) {
                 const subgroup = right.length === 0 ? [...left, ...inline] : [...inline, ...right];

@@ -213,12 +213,16 @@ export default abstract class Node implements BoxModel {
         return this._data[obj] != null ? this._data[obj][attr] : null;
     }
 
-    public ascend(xml = false) {
+    public ascend(xml = false, levels = -1) {
         const result: T[] = [];
         const attr = xml ? 'parent' : 'documentParent';
         let current: T = this[attr];
-        while (current != null && current.id !== 0) {
+        let i = -1;
+        while (current != null && current.id !== 0 && !result.includes(current)) {
             result.push(current);
+            if (++i === levels) {
+                break;
+            }
             current = current[attr];
         }
         return result;
@@ -322,10 +326,12 @@ export default abstract class Node implements BoxModel {
 
     public alignedVertically(previous: T, cleared = new Map<T, string>(), firstNode = false) {
         if (this.documentParent.baseElement === previous.documentParent.baseElement) {
+            const widthParent = this.documentParent.has('width', CSS_STANDARD.UNIT) ? this.documentParent.toInt('width') : this.documentParent.box.width;
             return (
                 this.lineBreak ||
                 previous.lineBreak ||
                 previous.blockStatic ||
+                (previous.bounds && previous.bounds.width > widthParent && (!previous.textElement || previous.css('whiteSpace') === 'nowrap')) ||
                 (previous.float === 'left' && this.autoMarginRight) ||
                 (previous.float === 'right' && this.autoMarginLeft) ||
                 (!previous.floating && ((!this.inlineElement && !this.floating) || this.blockStatic)) ||
@@ -826,8 +832,7 @@ export default abstract class Node implements BoxModel {
         this._nodeName = value;
     }
     get nodeName() {
-        return this._nodeName || (this.hasElement ? (this.tagName === 'INPUT' ? (<HTMLInputElement> this._element).type.toUpperCase() : this.tagName)
-                                                  : '');
+        return this._nodeName || (this.hasElement ? (this.tagName === 'INPUT' ? (<HTMLInputElement> this._element).type.toUpperCase() : this.tagName) : '');
     }
 
     set element(value) {

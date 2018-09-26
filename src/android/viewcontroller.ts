@@ -315,7 +315,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         const widthParent = !node.ascend().some(parent => parent.hasWidth);
                         for (let i = 1; i < nodes.length; i++) {
                             const item = nodes.get(i);
-                            if (!item.multiLine && !item.floating && (!item.alignParent('left') || rows.length === 1)) {
+                            if (!item.multiLine && !item.floating && (rows.length === 1 || !item.alignParent('left'))) {
                                 this.checkSingleLine(item, false, widthParent);
                             }
                         }
@@ -692,7 +692,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     columns
                                         .map(list => Math.max.apply(null, list.map(item => item.marginLeft + item.marginRight)))
                                         .reduce((a: number, b: number) => a + b, 0);
-                                const marginPercent = ((marginTotal + (marginLeft * (columnCount - 1))) / node.box.width) / columnCount;
+                                const marginPercent = Math.max(((marginTotal + (marginLeft * (columnCount - 1))) / node.box.width) / columnCount, 0.01);
                                 for (let i = 0; i < columns.length; i++) {
                                     const column = columns[i];
                                     const first = column[0];

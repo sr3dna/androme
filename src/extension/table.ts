@@ -161,7 +161,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         }
         else if (mapWidth.every(value => isUnit(value))) {
             const pxWidth = mapWidth.reduce((a, b) => a + parseInt(b), 0);
-            if (isPercent(tableWidth) || pxWidth < node.viewWidth) {
+            if ((isPercent(tableWidth) && tableWidth !== '100%') || pxWidth < node.viewWidth) {
                 mapWidth
                     .filter(value => value !== '0px')
                     .forEach((value, index) => mapWidth[index] = `${(parseInt(value) / pxWidth) * 100}%`);
@@ -180,7 +180,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         }
         const mapPercent = mapWidth.reduce((a, b) => a + (isPercent(b) ? parseFloat(b) : 0), 0);
         const typeWidth = (() => {
-            if (mapWidth.some(value => isPercent(value))) {
+            if (mapWidth.some(value => isPercent(value)) || mapWidth.every(value => isUnit(value) && value !== '0px')) {
                 return 3;
             }
             if (mapWidth.every(value => value === mapWidth[0])) {
@@ -280,9 +280,9 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                                 td.data(EXT_NAME.TABLE, 'percent', columnWidth);
                                 td.data(EXT_NAME.TABLE, 'expand', true);
                             }
-                            else if (convertInt(columnWidth) > 0) {
+                            else if (isUnit(columnWidth) && parseInt(columnWidth) > 0) {
                                 if (td.bounds.width >= parseInt(columnWidth)) {
-                                    td.css('width', columnWidth);
+                                    setBoundsWidth(td);
                                     td.data(EXT_NAME.TABLE, 'expand', false);
                                     td.data(EXT_NAME.TABLE, 'downsized', false);
                                 }

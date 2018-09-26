@@ -95,24 +95,6 @@ export default class Origin<T extends Node> extends Extension<T> {
                     this.modifyMarginLeft(node, node.marginLeft, true);
                 }
             }
-            if (!node.pageflow && node.children.length > 0 && node.children.some(item => !item.pageflow)) {
-                let calibrate = false;
-                if (!node.hasWidth) {
-                    const maxRight: number = Math.max.apply(null, node.cascade().map(item => item.linear.right));
-                    node.bounds.right = Math.max(maxRight + node.paddingRight + node.borderRightWidth, node.bounds.right);
-                    node.bounds.width = Math.max(node.bounds.right - node.bounds.left, node.bounds.width);
-                    calibrate = true;
-                }
-                if (!node.hasHeight) {
-                    const maxBottom: number = Math.max.apply(null, node.cascade().map(item => item.linear.bottom));
-                    node.bounds.bottom = Math.max(maxBottom + node.paddingBottom + node.borderBottomWidth, node.bounds.bottom);
-                    node.bounds.height = Math.max(node.bounds.bottom - node.bounds.top, node.bounds.height);
-                    calibrate = true;
-                }
-                if (calibrate) {
-                    node.setBounds(true);
-                }
-            }
         }
     }
 
