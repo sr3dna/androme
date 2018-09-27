@@ -196,6 +196,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             const siblings = getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
                             const viewGroup = current instanceof ViewGroup && !current.hasAlign(NODE_ALIGNMENT.SEGMENTED);
                             const previousSibling = current.previousSibling();
+                            const baseWidth = rowWidth + current.marginLeft + dimension.width;
                             let connected = false;
                             if (i === 1 && previous.textElement && current.textElement) {
                                 connected = siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(current.textContent);
@@ -204,7 +205,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 !connected &&
                                 !['SUP', 'SUB'].includes(current.tagName) &&
                                 (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && (
-                                    (current.float !== 'right' && rowWidth + current.marginLeft + dimension.width - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
+                                    (current.float !== 'right' && baseWidth - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
                                     (current.multiLine && hasLineBreak(current.element)) ||
                                     (previous.multiLine && previous.textContent.trim() !== '' && !/^\s*\n+/.test(previous.textContent) && !/\n+\s*$/.test(previous.textContent) && hasLineBreak(previous.element)) ||
                                     (previousSibling && previousSibling.lineBreak) ||
@@ -245,10 +246,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     current.anchor(sideParent, 'true');
                                     rowPreviousLeft = null;
                                 }
-                                if (SETTINGS.ellipsisOnTextOverflow &&
-                                    previous != null &&
-                                    previous.linearHorizontal)
-                                {
+                                if (SETTINGS.ellipsisOnTextOverflow && previous.linearHorizontal) {
                                     this.checkSingleLine(previous.children[previous.children.length - 1] as T, true);
                                 }
                                 if (rowPaddingLeft > 0) {
@@ -269,7 +267,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 else {
                                     current.anchor(sideSibling, previous.stringId);
                                 }
-                                if (connected) {
+                                if (connected || baseWidth > boxWidth) {
                                     this.checkSingleLine(current);
                                 }
                                 if (rowPreviousBottom != null) {
@@ -357,7 +355,14 @@ export default class ViewController<T extends View> extends Controller<T> {
                             if (images.includes(current)) {
                                 continue;
                             }
-                            const verticalAlign = current.css('verticalAlign');
+                            let verticalAlign = current.css('verticalAlign');
+                            if (verticalAlign === 'baseline' && (
+                                    current.controlName === 'RadioGroup' ||
+                                    current.tagName === 'TEXTAREA'
+                               ))
+                            {
+                                verticalAlign = 'text-bottom';
+                            }
                             if (alignWith == null ||
                                 verticalAlign.startsWith('text') ||
                                 optimal === current)
@@ -786,34 +791,35 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                 let disconnected = false;
                                                 let marginDelete = false;
                                                 let maxOffset = -1;
+                                                const attrs = index === 0 ? ['left', 'leftRight', 'top', AXIS_ANDROID.VERTICAL, 'hasWidth', 'right', 'marginHorizontal']
+                                                                          : ['top', 'topBottom', 'left', AXIS_ANDROID.HORIZONTAL, 'hasHeight', 'bottom', 'marginVertical'];
                                                 for (let i = 0; i < chainable.length; i++) {
                                                     const item = chainable.get(i);
                                                     if (i === 0) {
-                                                        if (!mapParent(item, index === 0 ? 'left' : 'top')) {
+                                                        if (!mapParent(item, attrs[0])) {
                                                             disconnected = true;
                                                             break;
                                                         }
                                                     }
                                                     else {
-                                                        if (mapSibling(item, index === 0 ? 'leftRight' : 'topBottom') == null) {
+                                                        if (mapSibling(item, attrs[1]) == null) {
                                                             disconnected = true;
                                                             break;
                                                         }
                                                     }
                                                 }
                                                 if (!disconnected) {
-                                                    const direction = index === 0 ? 'top' : 'left';
-                                                    if (chainable.list.every(item => sameValue(first, item, `linear.${direction}`))) {
+                                                    if (chainable.list.every(item => sameValue(first, item, `linear.${attrs[2]}`))) {
                                                         for (let j = 1; j < chainable.length; j++) {
                                                             const item = chainable.get(j);
-                                                            if (!item.constraint[orientation]) {
-                                                                item.anchor(mapLayout[direction], first.stringId, orientation);
+                                                            if (!item.constraint[attrs[3]]) {
+                                                                item.anchor(mapLayout[attrs[2]], first.stringId, attrs[3]);
                                                             }
                                                         }
                                                     }
-                                                    if (!flex.enabled && !node[index === 0 ? 'hasWidth' : 'hasHeight']) {
-                                                        mapDelete(last, index === 0 ? 'right' : 'bottom');
-                                                        last.constraint[index === 0 ? 'marginHorizontal' : 'marginVertical'] = mapSibling(last, index === 0 ? 'leftRight' : 'topBottom');
+                                                    if (!flex.enabled && node[attrs[4]] === 0) {
+                                                        mapDelete(last, attrs[5]);
+                                                        last.constraint[attrs[6]] = mapSibling(last, attrs[1]);
                                                     }
                                                 }
                                                 if (percentage) {

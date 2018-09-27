@@ -141,6 +141,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 if (image !== '') {
                     Object.assign(options.android, {
                         src: `@drawable/${image}`,
+                        layout_marginTop: top > 0 ? formatPX(top) : '',
                         baselineAlignBottom: 'true',
                         scaleType: !positionInside && gravity === 'right' ? 'fitEnd' : 'fitStart'
                     });

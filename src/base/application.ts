@@ -658,9 +658,14 @@ export default class Application<T extends Node> {
                                     clearedPartial.size > 0 &&
                                     !(floated.size === 1 && vertical.slice(1, vertical.length - 1).every(node => clearedPartial.has(node))))
                                 {
-                                    group = this.controllerHandler.createGroup(parentY, nodeY, vertical);
-                                    groupXml = this.writeFrameLayoutVertical(group, parentY, vertical, clearedPartial);
-                                    group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+                                    if (parentY.linearVertical) {
+                                        group = nodeY;
+                                        groupXml = this.writeFrameLayoutVertical(null, parentY, vertical, clearedPartial);
+                                    }
+                                    else {
+                                        group = this.controllerHandler.createGroup(parentY, nodeY, vertical);
+                                        groupXml = this.writeFrameLayoutVertical(group, parentY, vertical, clearedPartial);
+                                    }
                                 }
                                 else {
                                     if (vertical.length === axisY.length) {
@@ -1460,8 +1465,16 @@ export default class Application<T extends Node> {
         return xml;
     }
 
-    public writeFrameLayoutVertical(group: T, parent: T, nodes: T[], cleared: Map<T, string>) {
-        let xml = this.writeLinearLayout(group, parent, false);
+    public writeFrameLayoutVertical(group: Null<T>, parent: T, nodes: T[], cleared: Map<T, string>) {
+        let xml = '';
+        if (group == null) {
+            group = parent;
+            xml = formatPlaceholder(group.id);
+        }
+        else {
+            xml = this.writeLinearLayout(group, parent, false);
+            group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
+        }
         const rowsCurrent: T[][] = [];
         const rowsFloated: T[][] = [];
         const current: T[] = [];
@@ -1541,11 +1554,9 @@ export default class Application<T extends Node> {
                     if (subgroup != null) {
                         children.push(subgroup);
                     }
-                    if (group.blockStatic) {
-                        basegroup.alignmentType |= NODE_ALIGNMENT.VERTICAL;
-                    }
                     basegroup.init();
                     content += this.writeFrameLayout(basegroup, group, true);
+                    basegroup.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                     children.forEach((node, index) => {
                         if (nodes.includes(node)) {
                             content = replacePlaceholder(content, basegroup.id, `{:${basegroup.id}:${index}}`);

@@ -17,13 +17,13 @@ export interface IExtension {
     documentRoot: boolean;
     setTarget(node: T, parent?: T, element?: Element): void;
     getData(): void;
-    is(node: T): void;
+    is(node: T): boolean;
     require(value: string): void;
     included(element?: Element): boolean;
     beforeInit(internal?: boolean): void;
     init(element: Element): boolean;
     afterInit(internal?: boolean): void;
-    condition(): void;
+    condition(): boolean;
     processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
     processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
     afterRender(): void;

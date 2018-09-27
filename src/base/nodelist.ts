@@ -38,9 +38,9 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return nodes;
     }
 
-    public static textBaseline<T extends Node>(list: T[], alignInput = false) {
+    public static textBaseline<T extends Node>(list: T[]) {
         let baseline: T[] = [];
-        if (alignInput) {
+        if (!list.some(node => (node.textElement || node.imageElement) && node.baseline)) {
             baseline =
                 list.filter(node => node.baseline)
                     .sort((a, b) => {

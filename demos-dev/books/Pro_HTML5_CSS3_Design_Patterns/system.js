@@ -17,6 +17,7 @@ SystemJS.config({
    },
    transpiler: 'plugin-babel'
 });
+
 System.import('/build/main.js').then(function(result) {
     androme = result;
     androme.parseDocument().then(function() {
