@@ -578,7 +578,7 @@ export default class View extends Node {
             }
             return textAlign;
         }
-        if (!(this.floating || renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL))) {
+        if (!(this.floating || renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.MULTILINE))) {
             switch (this.styleMap.verticalAlign) {
                 case 'top':
                 case 'text-top':
@@ -731,7 +731,7 @@ export default class View extends Node {
     public applyOptimizations(settings: DisplaySettings) {
         const renderParent = this.renderParent;
         const renderChildren = this.renderChildren;
-        if (this.is(NODE_STANDARD.LINEAR)) {
+        if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
             const linearHorizontal = this.linearHorizontal;
             if (this.blockWidth && !this.blockStatic) {
                 [[linearHorizontal, this.inlineElement, 'width'], [!linearHorizontal, true, 'height']].forEach((value: [boolean, boolean, string]) => {
@@ -753,35 +753,14 @@ export default class View extends Node {
                     this.android('baselineAligned', 'false');
                 }
                 else {
-                    const alignInput = renderParent.is(NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline);
+                    const alignInput = renderChildren.every(node => node.nodeType < NODE_STANDARD.TEXT) || (renderParent.is(NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline));
                     if (alignInput ||
                         renderParent.android('baselineAlignedChildIndex') !== '' ||
-                        renderChildren.some(node => !node.alignOrigin || !node.baseline))
+                        renderChildren.some(node => node.alignOrigin || node.baseline))
                     {
                         const baseline = NodeList.textBaseline(renderChildren, alignInput);
                         if (baseline.length > 0) {
                             this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
-                        }
-                    }
-                }
-                if (this.hasElement && Array.from(this.element.children).every(element => renderChildren.includes(getNodeFromElement(element) as T) || element.tagName === 'BR')) {
-                    const pageflow = renderChildren.filter(node => !node.floating);
-                    if (pageflow.every(node => node.baseline || node.has('verticalAlign', CSS_STANDARD.UNIT))) {
-                        const marginTop: number = Math.max.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
-                        const marginBottom = Math.min.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
-                        const imageHighest = Math.max.apply(null, pageflow.map(node => node.imageElement && node.toInt('verticalAlign') > 0 ? node.bounds.height : 0));
-                        if (marginTop > 0 && marginBottom < 0) {
-                            pageflow.forEach(node => {
-                                const offset = node.toInt('verticalAlign');
-                                if (offset === 0) {
-                                    node.modifyBox(BOX_STANDARD.PADDING_TOP, Math.max(imageHighest, marginTop));
-                                    node.modifyBox(BOX_STANDARD.PADDING_BOTTOM, Math.abs(marginBottom));
-                                }
-                                else {
-                                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset * -1, true);
-                                    node.css('verticalAlign', '0px');
-                                }
-                            });
                         }
                     }
                 }
@@ -793,6 +772,54 @@ export default class View extends Node {
                     if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
                         node.android('singleLine', 'true');
                     }
+                }
+            }
+        }
+        if (this.linearHorizontal || this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL)) {
+            const pageflow = renderChildren.filter(node => !node.floating && (node.hasElement || node.renderChildren.length === 0));
+            if (pageflow.some(node => node.has('verticalAlign', CSS_STANDARD.UNIT, { not: '0px' })) && pageflow.every(node => node.baseline || node.has('verticalAlign', CSS_STANDARD.UNIT))) {
+                const marginTop: number = Math.max.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
+                const tallest: T[] = [];
+                let offsetTop = 0;
+                if (marginTop > 0) {
+                    pageflow.forEach(node => {
+                        const offset = node.toInt('verticalAlign');
+                        const offsetHeight = (node.imageElement ? node.bounds.height : 0) + (offset > 0 ? offset : 0);
+                        if (offsetHeight >= offsetTop) {
+                            if (offsetHeight > offsetTop) {
+                                tallest.length = 0;
+                            }
+                            tallest.push(node);
+                            offsetTop = offsetHeight;
+                        }
+                    });
+                    pageflow.forEach(node => {
+                        if (!tallest.includes(node)) {
+                            const offset = node.toInt('verticalAlign');
+                            if (marginTop > 0) {
+                                node.modifyBox(BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageElement && !node.imageElement ? node.bounds.height : 0));
+                            }
+                            if (offset !== 0) {
+                                node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset * -1, true);
+                                node.css('verticalAlign', '0px');
+                            }
+                        }
+                        else {
+                            node.css('verticalAlign', '0px');
+                        }
+                    });
+                }
+            }
+        }
+        if (this.inline && !this.floating) {
+            const offset = this.toInt('verticalAlign');
+            if (offset !== 0) {
+                this.modifyBox(BOX_STANDARD.MARGIN_TOP, offset * -1, true);
+                if (offset < 0 &&
+                    renderParent.layoutHorizontal &&
+                    renderParent.inlineHeight)
+                {
+                    renderParent.android('layout_height', formatPX(renderParent.bounds.height));
                 }
             }
         }
@@ -1018,23 +1045,10 @@ export default class View extends Node {
                 this.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
             }
         }
-        if (this.inline && !this.floating) {
-            const verticalAlign = this.toInt('verticalAlign');
-            if (verticalAlign !== 0) {
-                this.modifyBox(BOX_STANDARD.MARGIN_TOP, verticalAlign * -1, true);
-                if (verticalAlign < 0 &&
-                    renderParent.linearHorizontal &&
-                    renderParent.inlineHeight &&
-                    renderParent.renderChildren.every(node => node.baseline || node.linearHorizontal))
-                {
-                    renderParent.android('layout_height', formatPX(renderParent.bounds.height + this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth));
-                }
-            }
-        }
     }
 
     private bindWhiteSpace() {
-        if (this.linearHorizontal || this.hasAlign(NODE_ALIGNMENT.HORIZONTAL)) {
+        if (this.linearHorizontal || this.hasAlign(NODE_ALIGNMENT.HORIZONTAL | NODE_ALIGNMENT.MULTILINE)) {
             if (!this.hasAlign(NODE_ALIGNMENT.FLOAT)) {
                 const textAlign = this.css('textAlign');
                 const textIndent = this.toInt('textIndent');
@@ -1043,7 +1057,7 @@ export default class View extends Node {
                 let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent')
                                                             : textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0);
                 this.each((node: T, index) => {
-                    if (!(node.floating || (relative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)))) {
+                    if (!(node.floating || (relative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
                         const width = Math.round(node.actualLeft() - right);
                         if (width >= 1) {
                             node.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);

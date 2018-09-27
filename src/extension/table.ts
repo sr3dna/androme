@@ -1,6 +1,6 @@
 import { ExtensionResult } from './lib/types';
-import Extension from '../base/extension';
 import Node from '../base/node';
+import Extension from '../base/extension';
 import { convertFloat, convertInt, formatPX, hasBit, isPercent, isUnit } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
 import { cssInherit, getStyle } from '../lib/dom';

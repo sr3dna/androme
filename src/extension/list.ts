@@ -1,7 +1,7 @@
 import { ExtensionResult } from './lib/types';
-import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
+import Extension from '../base/extension';
 import { convertAlpha, convertRoman } from '../lib/util';
 import { EXT_NAME } from './lib/constants';
 import { BOX_STANDARD, NODE_RESOURCE } from '../lib/constants';

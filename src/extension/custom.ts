@@ -1,6 +1,6 @@
 import { ExtensionResult } from './lib/types';
-import Extension from '../base/extension';
 import Node from '../base/node';
+import Extension from '../base/extension';
 import { NODE_STANDARD } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
 

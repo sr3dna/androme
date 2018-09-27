@@ -1,7 +1,7 @@
 import { BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap, ViewData } from '../lib/types';
-import File from './file';
 import Node from './node';
 import NodeList from './nodelist';
+import File from './file';
 import { convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 import { cssFromParent, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
@@ -150,7 +150,7 @@ export default abstract class Resource<T extends Node> {
                 if (node.length > 0 ||
                     node.imageElement ||
                     node.tagName === 'HR' ||
-                    (node.inlineText && !backgroundImage && !['pre', 'pre-wrap'].includes(node.css('whiteSpace')) && node.element.innerHTML.trim() === ''))
+                    (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))
                 {
                     return;
                 }

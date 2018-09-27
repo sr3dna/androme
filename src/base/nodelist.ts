@@ -270,12 +270,9 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         this.clear();
     }
 
-    public get(index: number): T {
+    public get(index?: number): T {
         if (index == null) {
             return this._list[this._list.length - 1];
-        }
-        if (index < 0) {
-            return this._list[this._list.length + index];
         }
         return this._list[index];
     }

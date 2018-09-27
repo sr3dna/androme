@@ -1,7 +1,7 @@
 import { LayoutMapX, LayoutMapY, ObjectMap, StringMap } from '../lib/types';
 import { ExtensionDependency, ExtensionResult, IExtension } from '../extension/lib/types';
-import Application from './application';
 import Node from './node';
+import Application from './application';
 import { capitalize, convertCamelCase, includes, optional } from '../lib/util';
 
 export default abstract class Extension<T extends Node> implements IExtension {

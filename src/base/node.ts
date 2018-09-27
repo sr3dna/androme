@@ -1171,6 +1171,11 @@ export default abstract class Node implements BoxModel {
         return this._multiLine;
     }
 
+    get preserveWhiteSpace() {
+        const value = this.css('whiteSpace');
+        return value === 'pre' || value === 'pre-wrap';
+    }
+
     get actualHeight() {
         return this.plainText ? this.bounds.bottom - this.bounds.top : this.bounds.height;
     }

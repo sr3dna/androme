@@ -1,9 +1,9 @@
 import { ArrayIndex, LayoutMapX, LayoutMapY, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import Controller from './controller';
-import Resource from './resource';
 import Node from './node';
 import NodeList from './nodelist';
+import Controller from './controller';
+import Resource from './resource';
 import { convertInt, hasBit, hasValue, isNumber, optional, sortAsc, trimString, isUnit } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';

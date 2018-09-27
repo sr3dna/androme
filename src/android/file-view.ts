@@ -1,6 +1,6 @@
 import { Null, PlainFile, ViewData } from '../lib/types';
-import File from '../base/file';
 import NodeList from '../base/nodelist';
+import File from '../base/file';
 import View from './view';
 import { lastIndexOf } from '../lib/util';
 import { replaceUnit } from './lib/util';

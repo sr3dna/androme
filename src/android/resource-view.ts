@@ -1,8 +1,8 @@
 import { BorderAttribute, BoxStyle, FontAttribute, Image, NameValue, Null, ObjectMap, ObjectMapNested, StringMap, ViewData } from '../lib/types';
+import NodeList from '../base/nodelist';
+import View from './view';
 import Resource from '../base/resource';
 import File from '../base/file';
-import View from './view';
-import NodeList from '../base/nodelist';
 import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, isString, lastIndexOf, trimString } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';

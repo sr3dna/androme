@@ -89,9 +89,9 @@ export default class ListAndroid<T extends View> extends List<T> {
                     return 10;
                 }
             })();
-            let paddingLeftValue = gravity === '' && image === '' ? formatPX(paddingRight) : '';
-            let paddingRightValue = gravity === 'right' ? formatPX(paddingRight) : '';
             let marginLeftValue = left > 0 ? formatPX(left) : '';
+            const paddingLeftValue = gravity === '' && image === '' ? formatPX(paddingRight) : '';
+            const paddingRightValue = gravity === 'right' && paddingLeft > 20 ? formatPX(paddingRight) : '';
             const options = {
                 android: {},
                 app: {
@@ -99,12 +99,6 @@ export default class ListAndroid<T extends View> extends List<T> {
                 }
             };
             if (positionInside) {
-                if (paddingLeftValue !== '') {
-                    paddingLeftValue = delimitDimens(node.nodeName, parseRTL('padding_left'), paddingLeftValue);
-                }
-                if (paddingRightValue !== '') {
-                    paddingRightValue = delimitDimens(node.nodeName, parseRTL('padding_right'), paddingRightValue);
-                }
                 if (marginLeftValue !== '') {
                     marginLeftValue = delimitDimens(node.nodeName, parseRTL('margin_left'), marginLeftValue);
                 }
@@ -116,9 +110,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                         {
                             android: {
                                 minWidth,
-                                [parseRTL('layout_marginLeft')]: marginLeftValue,
-                                [parseRTL('paddingLeft')]: paddingLeftValue,
-                                [parseRTL('paddingRight')]: paddingRightValue
+                                [parseRTL('layout_marginLeft')]: marginLeftValue
                             },
                             app: { layout_columnWeight: columnWeight }
                         },
@@ -133,7 +125,7 @@ export default class ListAndroid<T extends View> extends List<T> {
             else {
                 Object.assign(options.android, {
                     minWidth,
-                    gravity: parseRTL(gravity),
+                    gravity: paddingLeft > 20 ? parseRTL(gravity) : '',
                     [parseRTL('layout_marginLeft')]: marginLeftValue,
                     [parseRTL('paddingLeft')]: paddingLeftValue,
                     [parseRTL('paddingRight')]: paddingRightValue
@@ -163,6 +155,9 @@ export default class ListAndroid<T extends View> extends List<T> {
                 companion.nodeName = `${node.tagName}_ORDINAL`;
                 companion.setNodeType(NODE_ANDROID.SPACE);
                 companion.inherit(node, 'style');
+                if (listStyle !== '0' && !/[A-Za-z0-9]+\./.test(listStyle) && companion.toInt('fontSize') > 12) {
+                    companion.css('fontSize', '12px');
+                }
                 node.companion = companion;
                 this.application.cache.append(companion);
                 controller.prependBefore(

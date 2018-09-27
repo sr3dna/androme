@@ -46,7 +46,8 @@ export enum NODE_ALIGNMENT {
     BOTTOM = 1024,
     LEFT = 2048,
     SINGLE = 4096,
-    SPACE = 8192
+    MULTILINE = 8192,
+    SPACE = 16384
 }
 
 export enum NODE_RESOURCE {

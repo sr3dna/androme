@@ -1,9 +1,9 @@
 import { LayoutMapX, ObjectIndex } from '../lib/types';
 import { ExtensionResult } from './lib/types';
 import { GridCellData, GridData } from './lib/types';
-import Extension from '../base/extension';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
+import Extension from '../base/extension';
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
 import { NODE_ALIGNMENT, BOX_STANDARD } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';

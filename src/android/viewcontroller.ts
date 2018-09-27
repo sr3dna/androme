@@ -1,9 +1,9 @@
 import { ControllerSettings, Null, ObjectIndex, ObjectMap, StringMap, ViewData } from '../lib/types';
-import Controller from '../base/controller';
 import NodeList from '../base/nodelist';
-import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
+import Controller from '../base/controller';
+import Resource from '../base/resource';
 import { capitalize, convertEnum, convertInt, formatPX, hasValue, indexOf, isPercent, isUnit, optional, repeat, sameValue, searchObject, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { delimitDimens, generateId, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
@@ -137,7 +137,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                     const baseline: T[] = [];
                     const textIndent = node.toInt('textIndent');
                     const noWrap = node.css('whiteSpace') === 'nowrap';
-                    const floatAligned = nodes.list.some(item => item.floating);
                     let boxWidth = node.box.width;
                     if (node.renderParent.overflowX) {
                         boxWidth = node.viewWidth || boxWidth || node.renderParent.toInt('width', 0, { map: 'initial' });
@@ -203,6 +202,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                             if (!noWrap &&
                                 !connected &&
+                                !['SUP', 'SUB'].includes(current.tagName) &&
                                 (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && (
                                     (current.float !== 'right' && rowWidth + current.marginLeft + dimension.width - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
                                     (current.multiLine && hasLineBreak(current.element)) ||
@@ -254,11 +254,11 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 if (rowPaddingLeft > 0) {
                                     current.modifyBox(BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
                                 }
-                                if (!floatAligned) {
-                                    this.adjustBaseline(baseline);
-                                    baseline.length = 0;
-                                }
+                                this.adjustBaseline(baseline);
+                                node.alignmentType ^= NODE_ALIGNMENT.HORIZONTAL;
+                                node.alignmentType |= NODE_ALIGNMENT.MULTILINE;
                                 rowWidth = 0;
+                                baseline.length = 0;
                                 rows.push([current]);
                             }
                             else {
@@ -278,15 +278,16 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 items.push(current);
                             }
                         }
-                        rowWidth += dimension.width + current.marginLeft + current.marginRight +
-                                    (previous && !previous.floating && !previous.plainText && previous.textContent.trim() !== '' && !current.floating && !current.plainText && current.textContent.trim() !== '' ? SETTINGS.whitespaceHorizontalOffset : 0);
-                        if (!floatAligned) {
+                        rowWidth += dimension.width + current.marginLeft + current.marginRight + (
+                                        previous && !previous.floating && !previous.plainText && !previous.preserveWhiteSpace && previous.textContent.trim() !== '' && !/\s+$/.test(previous.textContent) &&
+                                        !current.floating && !current.plainText && !current.preserveWhiteSpace && current.textContent.trim() !== '' && !/^\s+/.test(current.textContent)
+                                            ? SETTINGS.whitespaceHorizontalOffset : 0
+                                    );
+                        if (!current.floating) {
                             baseline.push(current);
                         }
                     }
-                    if (!floatAligned) {
-                        this.adjustBaseline(baseline);
-                    }
+                    this.adjustBaseline(baseline);
                     if (node.marginTop < 0 && nodes.get(0).position === 'relative') {
                         rows[0].forEach((item, index) => item.modifyBox(BOX_STANDARD.MARGIN_TOP, node.marginTop * (index === 0 ? 1 : -1), true));
                     }
@@ -323,11 +324,22 @@ export default class ViewController<T extends View> extends Controller<T> {
                 else {
                     mapLayout = MAP_LAYOUT.constraint;
                     if (node.hasAlign(NODE_ALIGNMENT.HORIZONTAL)) {
-                        const optimal =  NodeList.textBaseline(nodes.list)[0];
-                        const baseline = nodes.list.filter(item => item.textElement && item.baseline);
-                        const image = nodes.list.filter(item => item.imageElement && item.baseline);
-                        if (image.length > 0) {
-                            baseline.forEach(item => item.app(mapLayout['baseline'], image[0].stringId));
+                        const optimal = NodeList.textBaseline(nodes.list)[0];
+                        const baseline =
+                            nodes.list
+                                .filter(item => item.textElement && item.baseline)
+                                .sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1);
+                        let images =
+                            nodes.list
+                                .filter(item => item.imageElement && item.baseline)
+                                .sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1);
+                        if (images.length > 0) {
+                            const tallest = images[0];
+                            images.forEach((item, index) => index > 0 && item.app(mapLayout['baseline'], tallest.stringId));
+                            if (!optimal.imageElement) {
+                                optimal.app(mapLayout['bottom'], tallest.stringId);
+                            }
+                            images = images.filter(item => item !== tallest);
                         }
                         for (let i = 0; i < nodes.length; i++) {
                             const current = nodes.get(i);
@@ -338,9 +350,11 @@ export default class ViewController<T extends View> extends Controller<T> {
                             else {
                                 const previous = nodes.get(i - 1);
                                 current.app(mapLayout['leftRight'], previous.stringId);
-                                current.constraint.marginHorizontal = previous.stringId;
+                                if (!previous.floating && !current.floating) {
+                                    current.constraint.marginHorizontal = previous.stringId;
+                                }
                             }
-                            if (image.length > 0 && baseline.includes(current)) {
+                            if (images.includes(current)) {
                                 continue;
                             }
                             const verticalAlign = current.css('verticalAlign');
@@ -507,7 +521,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                         }
                                     }
                                     else if (current.floating) {
-                                        mapDelete(current, (current.float === 'right' ? 'left' : 'right'));
+                                        mapDelete(current, current.float === 'right' ? 'left' : 'right');
                                     }
                                     else if (current.inlineElement) {
                                         if (current.nodeType <= NODE_STANDARD.IMAGE) {
@@ -768,7 +782,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                 }
                                                 chainable.parent = node;
                                                 const first = chainable.get(0);
-                                                const last = chainable.get(-1);
+                                                const last = chainable.get();
                                                 let disconnected = false;
                                                 let marginDelete = false;
                                                 let maxOffset = -1;
@@ -1716,7 +1730,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         }
                     }
                     else {
-                        if (node.linearHorizontal && node.baseline) {
+                        if (parent.layoutHorizontal && node.baseline) {
                             node.android('baselineAlignBottom', 'true');
                         }
                     }
@@ -1903,7 +1917,9 @@ export default class ViewController<T extends View> extends Controller<T> {
             );
         if (SETTINGS.showAttributes && node.id === 0) {
             const indent = repeat(renderDepth + 1);
-            const attrs = node.combine().map(value => `\n${indent + value}`).join('');
+            const attrs =
+                node.combine()
+                    .map(value => `\n${indent + value}`).join('');
             output = output.replace(formatPlaceholder(node.id, '@'), attrs);
         }
         options['stringId'] = node.stringId;
@@ -2318,18 +2334,21 @@ export default class ViewController<T extends View> extends Controller<T> {
         if (nodes.length > 1) {
             const baseline = NodeList.textBaseline(nodes.filter(node => node.baseline && node.toInt('top') === 0 && node.toInt('bottom') === 0));
             if (baseline.length > 0) {
-                const unaligned: T[] = [];
                 const mapLayout = MAP_LAYOUT.relative;
                 const alignWith = baseline[0];
+                const images: T[] = [];
                 let baseExcluded: Null<T> = null;
                 for (const node of nodes) {
                     if (node !== alignWith) {
                         if (node.baseline && (
                                 node.nodeType <= NODE_STANDARD.INLINE ||
-                                (node.linearHorizontal && node.renderChildren.some(item => item.textElement && item.baseline))
+                                (node.linearHorizontal && node.renderChildren.some(item => item.baseline && item.nodeType <= NODE_STANDARD.INLINE))
                            ))
                         {
-                            if (node.alignOrigin) {
+                            if (!alignWith.imageElement && node.imageElement) {
+                                images.push(node);
+                            }
+                            else if (node.alignOrigin) {
                                 node.android(mapLayout[(node.imageElement || node.is(NODE_STANDARD.BUTTON) ? 'bottom' : 'baseline')], alignWith.stringId);
                             }
                             else if (
@@ -2340,13 +2359,22 @@ export default class ViewController<T extends View> extends Controller<T> {
                                 node.android(mapLayout[convertInt(alignWith.top) > 0 ? 'top' : 'bottom'], alignWith.stringId);
                             }
                         }
-                        else {
-                            unaligned.push(node);
-                        }
                         if (alignWith.imageElement && (baseExcluded == null || node.bounds.height > baseExcluded.bounds.height)) {
                             baseExcluded = node;
                         }
                     }
+                }
+                if (images.length > 0) {
+                    images.sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1);
+                    for (let i = 0; i < images.length; i++) {
+                        if (i === 0) {
+                            alignWith.android(mapLayout['bottom'], images[i].stringId);
+                        }
+                        else {
+                            images[i].android(mapLayout['bottom'], images[0].stringId);
+                        }
+                    }
+                    baseExcluded = null;
                 }
                 if (baseExcluded != null) {
                     if (!baseExcluded.imageElement) {
@@ -2360,28 +2388,6 @@ export default class ViewController<T extends View> extends Controller<T> {
                     }
                     if (baseExcluded != null) {
                         alignWith.android(mapLayout['bottom'], baseExcluded.stringId);
-                    }
-                }
-                if (unaligned.length > 0) {
-                    const realign =
-                        unaligned
-                            .filter(node => node.toInt('verticalAlign') !== 0)
-                            .sort((a, b) => a.toInt('verticalAlign') >= b.toInt('verticalAlign') ? -1 : 1);
-                    if (realign.length > 0 && realign[0].textElement) {
-                        const verticalAlign = Math.abs(realign[0].toInt('verticalAlign'));
-                        for (const node of baseline) {
-                            const marginTop = realign[0].bounds.height - (node.bounds.height + verticalAlign);
-                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, marginTop, true);
-                        }
-                        for (let i = 0; i < realign.length; i++) {
-                            const node = realign[i];
-                            if (i > 0) {
-                                node.css('verticalAlign', (node.toInt('verticalAlign') + verticalAlign).toString());
-                            }
-                            else {
-                                node.css('verticalAlign', 'baseline');
-                            }
-                        }
                     }
                 }
             }

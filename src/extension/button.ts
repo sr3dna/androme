@@ -1,5 +1,5 @@
-import Extension from '../base/extension';
 import Node from '../base/node';
+import Extension from '../base/extension';
 
 export default abstract class Button<T extends Node> extends Extension<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
