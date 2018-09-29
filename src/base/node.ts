@@ -155,7 +155,7 @@ export default abstract class Node implements BoxModel {
 
     public get(obj: string): StringMap {
         const name = `_${obj || '_'}`;
-        return (this[name] != null ? this[name] : {});
+        return this[name] != null ? this[name] : {};
     }
 
     public delete(obj: string, ...attrs: string[]) {
@@ -639,7 +639,14 @@ export default abstract class Node implements BoxModel {
                                 (negative && Math.abs(top) <= parent.marginTop && Math.abs(left) <= parent.marginLeft) ||
                                 this.imageElement)
                             {
-                                if (negative && !parent.documentRoot && top !== 0 && left !== 0 && this.bottom == null && this.right == null && (this.outsideX(parent.linear) || this.outsideY(parent.linear))) {
+                                if (negative &&
+                                    !parent.documentRoot &&
+                                    top !== 0 &&
+                                    left !== 0 &&
+                                    this.bottom == null &&
+                                    this.right == null &&
+                                    (this.outsideX(parent.linear) || this.outsideY(parent.linear)))
+                                {
                                     outside = true;
                                 }
                                 else {
@@ -726,7 +733,13 @@ export default abstract class Node implements BoxModel {
         }
         while (element != null) {
             const node = getNodeFromElement(element);
-            if (node && ((!pageflow && node.siblingflow) || (pageflow && node.pageflow)) && !(node.lineBreak && !lineBreak) && !(node.excluded && !excluded)) {
+            if (node &&
+                !(node.lineBreak && !lineBreak) &&
+                !(node.excluded && !excluded) && (
+                    (pageflow && node.pageflow) ||
+                    (!pageflow && node.siblingflow)
+               ))
+            {
                 return node;
             }
             element = <Element> element.previousSibling;
@@ -745,7 +758,13 @@ export default abstract class Node implements BoxModel {
         }
         while (element != null) {
             const node = getNodeFromElement(element);
-            if (node && ((!pageflow && node.siblingflow) || (pageflow && node.pageflow)) && (lineBreak || (!lineBreak && !node.lineBreak)) && (excluded || (!excluded && !node.excluded))) {
+            if (node &&
+                !(node.lineBreak && !lineBreak) &&
+                !(node.excluded && !excluded) && (
+                    (pageflow && node.pageflow) ||
+                    (!pageflow && node.siblingflow)
+               ))
+            {
                 return node;
             }
             element = <Element> element.nextSibling;
@@ -754,11 +773,11 @@ export default abstract class Node implements BoxModel {
     }
 
     public actualLeft(dimension = 'linear') {
-        return (this.companion && this.companion[dimension] != null ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left);
+        return this.companion && this.companion[dimension] != null ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left;
     }
 
     public actualRight(dimension = 'linear') {
-        return (this.companion && this.companion[dimension] != null ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right);
+        return this.companion && this.companion[dimension] != null ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right;
     }
 
     private boxAttribute(region: string, direction: string) {

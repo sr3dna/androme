@@ -70,7 +70,7 @@ export default abstract class Controller<T extends Node> {
     }
 
     public hasAppendProcessing(id: number) {
-        return (this._before[id] != null || this._after[id] != null);
+        return this._before[id] != null || this._after[id] != null;
     }
 
     protected getEnclosingTag(depth: number, controlName: string, id: number, xml = '', preXml = '', postXml = '') {

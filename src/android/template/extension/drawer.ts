@@ -6,9 +6,9 @@ const template = [
 '		<item name="android:windowDrawsSystemBarBackgrounds">true</item>',
 '		<item name="android:statusBarColor">@android:color/transparent</item>',
 '		<item name="android:windowTranslucentStatus">true</item>',
-'!1',
+    '!1',
 '		<item name="{name}">{value}</item>',
-'!1',
+    '!1',
 '	</style>',
 '</resources>',
 '!0'

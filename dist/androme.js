@@ -1,4 +1,4 @@
-/* androme 1.10.0
+/* androme 1.10.1
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -208,7 +208,9 @@
                 if (value.startsWith('../')) {
                     const parts = [];
                     let levels = 0;
-                    value.split('/').forEach(dir => {
+                    value
+                        .split('/')
+                        .forEach(dir => {
                         if (dir === '..') {
                             levels++;
                         }
@@ -1756,61 +1758,71 @@
                         nodes.forEach(element => this.insertNode(element, node));
                     }
                 }
+                const preAlignment = {};
+                const direction = [];
                 for (const node of this.cache) {
-                    const element = node.element;
                     if (node.hasElement) {
-                        const preAlignment = {};
+                        const element = node.element;
                         const textAlign = node.css('textAlign');
+                        preAlignment[node.id] = {};
+                        const attrs = preAlignment[node.id];
                         ['right', 'end', element.tagName !== 'BUTTON' && element.type !== 'button' ? 'center' : ''].some(value => {
                             if (value === textAlign) {
-                                preAlignment.textAlign = value;
+                                attrs.textAlign = value;
                                 element.style.textAlign = 'left';
                                 return true;
                             }
                             return false;
                         });
                         if (node.marginLeft < 0) {
-                            preAlignment.marginLeft = node.css('marginLeft');
+                            attrs.marginLeft = node.css('marginLeft');
                             element.style.marginLeft = '0px';
                         }
                         if (node.marginTop < 0) {
-                            preAlignment.marginTop = node.css('marginTop');
+                            attrs.marginTop = node.css('marginTop');
                             element.style.marginTop = '0px';
                         }
                         if (node.position === 'relative') {
                             ['top', 'right', 'bottom', 'left'].forEach(value => {
                                 if (node.has(value)) {
-                                    preAlignment[value] = node.styleMap[value];
+                                    attrs[value] = node.styleMap[value];
                                     element.style[value] = 'auto';
                                 }
                             });
                         }
                         if (node.overflowX || node.overflowY) {
                             if (node.has('width')) {
-                                preAlignment.width = node.styleMap.width;
+                                attrs.width = node.styleMap.width;
                                 element.style.width = 'auto';
                             }
                             if (node.has('height')) {
-                                preAlignment.height = node.styleMap.height;
+                                attrs.height = node.styleMap.height;
                                 element.style.height = 'auto';
                             }
-                            preAlignment.overflow = node.style.overflow || '';
+                            attrs.overflow = node.style.overflow || '';
                             element.style.overflow = 'visible';
                         }
-                        let direction = false;
                         if (element.dir === 'rtl') {
                             element.dir = 'ltr';
-                            direction = true;
+                            direction.push(element);
                         }
                         node.setBounds();
-                        for (const attr in preAlignment) {
-                            element.style[attr] = preAlignment[attr];
-                        }
-                        if (direction) {
-                            element.dir = 'rtl';
-                        }
                     }
                     node.setMultiLine();
+                }
+                for (const node of this.cache) {
+                    if (node.hasElement) {
+                        const element = node.element;
+                        const attrs = preAlignment[node.id];
+                        if (attrs != null) {
+                            for (const attr in attrs) {
+                                element.style[attr] = attrs[attr];
+                            }
+                            if (direction.includes(element)) {
+                                element.dir = 'rtl';
+                            }
+                        }
+                    }
                     if (node.children.length === 1) {
                         const firstNode = node.children[0];
                         if (!firstNode.pageflow &&
@@ -3414,7 +3426,9 @@
         }
         beforeInit(internal = false) {
             if (!internal && this.included()) {
-                this.dependencies.filter(item => item.init).forEach(item => {
+                this.dependencies
+                    .filter(item => item.init)
+                    .forEach(item => {
                     const ext = this.application.getExtension(item.name);
                     if (ext != null) {
                         ext.setTarget(this.node, this.parent, this.element);
@@ -3428,7 +3442,9 @@
         }
         afterInit(internal = false) {
             if (!internal && this.included()) {
-                this.dependencies.filter(item => item.init).forEach(item => {
+                this.dependencies
+                    .filter(item => item.init)
+                    .forEach(item => {
                     const ext = this.application.getExtension(item.name);
                     if (ext != null) {
                         ext.setTarget(this.node, this.parent, this.element);
@@ -3893,7 +3909,7 @@
         }
         get(obj) {
             const name = `_${obj || '_'}`;
-            return (this[name] != null ? this[name] : {});
+            return this[name] != null ? this[name] : {};
         }
         delete(obj, ...attrs) {
             const name = `_${obj || '_'}`;
@@ -4339,7 +4355,13 @@
                                     !negative ||
                                     (negative && Math.abs(top) <= parent.marginTop && Math.abs(left) <= parent.marginLeft) ||
                                     this.imageElement) {
-                                    if (negative && !parent.documentRoot && top !== 0 && left !== 0 && this.bottom == null && this.right == null && (this.outsideX(parent.linear) || this.outsideY(parent.linear))) {
+                                    if (negative &&
+                                        !parent.documentRoot &&
+                                        top !== 0 &&
+                                        left !== 0 &&
+                                        this.bottom == null &&
+                                        this.right == null &&
+                                        (this.outsideX(parent.linear) || this.outsideY(parent.linear))) {
                                         outside = true;
                                     }
                                     else {
@@ -4418,7 +4440,10 @@
             }
             while (element != null) {
                 const node = getNodeFromElement(element);
-                if (node && ((!pageflow && node.siblingflow) || (pageflow && node.pageflow)) && !(node.lineBreak && !lineBreak) && !(node.excluded && !excluded)) {
+                if (node &&
+                    !(node.lineBreak && !lineBreak) &&
+                    !(node.excluded && !excluded) && ((pageflow && node.pageflow) ||
+                    (!pageflow && node.siblingflow))) {
                     return node;
                 }
                 element = element.previousSibling;
@@ -4436,7 +4461,10 @@
             }
             while (element != null) {
                 const node = getNodeFromElement(element);
-                if (node && ((!pageflow && node.siblingflow) || (pageflow && node.pageflow)) && (lineBreak || (!lineBreak && !node.lineBreak)) && (excluded || (!excluded && !node.excluded))) {
+                if (node &&
+                    !(node.lineBreak && !lineBreak) &&
+                    !(node.excluded && !excluded) && ((pageflow && node.pageflow) ||
+                    (!pageflow && node.siblingflow))) {
                     return node;
                 }
                 element = element.nextSibling;
@@ -4444,10 +4472,10 @@
             return null;
         }
         actualLeft(dimension = 'linear') {
-            return (this.companion && this.companion[dimension] != null ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left);
+            return this.companion && this.companion[dimension] != null ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left;
         }
         actualRight(dimension = 'linear') {
-            return (this.companion && this.companion[dimension] != null ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right);
+            return this.companion && this.companion[dimension] != null ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right;
         }
         boxAttribute(region, direction) {
             const attr = region + direction;
@@ -6414,7 +6442,7 @@
             }
         }
         hasAppendProcessing(id) {
-            return (this._before[id] != null || this._after[id] != null);
+            return this._before[id] != null || this._after[id] != null;
         }
         getEnclosingTag(depth, controlName, id, xml = '', preXml = '', postXml = '') {
             const indent = repeat(Math.max(0, depth));

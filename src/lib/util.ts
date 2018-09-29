@@ -225,14 +225,16 @@ export function resolvePath(value: string) {
             if (value.startsWith('../')) {
                 const parts: string[] = [];
                 let levels = 0;
-                value.split('/').forEach(dir => {
-                    if (dir === '..') {
-                        levels++;
-                    }
-                    else {
-                        parts.push(dir);
-                    }
-                });
+                value
+                    .split('/')
+                    .forEach(dir => {
+                        if (dir === '..') {
+                            levels++;
+                        }
+                        else {
+                            parts.push(dir);
+                        }
+                    });
                 pathname = pathname.slice(0, Math.max(pathname.length - levels, 0));
                 pathname.push(...parts);
                 value = location.origin + pathname.join('/');

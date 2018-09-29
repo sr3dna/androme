@@ -204,61 +204,71 @@ export default class Application<T extends Node> {
                     nodes.forEach(element => this.insertNode(element, node));
                 }
             }
+            const preAlignment: ObjectIndex<StringMap> = {};
+            const direction: HTMLElement[] = [];
             for (const node of this.cache) {
-                const element = <HTMLElement> node.element;
                 if (node.hasElement) {
-                    const preAlignment: StringMap = {};
+                    const element = <HTMLElement> node.element;
                     const textAlign = node.css('textAlign');
+                    preAlignment[node.id] = {};
+                    const attrs = preAlignment[node.id];
                     ['right', 'end', element.tagName !== 'BUTTON' && (<HTMLInputElement> element).type !== 'button' ? 'center' : ''].some(value => {
                         if (value === textAlign) {
-                            preAlignment.textAlign = value;
+                            attrs.textAlign = value;
                             element.style.textAlign = 'left';
                             return true;
                         }
                         return false;
                     });
                     if (node.marginLeft < 0) {
-                        preAlignment.marginLeft = node.css('marginLeft');
+                        attrs.marginLeft = node.css('marginLeft');
                         element.style.marginLeft = '0px';
                     }
                     if (node.marginTop < 0) {
-                        preAlignment.marginTop = node.css('marginTop');
+                        attrs.marginTop = node.css('marginTop');
                         element.style.marginTop = '0px';
                     }
                     if (node.position === 'relative') {
                         ['top', 'right', 'bottom', 'left'].forEach(value => {
                             if (node.has(value)) {
-                                preAlignment[value] = node.styleMap[value];
+                                attrs[value] = node.styleMap[value];
                                 element.style[value] = 'auto';
                             }
                         });
                     }
                     if (node.overflowX || node.overflowY) {
                         if (node.has('width')) {
-                            preAlignment.width = node.styleMap.width;
+                            attrs.width = node.styleMap.width;
                             element.style.width = 'auto';
                         }
                         if (node.has('height')) {
-                            preAlignment.height = node.styleMap.height;
+                            attrs.height = node.styleMap.height;
                             element.style.height = 'auto';
                         }
-                        preAlignment.overflow = node.style.overflow || '';
+                        attrs.overflow = node.style.overflow || '';
                         element.style.overflow = 'visible';
                     }
-                    let direction = false;
                     if (element.dir === 'rtl') {
                         element.dir = 'ltr';
-                        direction = true;
+                        direction.push(element);
                     }
                     node.setBounds();
-                    for (const attr in preAlignment) {
-                        element.style[attr] = preAlignment[attr];
-                    }
-                    if (direction) {
-                        element.dir = 'rtl';
-                    }
                 }
                 node.setMultiLine();
+            }
+            for (const node of this.cache) {
+                if (node.hasElement) {
+                    const element = <HTMLElement> node.element;
+                    const attrs = preAlignment[node.id];
+                    if (attrs != null) {
+                        for (const attr in attrs) {
+                            element.style[attr] = attrs[attr];
+                        }
+                        if (direction.includes(element)) {
+                            element.dir = 'rtl';
+                        }
+                    }
+                }
                 if (node.children.length === 1) {
                     const firstNode = node.children[0];
                     if (!firstNode.pageflow &&

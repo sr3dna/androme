@@ -6,7 +6,7 @@ Multiple views per page are supported with their resources and styles merged int
 
 Layout rendering can also be customized using extensions as the program was built to be nearly completely modular. Some of the common layouts already have built-in extensions which you can load or unload based on your preference.
 
-The ratio is about 1 line of HTML to every 10 lines of Android XML when using androme to generate the UI for your mobile application. The real time saver is probably having the resources auto-generated for the entire project. Using HTML best practices and techniques will also generate the fastest possible layout structure in Android.
+The ratio is about 1 line of HTML to every 10 lines of Android XML when using androme to generate the UI for your mobile application. Another time saver is having the XML resources auto-generated for the entire project. Using HTML best practices and techniques will also generate the fastest possible layout structure in Android which is close to 95% efficient and better than most hand-written code.
 
 ## Installation (global js variable: androme)
 
@@ -1490,24 +1490,4 @@ The attributes "include" and "include-end" can only be applied to elements which
 
 Using excessive DIV and FORM tags are not required for mobile devices which can cause additional FrameLayouts or LinearLayouts to be generated. Block level elements are almost always rendered to preserve any CSS styles which are applied to the tag.
 
-https://www.w3.org/TR/html401/struct/global.html#h-7.5.3
-
-If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. Any HTML elements with free-form text might be collapsed into a TextView. Try to enclose everything inside an element container otherwise the text might be discarded. You can basically code the HTML any way you want although using reasonable techniques for mobile devices will lead you to a more accurate layout.
-
-RECOMMENDED
-```xml
-<div>
-    <span>abcde</span>
-    <span>fghij</span>
-    <span>klmno</span>
-</div>
-```
-NOT RECOMMENDED
-```xml
-<span>
-    abcde
-    <div>fghij</div>
-    klmno
-</span>
-```
-You can use the examples in /demos/*.html to preview some features of this library.
+If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. Any HTML elements with free-form text might be collapsed into a TextView. You can basically code the HTML any way you want although using reasonable techniques for mobile devices will lead you to a more accurate layout.
