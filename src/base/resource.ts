@@ -1,4 +1,4 @@
-import { AppModule, BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap, ViewData } from '../lib/types';
+import { AppCurrent, BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap, ViewData } from '../lib/types';
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
@@ -9,7 +9,7 @@ import { cssFromParent, getBoxSpacing, getElementCache, hasLineBreak, isLineBrea
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE } from '../lib/constants';
 
-export default abstract class Resource<T extends Node> implements AppModule<T> {
+export default abstract class Resource<T extends Node> implements AppCurrent<T> {
     public static STORED: ResourceMap = {
         strings: new Map(),
         arrays: new Map(),

@@ -1,10 +1,10 @@
-import { AppModule, ControllerSettings, ObjectIndex, ObjectMap, ViewData } from '../lib/types';
+import { AppCurrent, ControllerSettings, ObjectIndex, ObjectMap, ViewData } from '../lib/types';
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
 import { repeat } from '../lib/util';
 
-export default abstract class Controller<T extends Node> implements AppModule<T> {
+export default abstract class Controller<T extends Node> implements AppCurrent<T> {
     public cache: NodeList<T>;
     public settings: ObjectMap<any>;
     public application: Application<T>;

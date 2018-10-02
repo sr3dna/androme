@@ -9,16 +9,21 @@ export type Null<T> = T | null | undefined;
 
 export type FunctionMap = ObjectMap<(...args: any[]) => any>;
 
-export interface AppBase<T extends Node> {
+export interface AppFramework<T extends Node> {
+    system: FunctionMap;
+    create(): AppBase<T>;
+    cached(): AppBase<T>;
+}
+
+export type AppBase<T extends Node> = {
     Node: { new (id: number, api: number, element?: Element): T };
     Controller: Controller<T>;
     Resource: Resource<T>;
     builtInExtensions: ObjectMap<IExtension>;
     settings: ObjectMap<any>;
-    system?: FunctionMap;
-}
+};
 
-export interface AppModule<T extends Node> {
+export interface AppCurrent<T extends Node> {
     cache: NodeList<T>;
     settings: ObjectMap<any>;
     application: Application<T>;

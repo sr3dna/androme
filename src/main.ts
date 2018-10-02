@@ -130,25 +130,24 @@ function setImageCache(element: HTMLImageElement) {
     }
 }
 
-export function setFramework(name: string) {
-    reset();
+export function setFramework(name: string, cached = false) {
     if (framework !== name) {
         switch (name) {
             case 'android':
                 main = new Application();
-                main.settings = android.settings;
-                main.builtInExtensions = android.builtInExtensions;
-                main.Node = android.Node;
-                main.registerController(android.Controller);
-                main.registerResource(android.Resource);
-                settings = android.settings;
-                if (android.system != null) {
-                    system = android.system;
-                }
+                const appBase = cached ? android.cached() : android.create();
+                main.settings = appBase.settings;
+                main.builtInExtensions = appBase.builtInExtensions;
+                main.Node = appBase.Node;
+                main.registerController(appBase.Controller);
+                main.registerResource(appBase.Resource);
+                settings = appBase.settings;
+                system = android.system;
                 framework = name;
                 break;
         }
         if (framework === name) {
+            reset();
             if (Array.isArray(settings.builtInExtensions)) {
                 const register = new Set<Extension<T>>();
                 const extensions = <ObjectMap<Extension<T>>> main.builtInExtensions;

@@ -1,5 +1,5 @@
 
-import { AppBase, ObjectMap } from '../lib/types';
+import { AppFramework, ObjectMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import View from './view';
 import ViewController from './viewcontroller';
@@ -28,7 +28,7 @@ import Drawer from './extension/widget/drawer';
 
 function autoClose() {
     const main = Controller.application;
-    if (Settings.autoCloseOnWrite && !main.loading && !main.closed) {
+    if (main.settings.autoCloseOnWrite && !main.loading && !main.closed) {
         main.finalize();
         return true;
     }
@@ -37,32 +37,53 @@ function autoClose() {
 
 type T = View;
 
-const Controller = new ViewController<T>();
-const File = new FileAndroid<T>(Settings);
-const Resource = new ResourceAndroid<T>(File);
+let Controller: ViewController<T>;
+let File: FileAndroid<T>;
+let Resource: ResourceAndroid<T>;
+let settings: ObjectMap<any>;
+let builtInExtensions: ObjectMap<IExtension>;
 
-const builtInExtensions: ObjectMap<IExtension> = {
-    [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
-    [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN),
-    [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM),
-    [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY),
-    [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL', 'DL', 'DIV']),
-    [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
-    [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
-    [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, ['BUTTON', 'INPUT', 'IMG']),
-    [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, ['NAV']),
-    [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR),
-    [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR),
-    [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION),
-    [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER)
-};
-
-const appBase: AppBase<T> = {
-    Node: View,
-    Controller,
-    Resource,
-    builtInExtensions,
-    settings: Settings,
+const appBase: AppFramework<T> = {
+    create() {
+        Controller = new ViewController<T>();
+        File = new FileAndroid<T>(Settings);
+        Resource = new ResourceAndroid<T>(File);
+        builtInExtensions = {
+            [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
+            [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN),
+            [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM),
+            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY),
+            [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL', 'DL', 'DIV']),
+            [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
+            [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
+            [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, ['BUTTON', 'INPUT', 'IMG']),
+            [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, ['NAV']),
+            [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR),
+            [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR),
+            [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION),
+            [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER)
+        };
+        settings = Object.assign({}, Settings);
+        return {
+            settings,
+            Node: View,
+            Controller,
+            Resource,
+            builtInExtensions
+        };
+    },
+    cached() {
+        if (Controller != null) {
+            return {
+                settings,
+                Node: View,
+                Controller,
+                Resource,
+                builtInExtensions
+            };
+        }
+        return appBase.create();
+    },
     system: {
         writeLayoutAllXml(saveToDisk = false) {
             const main = Controller.application;
