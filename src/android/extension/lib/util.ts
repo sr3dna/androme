@@ -1,10 +1,9 @@
-import { Null, StringMap } from '../../../lib/types';
-import ResourceView from '../../resource-view';
+import { Null, ObjectMap, StringMap } from '../../../lib/types';
+import ResourceAndroid from '../../resource';
 import View from '../../view';
-import { includes, isNumber, optional } from '../../../lib/util';
+import { includes, optional } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../lib/constants';
-import SETTINGS from '../../../settings';
 
 type T = View;
 
@@ -24,7 +23,7 @@ export function locateExtension(node: T, extension: string): Null<Element> {
     return <Element> Array.from(node.element.children).find((element: Element) => includes(optional(element, 'dataset.ext'), extension));
 }
 
-export function formatResource(options: {}) {
+export function formatResource(options: {}, settings: ObjectMap<any> = {}) {
     for (const namespace in options) {
         const object: StringMap = options[namespace];
         if (typeof object === 'object') {
@@ -35,8 +34,8 @@ export function formatResource(options: {}) {
                         case 'android':
                             switch (attr) {
                                 case 'text':
-                                    if (!value.startsWith('@string/') && (SETTINGS.numberResourceValue || !isNumber(value))) {
-                                        value = ResourceView.addString(value);
+                                    if (!value.startsWith('@string/')) {
+                                        value = ResourceAndroid.addString(value, '', settings);
                                         if (value !== '') {
                                             object[attr] = `@string/${value}`;
                                             continue;
@@ -45,7 +44,7 @@ export function formatResource(options: {}) {
                                     break;
                                 case 'src':
                                     if (/^\w+:\/\//.test(value)) {
-                                        value = ResourceView.addImage({ 'mdpi': value });
+                                        value = ResourceAndroid.addImage({ 'mdpi': value });
                                         if (value !== '') {
                                             object[attr] = `@drawable/${value}`;
                                             continue;
@@ -57,7 +56,7 @@ export function formatResource(options: {}) {
                     }
                     const hex = parseHex(value);
                     if (hex !== '') {
-                        object[attr] = `@color/${ResourceView.addColor(hex)}`;
+                        object[attr] = `@color/${ResourceAndroid.addColor(hex)}`;
                     }
                 }
             }

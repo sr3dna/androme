@@ -2,12 +2,12 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import { hasValue, includes, optional } from '../../../lib/util';
+import { parseRTL } from '../../lib/util';
 import { locateExtension, overwriteDefault } from '../lib/util';
 import { getNodeFromElement } from '../../../lib/dom';
 import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
-import parseRTL from '../../localization';
 
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
@@ -43,14 +43,14 @@ export default class Drawer<T extends View> extends Extension<T> {
         }
         else {
             const optionsNavigation = Object.assign({}, this.options.navigation);
-            overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left'));
+            overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
             const navView = node.children[node.children.length - 1];
             navView.android('layout_gravity', optionsNavigation.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
             navView.auto = false;
         }
         const xml =
-            this.application.controllerHandler.renderNodeStatic(
+            this.application.Controller.renderNodeStatic(
                 VIEW_SUPPORT.DRAWER,
                 node.depth,
                 options,
@@ -88,9 +88,9 @@ export default class Drawer<T extends View> extends Extension<T> {
         if (menu !== '' || headerLayout !== '') {
             overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-            overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left'));
+            overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
             const xml =
-                application.controllerHandler.renderNodeStatic(
+                application.Controller.renderNodeStatic(
                     VIEW_SUPPORT.NAVIGATION_VIEW,
                     node.depth + 1,
                     options,
@@ -124,6 +124,6 @@ export default class Drawer<T extends View> extends Extension<T> {
         };
         overwriteDefault(options, 'output', 'path', 'res/values-v21');
         overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-        this.application.resourceHandler.addTheme(EXTENSION_DRAWER_TMPL, data, options);
+        this.application.Resource.addTheme(EXTENSION_DRAWER_TMPL, data, options);
     }
 }

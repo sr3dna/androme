@@ -1,6 +1,6 @@
 var androme = null;
 
-SystemJS.config({
+System.config({
     packages: {
         '/build': { defaultExtension: 'js' }
     },

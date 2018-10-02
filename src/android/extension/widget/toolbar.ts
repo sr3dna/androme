@@ -1,7 +1,7 @@
 import { Null } from '../../../lib/types';
 import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
-import ResourceView from '../../resource-view';
+import ResourceAndroid from '../../resource';
 import View from '../../view';
 import { formatPX, hasValue, includes, optional } from '../../../lib/util';
 import { createPlaceholder, locateExtension, overwriteDefault } from '../lib/util';
@@ -45,7 +45,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
     }
 
     public processNode(): ExtensionResult {
-        const controller = this.application.controllerHandler;
+        const controller = this.application.Controller;
         const node = this.node;
         const parent = this.parent as T;
         const target = hasValue(node.dataset.target);
@@ -64,7 +64,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
             .forEach((element: HTMLElement) => {
                 if (element.tagName === 'IMG') {
                     if (hasValue(element.dataset.navigationIcon)) {
-                        const result = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
+                        const result = ResourceAndroid.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
                         if (result !== '') {
                             overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
                             if (getStyle(element).display !== 'none') {
@@ -73,7 +73,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                         }
                     }
                     if (hasValue(element.dataset.collapseIcon)) {
-                        const result = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
+                        const result = ResourceAndroid.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
                         if (result !== '') {
                             overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
                             if (getStyle(element).display !== 'none') {
@@ -114,7 +114,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
             }
             overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
             if (backgroundImage) {
-                overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${ResourceView.addImageURL(node.css('backgroundImage'))}`);
+                overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${ResourceAndroid.addImageURL(node.css('backgroundImage'))}`);
                 node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
             }
             else {
@@ -166,7 +166,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                         break;
                 }
                 overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
-                overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${ResourceView.addImageURL(node.css('backgroundImage'))}`);
+                overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${ResourceAndroid.addImageURL(node.css('backgroundImage'))}`);
                 overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                 overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
@@ -187,7 +187,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
         let collapsingToolbarNode: Null<T> = null;
         if (appBar) {
             overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? delimitDimens('appbar', 'height', formatPX(node.viewHeight)) : 'wrap_content');
+            overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? delimitDimens('appbar', 'height', formatPX(node.viewHeight), this.application.settings) : 'wrap_content');
             overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
             if (hasMenu) {
                 if (optionsAppBar.android.theme != null) {
@@ -302,6 +302,6 @@ export default class Toolbar<T extends View> extends Extension<T> {
         };
         overwriteDefault(options, 'output', 'path', 'res/values');
         overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
-        this.application.resourceHandler.addTheme(EXTENSION_APPBAR_TMPL, data, options);
+        this.application.Resource.addTheme(EXTENSION_APPBAR_TMPL, data, options);
     }
 }

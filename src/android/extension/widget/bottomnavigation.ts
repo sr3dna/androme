@@ -20,7 +20,7 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
         const options = Object.assign({}, this.options[node.element.id]);
         overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
         const xml =
-            this.application.controllerHandler.renderNodeStatic(
+            this.application.Controller.renderNodeStatic(
                 VIEW_SUPPORT.BOTTOM_NAVIGATION,
                 node.depth,
                 options,
@@ -73,6 +73,6 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
         };
         overwriteDefault(options, 'output', 'path', 'res/values');
         overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
-        this.application.resourceHandler.addTheme(EXTENSION_GENERIC_TMPL, data, options);
+        this.application.Resource.addTheme(EXTENSION_GENERIC_TMPL, data, options);
     }
 }

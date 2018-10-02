@@ -3,10 +3,9 @@ import { Constraint } from './lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, lastIndexOf, isString, withinFraction } from '../lib/util';
-import { calculateBias, generateId, stripId } from './lib/util';
+import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
 import { getElementsBetweenSiblings, getNodeFromElement } from '../lib/dom';
 import API_ANDROID from './customizations';
-import parseRTL from './localization';
 import { BOX_STANDARD, CSS_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './constants';
 
@@ -96,14 +95,34 @@ export default class View extends Node {
         }
     }
 
-    public alignParent(position: string) {
+    public alignParent(position: string, settings: {}) {
         if (this.renderParent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
             const constraint = this.renderParent.controlName === NODE_ANDROID.CONSTRAINT;
-            const direction = capitalize(parseRTL(position));
+            const direction = capitalize(parseRTL(position, settings));
             const attr = constraint ? `layout_constraint${direction}_to${direction}Of` : `layout_alignParent${direction}`;
             return this[constraint ? 'app' : 'android'](attr) === (constraint ? 'parent' : 'true');
         }
         return false;
+    }
+
+    public horizontalBias({ constraintPercentAccuracy = 4 }) {
+        const parent = this.documentParent;
+        if (parent !== this) {
+            const left = Math.max(0, this.linear.left - parent.box.left);
+            const right = Math.max(0, parent.box.right - this.linear.right);
+            return calculateBias(left, right, constraintPercentAccuracy);
+        }
+        return 0.5;
+    }
+
+    public verticalBias({ constraintPercentAccuracy = 4 }) {
+        const parent = this.documentParent;
+        if (parent !== this) {
+            const top = Math.max(0, this.linear.top - parent.box.top);
+            const bottom = Math.max(0, parent.box.bottom - this.linear.bottom);
+            return calculateBias(top, bottom, constraintPercentAccuracy);
+        }
+        return 0.5;
     }
 
     public modifyBox(region: number | string, offset: number | null, negative = false) {
@@ -254,11 +273,9 @@ export default class View extends Node {
             const renderParent = this.renderParent;
             const renderChildren = this.renderChildren;
             const widthParent = (parent.initial.box != null ? parent.initial.box.width
-                                                            : (parent.element instanceof HTMLElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth)
-                                                                                                     : 0));
+                                                            : (parent.element instanceof HTMLElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0));
             const heightParent = (parent.initial.box != null ? parent.initial.box.height
-                                                             : (parent.element instanceof HTMLElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth)
-                                                                                                      : 0));
+                                                             : (parent.element instanceof HTMLElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0));
             const styleMap = this.styleMap;
             const constraint = this.constraint;
             const tableElement = (this.tagName === 'TABLE');
@@ -473,12 +490,12 @@ export default class View extends Node {
         }
     }
 
-    public setAlignment() {
+    public setAlignment(settings: DisplaySettings) {
         const renderParent = this.renderParent;
         const textAlignParent = this.cssParent('textAlign');
         const obj = renderParent.is(NODE_STANDARD.GRID) ? 'app' : 'android';
-        const left = parseRTL('left');
-        const right = parseRTL('right');
+        const left = parseRTL('left', settings);
+        const right = parseRTL('right', settings);
         let textAlign = this.styleMap.textAlign || '';
         let verticalAlign = '';
         let floating = '';
@@ -637,14 +654,14 @@ export default class View extends Node {
                 floating = floating || this.float;
                 if (floating !== 'none') {
                     if (renderParent.inlineWidth || (this.singleChild && !renderParent.documentRoot)) {
-                        renderParent.android('layout_gravity', mergeGravity(renderParent.android('layout_gravity'), parseRTL(floating)));
+                        renderParent.android('layout_gravity', mergeGravity(renderParent.android('layout_gravity'), parseRTL(floating, settings)));
                     }
                     else {
                         if (this.blockWidth) {
                             textAlign = setTextAlign(floating);
                         }
                         else {
-                            this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), parseRTL(floating)));
+                            this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), parseRTL(floating, settings)));
                         }
                     }
                 }
@@ -663,7 +680,7 @@ export default class View extends Node {
                 textAlign = setTextAlign(floating);
             }
         }
-        if (textAlignParent !== '' && parseRTL(textAlignParent) !== left) {
+        if (textAlignParent !== '' && parseRTL(textAlignParent, settings) !== left) {
             if (renderParent.is(NODE_STANDARD.FRAME) &&
                 this.singleChild &&
                 !this.floating &&
@@ -685,14 +702,14 @@ export default class View extends Node {
         this.android('gravity', mergeGravity(this.android('gravity'), convertHorizontal(textAlign), verticalAlign));
     }
 
-    public setBoxSpacing() {
+    public setBoxSpacing(settings: DisplaySettings) {
         if (!this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
             ['padding', 'margin'].forEach(region => {
                 ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
                     const dimension = region + direction;
                     const value: number = (this._boxReset[dimension] === 0 ? this[dimension] : 0) + this._boxAdjustment[dimension];
                     if (value !== 0) {
-                        const attr = parseRTL(BOX_ANDROID[`${region.toUpperCase()}_${direction.toUpperCase()}`]);
+                        const attr = parseRTL(BOX_ANDROID[`${region.toUpperCase()}_${direction.toUpperCase()}`], settings);
                         this.android(attr, formatPX(value));
                     }
                 });
@@ -700,9 +717,9 @@ export default class View extends Node {
             if (this.api >= BUILD_ANDROID.OREO) {
                 ['layout_margin', 'padding'].forEach((value, index) => {
                     const top = convertInt(this.android(`${value}Top`));
-                    const right = convertInt(this.android(parseRTL(`${value}Right`)));
+                    const right = convertInt(this.android(parseRTL(`${value}Right`, settings)));
                     const bottom = convertInt(this.android(`${value}Bottom`));
-                    const left = convertInt(this.android(parseRTL(`${value}Left`)));
+                    const left = convertInt(this.android(parseRTL(`${value}Left`, settings)));
                     if (top !== 0 &&
                         top === bottom &&
                         bottom === left &&
@@ -718,7 +735,7 @@ export default class View extends Node {
                                 this.android(`${value}Vertical`, formatPX(top));
                             }
                             if (left !== 0 && left === right) {
-                                this.delete('android', parseRTL(`${value}Left`), parseRTL(`${value}Right`));
+                                this.delete('android', parseRTL(`${value}Left`, settings), parseRTL(`${value}Right`, settings));
                                 this.android(`${value}Horizontal`, formatPX(left));
                             }
                         }
@@ -753,8 +770,9 @@ export default class View extends Node {
                     this.android('baselineAligned', 'false');
                 }
                 else {
+                    const childIndex = renderParent.android('baselineAlignedChildIndex');
                     if (renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
-                        renderParent.android('baselineAlignedChildIndex') !== '' ||
+                        (childIndex !== '' && this.renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
                         (renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
                         (renderParent.is(NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
                     {
@@ -879,7 +897,7 @@ export default class View extends Node {
                 }
             }
         }
-        this.bindWhiteSpace();
+        this.bindWhiteSpace(settings);
         if (settings.autoSizePaddingAndBorderWidth && !this.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
             let layoutWidth = convertInt(this.android('layout_width'));
             let layoutHeight = convertInt(this.android('layout_height'));
@@ -1049,7 +1067,7 @@ export default class View extends Node {
         }
     }
 
-    private bindWhiteSpace() {
+    private bindWhiteSpace(settings: DisplaySettings) {
         if (!this.hasAlign(NODE_ALIGNMENT.FLOAT) && (
             this.linearHorizontal ||
             this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL, NODE_ALIGNMENT.MULTILINE) ||
@@ -1063,7 +1081,7 @@ export default class View extends Node {
             let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent')
                                                         : textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0);
             this.each((node: T, index) => {
-                if (!(node.floating || (relative && node.alignParent('left')) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
+                if (!(node.floating || (relative && node.alignParent('left', settings)) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
                     const width = Math.round(node.actualLeft() - right);
                     if (width >= 1) {
                         node.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
@@ -1197,24 +1215,5 @@ export default class View extends Node {
     }
     get blockHeight() {
         return this._android.layout_height === 'match_parent';
-    }
-
-    get horizontalBias() {
-        const parent = this.documentParent;
-        if (parent !== this) {
-            const left = Math.max(0, this.linear.left - parent.box.left);
-            const right = Math.max(0, parent.box.right - this.linear.right);
-            return calculateBias(left, right);
-        }
-        return 0.5;
-    }
-    get verticalBias() {
-        const parent = this.documentParent;
-        if (parent !== this) {
-            const top = Math.max(0, this.linear.top - parent.box.top);
-            const bottom = Math.max(0, parent.box.bottom - this.linear.bottom);
-            return calculateBias(top, bottom);
-        }
-        return 0.5;
     }
 }

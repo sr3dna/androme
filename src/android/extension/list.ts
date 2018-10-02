@@ -1,13 +1,12 @@
 import { ExtensionResult } from '../../extension/lib/types';
-import ResourceView from '../../android/resource-view';
+import ResourceAndroid from '../resource';
 import List from '../../extension/list';
 import View from '../view';
 import { convertInt, formatPX } from '../../lib/util';
-import { delimitDimens } from '../lib/util';
+import { delimitDimens, parseRTL } from '../lib/util';
 import { BOX_STANDARD, NODE_ALIGNMENT, NODE_STANDARD } from '../../lib/constants';
 import { NODE_ANDROID } from '../constants';
 import { EXT_NAME } from '../../extension/lib/constants';
-import parseRTL from '../localization';
 
 export default class ListAndroid<T extends View> extends List<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
@@ -15,7 +14,7 @@ export default class ListAndroid<T extends View> extends List<T> {
     }
 
     public processChild(): ExtensionResult {
-        const controller = this.application.controllerHandler;
+        const controller = this.application.Controller;
         const node = this.node;
         const parent = this.parent as T;
         const listStyle = this.node.data(EXT_NAME.LIST, 'listStyleType') || '0';
@@ -59,14 +58,15 @@ export default class ListAndroid<T extends View> extends List<T> {
             }
         }
         else {
+            const settings = this.application.settings;
             const columnWeight = columnCount > 0 ? '0' : '';
             const positionInside = node.css('listStylePosition') === 'inside';
             const listStyleImage = !['', 'none'].includes(node.css('listStyleImage'));
             let image = '';
             let [left, top] = [0, 0];
             if (typeof listStyle === 'object') {
-                image = ResourceView.addImageURL(listStyle.image);
-                [left, top] = ResourceView.parseBackgroundPosition(listStyle.position, node.css('fontSize')).map(value => convertInt(value));
+                image = ResourceAndroid.addImageURL(listStyle.image);
+                [left, top] = ResourceAndroid.parseBackgroundPosition(listStyle.position, node.css('fontSize')).map(value => convertInt(value));
             }
             const gravity = (image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right';
             if (gravity === '') {
@@ -77,7 +77,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 paddingLeft -= left;
             }
             paddingLeft = Math.max(paddingLeft, 20);
-            const minWidth = paddingLeft > 0 ? delimitDimens(node.nodeName, parseRTL('min_width'), formatPX(paddingLeft)) : '';
+            const minWidth = paddingLeft > 0 ? delimitDimens(node.nodeName, parseRTL('min_width', settings), formatPX(paddingLeft), settings) : '';
             const paddingRight = (() => {
                 if (paddingLeft <= 24) {
                     return 6;
@@ -100,7 +100,7 @@ export default class ListAndroid<T extends View> extends List<T> {
             };
             if (positionInside) {
                 if (marginLeftValue !== '') {
-                    marginLeftValue = delimitDimens(node.nodeName, parseRTL('margin_left'), marginLeftValue);
+                    marginLeftValue = delimitDimens(node.nodeName, parseRTL('margin_left', settings), marginLeftValue, this.application.settings);
                 }
                 controller.prependBefore(
                     node.id,
@@ -110,7 +110,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                         {
                             android: {
                                 minWidth,
-                                [parseRTL('layout_marginLeft')]: marginLeftValue
+                                [parseRTL('layout_marginLeft', settings)]: marginLeftValue
                             },
                             app: { layout_columnWeight: columnWeight }
                         },
@@ -119,16 +119,16 @@ export default class ListAndroid<T extends View> extends List<T> {
                     )
                 );
                 Object.assign(options.android, {
-                    minWidth: delimitDimens(node.nodeName, parseRTL('min_width'), formatPX(24))
+                    minWidth: delimitDimens(node.nodeName, parseRTL('min_width', settings), formatPX(24), this.application.settings)
                 });
             }
             else {
                 Object.assign(options.android, {
                     minWidth,
-                    gravity: paddingLeft > 20 ? parseRTL(gravity) : '',
-                    [parseRTL('layout_marginLeft')]: marginLeftValue,
-                    [parseRTL('paddingLeft')]: paddingLeftValue,
-                    [parseRTL('paddingRight')]: paddingRightValue
+                    gravity: paddingLeft > 20 ? parseRTL(gravity, settings) : '',
+                    [parseRTL('layout_marginLeft', settings)]: marginLeftValue,
+                    [parseRTL('paddingLeft', settings)]: paddingLeftValue,
+                    [parseRTL('paddingRight', settings)]: paddingRightValue
                 });
                 if (columnCount === 3) {
                     node.app('layout_columnSpan', '2');
@@ -205,9 +205,9 @@ export default class ListAndroid<T extends View> extends List<T> {
                     current.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
                 }
                 if (spaceHeight > 0) {
-                    this.application.controllerHandler.prependBefore(
+                    this.application.Controller.prependBefore(
                         current.id,
-                        this.application.controllerHandler.renderNodeStatic(
+                        this.application.Controller.renderNodeStatic(
                             NODE_STANDARD.SPACE,
                             current.renderDepth,
                             {

@@ -1,4 +1,5 @@
-import { BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap, ViewData } from '../lib/types';
+import { AppModule, BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap, ViewData } from '../lib/types';
+import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
 import File from './file';
@@ -7,9 +8,8 @@ import { replaceEntity } from '../lib/xml';
 import { cssFromParent, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE } from '../lib/constants';
-import SETTINGS from '../settings';
 
-export default abstract class Resource<T extends Node> {
+export default abstract class Resource<T extends Node> implements AppModule<T> {
     public static STORED: ResourceMap = {
         strings: new Map(),
         arrays: new Map(),
@@ -56,6 +56,8 @@ export default abstract class Resource<T extends Node> {
     }
 
     public cache: NodeList<T>;
+    public settings: ObjectMap<any>;
+    public application: Application<T>;
     public imageDimensions: Map<string, Image>;
 
     constructor(public file: File<T>) {
@@ -78,7 +80,7 @@ export default abstract class Resource<T extends Node> {
 
     public setBoxSpacing() {
         this.cache.elements.each(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (getElementCache(node.element, 'boxSpacing') == null || SETTINGS.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (getElementCache(node.element, 'boxSpacing') == null || this.settings.alwaysReevaluateResources)) {
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
                 for (const attr in result) {
@@ -96,7 +98,7 @@ export default abstract class Resource<T extends Node> {
 
     public setBoxStyle() {
         this.cache.elements.each(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (getElementCache(node.element, 'boxStyle') == null || SETTINGS.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (getElementCache(node.element, 'boxStyle') == null || this.settings.alwaysReevaluateResources)) {
                 const result: ObjectMap<any> = {
                     borderTop: this.parseBorderStyle,
                     borderRight: this.parseBorderStyle,
@@ -145,7 +147,7 @@ export default abstract class Resource<T extends Node> {
 
     public setFontStyle() {
         this.cache.each(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || SETTINGS.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || this.settings.alwaysReevaluateResources)) {
                 const backgroundImage = this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
                 if (node.length > 0 ||
                     node.imageElement ||
@@ -253,7 +255,7 @@ export default abstract class Resource<T extends Node> {
         }
         this.cache.visible.each(node => {
             const element = node.element;
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (getElementCache(element, 'valueString') == null || SETTINGS.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (getElementCache(element, 'valueString') == null || this.settings.alwaysReevaluateResources)) {
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
@@ -363,14 +365,14 @@ export default abstract class Resource<T extends Node> {
                 !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
             ).each(node => {
                 const element = <HTMLSelectElement> node.element;
-                if (getElementCache(element, 'optionArray') == null || SETTINGS.alwaysReevaluateResources) {
+                if (getElementCache(element, 'optionArray') == null || this.settings.alwaysReevaluateResources) {
                     const stringArray: string[] = [];
                     let numberArray: Null<string[]> = [];
                     for (let i = 0; i < element.children.length; i++) {
                         const item = <HTMLOptionElement> element.children[i];
                         const value = item.text.trim();
                         if (value !== '') {
-                            if (!SETTINGS.numberResourceValue && numberArray != null && stringArray.length === 0 && isNumber(value)) {
+                            if (!this.settings.numberResourceValue && numberArray != null && stringArray.length === 0 && isNumber(value)) {
                                 numberArray.push(value);
                             }
                             else {

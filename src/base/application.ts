@@ -1,4 +1,4 @@
-import { ArrayIndex, LayoutMapX, LayoutMapY, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
+import { AppBase, ArrayIndex, DisplaySettings, LayoutMapX, LayoutMapY, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import Node from './node';
 import NodeList from './nodelist';
@@ -8,16 +8,19 @@ import { convertInt, hasBit, hasValue, isNumber, optional, sortAsc, trimString, 
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
-import SETTINGS from '../settings';
 
-export default class Application<T extends Node> {
+export default class Application<T extends Node> implements AppBase<T> {
     public readonly cache: NodeList<T> = new NodeList<T>();
     public readonly cacheSession: NodeList<T> = new NodeList<T>();
     public readonly elements: Set<HTMLElement> = new Set();
     public readonly extensions: IExtension[] = [];
-    public controllerHandler: Controller<T>;
-    public resourceHandler: Resource<T>;
+    public Node: { new (id: number, api: number, element?: Element): T };
+    public Controller: Controller<T>;
+    public Resource: Resource<T>;
+    public builtInExtensions: ObjectMap<IExtension>;
+    public settings: ObjectMap<any>;
     public renderQueue: ObjectIndex<string[]> = {};
+    public loading = false;
     public closed = false;
 
     private readonly _views: PlainFile[] = [];
@@ -25,17 +28,21 @@ export default class Application<T extends Node> {
     private _sorted: ObjectMap<number[]> = {};
     private _currentIndex = -1;
 
-    constructor(private readonly _Node: { new (id: number, api: number, element?: Element): T }) {
+    constructor() {
     }
 
-    public registerController(controllerHandler: Controller<T>) {
-        controllerHandler.cache = this.cache;
-        this.controllerHandler = controllerHandler;
+    public registerController(controller: Controller<T>) {
+        controller.application = this;
+        controller.settings = this.settings;
+        controller.cache = this.cache;
+        this.Controller = controller;
     }
 
     public registerResource(resource: Resource<T>) {
+        resource.application = this;
+        resource.settings = this.settings;
         resource.cache = this.cache;
-        this.resourceHandler = resource;
+        this.Resource = resource;
     }
 
     public registerExtension(extension: IExtension) {
@@ -56,27 +63,33 @@ export default class Application<T extends Node> {
 
     public finalize() {
         const visible = this.cacheSession.visible.list.filter(node => !node.hasAlign(NODE_ALIGNMENT.SPACE));
+        const displaySettings: DisplaySettings = {
+            supportRTL: this.settings.supportRTL,
+            autoSizePaddingAndBorderWidth: this.settings.autoSizePaddingAndBorderWidth,
+            autoSizeBackgroundImage: this.settings.autoSizeBackgroundImage,
+            ellipsisOnTextOverflow: this.settings.ellipsisOnTextOverflow
+        };
         for (const node of visible) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                 node.setLayout();
             }
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ALIGNMENT)) {
-                node.setAlignment();
+                node.setAlignment(displaySettings);
             }
         }
         for (const node of visible) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.OPTIMIZATION)) {
-                node.applyOptimizations(SETTINGS);
+                node.applyOptimizations(displaySettings);
             }
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.CUSTOMIZATION)) {
-                node.applyCustomizations(SETTINGS.customizationsOverwritePrivilege);
+                node.applyCustomizations(this.settings.customizationsOverwritePrivilege);
             }
         }
-        this.controllerHandler.setBoxSpacing(this.viewData);
+        this.Controller.setBoxSpacing(this.viewData);
         this.appendRenderQueue();
-        this.controllerHandler.setDimensions(this.viewData);
-        this.resourceHandler.finalize(this.viewData);
-        this.controllerHandler.finalize(this.viewData);
+        this.Controller.setDimensions(this.viewData);
+        this.Resource.finalize(this.viewData);
+        this.Controller.finalize(this.viewData);
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
                 ext.setTarget(node);
@@ -108,24 +121,24 @@ export default class Application<T extends Node> {
     }
 
     public setConstraints() {
-        this.controllerHandler.setConstraints();
+        this.Controller.setConstraints();
     }
 
     public resetController() {
-        this.controllerHandler.reset();
+        this.Controller.reset();
     }
 
     public setResources() {
-        this.resourceHandler.setBoxStyle();
-        this.resourceHandler.setFontStyle();
-        this.resourceHandler.setBoxSpacing();
-        this.resourceHandler.setValueString();
-        this.resourceHandler.setOptionArray();
-        this.resourceHandler.setImageSource();
+        this.Resource.setBoxStyle();
+        this.Resource.setFontStyle();
+        this.Resource.setBoxSpacing();
+        this.Resource.setValueString();
+        this.Resource.setOptionArray();
+        this.Resource.setImageSource();
     }
 
     public resetResource() {
-        this.resourceHandler.reset();
+        this.Resource.reset();
     }
 
     public createNodeCache(rootElement: HTMLElement) {
@@ -144,15 +157,15 @@ export default class Application<T extends Node> {
         }
         const rootNode = this.insertNode(rootElement);
         if (rootNode != null) {
-            rootNode.parent = new this._Node(0, SETTINGS.targetAPI, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
+            rootNode.parent = new this.Node(0, this.settings.targetAPI, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
             rootNode.documentRoot = true;
             this.cache.parent = rootNode;
         }
         else {
             return false;
         }
-        const supportInline = SETTINGS.renderInlineText ? ['BR']
-                                                        : this.controllerHandler.supportInline;
+        const supportInline = this.settings.renderInlineText ? ['BR']
+                                                        : this.Controller.supportInline;
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
             return (styleMap == null || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.children.length === 0;
@@ -283,7 +296,7 @@ export default class Application<T extends Node> {
             }
             for (const node of this.cache) {
                 if (!node.documentRoot) {
-                    let parent: Null<T> = node.getParentElementAsNode(SETTINGS.constraintSupportNegativeLeftTop, this.cache.parent) as T;
+                    let parent: Null<T> = node.getParentElementAsNode(this.settings.constraintSupportNegativeLeftTop, this.cache.parent) as T;
                     if (parent == null && !node.pageflow) {
                         parent = this.cache.parent;
                     }
@@ -470,16 +483,16 @@ export default class Application<T extends Node> {
                         continue;
                     }
                     let parentY = nodeY.parent as T;
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.controllerHandler.supportInclude) {
+                    if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.Controller.supportInclude) {
                         const filename: string = optional(nodeY, 'dataset.include').trim();
                         if (filename !== '' && includes.indexOf(filename) === -1) {
-                            renderXml(nodeY, parentY, this.controllerHandler.renderInclude(nodeY, parentY, filename), includes.length > 0 ? includes[includes.length - 1] : '');
+                            renderXml(nodeY, parentY, this.Controller.renderInclude(nodeY, parentY, filename), includes.length > 0 ? includes[includes.length - 1] : '');
                             includes.push(filename);
                         }
                         current = includes.length > 0 ? includes[includes.length - 1] : '';
                         if (current !== '') {
                             const cloneParent = parentY.clone() as T;
-                            cloneParent.renderDepth = this.controllerHandler.baseRenderDepth(current);
+                            cloneParent.renderDepth = this.Controller.baseRenderDepth(current);
                             nodeY.parent = cloneParent;
                             parentY = cloneParent;
                         }
@@ -551,10 +564,10 @@ export default class Application<T extends Node> {
                                             const verticalAlign = adjacent.alignedVertically(previousSibling, clearedPrevious);
                                             if (verticalAlign ||
                                                 clearedPartial.has(adjacent) ||
-                                                (SETTINGS.floatOverlapDisabled && previousSibling.floating && adjacent.blockStatic && floatedOpen.size === 2))
+                                                (this.settings.floatOverlapDisabled && previousSibling.floating && adjacent.blockStatic && floatedOpen.size === 2))
                                             {
                                                 if (horizontal.length > 0) {
-                                                    if (!SETTINGS.floatOverlapDisabled && !previousSibling.lineBreak) {
+                                                    if (!this.settings.floatOverlapDisabled && !previousSibling.lineBreak) {
                                                         const clearedDirection = new Set<string>(pending.map(node => clearedPartial.get(node) || '').filter(value => value !== ''));
                                                         let maxBottom: Null<number> = null;
                                                         if (floated.size > 0) {
@@ -625,7 +638,7 @@ export default class Application<T extends Node> {
                             if (horizontal.length > 1) {
                                 const clearedPartial = NodeList.cleared(horizontal);
                                 if (this.isFrameHorizontal(horizontal, clearedPartial)) {
-                                    group = this.controllerHandler.createGroup(parentY, nodeY, horizontal);
+                                    group = this.Controller.createGroup(parentY, nodeY, horizontal);
                                     groupXml = this.writeFrameLayoutHorizontal(group, parentY, horizontal, clearedPartial);
                                 }
                                 else {
@@ -638,17 +651,17 @@ export default class Application<T extends Node> {
                                             horizontal.some(node => node.has('width', CSS_STANDARD.PERCENT)) &&
                                             horizontal.every(node => node.has('width', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT)))
                                         {
-                                            group = this.controllerHandler.createGroup(parentY, nodeY, horizontal);
+                                            group = this.Controller.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeConstraintLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.PERCENT;
                                         }
                                         else if (this.isRelativeHorizontal(horizontal, clearedPartial)) {
-                                            group = this.controllerHandler.createGroup(parentY, nodeY, horizontal);
+                                            group = this.Controller.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeRelativeLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                         }
                                         else {
-                                            group = this.controllerHandler.createGroup(parentY, nodeY, horizontal);
+                                            group = this.Controller.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeLinearLayout(group, parentY, true);
                                             if (floated.size > 0) {
                                                 group.alignmentType |= NODE_ALIGNMENT.FLOAT;
@@ -673,7 +686,7 @@ export default class Application<T extends Node> {
                                         groupXml = this.writeFrameLayoutVertical(null, parentY, vertical, clearedPartial);
                                     }
                                     else {
-                                        group = this.controllerHandler.createGroup(parentY, nodeY, vertical);
+                                        group = this.Controller.createGroup(parentY, nodeY, vertical);
                                         groupXml = this.writeFrameLayoutVertical(group, parentY, vertical, clearedPartial);
                                     }
                                 }
@@ -682,7 +695,7 @@ export default class Application<T extends Node> {
                                         parentY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                                     }
                                     else if (!linearVertical) {
-                                        group = this.controllerHandler.createGroup(parentY, nodeY, vertical);
+                                        group = this.Controller.createGroup(parentY, nodeY, vertical);
                                         groupXml = this.writeLinearLayout(group, parentY, false);
                                         group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                                     }
@@ -772,11 +785,11 @@ export default class Application<T extends Node> {
                                 (parentY.is(NODE_STANDARD.FRAME) && nodeY.singleChild)
                            ))
                         {
-                            const group = this.controllerHandler.createGroup(parentY, nodeY, [nodeY]);
+                            const group = this.Controller.createGroup(parentY, nodeY, [nodeY]);
                             const groupXml = this.writeGridLayout(group, parentY, 2, 1);
                             group.alignmentType |= NODE_ALIGNMENT.PERCENT;
                             renderXml(group, parentY, groupXml, current);
-                            this.controllerHandler[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${(100 - nodeY.toInt('width'))}%`));
+                            this.Controller[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${(100 - nodeY.toInt('width'))}%`));
                             parentY = group;
                         }
                         if (nodeY.controlName === '') {
@@ -785,7 +798,7 @@ export default class Application<T extends Node> {
                             const backgroundColor = nodeY.has('backgroundColor');
                             const backgroundVisible = borderVisible || backgroundImage || backgroundColor;
                             if (nodeY.children.length === 0) {
-                                const freeFormText = hasFreeFormText(nodeY.element, SETTINGS.renderInlineText ? 0 : 1);
+                                const freeFormText = hasFreeFormText(nodeY.element, this.settings.renderInlineText ? 0 : 1);
                                 if (freeFormText || (borderVisible && nodeY.textContent.length > 0)) {
                                     xml = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
                                 }
@@ -806,7 +819,7 @@ export default class Application<T extends Node> {
                                     xml = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
                                 }
                                 else if (!nodeY.documentRoot) {
-                                    if (SETTINGS.collapseUnattributedElements &&
+                                    if (this.settings.collapseUnattributedElements &&
                                         nodeY.bounds.height === 0 &&
                                         !hasValue(nodeY.element.id) &&
                                         !hasValue(nodeY.dataset.ext) &&
@@ -840,7 +853,7 @@ export default class Application<T extends Node> {
                                                 }
                                                 return false;
                                             });
-                                        if ((SETTINGS.collapseUnattributedElements &&
+                                        if ((this.settings.collapseUnattributedElements &&
                                             !nodeY.documentRoot &&
                                             !hasValue(nodeY.element.id) &&
                                             !hasValue(nodeY.dataset.ext) &&
@@ -850,7 +863,7 @@ export default class Application<T extends Node> {
                                             !backgroundVisible &&
                                             !nodeY.has('textAlign') && !nodeY.has('verticalAlign') &&
                                             nodeY.float !== 'right' && !nodeY.autoMargin && nodeY.alignOrigin &&
-                                            !this.controllerHandler.hasAppendProcessing(nodeY.id)) ||
+                                            !this.Controller.hasAppendProcessing(nodeY.id)) ||
                                             (nodeY.documentRoot && targeted.length === 1))
                                         {
                                             const child = nodeY.children[0];
@@ -953,7 +966,7 @@ export default class Application<T extends Node> {
                         }
                         renderXml(nodeY, parentY, xml, current);
                     }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.controllerHandler.supportInclude) {
+                    if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.Controller.supportInclude) {
                         if (includes.length > 0 && optional(nodeY, 'dataset.includeEnd') === 'true') {
                             includes.pop();
                         }
@@ -991,11 +1004,11 @@ export default class Application<T extends Node> {
                     }
                 }
             }
-            if (this.controllerHandler.supportInclude) {
+            if (this.Controller.supportInclude) {
                 for (const [current, views] of external.entries()) {
                     const templates = Array.from(views.values());
                     if (templates.length > 0) {
-                        const xml = this.controllerHandler.renderMerge(current, templates);
+                        const xml = this.Controller.renderMerge(current, templates);
                         this.addInclude(current, xml);
                     }
                 }
@@ -1064,31 +1077,31 @@ export default class Application<T extends Node> {
 
     public writeFrameLayout(node: T, parent: T, children = false) {
         if (!children && node.children.length === 0) {
-            return this.controllerHandler.renderNode(node, parent, NODE_STANDARD.FRAME);
+            return this.Controller.renderNode(node, parent, NODE_STANDARD.FRAME);
         }
         else {
-            return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.FRAME);
+            return this.Controller.renderGroup(node, parent, NODE_STANDARD.FRAME);
         }
     }
 
     public writeLinearLayout(node: T, parent: T, horizontal: boolean) {
-        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.LINEAR, { horizontal });
+        return this.Controller.renderGroup(node, parent, NODE_STANDARD.LINEAR, { horizontal });
     }
 
     public writeGridLayout(node: T, parent: T, columns: number, rows: number = 0) {
-        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.GRID, { columns, rows });
+        return this.Controller.renderGroup(node, parent, NODE_STANDARD.GRID, { columns, rows });
     }
 
     public writeRelativeLayout(node: T, parent: T) {
-        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.RELATIVE);
+        return this.Controller.renderGroup(node, parent, NODE_STANDARD.RELATIVE);
     }
 
     public writeConstraintLayout(node: T, parent: T) {
-        return this.controllerHandler.renderGroup(node, parent, NODE_STANDARD.CONSTRAINT);
+        return this.Controller.renderGroup(node, parent, NODE_STANDARD.CONSTRAINT);
     }
 
     public writeNode(node: T, parent: T, nodeName: number | string) {
-        return this.controllerHandler.renderNode(node, parent, nodeName);
+        return this.Controller.renderNode(node, parent, nodeName);
     }
 
     public writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>) {
@@ -1143,7 +1156,7 @@ export default class Application<T extends Node> {
                         return xml;
                     }
                     else if (right.length === 0) {
-                        if (!SETTINGS.floatOverlapDisabled) {
+                        if (!this.settings.floatOverlapDisabled) {
                             xml = this.writeLinearLayout(group, parent, true);
                             layers = <LayerIndex> [left, inline];
                             group.alignmentType |= NODE_ALIGNMENT.FLOAT;
@@ -1250,7 +1263,7 @@ export default class Application<T extends Node> {
                             if (rightBelow.length === 0) {
                                 pendingFloat |= 4;
                             }
-                            if (!SETTINGS.floatOverlapDisabled && current !== 'right' && rightAbove.length > 0) {
+                            if (!this.settings.floatOverlapDisabled && current !== 'right' && rightAbove.length > 0) {
                                 rightAbove.push(node);
                             }
                             else {
@@ -1261,7 +1274,7 @@ export default class Application<T extends Node> {
                             if (leftBelow.length === 0) {
                                 pendingFloat |= 2;
                             }
-                            if (!SETTINGS.floatOverlapDisabled && current !== 'left' && leftAbove.length > 0) {
+                            if (!this.settings.floatOverlapDisabled && current !== 'left' && leftAbove.length > 0) {
                                 leftAbove.push(node);
                             }
                             else {
@@ -1319,7 +1332,7 @@ export default class Application<T extends Node> {
             else if (rightBelow.length > 0) {
                 rightSub = rightBelow;
             }
-            if (SETTINGS.floatOverlapDisabled) {
+            if (this.settings.floatOverlapDisabled) {
                 if (parent.linearVertical) {
                     xml = formatPlaceholder(group.id);
                     group.renderDepth--;
@@ -1380,8 +1393,8 @@ export default class Application<T extends Node> {
                     const grouping: T[] = [];
                     (item as T[][]).forEach(list => grouping.push(...list));
                     grouping.sort(NodeList.siblingIndex);
-                    floatgroup = this.controllerHandler.createGroup(group, grouping[0], grouping);
-                    if (SETTINGS.floatOverlapDisabled) {
+                    floatgroup = this.Controller.createGroup(group, grouping[0], grouping);
+                    if (this.settings.floatOverlapDisabled) {
                         xml = replacePlaceholder(xml, group.id, this.writeFrameLayout(floatgroup, group, true));
                     }
                     else {
@@ -1402,7 +1415,7 @@ export default class Application<T extends Node> {
                     }
                     if (section.length > 1) {
                         let groupXml = '';
-                        const subgroup = this.controllerHandler.createGroup(basegroup, section[0], section);
+                        const subgroup = this.Controller.createGroup(basegroup, section[0], section);
                         const floatLeft = section.some(node => node.float === 'left');
                         const floatRight = section.some(node => node.float === 'right');
                         if (this.isRelativeHorizontal(section, NodeList.cleared(section))) {
@@ -1535,11 +1548,11 @@ export default class Application<T extends Node> {
                 const pageflow = rowsCurrent[i] || [];
                 if (pageflow.length > 0 || floating.length > 0) {
                     const baseNode = floating[0] || pageflow[0];
-                    const basegroup = this.controllerHandler.createGroup(group, baseNode, []);
+                    const basegroup = this.Controller.createGroup(group, baseNode, []);
                     const children: T[] = [];
                     let subgroup: Null<T> = null;
                     if (floating.length > 1) {
-                        subgroup = this.controllerHandler.createGroup(basegroup, floating[0], floating);
+                        subgroup = this.Controller.createGroup(basegroup, floating[0], floating);
                         basegroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
                     }
                     else if (floating.length > 0) {
@@ -1555,7 +1568,7 @@ export default class Application<T extends Node> {
                         subgroup = null;
                     }
                     if (pageflow.length > 1) {
-                        subgroup = this.controllerHandler.createGroup(basegroup, pageflow[0], pageflow);
+                        subgroup = this.Controller.createGroup(basegroup, pageflow[0], pageflow);
                     }
                     else if (pageflow.length > 0) {
                         subgroup = pageflow[0];
@@ -1636,7 +1649,7 @@ export default class Application<T extends Node> {
             for (const id in template) {
                 value.content = value.content.replace(formatPlaceholder(id), template[id]);
             }
-            value.content = this.controllerHandler.appendRenderQueue(value.content);
+            value.content = this.Controller.appendRenderQueue(value.content);
         }
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
@@ -1647,7 +1660,7 @@ export default class Application<T extends Node> {
     }
 
     public getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan?: number) {
-        return this.controllerHandler.getEmptySpacer(nodeType, depth, width, height, columnSpan);
+        return this.Controller.getEmptySpacer(nodeType, depth, width, height, columnSpan);
     }
 
     public createLayout(filename: string) {
@@ -1660,7 +1673,7 @@ export default class Application<T extends Node> {
     }
 
     public updateLayout(content: string, pathname = '', documentRoot = false) {
-        pathname = pathname || this.controllerHandler.settings.folderLayout;
+        pathname = pathname || this.Controller.localSettings.folderLayout;
         if (documentRoot &&
             this._views.length > 0 &&
             this._views[0].content === '')
@@ -1681,7 +1694,7 @@ export default class Application<T extends Node> {
 
     public addInclude(filename: string, content: string) {
         this._includes.push({
-            pathname: this.controllerHandler.settings.folderLayout,
+            pathname: this.Controller.localSettings.folderLayout,
             filename,
             content
         });
@@ -1754,10 +1767,6 @@ export default class Application<T extends Node> {
         return this.extensions.find(item => item.name === name);
     }
 
-    public addXmlNs(name: string, uri: string) {
-        this.controllerHandler.addXmlNs(name, uri);
-    }
-
     public toString() {
         return this._views.length > 0 ? this._views[0].content : '';
     }
@@ -1767,7 +1776,7 @@ export default class Application<T extends Node> {
         if (element.nodeName.charAt(0) === '#') {
             if (element.nodeName === '#text') {
                 if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                    node = new this._Node(this.cache.nextId, SETTINGS.targetAPI, element);
+                    node = new this.Node(this.cache.nextId, this.settings.targetAPI, element);
                     node.nodeName = 'PLAINTEXT';
                     if (parent) {
                         node.parent = parent;
@@ -1793,7 +1802,7 @@ export default class Application<T extends Node> {
                 case 'AREA':
                     return null;
             }
-            const elementNode = new this._Node(this.cache.nextId, SETTINGS.targetAPI, element);
+            const elementNode = new this.Node(this.cache.nextId, this.settings.targetAPI, element);
             if (isElementVisible(element)) {
                 node = elementNode;
                 node.setExclusions();
@@ -1884,12 +1893,12 @@ export default class Application<T extends Node> {
     }
 
     set appName(value) {
-        if (this.resourceHandler != null) {
-            this.resourceHandler.file.appName = value;
+        if (this.Resource != null) {
+            this.Resource.file.appName = value;
         }
     }
     get appName() {
-        return this.resourceHandler != null ? this.resourceHandler.file.appName : '';
+        return this.Resource != null ? this.Resource.file.appName : '';
     }
 
     set layoutProcessing(value) {

@@ -1,5 +1,5 @@
 import { Null, ObjectMap } from '../.././lib/types';
-import SETTINGS from '../../settings';
+import { BUILD_ANDROID } from '../constants';
 
 let ID: ObjectMap<string[]>;
 
@@ -49,23 +49,20 @@ export function convertDP(value: any, dpi = 160, font = false) {
     return '0dp';
 }
 
-export function delimitDimens(nodeName: string, attr: string, size: string) {
-    return SETTINGS.dimensResourceValue ? `{%${nodeName.toLowerCase()},${attr},${size}}` : size;
+export function delimitDimens(nodeName: string, attr: string, size: string, { dimensResourceValue = true }) {
+    return dimensResourceValue ? `{%${nodeName.toLowerCase()},${attr},${size}}` : size;
 }
 
-export function replaceUnit(value: string, font = false) {
-    switch (SETTINGS.convertPixels) {
+export function replaceUnit(value: string, { density = 160, convertPixels = 'dp' }, font = false) {
+    switch (convertPixels) {
         case 'dp':
-            return value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], SETTINGS.density, font) + capture[3]);
+            return value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], density, font) + capture[3]);
         default:
             return value;
     }
 }
 
-export function calculateBias(start: number, end: number, accurracy?: number) {
-    if (accurracy == null) {
-        accurracy = SETTINGS.constraintPercentAccuracy;
-    }
+export function calculateBias(start: number, end: number, accurracy: number) {
     return (
         parseFloat(
             Math.max(start === 0 ? 0
@@ -74,4 +71,12 @@ export function calculateBias(start: number, end: number, accurracy?: number) {
                 .toFixed(accurracy)
         )
     );
+}
+
+export function parseRTL(value: string, { supportRTL = true, targetAPI = BUILD_ANDROID.JELLYBEAN_1 }) {
+    if (supportRTL && targetAPI >= BUILD_ANDROID.JELLYBEAN_1) {
+        value = value.replace(/left/g, 'start').replace(/right/g, 'end');
+        value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
+    }
+    return value;
 }

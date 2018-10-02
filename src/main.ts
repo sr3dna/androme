@@ -1,78 +1,22 @@
-import { Image, Null, ObjectMap } from './lib/types';
+import { FunctionMap, Image, Null, ObjectMap } from './lib/types';
 import Application from './base/application';
+import Node from './base/node';
 import Extension from './base/extension';
-import { convertCamelCase, convertPX, convertWord, hasValue, isPercent, optional } from './lib/util';
+import { convertCamelCase, convertPX, convertWord, hasValue, isPercent, isString, optional } from './lib/util';
 import { getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
 import { formatRGB, getByColorName } from './lib/color';
-import { EXT_NAME } from './extension/lib/constants';
-import SETTINGS from './settings';
 
-import ViewController from './android/viewcontroller';
-import ResourceView from './android/resource-view';
-import FileView from './android/file-view';
-import View from './android/view';
-import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
-import API_ANDROID from './android/customizations';
+import android from './android/main';
 
-import External from './extension/external';
-import Origin from './extension/origin';
-import Custom from './android/extension/custom';
-import Accessibility from './android/extension/accessibility';
-import List from './android/extension/list';
-import Grid from './android/extension/grid';
-import Table from './android/extension/table';
-import Button from './android/extension/widget/floatingactionbutton';
-import Menu from './android/extension/widget/menu';
-import Coordinator from './android/extension/widget/coodinator';
-import Toolbar from './android/extension/widget/toolbar';
-import BottomNavigation from './android/extension/widget/bottomnavigation';
-import Drawer from './android/extension/widget/drawer';
-import { WIDGET_NAME } from './android/extension/lib/constants';
+type T = Node;
 
-type T = View;
+let main: Application<T>;
+let settings: ObjectMap<any>;
+let system: FunctionMap;
+let framework = '';
 
-let LOADING = false;
-const ROOT_CACHE: Set<HTMLElement> = new Set();
-const IMAGE_CACHE: Map<string, Image> = new Map();
-const EXTENSIONS: ObjectMap<Extension<T>> = {
-    [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
-    [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN),
-    [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM),
-    [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY),
-    [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL', 'DL', 'DIV']),
-    [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
-    [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
-    [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, ['BUTTON', 'INPUT', 'IMG']),
-    [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, ['NAV']),
-    [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR),
-    [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR),
-    [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION),
-    [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER)
-};
-
-const Node = View;
-const Controller = new ViewController();
-const File = new FileView();
-const Resource = new ResourceView(File);
-
-const main = new Application<T>(Node);
-main.registerController(Controller);
-main.registerResource(Resource);
-
-(() => {
-    const extension = new Set<Extension<T>>();
-    for (let name of SETTINGS.builtInExtensions) {
-        name = name.toLowerCase().trim();
-        for (const ext in EXTENSIONS) {
-            if (ext === name || ext.startsWith(`${name}.`)) {
-                extension.add(EXTENSIONS[ext]);
-            }
-        }
-    }
-    for (const ext of extension) {
-        main.registerExtension(ext);
-    }
-})();
+const cacheRoot: Set<HTMLElement> = new Set();
+const cacheImage: Map<string, Image> = new Map();
 
 function setStyleMap() {
     let warning = false;
@@ -86,8 +30,7 @@ function setStyleMap() {
                     for (const attr of Array.from(cssRule.style)) {
                         attrs.add(convertCamelCase(attr));
                     }
-                    const elements = document.querySelectorAll(cssRule.selectorText);
-                    Array.from(elements)
+                    Array.from(document.querySelectorAll(cssRule.selectorText))
                         .forEach((element: HTMLElement) => {
                             for (const attr of Array.from(element.style)) {
                                 attrs.add(convertCamelCase(attr));
@@ -140,7 +83,7 @@ function setStyleMap() {
                                     }
                                 }
                             }
-                            if (SETTINGS.preloadImages &&
+                            if (main.settings.preloadImages &&
                                 hasValue(styleMap['backgroundImage']) &&
                                 styleMap['backgroundImage'] !== 'initial')
                             {
@@ -149,8 +92,8 @@ function setStyleMap() {
                                     .map(value => value.trim())
                                     .forEach(value => {
                                         const url = parseBackgroundUrl(value);
-                                        if (url !== '' && !IMAGE_CACHE.has(url)) {
-                                            IMAGE_CACHE.set(url, { width: 0, height: 0, url });
+                                        if (url !== '' && !cacheImage.has(url)) {
+                                            cacheImage.set(url, { width: 0, height: 0, url });
                                         }
                                     });
                             }
@@ -179,7 +122,7 @@ function setStyleMap() {
 
 function setImageCache(element: HTMLImageElement) {
     if (element && hasValue(element.src)) {
-        IMAGE_CACHE.set(element.src, {
+        cacheImage.set(element.src, {
             width: element.naturalWidth,
             height: element.naturalHeight,
             url: element.src
@@ -187,11 +130,54 @@ function setImageCache(element: HTMLImageElement) {
     }
 }
 
+export function setFramework(name: string) {
+    reset();
+    if (framework !== name) {
+        switch (name) {
+            case 'android':
+                main = new Application();
+                main.settings = android.settings;
+                main.builtInExtensions = android.builtInExtensions;
+                main.Node = android.Node;
+                main.registerController(android.Controller);
+                main.registerResource(android.Resource);
+                settings = android.settings;
+                if (android.system != null) {
+                    system = android.system;
+                }
+                framework = name;
+                break;
+        }
+        if (framework === name) {
+            if (Array.isArray(settings.builtInExtensions)) {
+                const register = new Set<Extension<T>>();
+                const extensions = <ObjectMap<Extension<T>>> main.builtInExtensions;
+                for (let namespace of settings.builtInExtensions) {
+                    namespace = namespace.toLowerCase().trim();
+                    if (extensions[namespace] != null) {
+                        register.add(extensions[namespace]);
+                    }
+                    else {
+                        for (const ext in extensions) {
+                            if (ext.startsWith(`${namespace}.`)) {
+                                register.add(extensions[ext]);
+                            }
+                        }
+                    }
+                }
+                for (const ext of register) {
+                    main.registerExtension(ext);
+                }
+            }
+        }
+    }
+}
+
 export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     if (main.closed) {
         return;
     }
-    LOADING = false;
+    main.loading = false;
     setStyleMap();
     main.elements.clear();
     if (main.appName === '' && elements.length === 0) {
@@ -211,11 +197,11 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     }
     let __THEN: () => void;
     function parseResume() {
-        LOADING = false;
-        if (SETTINGS.preloadImages && rootElement != null) {
+        main.loading = false;
+        if (main.settings.preloadImages && rootElement != null) {
             Array.from(rootElement.getElementsByClassName('androme.preload')).forEach(element => rootElement && rootElement.removeChild(element));
         }
-        main.resourceHandler.imageDimensions = IMAGE_CACHE;
+        main.Resource.imageDimensions = cacheImage;
         for (const element of main.elements) {
             if (main.appName === '') {
                 if (element.id === '') {
@@ -235,15 +221,15 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 main.createLayoutXml();
                 main.setConstraints();
                 main.setResources();
-                ROOT_CACHE.add(element);
+                cacheRoot.add(element);
             }
         }
         if (typeof __THEN === 'function') {
             __THEN.call(main);
         }
     }
-    if (SETTINGS.preloadImages && rootElement != null) {
-        for (const image of IMAGE_CACHE.values()) {
+    if (main.settings.preloadImages && rootElement != null) {
+        for (const image of cacheImage.values()) {
             if (image.width === 0 && image.height === 0 && image.url) {
                 const imageElement = <HTMLImageElement> document.createElement('IMG');
                 imageElement.src = image.url;
@@ -278,7 +264,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
         parseResume();
     }
     else {
-        LOADING = true;
+        main.loading = true;
         const queue = images.map(image => {
             return (
                 new Promise((resolve, reject) => {
@@ -298,7 +284,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 parseResume();
             })
             .catch((err: Event) => {
-                const message = err.srcElement != null ? (<HTMLImageElement> err.srcElement).src : '';
+                const message = err.srcElement ? (<HTMLImageElement> err.srcElement).src : '';
                 if (!hasValue(message) || confirm(`FAIL: ${message}`)) {
                     parseResume();
                 }
@@ -306,7 +292,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     }
     return {
         then: (resolve: () => void) => {
-            if (LOADING) {
+            if (main.loading) {
                 __THEN = resolve;
             }
             else {
@@ -317,7 +303,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
 }
 
 export function registerExtension(ext: Extension<T>) {
-    if (ext instanceof Extension && ext.name !== '' && Array.isArray(ext.tagNames)) {
+    if (ext instanceof Extension && isString(ext.name) && Array.isArray(ext.tagNames)) {
         main.registerExtension(ext);
     }
 }
@@ -337,129 +323,50 @@ export function ext(name: any, options?: {}) {
     if (typeof name === 'object') {
         registerExtension(name);
     }
-    else if (options != null) {
-        configureExtension(name, options);
-    }
-    else if (name !== '') {
-        return getExtension(name);
+    else if (isString(name)) {
+        if (typeof options === 'object') {
+            configureExtension(name, options);
+        }
+        else {
+            return getExtension(name);
+        }
     }
 }
 
 export function ready() {
-    return (!LOADING && !main.closed);
+    return !main.loading && !main.closed;
 }
 
 export function close() {
-    if (!LOADING && main.size > 0) {
+    if (!main.loading && main.size > 0) {
         main.finalize();
     }
 }
 
 export function reset() {
-    for (const element of ROOT_CACHE) {
-        delete element.dataset.views;
-        delete element.dataset.viewName;
+    if (main != null) {
+        for (const element of cacheRoot) {
+            delete element.dataset.views;
+            delete element.dataset.viewName;
+        }
+        cacheRoot.clear();
+        main.reset();
     }
-    ROOT_CACHE.clear();
-    main.reset();
 }
 
 export function saveAllToDisk() {
-    if (!LOADING && main.size > 0) {
+    if (!main.loading && main.size > 0) {
         if (!main.closed) {
             main.finalize();
         }
-        main.resourceHandler.file.saveAllToDisk(main.viewData);
+        main.Resource.file.saveAllToDisk(main.viewData);
     }
-}
-
-export function writeLayoutAllXml(saveToDisk = false) {
-    if (main.closed || autoClose()) {
-        return main.resourceHandler.file.layoutAllToXml(main.viewData, saveToDisk);
-    }
-    return '';
-}
-
-export function writeResourceAllXml(saveToDisk = false) {
-    if (main.closed || autoClose()) {
-        return main.resourceHandler.file.resourceAllToXml(saveToDisk);
-    }
-    return '';
-}
-
-export function writeResourceStringXml(saveToDisk = false) {
-    if (main.closed || autoClose()) {
-        return main.resourceHandler.file.resourceStringToXml(saveToDisk);
-    }
-    return '';
-}
-
-export function writeResourceArrayXml(saveToDisk = false) {
-    if (main.closed || autoClose()) {
-        return main.resourceHandler.file.resourceStringArrayToXml(saveToDisk);
-    }
-    return '';
-}
-
-export function writeResourceFontXml(saveToDisk = false) {
-    if (main.closed || autoClose()) {
-        return main.resourceHandler.file.resourceFontToXml(saveToDisk);
-    }
-    return '';
-}
-
-export function writeResourceColorXml(saveToDisk = false) {
-    if (main.closed || autoClose()) {
-        return main.resourceHandler.file.resourceColorToXml(saveToDisk);
-    }
-    return '';
-}
-
-export function writeResourceStyleXml(saveToDisk = false) {
-    if (main.closed || autoClose()) {
-        return main.resourceHandler.file.resourceStyleToXml(saveToDisk);
-    }
-    return '';
-}
-
-export function writeResourceDimenXml(saveToDisk = false) {
-    if (main.closed || autoClose()) {
-        return main.resourceHandler.file.resourceDimenToXml(saveToDisk);
-    }
-    return '';
-}
-
-export function writeResourceDrawableXml(saveToDisk = false) {
-    if (main.closed || autoClose()) {
-        return main.resourceHandler.file.resourceDrawableToXml(saveToDisk);
-    }
-    return '';
-}
-
-export function customize(build: number, widget: string, options: {}) {
-    if (API_ANDROID[build] != null) {
-        const customizations = API_ANDROID[build].customizations;
-        if (customizations[widget] == null) {
-            customizations[widget] = {};
-        }
-        Object.assign(customizations[widget], options);
-    }
-}
-
-export function addXmlNs(name: string, uri: string) {
-    main.addXmlNs(name, uri);
 }
 
 export function toString() {
     return main.toString();
 }
 
-function autoClose() {
-    if (SETTINGS.autoCloseOnWrite && !LOADING && !main.closed) {
-        main.finalize();
-        return true;
-    }
-    return false;
-}
+setFramework('android');
 
-export { BUILD_ANDROID as build, DENSITY_ANDROID as density, SETTINGS as settings, Extension };
+export { settings, system, Extension };

@@ -1,4 +1,4 @@
-import { Null, PlainFile, ViewData } from '../lib/types';
+import { Null, ObjectMap, PlainFile, ViewData } from '../lib/types';
 import NodeList from '../base/nodelist';
 import File from '../base/file';
 import View from './view';
@@ -6,7 +6,6 @@ import { lastIndexOf } from '../lib/util';
 import { replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate, replaceTab } from '../lib/xml';
 import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './constants';
-import SETTINGS from '../settings';
 
 import STRING_TMPL from './template/resource/string';
 import STRINGARRAY_TMPL from './template/resource/string-array';
@@ -20,9 +19,9 @@ function caseInsensitve(a: string | string[], b: string | string[]) {
     return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
 }
 
-export default class FileView<T extends View> extends File<T> {
-    constructor() {
-        super(SETTINGS.outputDirectory, SETTINGS.outputMaxProcessingTime, SETTINGS.outputArchiveFileType);
+export default class FileAndroid<T extends View> extends File<T> {
+    constructor(public readonly settings: ObjectMap<any>) {
+        super(settings.outputDirectory, settings.outputMaxProcessingTime, settings.outputArchiveFileType);
     }
 
     public saveAllToDisk(data: ViewData<NodeList<T>>) {
@@ -30,7 +29,7 @@ export default class FileView<T extends View> extends File<T> {
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
             const view = views[i];
-            files.push(this.getLayoutFile(view.pathname, i === 0 ? SETTINGS.outputActivityMainFileName : `${view.filename}.xml`, view.content));
+            files.push(this.getLayoutFile(view.pathname, i === 0 ? this.settings.outputActivityMainFileName : `${view.filename}.xml`, view.content));
         }
         const xml = this.resourceDrawableToXml();
         files.push(...this.parseFileDetails(this.resourceStringToXml()));
@@ -51,7 +50,7 @@ export default class FileView<T extends View> extends File<T> {
             const view = views[i];
             result[view.filename] = view.content;
             if (saveToDisk) {
-                files.push(this.getLayoutFile(view.pathname, i === 0 ? SETTINGS.outputActivityMainFileName : `${view.filename}.xml`, view.content));
+                files.push(this.getLayoutFile(view.pathname, i === 0 ? this.settings.outputActivityMainFileName : `${view.filename}.xml`, view.content));
             }
         }
         if (saveToDisk) {
@@ -105,7 +104,7 @@ export default class FileView<T extends View> extends File<T> {
             root['1'].push({ name, value });
         }
         xml = insertTemplateData(template, data);
-        xml = replaceTab(xml, SETTINGS.insertSpaces, true);
+        xml = replaceTab(xml, this.settings, true);
         if (saveToDisk) {
             this.saveToDisk(this.parseFileDetails(xml));
         }
@@ -135,7 +134,7 @@ export default class FileView<T extends View> extends File<T> {
                 root['1'].push(arrayItem);
             }
             xml = insertTemplateData(template, data);
-            xml = replaceTab(xml, SETTINGS.insertSpaces, true);
+            xml = replaceTab(xml, this.settings, true);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -157,7 +156,7 @@ export default class FileView<T extends View> extends File<T> {
                         '1': []
                     }]
                 };
-                data[(SETTINGS.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude')]['app'] = true;
+                data[(this.settings.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude')]['app'] = true;
                 const root = getTemplateLevel(data, '0');
                 for (const attr in font) {
                     const [style, weight] = attr.split('-');
@@ -171,7 +170,7 @@ export default class FileView<T extends View> extends File<T> {
                 }
                 xml += '\n\n' + insertTemplateData(template, data);
             }
-            xml = replaceTab(xml, SETTINGS.insertSpaces);
+            xml = replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -194,7 +193,7 @@ export default class FileView<T extends View> extends File<T> {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);
-            xml = replaceTab(xml, SETTINGS.insertSpaces);
+            xml = replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -229,8 +228,8 @@ export default class FileView<T extends View> extends File<T> {
                 root['1'].push(styleItem);
             }
             xml = insertTemplateData(template, data);
-            xml = replaceUnit(xml, true);
-            xml = replaceTab(xml, SETTINGS.insertSpaces);
+            xml = replaceUnit(xml, this.settings, true);
+            xml = replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -253,8 +252,8 @@ export default class FileView<T extends View> extends File<T> {
                 root['1'].push({ name, value });
             }
             xml = insertTemplateData(template, data);
-            xml = replaceUnit(xml);
-            xml = replaceTab(xml, SETTINGS.insertSpaces);
+            xml = replaceUnit(xml, this.settings);
+            xml = replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -293,8 +292,8 @@ export default class FileView<T extends View> extends File<T> {
                 }
             }
             xml = insertTemplateData(template, data);
-            xml = replaceUnit(xml);
-            xml = replaceTab(xml, SETTINGS.insertSpaces);
+            xml = replaceUnit(xml, this.settings);
+            xml = replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk([...this.parseImageDetails(xml), ...this.parseFileDetails(xml)]);
             }

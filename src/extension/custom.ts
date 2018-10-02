@@ -17,10 +17,10 @@ export default abstract class Custom<T extends Node> extends Extension<T> {
         let xml = '';
         if (data.tag) {
             if (node.children.length > 0) {
-                xml = this.application.controllerHandler.renderGroup(node, parent, data.tag);
+                xml = this.application.Controller.renderGroup(node, parent, data.tag);
             }
             else {
-                xml = this.application.controllerHandler.renderNode(node, parent, data.tag);
+                xml = this.application.Controller.renderNode(node, parent, data.tag);
             }
             node.nodeType = node.blockStatic ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE;
         }

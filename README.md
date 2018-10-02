@@ -37,20 +37,19 @@ GitHub
 <script src="/dist/androme.min.js"></script>
 <script>
     // optional
-    androme.settings.targetAPI = 19; // androme.build.KITKAT
-    androme.settings.density = 160; // androme.density.MDPI
+    androme.settings.targetAPI = 19;
+    androme.settings.density = 160;
 
     // without Express: use either console.log() or element.innerHTML to display using "write" commands
 
     document.addEventListener('DOMContentLoaded', function() {
+        // optional: default 'android'
+        androme.setFramework('android');
+
         // required: zero or more
         androme.parseDocument(/* document.getElementById('mainview') */, /* 'subview' */, /* etc... */);
         androme.close();
         androme.saveAllToDisk(); /* Express required */
-
-        // optional
-        androme.writeLayoutAllXml(); /* true: save to disk, false | null: string xml */
-        androme.writeResourceAllXml();
 
         // start new "parseDocument" session
         androme.reset();
@@ -83,8 +82,8 @@ androme.settings = {
         'androme.grid',
         'androme.widget' // androme.widget.floatingactionbutton | androme.widget.menu | androme.widget.bottomnavigation | androme.widget.coordinator | androme.widget.toolbar | androme.widget.drawer
     ],
-    targetAPI: androme.build.OREO,
-    density: androme.density.MDPI,
+    targetAPI: 26,
+    density: 160,
     supportRTL: true,
     dimensResourceValue: true,
     numberResourceValue: false,
@@ -194,11 +193,7 @@ Most of the Android support library extensions can be configured using the same 
 There is no official documentation for the time being since this project is still in early development. The entire source code is available on GitHub if you need further clarification.
 
 ```javascript
-.build // android versions: 14 to 28
-.density // dpi
 .settings // see user preferences section
-
-customize(build: number, widget: string, options: { android: {}, app: {} }) // global attributes applied to specific views (widget: 'Button' / 'Spinner' / 'namespace.thirdparty.control')
 
 parseDocument() // see installation section
 
@@ -208,22 +203,25 @@ reset() // clear cached layouts and reopen session
 
 saveAllToDisk() // download entire project as zip archive - requires http://localhost through Node and Express
 
-writeLayoutAllXml(saveToDisk: boolean) // output generated xml
-writeResourceAllXml(saveToDisk: boolean)
-writeResourceArrayXml(saveToDisk: boolean)
-writeResourceColorXml(saveToDisk: boolean)
-writeResourceDimenXml(saveToDisk: boolean)
-writeResourceDrawableXml(saveToDisk: boolean)
-writeResourceFontXml(saveToDisk: boolean)
-writeResourceStringXml(saveToDisk: boolean)
-writeResourceStyleXml(saveToDisk: boolean)
 toString() // activity_main.xml
 
 configureExtension(name: string, options: {}) // see extension configuration section | same: ext(name: string, options: {})
 registerExtension(extension: androme.Extension) // see extension configuration section | same: ext(extension: object)
 getExtension(name: string) // retrieve an extension by namespace and control | same: ext(name: string)
 
-addXmlNs(name: string, uri: string) // add global namespaces for android third-party controls
+// android specific methods
+
+system.writeLayoutAllXml(saveToDisk: boolean) // output generated xml
+system.writeResourceAllXml(saveToDisk: boolean)
+system.writeResourceArrayXml(saveToDisk: boolean)
+system.writeResourceColorXml(saveToDisk: boolean)
+system.writeResourceDimenXml(saveToDisk: boolean)
+system.writeResourceDrawableXml(saveToDisk: boolean)
+system.writeResourceFontXml(saveToDisk: boolean)
+system.writeResourceStringXml(saveToDisk: boolean)
+system.writeResourceStyleXml(saveToDisk: boolean)
+system.addXmlNs(name: string, uri: string) // add global namespaces for android third-party controls
+system.customize(build: number, widget: string, options: { android: {}, app: {} }) // global attributes applied to specific views (widget: 'Button' / 'Spinner' / 'namespace.thirdparty.control')
 ```
 ### Redirecting output location
 
@@ -390,7 +388,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol27968"
+                    android:text="@string/__symbol75986"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -540,7 +538,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol27968"
+                    android:text="@string/__symbol75986"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -977,7 +975,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol27968"
+                    android:text="@string/__symbol75986"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1109,7 +1107,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol27968">):</string>
+    <string name="__symbol75986">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>

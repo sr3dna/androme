@@ -65,10 +65,10 @@
             androme.parseDocument('androme_ui');
             androme.close();
 
-            var views = androme.writeLayoutAllXml();
+            var views = androme.system.writeLayoutAllXml();
             document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
 
-            var resource = androme.writeResourceAllXml();
+            var resource = androme.system.writeResourceAllXml();
             document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
         });
     </script>
@@ -126,7 +126,7 @@
             <pre id="output"></pre>
             <div>
                 <button onclick="copy('output');">Copy</button>
-                <button onclick="androme.writeLayoutAllXml(true);">Save</button>
+                <button onclick="androme.system.writeLayoutAllXml(true);">Save</button>
                 <button onclick="androme.saveAllToDisk();">Save All</button>
             </div>
         </div>
@@ -134,7 +134,7 @@
             <pre id="resource"></pre>
             <div>
                 <button onclick="copy('resource');">Copy</button>
-                <button onclick="androme.writeResourceAllXml(true);">Save</button>
+                <button onclick="androme.system.writeResourceAllXml(true);">Save</button>
             </div>
         </div>
     </div>

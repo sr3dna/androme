@@ -1,4 +1,28 @@
+import { IExtension } from '../extension/lib/types';
+import Application from '../base/application';
+import Controller from '../base/controller';
+import Resource from '../base/resource';
+import Node from '../base/node';
+import NodeList from '../base/nodelist';
+
 export type Null<T> = T | null | undefined;
+
+export type FunctionMap = ObjectMap<(...args: any[]) => any>;
+
+export interface AppBase<T extends Node> {
+    Node: { new (id: number, api: number, element?: Element): T };
+    Controller: Controller<T>;
+    Resource: Resource<T>;
+    builtInExtensions: ObjectMap<IExtension>;
+    settings: ObjectMap<any>;
+    system?: FunctionMap;
+}
+
+export interface AppModule<T extends Node> {
+    cache: NodeList<T>;
+    settings: ObjectMap<any>;
+    application: Application<T>;
+}
 
 export interface Inheritable {
     inherit: boolean;
@@ -157,6 +181,7 @@ export type InitialValues<T> = {
 };
 
 export type DisplaySettings = {
+    supportRTL: boolean;
     autoSizePaddingAndBorderWidth: boolean;
     autoSizeBackgroundImage: boolean;
     ellipsisOnTextOverflow: boolean;

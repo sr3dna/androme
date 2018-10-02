@@ -16,6 +16,7 @@
   },
   "keywords": [
     "Android",
+    "Flutter",
     "iOS",
     "Chrome",
     "Safari",
@@ -24,6 +25,7 @@
     "HTML",
     "CSS",
     "Java",
+    "Dart",
     "Kotlin",
     "Swift",
     "Android Studio",
@@ -61,7 +63,7 @@
     "uuid": "^3.3.2"
   },
   "devDependencies": {
-    "@babel/core": "^7.1.0",
+    "@babel/core": "^7.1.2",
     "@babel/preset-env": "^7.1.0",
     "rimraf": "^2.6.2",
     "rollup": "^0.66.2",

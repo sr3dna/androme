@@ -1,6 +1,6 @@
-import { BUILD_ANDROID, DENSITY_ANDROID } from './android/constants';
+import { BUILD_ANDROID, DENSITY_ANDROID } from './constants';
 
-const SETTINGS = {
+export default {
     builtInExtensions: [
         'androme.external',
         'androme.origin',
@@ -43,5 +43,3 @@ const SETTINGS = {
     outputArchiveFileType: 'zip',
     outputMaxProcessingTime: 30
 };
-
-export default SETTINGS;

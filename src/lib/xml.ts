@@ -36,21 +36,23 @@ export function replaceIndent(value: string, depth: number) {
     return value;
 }
 
-export function replaceTab(value: string, spaces = 4, preserve = false) {
-    if (spaces > 0) {
+export function replaceTab(value: string, { insertSpaces = 4 }, preserve = false) {
+    if (insertSpaces > 0) {
         if (preserve) {
-            value = value.split('\n')
-                .map(line => {
-                    const match = line.match(/^(\t+)(.*)$/);
-                    if (match) {
-                        return ' '.repeat(spaces * match[1].length) + match[2];
-                    }
-                    return line;
-                })
-                .join('\n');
+            value =
+                value
+                    .split('\n')
+                    .map(line => {
+                        const match = line.match(/^(\t+)(.*)$/);
+                        if (match) {
+                            return ' '.repeat(insertSpaces * match[1].length) + match[2];
+                        }
+                        return line;
+                    })
+                    .join('\n');
         }
         else {
-            value = value.replace(/\t/g, ' '.repeat(spaces));
+            value = value.replace(/\t/g, ' '.repeat(insertSpaces));
         }
     }
     return value;

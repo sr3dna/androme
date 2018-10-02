@@ -10,7 +10,6 @@ import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setEleme
 import { getColorNearest, parseHex, parseRGBA, reduceHexToRGB } from '../lib/color';
 import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
-import SETTINGS from '../settings';
 
 import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
 import LAYERLIST_TMPL from './template/resource/layer-list';
@@ -61,14 +60,14 @@ type BackgroundImage = {
 
 type StyleList = ObjectMap<number[]>[];
 
-export default class ResourceView<T extends View> extends Resource<T> {
-    public static addString(value: string, name = '') {
+export default class ResourceAndroid<T extends View> extends Resource<T> {
+    public static addString(value: string, name = '', { numberResourceValue = false }) {
         if (value !== '') {
             if (name === '') {
                 name = value;
             }
             const numeric = isNumber(value);
-            if (SETTINGS.numberResourceValue || !numeric) {
+            if (numberResourceValue || !numeric) {
                 for (const [resourceName, resourceValue] of Resource.STORED.strings.entries()) {
                     if (resourceValue === value) {
                         return resourceName;
@@ -139,7 +138,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         if (images['mdpi'] == null) {
             images['mdpi'] = element.src;
         }
-        return ResourceView.addImage(images, prefix);
+        return ResourceAndroid.addImage(images, prefix);
     }
 
     public static addImage(images: StringMap, prefix = '') {
@@ -168,7 +167,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
     public static addImageURL(value: string, prefix = '') {
         const url = parseBackgroundUrl(value);
         if (url !== '') {
-            return ResourceView.addImage({ 'mdpi': url }, prefix);
+            return ResourceAndroid.addImage({ 'mdpi': url }, prefix);
         }
         return '';
     }
@@ -317,8 +316,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const stored: StringMap = getElementCache(node.element, 'boxSpacing');
             if (stored != null) {
                 if (stored.marginLeft === stored.marginRight &&
-                    node.alignParent('left') &&
-                    node.alignParent('right') &&
+                    node.alignParent('left', this.settings) &&
+                    node.alignParent('right', this.settings) &&
                     !node.blockWidth &&
                     !(node.position === 'relative' && node.alignNegative))
                 {
@@ -341,7 +340,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
             const stored: BoxStyle = getElementCache(node.element, 'boxStyle');
             if (stored != null) {
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
-                    stored.backgroundColor = ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
+                    stored.backgroundColor = ResourceAndroid.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
                 let backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
                 let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
@@ -353,7 +352,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         backgroundImageUrl.push(backgroundImage[i]);
                         const image = this.imageDimensions.get(parseBackgroundUrl(backgroundImage[i]));
                         backgroundDimensions.push(image);
-                        backgroundImage[i] = ResourceView.addImageURL(backgroundImage[i]);
+                        backgroundImage[i] = ResourceAndroid.addImageURL(backgroundImage[i]);
                     }
                     else {
                         backgroundImage[i] = '';
@@ -372,7 +371,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 {
                     const boxStyle: BoxStyle = getElementCache(companion.element, 'boxStyle');
                     if (Array.isArray(boxStyle.backgroundColor) && boxStyle.backgroundColor.length > 0) {
-                        stored.backgroundColor = ResourceView.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
+                        stored.backgroundColor = ResourceAndroid.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
                     }
                 }
                 const hasBorder = (
@@ -391,7 +390,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     ];
                     borders.forEach((item: BorderAttribute) => {
                         if (Array.isArray(item.color) && item.color.length > 0) {
-                            item.color = ResourceView.addColor(item.color[0], item.color[2]);
+                            item.color = ResourceAndroid.addColor(item.color[0], item.color[2]);
                         }
                     });
                     let data;
@@ -404,7 +403,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         let tileMode = '';
                         let tileModeX = '';
                         let tileModeY = '';
-                        let [left, top] = ResourceView.parseBackgroundPosition(backgroundPosition[i], node.css('fontSize'));
+                        let [left, top] = ResourceAndroid.parseBackgroundPosition(backgroundPosition[i], node.css('fontSize'));
                         let right = '';
                         let bottom = '';
                         const image = backgroundDimensions[i];
@@ -525,7 +524,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 if (tileModeY === 'repeat') {
                                     let backgroundWidth = node.viewWidth;
                                     if (backgroundWidth > 0) {
-                                        if (SETTINGS.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+                                        if (this.settings.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
                                             backgroundWidth = node.viewWidth + node.paddingLeft + node.paddingRight;
                                         }
                                     }
@@ -557,7 +556,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                                 if (tileModeX === 'repeat') {
                                     let backgroundHeight = node.viewHeight;
                                     if (backgroundHeight > 0) {
-                                        if (SETTINGS.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+                                        if (this.settings.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
                                             backgroundHeight = node.viewHeight + node.paddingTop + node.paddingBottom;
                                         }
                                     }
@@ -865,7 +864,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     node.formatted(formatString(method['background'], resourceName), node.renderExtension.size === 0);
                     if (backgroundImage.length > 0) {
                         node.data('RESOURCE', 'backgroundImage', true);
-                        if (SETTINGS.autoSizeBackgroundImage &&
+                        if (this.settings.autoSizeBackgroundImage &&
                             !node.documentRoot &&
                             !node.imageElement &&
                             node.renderParent.tagName !== 'TABLE' &&
@@ -940,7 +939,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 if (match) {
                     const color = parseRGBA(match[1]);
                     if (color.length > 0) {
-                        node.android('shadowColor', `@color/${ResourceView.addColor(color[0], color[2])}`);
+                        node.android('shadowColor', `@color/${ResourceAndroid.addColor(color[0], color[2])}`);
                     }
                     node.android('shadowDx', convertInt(match[2]).toString());
                     node.android('shadowDy', convertInt(match[3]).toString());
@@ -959,7 +958,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const element = node.element;
                 const stored: FontAttribute = Object.assign({}, getElementCache(element, 'fontStyle'));
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
-                    stored.backgroundColor = `@color/${ResourceView.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
+                    stored.backgroundColor = `@color/${ResourceAndroid.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
                 }
                 if (stored.fontFamily) {
                     let fontFamily =
@@ -971,13 +970,13 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     let fontStyle = '';
                     let fontWeight = '';
                     if (Array.isArray(stored.color) && stored.color.length > 0) {
-                        stored.color = `@color/${ResourceView.addColor(stored.color[0], stored.color[2])}`;
+                        stored.color = `@color/${ResourceAndroid.addColor(stored.color[0], stored.color[2])}`;
                     }
-                    if (SETTINGS.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily] != null) {
+                    if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily] != null) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
-                    if ((FONT_ANDROID[fontFamily] != null && SETTINGS.targetAPI >= FONT_ANDROID[fontFamily]) ||
-                        (SETTINGS.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] != null && SETTINGS.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]]))
+                    if ((FONT_ANDROID[fontFamily] != null && this.settings.targetAPI >= FONT_ANDROID[fontFamily]) ||
+                        (this.settings.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] != null && this.settings.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]]))
                     {
                         system = true;
                         stored.fontFamily = fontFamily;
@@ -1049,9 +1048,9 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)
             ).each(node => {
                 const element = <HTMLImageElement> node.element;
-                if (getElementCache(element, 'imageSource') == null || SETTINGS.alwaysReevaluateResources) {
-                    const result = node.imageElement ? ResourceView.addImageSrcSet(element)
-                                                     : ResourceView.addImage({ 'mdpi': element.src });
+                if (getElementCache(element, 'imageSource') == null || this.settings.alwaysReevaluateResources) {
+                    const result = node.imageElement ? ResourceAndroid.addImageSrcSet(element)
+                                                     : ResourceAndroid.addImage({ 'mdpi': element.src });
                     if (result !== '') {
                         const method = METHOD_ANDROID['imageSource'];
                         node.formatted(formatString(method['src'], result), node.renderExtension.size === 0);
@@ -1077,8 +1076,8 @@ export default class ResourceView<T extends View> extends Resource<T> {
                         result =
                             stored.stringArray
                                 .map(value => {
-                                    const name = ResourceView.addString(value);
-                                    return (name !== '' ? `@string/${name}` : '');
+                                    const name = ResourceAndroid.addString(value, '', this.settings);
+                                    return name !== '' ? `@string/${name}` : '';
                                 })
                                 .filter(name => name);
                     }
@@ -1112,7 +1111,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 const stored: NameValue = getElementCache(node.element, 'valueString');
                 if (stored != null) {
                     if (node.renderParent.is(NODE_STANDARD.RELATIVE)) {
-                        if (node.alignParent('left') && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
+                        if (node.alignParent('left', this.settings) && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                             const value = node.textContent;
                             let leadingSpace = 0;
                             for (let i = 0; i < value.length; i++) {
@@ -1148,7 +1147,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                             }
                         }
                     }
-                    const name = ResourceView.addString(stored.value, stored.name);
+                    const name = ResourceAndroid.addString(stored.value, stored.name, this.settings);
                     if (name !== '') {
                         const method = METHOD_ANDROID['valueString'];
                         if (node.toInt('textIndent') + node.bounds.width > 0) {
@@ -1167,7 +1166,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 let value = options.item[name];
                 const hex = parseHex(value);
                 if (hex !== '') {
-                    value = `@color/${ResourceView.addColor(hex)}`;
+                    value = `@color/${ResourceAndroid.addColor(hex)}`;
                 }
                 root['1'].push({ name, value });
             }
@@ -1392,7 +1391,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                     node.attr('_', 'style', `@style/${styles.pop()}`);
                 }
                 if (attrs.length > 0) {
-                    attrs.sort().forEach(value => node.formatted(replaceUnit(value, true), false));
+                    attrs.sort().forEach(value => node.formatted(replaceUnit(value, this.settings, true), false));
                 }
             }
         }
@@ -1486,7 +1485,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
         const groove = border.style === 'groove';
         if (parseInt(border.width) > 1 && (groove || border.style === 'ridge')) {
             let colorName = border.color;
-            let hexValue = ResourceView.getColor(colorName as string);
+            let hexValue = ResourceAndroid.getColor(colorName as string);
             if (hexValue !== '') {
                 let opacity = '1';
                 if (hexValue.length === 9) {
@@ -1495,7 +1494,7 @@ export default class ResourceView<T extends View> extends Resource<T> {
                 }
                 const reduced = parseRGBA(reduceHexToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
                 if (reduced.length > 0) {
-                    colorName = ResourceView.addColor(reduced[0], opacity);
+                    colorName = ResourceAndroid.addColor(reduced[0], opacity);
                 }
             }
             const colorReduced = `android:color="@color/${colorName}"`;

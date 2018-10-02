@@ -1,13 +1,13 @@
 import { ExtensionResult } from '../../../extension/lib/types';
 import Button from '../../../extension/button';
-import ResourceView from '../../resource-view';
+import ResourceAndroid from '../../resource';
 import View from '../../view';
 import { formatPX, hasValue } from '../../../lib/util';
+import { parseRTL } from '../../lib/util';
 import { overwriteDefault } from '../lib/util';
 import { parseRGBA } from '../../../lib/color';
 import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
-import parseRTL from '../../localization';
 
 export default class FloatingActionButton<T extends View> extends Button<T> {
     constructor(name: string, tagNames?: string[], options?: {}) {
@@ -21,7 +21,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
         const target = hasValue(node.dataset.target);
-        overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceView.addColor(backgroundColor[0], backgroundColor[2])}`
+        overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceAndroid.addColor(backgroundColor[0], backgroundColor[2])}`
                                                                                           : '?attr/colorAccent');
         if (node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
             overwriteDefault(options, 'android', 'focusable', 'false');
@@ -29,25 +29,25 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         let src = '';
         switch (element.tagName) {
             case 'IMG':
-                src = ResourceView.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.DIALOG);
+                src = ResourceAndroid.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.DIALOG);
                 break;
             case 'INPUT':
                 if ((<HTMLInputElement> element).type === 'image') {
-                    src = ResourceView.addImage({ 'mdpi': (<HTMLInputElement> element).src }, DRAWABLE_PREFIX.DIALOG);
+                    src = ResourceAndroid.addImage({ 'mdpi': (<HTMLInputElement> element).src }, DRAWABLE_PREFIX.DIALOG);
                 }
                 else {
-                    src = ResourceView.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
+                    src = ResourceAndroid.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
                 }
                 break;
             case 'BUTTON':
-                src = ResourceView.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
+                src = ResourceAndroid.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
                 break;
         }
         if (src !== '') {
             overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
         const xml =
-            this.application.controllerHandler.renderNodeStatic(
+            this.application.Controller.renderNodeStatic(
                 VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
                 target ? -1 : parent.renderDepth + 1,
                 options,
@@ -91,15 +91,16 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
     }
 
     private setFrameGravity<T extends View>(node: T) {
+        const settings = this.application.settings;
         const parent = node.documentParent;
-        const horizontalBias = node.horizontalBias;
-        const verticalBias = node.verticalBias;
+        const horizontalBias = node.horizontalBias(settings);
+        const verticalBias = node.verticalBias(settings);
         const gravity: string[] = [];
         if (horizontalBias < 0.5) {
-            gravity.push(parseRTL('left'));
+            gravity.push(parseRTL('left', settings));
         }
         else if (horizontalBias > 0.5) {
-            gravity.push(parseRTL('right'));
+            gravity.push(parseRTL('right', settings));
         }
         else {
             gravity.push('center_horizontal');
