@@ -134,8 +134,8 @@ export function setFramework(name: string, cached = false) {
     if (framework !== name) {
         switch (name) {
             case 'android':
-                main = new Application();
                 const appBase = cached ? android.cached() : android.create();
+                main = new Application();
                 main.settings = appBase.settings;
                 main.builtInExtensions = appBase.builtInExtensions;
                 main.Node = appBase.Node;

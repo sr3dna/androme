@@ -1,4 +1,4 @@
-import { BoxModel, ClientRect, DisplaySettings, Flexbox, InitialValues, Null, ObjectMap, Point, StringMap } from '../lib/types';
+import { BoxModel, INode, ClientRect, DisplaySettings, Flexbox, InitialValues, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject } from '../lib/util';
 import { assignBounds, getBoxModel, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
@@ -6,7 +6,7 @@ import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT, NODE_ALIGNMENT
 
 type T = Node;
 
-export default abstract class Node implements BoxModel {
+export default abstract class Node implements INode {
     public readonly initial: InitialValues<T>;
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
@@ -422,7 +422,7 @@ export default abstract class Node implements BoxModel {
         return result;
     }
 
-    public has(attr: string, checkType: number = 0, options?: ObjectMap<any> ) {
+    public has(attr: string, checkType: number = 0, options?: ObjectMap<any>) {
         const value = (options && options.map === 'initial' ? this.initial.styleMap : this.styleMap)[attr];
         if (hasValue(value)) {
             switch (value) {
@@ -1253,7 +1253,7 @@ export default abstract class Node implements BoxModel {
         return null;
     }
 
-    get firstElementChild(): Null<Element> {
+    get firstElementChild(): Element | null {
         const element = this.baseElement;
         if (element instanceof HTMLElement) {
             for (let i = 0; i < element.childNodes.length; i++) {
@@ -1269,7 +1269,7 @@ export default abstract class Node implements BoxModel {
         return null;
     }
 
-    get lastElementChild(): Null<Element> {
+    get lastElementChild(): Element | null {
         const element = this.baseElement;
         if (element instanceof HTMLElement) {
             for (let i = element.childNodes.length - 1; i >= 0; i--) {

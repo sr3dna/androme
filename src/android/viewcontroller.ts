@@ -1945,7 +1945,7 @@ export default class ViewController<T extends View> extends Controller<T> {
     public renderMerge(name: string, value: string[]) {
         let xml = value.join('');
         if (this._merge[name]) {
-            const node = new View(0, 0) as T;
+            const node = new View() as T;
             node.documentRoot = true;
             xml =
                 this.renderNodeStatic(

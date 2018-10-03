@@ -388,7 +388,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol75986"
+                    android:text="@string/__symbol67029"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -538,7 +538,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol75986"
+                    android:text="@string/__symbol67029"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -975,7 +975,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol75986"
+                    android:text="@string/__symbol67029"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1055,7 +1055,6 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:orientation="horizontal">
                     <RadioGroup
                         android:id="@+id/radiogroup_1"
-                        android:baselineAlignedChildIndex="0"
                         android:checkedButton="@+id/c2"
                         android:layout_height="wrap_content"
                         android:layout_width="wrap_content"
@@ -1107,7 +1106,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol75986">):</string>
+    <string name="__symbol67029">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
