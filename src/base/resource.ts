@@ -1,4 +1,5 @@
-import { AppCurrent, BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap, ViewData } from '../lib/types';
+import { AppCurrent, ViewData } from '../base/lib/types';
+import { BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap } from '../lib/types';
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';

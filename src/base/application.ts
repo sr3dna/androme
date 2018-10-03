@@ -1,4 +1,5 @@
-import { AppBase, ArrayIndex, DisplaySettings, LayoutMapX, LayoutMapY, Null, ObjectIndex, ObjectMap, PlainFile, StringMap, ViewData } from '../lib/types';
+import { AppBase, DisplaySettings, LayoutMapX, LayoutMapY, ViewData } from '../base/lib/types';
+import { ArrayIndex, Null, ObjectIndex, ObjectMap, PlainFile, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import Node from './node';
 import NodeList from './nodelist';
@@ -326,7 +327,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                 ext.setTarget(rootNode);
                 ext.afterInit();
             }
-            this.createLayout(rootElement.dataset.viewName as string);
+            this.createLayout(rootElement.dataset.layoutName as string);
             return true;
         }
         return false;

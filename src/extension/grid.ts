@@ -1,4 +1,5 @@
-import { LayoutMapX, ObjectIndex } from '../lib/types';
+import { LayoutMapX } from '../base/lib/types';
+import { ObjectIndex } from '../lib/types';
 import { ExtensionResult } from './lib/types';
 import { GridCellData, GridData } from './lib/types';
 import Node from '../base/node';

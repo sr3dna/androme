@@ -1,5 +1,6 @@
 
-import { AppFramework, ObjectMap } from '../lib/types';
+import { AppFramework } from '../base/lib/types';
+import { ObjectMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import View from './view';
 import ViewController from './viewcontroller';

@@ -278,7 +278,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
 
     public beforeInsert() {
         const node = this.node;
-        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
+        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);
             const optionsToolbar = Object.assign({}, options.toolbar);

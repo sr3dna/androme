@@ -1,4 +1,5 @@
-import { ControllerSettings, DisplaySettings, Null, ObjectIndex, ObjectMap, StringMap, ViewData } from '../lib/types';
+import { ControllerSettings, DisplaySettings, ViewData } from '../base/lib/types';
+import { Null, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
 import NodeList from '../base/nodelist';
 import View from './view';
 import ViewGroup from './viewgroup';

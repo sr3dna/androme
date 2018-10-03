@@ -1,4 +1,5 @@
-import { FunctionMap, Image, Null, ObjectMap } from './lib/types';
+import { FunctionMap } from './base/lib/types';
+import { Image, Null, ObjectMap } from './lib/types';
 import Application from './base/application';
 import Node from './base/node';
 import Extension from './base/extension';
@@ -214,8 +215,8 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 }
             }
             const filename: string = optional(element, 'dataset.filename').trim().replace(/\.xml$/, '') || element.id;
-            element.dataset.views = ((optional(element, 'dataset.views', 'number') as number) + 1).toString();
-            element.dataset.viewName = convertWord(element.dataset.views !== '1' ? `${filename}_${element.dataset.views}` : filename);
+            element.dataset.iteration = (optional(element, 'dataset.iteration', 'number') + 1).toString();
+            element.dataset.layoutName = convertWord(element.dataset.iteration !== '1' ? `${filename}_${element.dataset.iteration}` : filename);
             if (main.createNodeCache(element)) {
                 main.createLayoutXml();
                 main.setConstraints();
@@ -345,8 +346,8 @@ export function close() {
 export function reset() {
     if (main != null) {
         for (const element of cacheRoot) {
-            delete element.dataset.views;
-            delete element.dataset.viewName;
+            delete element.dataset.iteration;
+            delete element.dataset.layoutName;
         }
         cacheRoot.clear();
         main.reset();

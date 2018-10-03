@@ -1,4 +1,5 @@
-import { BoxModel, INode, ClientRect, DisplaySettings, Flexbox, InitialValues, Null, ObjectMap, Point, StringMap } from '../lib/types';
+import { INode, DisplaySettings, InitialValues } from '../base/lib/types';
+import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject } from '../lib/util';
 import { assignBounds, getBoxModel, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';

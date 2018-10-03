@@ -76,8 +76,8 @@ export default class Drawer<T extends View> extends Extension<T> {
                 delete application.renderQueue[node.nodeId];
             }
         }
-        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.viewName');
-        const headerLayout: string = optional(locateExtension(node, EXT_NAME.EXTERNAL), 'dataset.viewName');
+        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const headerLayout: string = optional(locateExtension(node, EXT_NAME.EXTERNAL), 'dataset.layoutName');
         const options: {} = Object.assign({}, this.options.navigation);
         if (menu !== '') {
             overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);

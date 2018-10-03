@@ -1,4 +1,5 @@
-import { BorderAttribute, BoxStyle, FontAttribute, Image, NameValue, Null, ObjectMap, ObjectMapNested, StringMap, ViewData } from '../lib/types';
+import { ViewData } from '../base/lib/types';
+import { BorderAttribute, BoxStyle, FontAttribute, Image, NameValue, Null, ObjectMap, ObjectMapNested, StringMap } from '../lib/types';
 import NodeList from '../base/nodelist';
 import View from './view';
 import Resource from '../base/resource';

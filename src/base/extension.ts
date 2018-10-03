@@ -1,4 +1,5 @@
-import { LayoutMapX, LayoutMapY, ObjectMap, StringMap } from '../lib/types';
+import { LayoutMapX, LayoutMapY } from '../base/lib/types';
+import { ObjectMap, StringMap } from '../lib/types';
 import { ExtensionDependency, ExtensionResult, IExtension } from '../extension/lib/types';
 import Node from './node';
 import Application from './application';

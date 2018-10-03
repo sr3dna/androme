@@ -1,4 +1,5 @@
-import { Null, ObjectMap, PlainFile, ViewData } from '../lib/types';
+import { ViewData } from '../base/lib/types';
+import { Null, ObjectMap, PlainFile } from '../lib/types';
 import NodeList from '../base/nodelist';
 import File from '../base/file';
 import View from './view';

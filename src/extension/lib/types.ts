@@ -1,4 +1,5 @@
-import { BoxRect, Inheritable, LayoutMapX, LayoutMapY, ObjectMap } from '../../lib/types';
+import { LayoutMapX, LayoutMapY } from '../../base/lib/types';
+import { BoxRect, Inheritable, ObjectMap } from '../../lib/types';
 import Node from '../../base/node';
 
 type T = Node;

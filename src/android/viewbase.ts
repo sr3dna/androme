@@ -1,4 +1,5 @@
-import { Constructor, DisplaySettings, Null, StringMap } from '../lib/types';
+import { DisplaySettings } from '../base/lib/types';
+import { Constructor, Null, StringMap } from '../lib/types';
 import { Constraint } from './lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
