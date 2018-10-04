@@ -1,5 +1,4 @@
 import { ObjectMapNested } from '../../lib/types';
-import NodeList from '../../base/nodelist';
 import View from '../view';
 
 type ConstraintCurrent = {
@@ -18,7 +17,5 @@ export type Constraint<T extends View> = {
     layoutVertical: boolean;
     marginHorizontal: string;
     marginVertical: string;
-    horizontalChain: NodeList<T>;
-    verticalChain: NodeList<T>;
     guideline: ObjectMapNested<ObjectMapNested<number>>
 };

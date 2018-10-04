@@ -625,23 +625,26 @@ export default class ViewController<T extends View> extends Controller<T> {
                             columnCount > 0 ||
                             (!this.settings.constraintChainDisabled && pageflow.length > 1))
                         {
-                            const flexbox: any[] = [];
+                            const horizontal: NodeList<T>[] = [];
+                            const vertical: NodeList<T>[] = [];
                             if (flex.enabled) {
                                 if (flex.wrap === 'nowrap') {
-                                    const horizontalChain = pageflow.clone();
-                                    const verticalChain = pageflow.clone();
                                     switch (flex.direction) {
                                         case 'row-reverse':
-                                            horizontalChain.list.reverse();
+                                            const row = pageflow.clone();
+                                            row.list.reverse();
+                                            horizontal.push(row);
+                                            break;
                                         case 'row':
-                                            verticalChain.clear();
-                                            flexbox.push({ constraint: { horizontalChain } });
+                                            horizontal.push(pageflow.clone());
                                             break;
                                         case 'column-reverse':
-                                            verticalChain.list.reverse();
+                                            const column = pageflow.clone();
+                                            column.list.reverse();
+                                            vertical.push(column);
+                                            break;
                                         case 'column':
-                                            horizontalChain.clear();
-                                            flexbox.push({ constraint: { verticalChain } });
+                                            vertical.push(pageflow.clone());
                                             break;
                                     }
                                 }
@@ -684,7 +687,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             break;
                                     }
                                     for (const n of levels) {
-                                        flexbox.push({ constraint: { horizontalChain: new NodeList<T>(map[n]) } });
+                                        horizontal.push(new NodeList<T>(map[n]));
                                     }
                                 }
                             }
@@ -723,48 +726,47 @@ export default class ViewController<T extends View> extends Controller<T> {
                                             item.app('layout_constraintWidth_percent', ((1 / columnCount) - marginPercent).toFixed(2));
                                         }
                                     });
-                                    flexbox.push({ constraint: { verticalChain: new NodeList<T>(column) } });
+                                    vertical.push(new NodeList<T>(column));
                                 }
-                                flexbox.push({ constraint: { horizontalChain: new NodeList<T>(row) } });
+                                horizontal.push(new NodeList<T>(row));
                             }
                             else {
-                                const horizontal = pageflow.list.filter(current => !current.constraint.horizontal);
-                                const vertical = pageflow.list.filter(current => !current.constraint.vertical);
+                                const horizontalChain = pageflow.list.filter(current => !current.constraint.horizontal);
+                                const verticalChain = pageflow.list.filter(current => !current.constraint.vertical);
                                 pageflow.list.some((current: T) => {
-                                    const horizontalChain: T[] = [];
-                                    const verticalChain: T[] = [];
-                                    if (horizontal.length > 0) {
-                                        horizontalChain.push(...this.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, !percentage));
-                                        current.constraint.horizontalChain = new NodeList<T>(sortAsc(horizontalChain, 'linear.left'));
+                                    const horizontalOutput: T[] = [];
+                                    const verticalOutput: T[] = [];
+                                    if (horizontalChain.includes(current)) {
+                                        horizontalOutput.push(...this.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, !percentage));
+                                        if (horizontalOutput.length > 0) {
+                                            horizontal.push(new NodeList<T>(sortAsc(horizontalOutput, 'linear.left')));
+                                        }
                                     }
-                                    if (vertical.length > 0 && !percentage) {
-                                        verticalChain.push(...this.partitionChain(current, pageflow, AXIS_ANDROID.VERTICAL, true));
-                                        current.constraint.verticalChain = new NodeList<T>(sortAsc(verticalChain, 'linear.top'));
+                                    if (verticalChain.includes(current) && !percentage) {
+                                        verticalOutput.push(...this.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, true));
+                                        if (verticalOutput.length > 0) {
+                                            vertical.push(new NodeList<T>(sortAsc(verticalOutput, 'linear.top')));
+                                        }
                                     }
-                                    return horizontalChain.length === pageflow.length || verticalChain.length === pageflow.length;
+                                    return horizontalOutput.length === pageflow.length || verticalOutput.length === pageflow.length;
                                 });
+                                horizontal.sort((a, b) => a.length >= b.length ? -1 : 1);
+                                vertical.sort((a, b) => a.length >= b.length ? -1 : 1);
                             }
-                            ['horizontalChain', 'verticalChain'].forEach((value, index) => {
-                                const connected: T[] = flexbox.length > 0 ? flexbox
-                                                                          : pageflow.list
-                                                                                .slice()
-                                                                                .sort((a, b) => (a.constraint[value] ? a.constraint[value].length : 0) >= (b.constraint[value] ? b.constraint[value].length : 0) ? -1 : 1);
+                            [horizontal, vertical].forEach((connected, index) => {
                                 if (connected.length > 0) {
                                     const mapId = new Set<string>();
                                     const connectedRows: NodeList<T>[]  = [];
                                     connected
                                         .filter(current => {
-                                            if (current.constraint[value] instanceof NodeList) {
-                                                const id = (<NodeList<T>> current.constraint[value]).list.map(item => item.id).join('-');
-                                                if (!mapId.has(id)) {
-                                                    mapId.add(id);
-                                                    return true;
-                                                }
+                                            const id = current.list.map(item => item.id).sort().join('-');
+                                            if (!mapId.has(id)) {
+                                                mapId.add(id);
+                                                return true;
                                             }
                                             return false;
                                         })
-                                        .forEach((current, level) => {
-                                            const chainable: NodeList<T> = current.constraint[value];
+                                        .forEach((chainable, level) => {
                                             if (chainable.length > (flex.enabled ? 0 : 1)) {
                                                 const inverse = index === 0 ? 1 : 0;
                                                 const [HV, VH] = [MAP_CHAIN['horizontalVertical'][index], MAP_CHAIN['horizontalVertical'][inverse]];
@@ -846,8 +848,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                             this.setAlignParent(chain, orientationInverse);
                                                         }
                                                         const rowNext = connected[level + 1];
-                                                        if (rowNext && rowNext.constraint[value] != null) {
-                                                            const chainNext = (<NodeList<T>> rowNext.constraint[value]).get(i);
+                                                        if (rowNext != null) {
+                                                            const chainNext = rowNext.get(i);
                                                             if (chainNext && chain.withinY(chainNext.linear)) {
                                                                 chain.anchor(mapLayout['bottomTop'], chainNext.stringId);
                                                                 if (!mapParent(chain, 'bottom')) {
@@ -1091,21 +1093,19 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                                 }
                                                             }
                                                         });
-                                                        for (const inner of chainable) {
-                                                            for (const outer of pageflow) {
-                                                                const horizontal = outer.constraint.horizontalChain;
-                                                                const vertical = outer.constraint.verticalChain;
-                                                                if (horizontal &&
-                                                                    horizontal.length > 0 &&
-                                                                    horizontal.locate('id', inner.id))
-                                                                {
-                                                                    horizontal.clear();
+                                                        for (const current of chainable) {
+                                                            if (index === 0) {
+                                                                for (const item of horizontal) {
+                                                                    if (item.locate('id', current.id)) {
+                                                                        item.clear();
+                                                                    }
                                                                 }
-                                                                if (vertical &&
-                                                                    vertical.length > 0 &&
-                                                                    vertical.locate('id', inner.id))
-                                                                {
-                                                                    vertical.clear();
+                                                            }
+                                                            else {
+                                                                for (const item of vertical) {
+                                                                    if (item.locate('id', current.id)) {
+                                                                        item.clear();
+                                                                    }
                                                                 }
                                                             }
                                                         }

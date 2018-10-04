@@ -203,7 +203,7 @@ reset() // clear cached layouts and reopen session
 
 saveAllToDisk() // download entire project as zip archive - requires http://localhost through Node and Express
 
-toString() // activity_main.xml
+toString() // main layout file contents
 
 configureExtension(name: string, options: {}) // see extension configuration section | same: ext(name: string, options: {})
 registerExtension(extension: androme.Extension) // see extension configuration section | same: ext(extension: object)
