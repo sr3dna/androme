@@ -38,6 +38,8 @@ function autoClose() {
 
 type T = View;
 
+let initialized = false;
+
 let Controller: ViewController<T>;
 let File: FileAndroid<T>;
 let Resource: ResourceAndroid<T>;
@@ -65,6 +67,7 @@ const appBase: AppFramework<T> = {
             [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER)
         };
         settings = Object.assign({}, Settings);
+        initialized = true;
         return {
             settings,
             Node: View,
@@ -74,7 +77,7 @@ const appBase: AppFramework<T> = {
         };
     },
     cached() {
-        if (Controller != null) {
+        if (initialized) {
             return {
                 settings,
                 Node: View,
@@ -87,65 +90,83 @@ const appBase: AppFramework<T> = {
     },
     system: {
         writeLayoutAllXml(saveToDisk = false) {
-            const main = Controller.application;
-            if (main.closed || autoClose()) {
-                return Resource.file.layoutAllToXml(main.viewData, saveToDisk);
+            if (initialized) {
+                const main = Controller.application;
+                if (main.closed || autoClose()) {
+                    return Resource.file.layoutAllToXml(main.viewData, saveToDisk);
+                }
             }
             return '';
         },
         writeResourceAllXml(saveToDisk = false) {
-            const main = Controller.application;
-            if (main.closed || autoClose()) {
-                return Resource.file.resourceAllToXml(saveToDisk);
+            if (initialized) {
+                const main = Controller.application;
+                if (main.closed || autoClose()) {
+                    return Resource.file.resourceAllToXml(saveToDisk);
+                }
             }
             return '';
         },
         writeResourceStringXml(saveToDisk = false) {
-            const main = Controller.application;
-            if (main.closed || autoClose()) {
-                return Resource.file.resourceStringToXml(saveToDisk);
+            if (initialized) {
+                const main = Controller.application;
+                if (main.closed || autoClose()) {
+                    return Resource.file.resourceStringToXml(saveToDisk);
+                }
             }
             return '';
         },
         writeResourceArrayXml(saveToDisk = false) {
-            const main = Controller.application;
-            if (main.closed || autoClose()) {
-                return Resource.file.resourceStringArrayToXml(saveToDisk);
+            if (initialized) {
+                const main = Controller.application;
+                if (main.closed || autoClose()) {
+                    return Resource.file.resourceStringArrayToXml(saveToDisk);
+                }
             }
             return '';
         },
         writeResourceFontXml(saveToDisk = false) {
-            const main = Controller.application;
-            if (main.closed || autoClose()) {
-                return Resource.file.resourceFontToXml(saveToDisk);
+            if (initialized) {
+                const main = Controller.application;
+                if (main.closed || autoClose()) {
+                    return Resource.file.resourceFontToXml(saveToDisk);
+                }
             }
             return '';
         },
         writeResourceColorXml(saveToDisk = false) {
-            const main = Controller.application;
-            if (main.closed || autoClose()) {
-                return Resource.file.resourceColorToXml(saveToDisk);
+            if (initialized) {
+                const main = Controller.application;
+                if (main.closed || autoClose()) {
+                    return Resource.file.resourceColorToXml(saveToDisk);
+                }
             }
             return '';
         },
         writeResourceStyleXml(saveToDisk = false) {
-            const main = Controller.application;
-            if (main.closed || autoClose()) {
-                return Resource.file.resourceStyleToXml(saveToDisk);
+            if (initialized) {
+                const main = Controller.application;
+                if (main.closed || autoClose()) {
+                    return Resource.file.resourceStyleToXml(saveToDisk);
+                }
             }
             return '';
         },
         writeResourceDimenXml(saveToDisk = false) {
-            const main = Controller.application;
-            if (main.closed || autoClose()) {
-                return Resource.file.resourceDimenToXml(saveToDisk);
+            if (initialized) {
+                const main = Controller.application;
+                if (main.closed || autoClose()) {
+                    return Resource.file.resourceDimenToXml(saveToDisk);
+                }
             }
             return '';
         },
         writeResourceDrawableXml(saveToDisk = false) {
-            const main = Controller.application;
-            if (main.closed || autoClose()) {
-                return Resource.file.resourceDrawableToXml(saveToDisk);
+            if (initialized) {
+                const main = Controller.application;
+                if (main.closed || autoClose()) {
+                    return Resource.file.resourceDrawableToXml(saveToDisk);
+                }
             }
             return '';
         },

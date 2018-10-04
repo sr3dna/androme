@@ -20,7 +20,11 @@ export function createPlaceholder(nextId: number, node: T, children: T[] = []) {
 }
 
 export function locateExtension(node: T, extension: string): Null<Element> {
-    return <Element> Array.from(node.element.children).find((element: Element) => includes(optional(element, 'dataset.ext'), extension));
+    return (
+        Array
+            .from(node.element.children)
+            .find((element: Element) => includes(optional(element, 'dataset.ext'), extension)) as Element
+    );
 }
 
 export function formatResource(options: {}, settings: ObjectMap<any> = {}) {

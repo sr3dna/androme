@@ -18,7 +18,10 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const thead = node.children.filter(item => item.tagName === 'THEAD');
         const tbody = node.children.filter(item => item.tagName === 'TBODY');
         const tfoot = node.children.filter(item => item.tagName === 'TFOOT');
-        const colgroup = Array.from(node.element.children).find(element => element.tagName === 'COLGROUP');
+        const colgroup =
+            Array
+                .from(node.element.children)
+                .find(element => element.tagName === 'COLGROUP');
         const tableWidth = node.css('width');
         let xml = '';
         if (thead.length > 0) {

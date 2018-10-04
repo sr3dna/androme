@@ -1093,19 +1093,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                                                                 }
                                                             }
                                                         });
-                                                        for (const current of chainable) {
-                                                            if (index === 0) {
-                                                                for (const item of horizontal) {
-                                                                    if (item.locate('id', current.id)) {
-                                                                        item.clear();
-                                                                    }
-                                                                }
-                                                            }
-                                                            else {
-                                                                for (const item of vertical) {
-                                                                    if (item.locate('id', current.id)) {
-                                                                        item.clear();
-                                                                    }
+                                                        for (const item of chainable) {
+                                                            for (const list of connected) {
+                                                                if (list.locate('id', item.id)) {
+                                                                    list.clear();
                                                                 }
                                                             }
                                                         }
@@ -2153,11 +2144,12 @@ export default class ViewController<T extends View> extends Controller<T> {
                             return sameXY;
                         }
                         else {
-                            let valid;
                             const chained: Set<T> = new Set([node]);
+                            let valid;
                             do {
                                 valid = false;
-                                Array.from(chained)
+                                Array
+                                    .from(chained)
                                     .some(item => {
                                         return sameXY.some(adjacent => {
                                             if (!chained.has(adjacent) && (adjacent.app(connected[0]) === item.stringId || adjacent.app(connected[1]) === item.stringId)) {

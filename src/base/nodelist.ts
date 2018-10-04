@@ -199,7 +199,8 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                     if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
                         const cleared =
                             NodeList.cleared(
-                                Array.from(parent.baseElement.children)
+                                Array
+                                    .from(parent.baseElement.children)
                                     .map(node => getNodeFromElement(node) as T)
                                     .filter(node => node)
                             );
@@ -250,7 +251,8 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
                     const cleared =
                         NodeList.cleared(
-                            Array.from(parent.baseElement.children)
+                            Array
+                                .from(parent.baseElement.children)
                                 .map(node => getNodeFromElement(node) as T)
                                 .filter(node => node)
                         );

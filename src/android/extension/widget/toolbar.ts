@@ -23,7 +23,8 @@ export default class Toolbar<T extends View> extends Extension<T> {
 
     public init(element: HTMLElement) {
         if (this.included(element)) {
-            Array.from(element.children)
+            Array
+                .from(element.children)
                 .some((item: HTMLElement) => {
                     if (item.tagName === 'NAV' && !includes(item.dataset.ext, EXT_NAME.EXTERNAL)) {
                         item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
@@ -60,7 +61,8 @@ export default class Toolbar<T extends View> extends Extension<T> {
         let xml = '';
         let depth = target ? 0 : node.depth;
         let children = node.children.filter(item => item.auto).length;
-        Array.from(node.element.children)
+        Array
+            .from(node.element.children)
             .forEach((element: HTMLElement) => {
                 if (element.tagName === 'IMG') {
                     if (hasValue(element.dataset.navigationIcon)) {

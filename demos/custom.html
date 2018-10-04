@@ -70,7 +70,6 @@
     <script src="common/prod.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            androme.addXmlNs('card_view', 'http://schemas.android.com/apk/res-auto');
             androme.ext('androme.custom', {
                 recyclerview_demo: {
                     android: {
@@ -89,6 +88,7 @@
                     }
                 }
             });
+            androme.system.addXmlNs('card_view', 'http://schemas.android.com/apk/res-auto');
             androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 

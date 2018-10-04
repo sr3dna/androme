@@ -12,7 +12,7 @@ import android from './android/main';
 type T = Node;
 
 let main: Application<T>;
-let settings: ObjectMap<any>;
+let settings: ObjectMap<any> = {};
 let system: FunctionMap;
 let framework = '';
 
@@ -31,7 +31,8 @@ function setStyleMap() {
                     for (const attr of Array.from(cssRule.style)) {
                         attrs.add(convertCamelCase(attr));
                     }
-                    Array.from(document.querySelectorAll(cssRule.selectorText))
+                    Array
+                        .from(document.querySelectorAll(cssRule.selectorText))
                         .forEach((element: HTMLElement) => {
                             for (const attr of Array.from(element.style)) {
                                 attrs.add(convertCamelCase(attr));
@@ -74,7 +75,8 @@ function setStyleMap() {
                                         case 'paddingRight':
                                         case 'paddingBottom':
                                         case 'paddingLeft':
-                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(cssStyle as string) || isPercent(cssStyle) ? cssStyle : convertPX(cssStyle, style.fontSize as string);
+                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(cssStyle as string) || isPercent(cssStyle) ? cssStyle
+                                                                                                                             : convertPX(cssStyle, style.fontSize as string);
                                             break;
                                         default:
                                             if (styleMap[attr] == null) {
@@ -110,8 +112,9 @@ function setStyleMap() {
                 }
                 catch (error) {
                     if (!warning) {
-                        alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). Either use a local web ' +
-                              'server (http://), embed your CSS files into a <style> tag, or use a different browser. See the README for further instructions.\n\n' +
+                        alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). ' +
+                              'Either use a local web server (http://), embed your CSS files into a <style> tag, or use a different browser. ' +
+                              'See the README for further instructions.\n\n' +
                               `${styleSheet.href}\n\n${error}`);
                         warning = true;
                     }
@@ -131,19 +134,30 @@ function setImageCache(element: HTMLImageElement) {
     }
 }
 
+function checkFramework() {
+    if (!main) {
+        setFramework('android');
+    }
+}
+
 export function setFramework(name: string, cached = false) {
     if (framework !== name) {
         switch (name) {
             case 'android':
                 const appBase = cached ? android.cached() : android.create();
+                if (main || Object.keys(settings).length === 0) {
+                    settings = appBase.settings;
+                }
+                else {
+                    settings = Object.assign(appBase.settings, settings);
+                }
+                system = android.system;
                 main = new Application();
-                main.settings = appBase.settings;
+                main.settings = settings;
                 main.builtInExtensions = appBase.builtInExtensions;
                 main.Node = appBase.Node;
                 main.registerController(appBase.Controller);
                 main.registerResource(appBase.Resource);
-                settings = appBase.settings;
-                system = android.system;
                 framework = name;
                 break;
         }
@@ -174,32 +188,32 @@ export function setFramework(name: string, cached = false) {
 }
 
 export function parseDocument(...elements: Null<string | HTMLElement>[]) {
+    checkFramework();
     if (main.closed) {
         return;
     }
+    let __THEN: () => void;
+    main.elements.clear();
     main.loading = false;
     setStyleMap();
-    main.elements.clear();
     if (main.appName === '' && elements.length === 0) {
         elements.push(document.body);
     }
-    let rootElement: Null<HTMLElement> = null;
     for (let element of elements) {
         if (typeof element === 'string') {
             element = document.getElementById(element);
         }
         if (element instanceof HTMLElement) {
-            if (rootElement == null) {
-                rootElement = element;
-            }
             main.elements.add(element);
         }
     }
-    let __THEN: () => void;
+    const rootElement = main.elements.values().next().value;
     function parseResume() {
         main.loading = false;
-        if (main.settings.preloadImages && rootElement != null) {
-            Array.from(rootElement.getElementsByClassName('androme.preload')).forEach(element => rootElement && rootElement.removeChild(element));
+        if (main.settings.preloadImages && rootElement) {
+            Array
+                .from(rootElement.getElementsByClassName('androme.preload'))
+                .forEach(element => rootElement.removeChild(element));
         }
         main.Resource.imageDimensions = cacheImage;
         for (const element of main.elements) {
@@ -228,7 +242,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
             __THEN.call(main);
         }
     }
-    if (main.settings.preloadImages && rootElement != null) {
+    if (main.settings.preloadImages && rootElement) {
         for (const image of cacheImage.values()) {
             if (image.width === 0 && image.height === 0 && image.url) {
                 const imageElement = <HTMLImageElement> document.createElement('IMG');
@@ -246,20 +260,23 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
         }
     }
     const images: HTMLImageElement[] =
-        Array.from(main.elements).map(element => {
-            const queue: HTMLImageElement[] = [];
-            Array.from(element.querySelectorAll('IMG'))
-                .forEach((image: HTMLImageElement) => {
-                    if (image.complete) {
-                        setImageCache(image);
-                    }
-                    else {
-                        queue.push(image);
-                    }
-                });
-            return queue;
-        })
-        .reduce((a, b) => a.concat(b), []);
+        Array
+            .from(main.elements)
+            .map(element => {
+                const queue: HTMLImageElement[] = [];
+                Array
+                    .from(element.querySelectorAll('IMG'))
+                    .forEach((image: HTMLImageElement) => {
+                        if (image.complete) {
+                            setImageCache(image);
+                        }
+                        else {
+                            queue.push(image);
+                        }
+                    });
+                return queue;
+            })
+            .reduce((a, b) => a.concat(b), []);
     if (images.length === 0) {
         parseResume();
     }
@@ -303,19 +320,22 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
 }
 
 export function registerExtension(ext: Extension<T>) {
+    checkFramework();
     if (ext instanceof Extension && isString(ext.name) && Array.isArray(ext.tagNames)) {
         main.registerExtension(ext);
     }
 }
 
 export function configureExtension(name: string, options: {}) {
+    checkFramework();
     const ext = main.getExtension(name);
-    if (ext != null && typeof options === 'object') {
+    if (ext && typeof options === 'object') {
         Object.assign(ext.options, options);
     }
 }
 
 export function getExtension(name: string) {
+    checkFramework();
     return main.getExtension(name);
 }
 
@@ -334,17 +354,18 @@ export function ext(name: any, options?: {}) {
 }
 
 export function ready() {
+    checkFramework();
     return !main.loading && !main.closed;
 }
 
 export function close() {
-    if (!main.loading && main.size > 0) {
+    if (main && !main.loading && main.size > 0) {
         main.finalize();
     }
 }
 
 export function reset() {
-    if (main != null) {
+    if (main) {
         for (const element of cacheRoot) {
             delete element.dataset.iteration;
             delete element.dataset.layoutName;
@@ -355,7 +376,7 @@ export function reset() {
 }
 
 export function saveAllToDisk() {
-    if (!main.loading && main.size > 0) {
+    if (main && !main.loading && main.size > 0) {
         if (!main.closed) {
             main.finalize();
         }
@@ -364,9 +385,7 @@ export function saveAllToDisk() {
 }
 
 export function toString() {
-    return main.toString();
+    return main ? main.toString() : '';
 }
-
-setFramework('android');
 
 export { settings, system, Extension };

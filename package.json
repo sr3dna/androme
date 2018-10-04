@@ -1,7 +1,7 @@
 {
   "name": "androme",
   "version": "1.10.1",
-  "description": "Converts and optimizes HTML pages with JavaScript into the various standard Android layouts in XML. Resources are also auto-generated. iOS possibly will be supported including a browser based UI designer.",
+  "description": "Converts and optimizes HTML pages with JavaScript into the various standard Android layouts in XML. iOS will be supported through Flutter integration. Compatible with Chrome and Safari.",
   "main": "dist/androme.min.js",
   "scripts": {
     "express": "node app.js",

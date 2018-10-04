@@ -22,7 +22,8 @@ export default class Drawer<T extends View> extends Extension<T> {
 
     public init(element: HTMLElement) {
         if (this.included(element) && element.children.length > 0) {
-            Array.from(element.children)
+            Array
+                .from(element.children)
                 .forEach((item: HTMLElement) => {
                     if (item.tagName === 'NAV' && !includes(item.dataset.ext, EXT_NAME.EXTERNAL)) {
                         item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;

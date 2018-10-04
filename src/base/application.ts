@@ -145,7 +145,9 @@ export default class Application<T extends Node> implements AppBase<T> {
     public createNodeCache(rootElement: HTMLElement) {
         let nodeTotal = 0;
         if (rootElement === document.body) {
-            Array.from(document.body.childNodes).some((item: Element) => isElementVisible(item) && ++nodeTotal > 1);
+            Array
+                .from(document.body.childNodes)
+                .some((item: Element) => isElementVisible(item) && ++nodeTotal > 1);
         }
         const elements = rootElement !== document.body ? rootElement.querySelectorAll('*')
                                                        : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
@@ -200,7 +202,8 @@ export default class Application<T extends Node> implements AppBase<T> {
             for (const node of this.cache) {
                 const nodes: Element[] = [];
                 let valid = false;
-                Array.from(node.element.childNodes)
+                Array
+                    .from(node.element.childNodes)
                     .forEach((element: Element) => {
                         if (element.nodeName === '#text') {
                             if (node.tagName !== 'SELECT') {
@@ -312,7 +315,8 @@ export default class Application<T extends Node> implements AppBase<T> {
             }
             for (const node of this.cache.elements) {
                 let i = 0;
-                Array.from(node.element.childNodes)
+                Array
+                    .from(node.element.childNodes)
                     .forEach((element: Element) => {
                         const item = getNodeFromElement(element);
                         if (item && !item.excluded && item.pageflow) {

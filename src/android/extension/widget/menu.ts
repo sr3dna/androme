@@ -88,7 +88,8 @@ export default class Menu<T extends View> extends Nav<T> {
                     title = element.title.trim();
                 }
                 else {
-                    Array.from(node.element.childNodes)
+                    Array
+                        .from(node.element.childNodes)
                         .some((item: HTMLElement) => {
                             if (item.nodeName === '#text') {
                                 title = optional(item, 'textContent').trim();
@@ -199,7 +200,10 @@ export default class Menu<T extends View> extends Nav<T> {
                 const match = value.match(validator[attr]);
                 if (match) {
                     const namespace = (this.options.appCompat == null || this.options.appCompat) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
-                    options[namespace][attr] = Array.from(new Set(match)).join('|');
+                    options[namespace][attr] =
+                        Array
+                            .from(new Set(match))
+                            .join('|');
                 }
             }
         }

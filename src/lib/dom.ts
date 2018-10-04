@@ -352,7 +352,8 @@ export function isElementVisible(element: Element) {
                     if (valid) {
                         if (element.children.length > 0) {
                             return (
-                                Array.from(element.children)
+                                Array
+                                    .from(element.children)
                                     .some((item: Element) => {
                                         const style = getStyle(item);
                                         const float = style.cssFloat;

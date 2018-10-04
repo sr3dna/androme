@@ -100,6 +100,7 @@
     <script>
         System.import('/build/main.js').then(function(result) {
             androme = result;
+            androme.setFramework('android');
             androme.system.customize(androme.settings.targetAPI, 'Button', {
                 android: {
                     minWidth: '35px',

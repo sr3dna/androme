@@ -14,7 +14,10 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
             let valid = false;
             if (element.children.length > 0) {
                 const tagName = element.children[0].tagName;
-                valid = Array.from(element.children).every(item => item.tagName === tagName);
+                valid =
+                    Array
+                        .from(element.children)
+                        .every(item => item.tagName === tagName);
                 let current = element.parentElement;
                 while (current != null) {
                     if (current.tagName === 'NAV' && this.application.elements.has(current)) {
@@ -25,7 +28,8 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
                 }
             }
             if (valid) {
-                Array.from(element.querySelectorAll('NAV'))
+                Array
+                    .from(element.querySelectorAll('NAV'))
                     .forEach((item: HTMLElement) => {
                         const style = getStyle(element);
                         if (style.display === 'none') {
@@ -42,7 +46,8 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
     public afterRender() {
         const node = this.node;
         if (this.included(node.element)) {
-            Array.from(node.element.querySelectorAll('NAV'))
+            Array
+                .from(node.element.querySelectorAll('NAV'))
                 .forEach((item: HTMLElement) => {
                     const display = getElementCache(item, 'andromeExternalDisplay');
                     if (display) {

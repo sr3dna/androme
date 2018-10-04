@@ -44,6 +44,7 @@ GitHub
 
     document.addEventListener('DOMContentLoaded', function() {
         // optional: default 'android'
+        // required: before any calls to "system" methods
         androme.setFramework('android');
 
         // required: zero or more

@@ -1303,8 +1303,15 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                             style[tag][attrs] = filtered[attrs];
                         }
                         for (const index in combined) {
-                            const attrs = Array.from(combined[index]).sort().join(';');
-                            const ids = index.split(',').map(value => parseInt(value));
+                            const attrs =
+                                Array
+                                    .from(combined[index])
+                                    .sort()
+                                    .join(';');
+                            const ids =
+                                index
+                                    .split(',')
+                                    .map(value => parseInt(value));
                             this.deleteStyleAttribute(sorted, attrs, ids);
                             style[tag][attrs] = ids;
                         }

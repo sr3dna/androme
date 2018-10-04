@@ -129,6 +129,7 @@
     <script src="common/prod.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+            androme.setFramework('android');
             androme.system.customize(androme.settings.targetAPI, 'Button', {
                 android: {
                     minWidth: '35px',
