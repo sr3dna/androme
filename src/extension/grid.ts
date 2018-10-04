@@ -96,7 +96,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                         for (let m = 0; m < columns.length; m++) {
                             if (columns[m].length > base.length) {
                                 const removed = columns[m].splice(assigned[m] + (every ? 2 : 1), columns[m].length - base.length);
-                                columns[m][assigned[m] + (every ? 1 : 0)].data(EXT_NAME.GRID, 'gridSiblings', [...removed]);
+                                columns[m][assigned[m] + (every ? 1 : 0)].data(EXT_NAME.GRID, 'siblings', [...removed]);
                             }
                         }
                     }
@@ -107,7 +107,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                             for (let m = 0; m < columns.length; m++) {
                                 if (found[m] > minIndex) {
                                     const removed = columns[m].splice(minIndex, found[m] - minIndex);
-                                    columns[m][assigned[m] + (every ? 1 : 0)].data(EXT_NAME.GRID, 'gridSiblings', [...removed]);
+                                    columns[m][assigned[m] + (every ? 1 : 0)].data(EXT_NAME.GRID, 'siblings', [...removed]);
                                 }
                             }
                         }
@@ -311,13 +311,13 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     public processChild(): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;
-        const mainData = <GridData> parent.data(EXT_NAME.GRID, 'mainData');
-        const cellData = <GridCellData> node.data(EXT_NAME.GRID, 'cellData');
+        const mainData: GridData = parent.data(EXT_NAME.GRID, 'mainData');
+        const cellData: GridCellData = node.data(EXT_NAME.GRID, 'cellData');
         let xml = '';
         if (mainData && cellData) {
             let siblings: T[];
             if (this.options.columnBalance) {
-                siblings = node.data(EXT_NAME.GRID, 'gridSiblings') as T[];
+                siblings = node.data(EXT_NAME.GRID, 'siblings');
             }
             else {
                 const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];

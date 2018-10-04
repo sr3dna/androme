@@ -61,3 +61,9 @@ export interface GridCellData extends Inheritable {
     rowEnd: boolean;
     rowStart: boolean;
 }
+
+export type ListData = {
+    ordinal: string;
+    imageSrc: string;
+    imagePosition: string;
+};

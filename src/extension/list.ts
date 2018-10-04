@@ -1,4 +1,4 @@
-import { ExtensionResult } from './lib/types';
+import { ExtensionResult, ListData } from './lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import Extension from '../base/extension';
@@ -39,61 +39,66 @@ export default abstract class List<T extends Node> extends Extension<T> {
         }
         let i = 0;
         node.each((item: T) => {
-            let ordinal: any = '0';
+            const mainData: ListData = {
+                ordinal: '',
+                imageSrc: '',
+                imagePosition: ''
+            };
             if (item.display === 'list-item' || item.has('listStyleType') || this.hasSingleImage(item)) {
-                let image = item.css('listStyleImage');
-                if (image && image !== 'none') {
-                    ordinal = { image, position: '' };
+                let src = item.css('listStyleImage');
+                if (src && src !== 'none') {
+                    mainData.imageSrc = src;
                 }
                 else {
                     switch (item.css('listStyleType')) {
                         case 'disc':
-                            ordinal = '●';
+                            mainData.ordinal = '●';
                             break;
                         case 'square':
-                            ordinal = '■';
+                            mainData.ordinal = '■';
                             break;
                         case 'decimal':
-                            ordinal = `${(i + 1).toString()}.`;
+                            mainData.ordinal = `${(i + 1).toString()}.`;
                             break;
                         case 'decimal-leading-zero':
-                            ordinal = `${(i < 9 ? '0' : '') + (i + 1).toString()}.`;
+                            mainData.ordinal = `${(i < 9 ? '0' : '') + (i + 1).toString()}.`;
                             break;
                         case 'lower-alpha':
                         case 'lower-latin':
-                            ordinal = `${convertAlpha(i).toLowerCase()}.`;
+                            mainData.ordinal = `${convertAlpha(i).toLowerCase()}.`;
                             break;
                         case 'upper-alpha':
                         case 'upper-latin':
-                            ordinal = `${convertAlpha(i)}.`;
+                            mainData.ordinal = `${convertAlpha(i)}.`;
                             break;
                         case 'lower-roman':
-                            ordinal = `${convertRoman(i + 1).toLowerCase()}.`;
+                            mainData.ordinal = `${convertRoman(i + 1).toLowerCase()}.`;
                             break;
                         case 'upper-roman':
-                            ordinal = `${convertRoman(i + 1)}.`;
+                            mainData.ordinal = `${convertRoman(i + 1)}.`;
                             break;
                         case 'none':
-                            image = '';
+                            src = '';
                             let position = '';
                             const repeat = item.css('backgroundRepeat');
                             if (repeat === 'no-repeat') {
-                                image = item.css('backgroundImage');
+                                src = item.css('backgroundImage');
                                 position = item.css('backgroundPosition');
                             }
-                            if (image && image !== 'none') {
-                                ordinal = { image, position };
+                            if (src && src !== 'none') {
+                                mainData.imageSrc = src;
+                                mainData.imagePosition = position;
                                 item.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
                             }
                             break;
                         default:
-                            ordinal = '○';
+                            mainData.ordinal = '○';
                             break;
                     }
                 }
                 i++;
             }
-            item.data(EXT_NAME.LIST, 'listStyleType', ordinal);
+            item.data(EXT_NAME.LIST, 'mainData', mainData);
         });
         return { xml, complete: true };
     }

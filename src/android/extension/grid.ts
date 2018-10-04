@@ -14,7 +14,7 @@ export default class GridAndroid<T extends View> extends Grid<T> {
 
     public processChild(): ExtensionResult {
         const node = this.node;
-        const data = <GridCellData> node.data(EXT_NAME.GRID, 'cellData');
+        const data: GridCellData = node.data(EXT_NAME.GRID, 'cellData');
         if (data) {
             if (data.rowSpan > 1) {
                 node.app('layout_rowSpan', data.rowSpan.toString());
@@ -32,10 +32,10 @@ export default class GridAndroid<T extends View> extends Grid<T> {
     public afterRender() {
         for (const node of this.subscribers) {
             if (!(node.display === 'table' && node.css('borderCollapse') === 'collapse')) {
-                const mainData = <GridData> node.data(EXT_NAME.GRID, 'mainData');
+                const mainData: GridData = node.data(EXT_NAME.GRID, 'mainData');
                 if (mainData) {
                     node.each(item => {
-                        const cellData = <GridCellData> item.data(EXT_NAME.GRID, 'cellData');
+                        const cellData: GridCellData = item.data(EXT_NAME.GRID, 'cellData');
                         if (cellData) {
                             const dimensions = getBoxSpacing(item.documentParent.element, true);
                             const padding = mainData.padding;
@@ -74,7 +74,7 @@ export default class GridAndroid<T extends View> extends Grid<T> {
             }
         }
         for (const node of this.subscribers) {
-            const data = <GridData> node.data(EXT_NAME.GRID, 'mainData');
+            const data: GridData = node.data(EXT_NAME.GRID, 'mainData');
             if (data) {
                 node.modifyBox(BOX_STANDARD.PADDING_TOP, data.padding.top);
                 node.modifyBox(BOX_STANDARD.PADDING_RIGHT, data.padding.right);

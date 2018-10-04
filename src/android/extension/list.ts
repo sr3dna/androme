@@ -1,4 +1,4 @@
-import { ExtensionResult } from '../../extension/lib/types';
+import { ExtensionResult, ListData } from '../../extension/lib/types';
 import ResourceAndroid from '../resource';
 import List from '../../extension/list';
 import View from '../view';
@@ -14,169 +14,169 @@ export default class ListAndroid<T extends View> extends List<T> {
     }
 
     public processChild(): ExtensionResult {
-        const controller = this.application.Controller;
         const node = this.node;
-        const parent = this.parent as T;
-        const listStyle = this.node.data(EXT_NAME.LIST, 'listStyleType') || '0';
-        const parentLeft = convertInt(parent.css('paddingLeft')) + convertInt(parent.cssInitial('marginLeft', true));
-        let columnCount = 0;
-        let paddingLeft = node.marginLeft;
-        node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
-        if (parent.is(NODE_STANDARD.GRID)) {
-            columnCount = convertInt(parent.app('columnCount'));
-            paddingLeft += parentLeft;
-        }
-        else if (parent.children[0] === node) {
-            paddingLeft += parentLeft;
-        }
-        const ordinal =
-            node.children.find(item =>
-                item.float === 'left' &&
-                convertInt(item.cssInitial('marginLeft', true)) < 0 &&
-                Math.abs(convertInt(item.cssInitial('marginLeft', true))) <= convertInt(item.documentParent.cssInitial('marginLeft', true))
-            ) as T;
-        if (ordinal && listStyle === '0') {
-            let xml = '';
-            ordinal.parent = parent;
-            if (ordinal.inlineText || ordinal.children.length === 0) {
-                xml = controller.renderNode(ordinal, parent, NODE_STANDARD.TEXT);
+        const mainData: ListData = node.data(EXT_NAME.LIST, 'mainData');
+        if (mainData != null) {
+            const parent = this.parent as T;
+            const controller = this.application.Controller;
+            const parentLeft = convertInt(parent.css('paddingLeft')) + convertInt(parent.cssInitial('marginLeft', true));
+            let columnCount = 0;
+            let paddingLeft = node.marginLeft;
+            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
+            if (parent.is(NODE_STANDARD.GRID)) {
+                columnCount = convertInt(parent.app('columnCount'));
+                paddingLeft += parentLeft;
             }
-            else if (ordinal.children.every(item => item.pageflow)) {
-                xml = controller.renderGroup(ordinal, parent, NODE_STANDARD.RELATIVE);
+            else if (parent.children[0] === node) {
+                paddingLeft += parentLeft;
             }
-            else {
-                xml = controller.renderGroup(ordinal, parent, NODE_STANDARD.CONSTRAINT);
-            }
-            controller.prependBefore(node.id, xml);
-            if (columnCount === 3) {
-                node.app('layout_columnSpan', '2');
-            }
-            paddingLeft += ordinal.marginLeft;
-            ordinal.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
-            if (!ordinal.hasWidth && paddingLeft > 0) {
-                ordinal.android('minWidth', formatPX(paddingLeft));
-            }
-        }
-        else {
-            const settings = this.application.settings;
-            const columnWeight = columnCount > 0 ? '0' : '';
-            const positionInside = node.css('listStylePosition') === 'inside';
-            const listStyleImage = !['', 'none'].includes(node.css('listStyleImage'));
-            let image = '';
-            let [left, top] = [0, 0];
-            if (typeof listStyle === 'object') {
-                image = ResourceAndroid.addImageURL(listStyle.image);
-                [left, top] = ResourceAndroid.parseBackgroundPosition(listStyle.position, node.css('fontSize')).map(value => convertInt(value));
-            }
-            const gravity = (image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right';
-            if (gravity === '') {
-                paddingLeft += node.paddingLeft;
-                node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
-            }
-            if (left > 0 && paddingLeft > left) {
-                paddingLeft -= left;
-            }
-            paddingLeft = Math.max(paddingLeft, 20);
-            const minWidth = paddingLeft > 0 ? delimitDimens(node.nodeName, parseRTL('min_width', settings), formatPX(paddingLeft), settings) : '';
-            const paddingRight = (() => {
-                if (paddingLeft <= 24) {
-                    return 6;
+            const ordinal =
+                node.children.find(item =>
+                    item.float === 'left' &&
+                    convertInt(item.cssInitial('marginLeft', true)) < 0 &&
+                    Math.abs(convertInt(item.cssInitial('marginLeft', true))) <= convertInt(item.documentParent.cssInitial('marginLeft', true))
+                ) as T;
+            if (ordinal && mainData.ordinal === '') {
+                let xml = '';
+                ordinal.parent = parent;
+                if (ordinal.inlineText || ordinal.children.length === 0) {
+                    xml = controller.renderNode(ordinal, parent, NODE_STANDARD.TEXT);
                 }
-                else if (paddingLeft <= 32) {
-                    return 8;
+                else if (ordinal.children.every(item => item.pageflow)) {
+                    xml = controller.renderGroup(ordinal, parent, NODE_STANDARD.RELATIVE);
                 }
                 else {
-                    return 10;
+                    xml = controller.renderGroup(ordinal, parent, NODE_STANDARD.CONSTRAINT);
                 }
-            })();
-            let marginLeftValue = left > 0 ? formatPX(left) : '';
-            const paddingLeftValue = gravity === '' && image === '' ? formatPX(paddingRight) : '';
-            const paddingRightValue = gravity === 'right' && paddingLeft > 20 ? formatPX(paddingRight) : '';
-            const options = {
-                android: {},
-                app: {
-                    layout_columnWeight: columnWeight
-                }
-            };
-            if (positionInside) {
-                if (marginLeftValue !== '') {
-                    marginLeftValue = delimitDimens(node.nodeName, parseRTL('margin_left', settings), marginLeftValue, this.application.settings);
-                }
-                controller.prependBefore(
-                    node.id,
-                    controller.renderNodeStatic(
-                        NODE_STANDARD.SPACE,
-                        parent.renderDepth + 1,
-                        {
-                            android: {
-                                minWidth,
-                                [parseRTL('layout_marginLeft', settings)]: marginLeftValue
-                            },
-                            app: { layout_columnWeight: columnWeight }
-                        },
-                        'wrap_content',
-                        'wrap_content'
-                    )
-                );
-                Object.assign(options.android, {
-                    minWidth: delimitDimens(node.nodeName, parseRTL('min_width', settings), formatPX(24), this.application.settings)
-                });
-            }
-            else {
-                Object.assign(options.android, {
-                    minWidth,
-                    gravity: paddingLeft > 20 ? parseRTL(gravity, settings) : '',
-                    [parseRTL('layout_marginLeft', settings)]: marginLeftValue,
-                    [parseRTL('paddingLeft', settings)]: paddingLeftValue,
-                    [parseRTL('paddingRight', settings)]: paddingRightValue
-                });
+                controller.prependBefore(node.id, xml);
                 if (columnCount === 3) {
                     node.app('layout_columnSpan', '2');
                 }
-            }
-            if (node.tagName === 'DT' && image === '') {
-                node.app('layout_columnSpan', columnCount.toString());
+                paddingLeft += ordinal.marginLeft;
+                ordinal.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
+                if (!ordinal.hasWidth && paddingLeft > 0) {
+                    ordinal.android('minWidth', formatPX(paddingLeft));
+                }
             }
             else {
-                if (image !== '') {
+                const settings = this.application.settings;
+                const columnWeight = columnCount > 0 ? '0' : '';
+                const positionInside = node.css('listStylePosition') === 'inside';
+                const listStyleImage = !['', 'none'].includes(node.css('listStyleImage'));
+                let image = '';
+                let [left, top] = [0, 0];
+                if (mainData.imageSrc !== '') {
+                    image = ResourceAndroid.addImageURL(mainData.imageSrc);
+                    [left, top] = ResourceAndroid.parseBackgroundPosition(mainData.imagePosition, node.css('fontSize')).map(value => convertInt(value));
+                }
+                const gravity = (image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right';
+                if (gravity === '') {
+                    paddingLeft += node.paddingLeft;
+                    node.modifyBox(BOX_STANDARD.PADDING_LEFT, null);
+                }
+                if (left > 0 && paddingLeft > left) {
+                    paddingLeft -= left;
+                }
+                paddingLeft = Math.max(paddingLeft, 20);
+                const minWidth = paddingLeft > 0 ? delimitDimens(node.nodeName, parseRTL('min_width', settings), formatPX(paddingLeft), settings) : '';
+                const paddingRight = (() => {
+                    if (paddingLeft <= 24) {
+                        return 6;
+                    }
+                    else if (paddingLeft <= 32) {
+                        return 8;
+                    }
+                    else {
+                        return 10;
+                    }
+                })();
+                let marginLeftValue = left > 0 ? formatPX(left) : '';
+                const paddingLeftValue = gravity === '' && image === '' ? formatPX(paddingRight) : '';
+                const paddingRightValue = gravity === 'right' && paddingLeft > 20 ? formatPX(paddingRight) : '';
+                const options = {
+                    android: {},
+                    app: {
+                        layout_columnWeight: columnWeight
+                    }
+                };
+                if (positionInside) {
+                    if (marginLeftValue !== '') {
+                        marginLeftValue = delimitDimens(node.nodeName, parseRTL('margin_left', settings), marginLeftValue, this.application.settings);
+                    }
+                    controller.prependBefore(
+                        node.id,
+                        controller.renderNodeStatic(
+                            NODE_STANDARD.SPACE,
+                            parent.renderDepth + 1,
+                            {
+                                android: {
+                                    minWidth,
+                                    [parseRTL('layout_marginLeft', settings)]: marginLeftValue
+                                },
+                                app: { layout_columnWeight: columnWeight }
+                            },
+                            'wrap_content',
+                            'wrap_content'
+                        )
+                    );
                     Object.assign(options.android, {
-                        src: `@drawable/${image}`,
-                        layout_marginTop: top > 0 ? formatPX(top) : '',
-                        baselineAlignBottom: 'true',
-                        scaleType: !positionInside && gravity === 'right' ? 'fitEnd' : 'fitStart'
+                        minWidth: delimitDimens(node.nodeName, parseRTL('min_width', settings), formatPX(24), this.application.settings)
                     });
                 }
                 else {
                     Object.assign(options.android, {
-                        text: listStyle !== '0' ? listStyle : ''
+                        minWidth,
+                        gravity: paddingLeft > 20 ? parseRTL(gravity, settings) : '',
+                        [parseRTL('layout_marginLeft', settings)]: marginLeftValue,
+                        [parseRTL('paddingLeft', settings)]: paddingLeftValue,
+                        [parseRTL('paddingRight', settings)]: paddingRightValue
                     });
+                    if (columnCount === 3) {
+                        node.app('layout_columnSpan', '2');
+                    }
                 }
-                const companion = new View(this.application.cache.nextId, node.api, document.createElement('SPAN')) as T;
-                companion.alignmentType = NODE_ALIGNMENT.SPACE;
-                companion.nodeName = `${node.tagName}_ORDINAL`;
-                companion.setNodeType(NODE_ANDROID.SPACE);
-                companion.inherit(node, 'style');
-                if (listStyle !== '0' && !/[A-Za-z0-9]+\./.test(listStyle) && companion.toInt('fontSize') > 12) {
-                    companion.css('fontSize', '12px');
+                if (node.tagName === 'DT' && image === '') {
+                    node.app('layout_columnSpan', columnCount.toString());
                 }
-                node.companion = companion;
-                this.application.cache.append(companion);
-                controller.prependBefore(
-                    node.id,
-                    controller.renderNodeStatic(
-                        image !== '' ? NODE_STANDARD.IMAGE
-                                     : listStyle !== '0' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE,
-                        parent.renderDepth + 1,
-                        options,
-                        'wrap_content',
-                        'wrap_content',
-                        companion
-                    )
-                );
+                else {
+                    if (image !== '') {
+                        Object.assign(options.android, {
+                            src: `@drawable/${image}`,
+                            layout_marginTop: top > 0 ? formatPX(top) : '',
+                            baselineAlignBottom: 'true',
+                            scaleType: !positionInside && gravity === 'right' ? 'fitEnd' : 'fitStart'
+                        });
+                    }
+                    else {
+                        Object.assign(options.android, { text: mainData.ordinal });
+                    }
+                    const companion = new View(this.application.cache.nextId, node.api, document.createElement('SPAN')) as T;
+                    companion.alignmentType = NODE_ALIGNMENT.SPACE;
+                    companion.nodeName = `${node.tagName}_ORDINAL`;
+                    companion.setNodeType(NODE_ANDROID.SPACE);
+                    companion.inherit(node, 'style');
+                    if (mainData.ordinal !== '' && !/[A-Za-z0-9]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
+                        companion.css('fontSize', '12px');
+                    }
+                    node.companion = companion;
+                    this.application.cache.append(companion);
+                    controller.prependBefore(
+                        node.id,
+                        controller.renderNodeStatic(
+                            image !== '' ? NODE_STANDARD.IMAGE
+                                         : mainData.ordinal !== '' ? NODE_STANDARD.TEXT : NODE_STANDARD.SPACE,
+                            parent.renderDepth + 1,
+                            options,
+                            'wrap_content',
+                            'wrap_content',
+                            companion
+                        )
+                    );
+                }
             }
-        }
-        if (columnCount > 0) {
-            node.app('layout_columnWeight', '1');
+            if (columnCount > 0) {
+                node.app('layout_columnWeight', '1');
+            }
         }
         return { xml: '', complete: true };
     }
