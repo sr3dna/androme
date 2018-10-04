@@ -1,7 +1,7 @@
 import Node from './node';
 import { convertInt, partition, sortAsc, sortDesc } from '../lib/util';
-import { NODE_STANDARD } from '../lib/constants';
 import { getNodeFromElement } from '../lib/dom';
+import { NODE_STANDARD } from './lib/constants';
 
 export type FindPredicate<T> = (value: T, index?: number) => boolean;
 

@@ -4,12 +4,13 @@ import Grid from '../../extension/grid';
 import View from '../view';
 import { formatPX } from '../../lib/util';
 import { getBoxSpacing } from '../../lib/dom';
-import { BOX_STANDARD, NODE_STANDARD } from '../../lib/constants';
+import { NODE_STANDARD } from '../../base/lib/constants';
+import { BOX_STANDARD } from '../../lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 
 export default class GridAndroid<T extends View> extends Grid<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public processChild(): ExtensionResult {

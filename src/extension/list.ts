@@ -3,12 +3,13 @@ import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import Extension from '../base/extension';
 import { convertAlpha, convertRoman } from '../lib/util';
+import { NODE_RESOURCE } from '../base/lib/constants';
+import { BOX_STANDARD } from '../lib/constants';
 import { EXT_NAME } from './lib/constants';
-import { BOX_STANDARD, NODE_RESOURCE } from '../lib/constants';
 
 export default abstract class List<T extends Node> extends Extension<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public condition() {

@@ -8,6 +8,7 @@ import ResourceAndroid from './resource';
 import FileAndroid from './file';
 import Settings from './settings';
 import API_ANDROID from './customizations';
+import { APP_FRAMEWORK } from '../base/lib/constants';
 import { XMLNS_ANDROID } from './constants';
 
 import { EXT_NAME } from '../extension/lib/constants';
@@ -52,19 +53,19 @@ const appBase: AppFramework<T> = {
         File = new FileAndroid<T>(Settings);
         Resource = new ResourceAndroid<T>(File);
         builtInExtensions = {
-            [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL),
-            [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN),
-            [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM),
-            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY),
-            [EXT_NAME.LIST]: new List(EXT_NAME.LIST, ['UL', 'OL', 'DL', 'DIV']),
-            [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, ['TABLE']),
-            [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
-            [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, ['BUTTON', 'INPUT', 'IMG']),
-            [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, ['NAV']),
-            [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR),
-            [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR),
-            [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION),
-            [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER)
+            [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, APP_FRAMEWORK.ANDROID),
+            [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, APP_FRAMEWORK.ANDROID),
+            [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, APP_FRAMEWORK.ANDROID),
+            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, APP_FRAMEWORK.ANDROID),
+            [EXT_NAME.LIST]: new List(EXT_NAME.LIST, APP_FRAMEWORK.ANDROID, ['UL', 'OL', 'DL', 'DIV']),
+            [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, APP_FRAMEWORK.ANDROID, ['TABLE']),
+            [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, APP_FRAMEWORK.ANDROID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
+            [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, APP_FRAMEWORK.ANDROID, ['BUTTON', 'INPUT', 'IMG']),
+            [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, APP_FRAMEWORK.ANDROID, ['NAV']),
+            [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR, APP_FRAMEWORK.ANDROID),
+            [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR, APP_FRAMEWORK.ANDROID),
+            [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, APP_FRAMEWORK.ANDROID),
+            [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER, APP_FRAMEWORK.ANDROID)
         };
         settings = Object.assign({}, Settings);
         initialized = true;

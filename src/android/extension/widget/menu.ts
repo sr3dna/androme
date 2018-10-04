@@ -1,10 +1,10 @@
 import { ObjectMap, StringMap } from '../../../lib/types';
 import { ExtensionResult } from '../../../extension/lib/types';
 import Nav from '../../../extension/nav';
-import ResourceAndroid from '../../resource';
 import View from '../../view';
+import ResourceAndroid from '../../resource';
 import { optional } from '../../../lib/util';
-import { NODE_RESOURCE, NODE_STANDARD, NODE_PROCEDURE } from '../../../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD, NODE_PROCEDURE } from '../../../base/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 
 const VALIDATE_ITEM = {
@@ -40,8 +40,8 @@ const VALIDATE_GROUP = {
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
 export default class Menu<T extends View> extends Nav<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public condition() {

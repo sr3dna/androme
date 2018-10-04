@@ -3,12 +3,12 @@ import Extension from '../../../base/extension';
 import View from '../../view';
 import { locateExtension } from '../lib/util';
 import { getNodeFromElement } from '../../../lib/dom';
-import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD } from '../../../base/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 export default class Coordinator<T extends View> extends Extension<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public processNode(): ExtensionResult {

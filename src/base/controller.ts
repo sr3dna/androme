@@ -1,4 +1,4 @@
-import { AppCurrent, ControllerSettings, ViewData } from '../base/lib/types';
+import { AppCurrent, ControllerSettings, ViewData } from './lib/types';
 import { ObjectIndex, ObjectMap } from '../lib/types';
 import Application from './application';
 import Node from './node';

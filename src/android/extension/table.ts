@@ -3,12 +3,12 @@ import { ExtensionResult } from '../../extension/lib/types';
 import Table from '../../extension/table';
 import View from '../view';
 import { convertFloat, convertInt, formatPX, trimEnd } from '../../lib/util';
-import { NODE_STANDARD } from '../../lib/constants';
+import { NODE_STANDARD } from '../../base/lib/constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 
 export default class TableAndroid<T extends View> extends Table<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public processNode(): ExtensionResult {

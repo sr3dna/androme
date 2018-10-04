@@ -5,15 +5,15 @@ import { hasValue, includes, optional } from '../../../lib/util';
 import { parseRTL } from '../../lib/util';
 import { locateExtension, overwriteDefault } from '../lib/util';
 import { getNodeFromElement } from '../../../lib/dom';
-import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD } from '../../../base/lib/constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
 export default class Drawer<T extends View> extends Extension<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
         this.documentRoot = true;
         this.require(EXT_NAME.EXTERNAL, true);
         this.require(WIDGET_NAME.MENU);

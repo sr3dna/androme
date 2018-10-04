@@ -7,7 +7,8 @@ import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatP
 import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
 import { getElementsBetweenSiblings, getNodeFromElement } from '../lib/dom';
 import API_ANDROID from './customizations';
-import { BOX_STANDARD, CSS_STANDARD, MAP_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../base/lib/constants';
+import { BOX_STANDARD, CSS_STANDARD, MAP_ELEMENT } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './constants';
 
 export default (Base: Constructor<Node>) => {

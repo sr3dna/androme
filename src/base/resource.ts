@@ -1,14 +1,14 @@
-import { AppCurrent, ViewData } from '../base/lib/types';
+import { AppCurrent, ViewData } from './lib/types';
 import { BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap } from '../lib/types';
-import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
+import Application from './application';
 import File from './file';
 import { convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
 import { replaceEntity } from '../lib/xml';
 import { cssFromParent, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
 import { parseRGBA } from '../lib/color';
-import { NODE_RESOURCE } from '../lib/constants';
+import { NODE_RESOURCE } from './lib/constants';
 
 export default abstract class Resource<T extends Node> implements AppCurrent<T> {
     public static STORED: ResourceMap = {

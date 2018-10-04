@@ -1,7 +1,7 @@
 import Node from './node';
 import NodeList from './nodelist';
 import { assignBounds, getNodeFromElement } from '../lib/dom';
-import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/constants';
+import { NODE_ALIGNMENT, NODE_STANDARD } from './lib/constants';
 
 export default abstract class NodeGroup<T extends Node> extends Node {
     constructor(

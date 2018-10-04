@@ -2,12 +2,12 @@ import Accessibility from '../../extension/accessibility';
 import View from '../view';
 import { hasValue } from '../../lib/util';
 import { getNodeFromElement } from '../../lib/dom';
-import { NODE_PROCEDURE } from '../../lib/constants';
+import { NODE_PROCEDURE } from '../../base/lib/constants';
 import { NODE_ANDROID } from '../constants';
 
 export default class AccessibilityAndroid<T extends View> extends Accessibility<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public afterRender() {

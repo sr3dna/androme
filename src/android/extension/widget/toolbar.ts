@@ -1,14 +1,14 @@
 import { Null } from '../../../lib/types';
 import { ExtensionResult } from '../../../extension/lib/types';
 import Extension from '../../../base/extension';
-import ResourceAndroid from '../../resource';
 import View from '../../view';
+import ResourceAndroid from '../../resource';
 import { formatPX, hasValue, includes, optional } from '../../../lib/util';
-import { createPlaceholder, locateExtension, overwriteDefault } from '../lib/util';
 import { delimitDimens, stripId } from '../../lib/util';
+import { createPlaceholder, locateExtension, overwriteDefault } from '../lib/util';
 import { getNodeFromElement, getStyle } from '../../../lib/dom';
 import { replacePlaceholder } from '../../../lib/xml';
-import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
+import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../base/lib/constants';
 import { NODE_ANDROID } from '../../constants';
 import { EXT_NAME } from '../../../extension/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
@@ -16,8 +16,8 @@ import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 import EXTENSION_APPBAR_TMPL from '../../template/extension/appbar';
 
 export default class Toolbar<T extends View> extends Extension<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
         this.require(WIDGET_NAME.MENU);
     }
 

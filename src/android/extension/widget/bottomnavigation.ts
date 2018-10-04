@@ -3,14 +3,14 @@ import Extension from '../../../base/extension';
 import View from '../../view';
 import { optional } from '../../../lib/util';
 import { locateExtension, overwriteDefault } from '../lib/util';
-import { NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
+import { NODE_RESOURCE, NODE_STANDARD } from '../../../base/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 import EXTENSION_GENERIC_TMPL from '../../template/extension/generic';
 
 export default class BottomNavigation<T extends View> extends Extension<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
         this.require(WIDGET_NAME.MENU);
     }
 

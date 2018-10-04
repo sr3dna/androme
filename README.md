@@ -176,9 +176,10 @@ Most of the Android support library extensions can be configured using the same 
     });
 
     // create an extension (third-party)
+    // framework: universal = 0; android = 2;
     class Sample extends androme.Extension {
-        constructor(name, tagNames = [], options = {}) {
-            super(name, tagNames, options);
+        constructor(name, framework = 0, tagNames = [], options = {}) {
+            super(name, framework, tagNames, options);
         }
     }
 
@@ -207,10 +208,10 @@ saveAllToDisk() // download entire project as zip archive - requires http://loca
 toString() // main layout file contents
 
 configureExtension(name: string, options: {}) // see extension configuration section | same: ext(name: string, options: {})
-registerExtension(extension: androme.Extension) // see extension configuration section | same: ext(extension: object)
+registerExtension(extension: androme.Extension) // see extension configuration section | same: ext(extension: {})
 getExtension(name: string) // retrieve an extension by namespace and control | same: ext(name: string)
 
-// android specific methods
+// android internal methods
 
 system.writeLayoutAllXml(saveToDisk: boolean) // output generated xml
 system.writeResourceAllXml(saveToDisk: boolean)

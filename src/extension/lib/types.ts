@@ -1,32 +1,30 @@
 import { LayoutMapX, LayoutMapY } from '../../base/lib/types';
 import { BoxRect, Inheritable, ObjectMap } from '../../lib/types';
-import Node from '../../base/node';
-
-type T = Node;
 
 export interface IExtension {
     readonly dependencies: ExtensionDependency[];
-    readonly subscribers: Set<T>;
-    readonly subscribersChild: Set<T>;
-    name: string;
+    readonly subscribers: Set<{}>;
+    readonly subscribersChild: Set<{}>;
+    readonly name: string;
+    readonly framework: number;
     application: any;
-    node: T;
-    parent?: T;
+    node: {};
+    parent?: {};
     element?: Element;
     tagNames: string[];
     options: ObjectMap<any>;
     documentRoot: boolean;
-    setTarget(node: T, parent?: T, element?: Element): void;
+    setTarget(node: {}, parent?: {}, element?: Element): void;
     getData(): void;
-    is(node: T): boolean;
+    is(node: {}): boolean;
     require(value: string): void;
     included(element?: Element): boolean;
     beforeInit(internal?: boolean): void;
     init(element: Element): boolean;
     afterInit(internal?: boolean): void;
     condition(): boolean;
-    processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
-    processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
+    processNode(mapX?: LayoutMapX<{}>, mapY?: LayoutMapY<{}>): ExtensionResult;
+    processChild(mapX?: LayoutMapX<{}>, mapY?: LayoutMapY<{}>): ExtensionResult;
     afterRender(): void;
     beforeInsert(): void;
     afterInsert(): void;
@@ -42,7 +40,7 @@ export type ExtensionResult = {
     xml: string;
     complete: boolean;
     next?: boolean;
-    parent?: Node;
+    parent?: {};
     include?: boolean;
 };
 

@@ -1,4 +1,4 @@
-import { AppBase, DisplaySettings, LayoutMapX, LayoutMapY, ViewData } from '../base/lib/types';
+import { AppBase, DisplaySettings, LayoutMapX, LayoutMapY, ViewData } from './lib/types';
 import { ArrayIndex, Null, ObjectIndex, ObjectMap, PlainFile, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import Node from './node';
@@ -8,7 +8,8 @@ import Resource from './resource';
 import { convertInt, hasBit, hasValue, isNumber, optional, sortAsc, trimString, isUnit } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
-import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { APP_SECTION, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from './lib/constants';
+import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
 
 export default class Application<T extends Node> implements AppBase<T> {
     public readonly cache: NodeList<T> = new NodeList<T>();
@@ -29,7 +30,7 @@ export default class Application<T extends Node> implements AppBase<T> {
     private _sorted: ObjectMap<number[]> = {};
     private _currentIndex = -1;
 
-    constructor() {
+    constructor(public readonly framework: number) {
     }
 
     public registerController(controller: Controller<T>) {
@@ -46,18 +47,18 @@ export default class Application<T extends Node> implements AppBase<T> {
         this.Resource = resource;
     }
 
-    public registerExtension(extension: IExtension) {
-        const found = this.getExtension(extension.name);
-        if (found != null) {
-            if (Array.isArray(extension.tagNames)) {
-                found.tagNames = extension.tagNames;
+    public registerExtension(ext: IExtension) {
+        const found = this.getExtension(ext.name);
+        if (found) {
+            if (Array.isArray(ext.tagNames)) {
+                found.tagNames = ext.tagNames;
             }
-            Object.assign(found.options, extension.options);
+            Object.assign(found.options, ext.options);
         }
         else {
-            if (extension.dependencies.every(item => this.getExtension(item.name) != null)) {
-                extension.application = this;
-                this.extensions.push(extension);
+            if ((ext.framework === 0 || hasBit(ext.framework, this.framework)) && ext.dependencies.every(item => this.getExtension(item.name) != null)) {
+                ext.application = this;
+                this.extensions.push(ext);
             }
         }
     }

@@ -4,8 +4,8 @@ import Extension from '../base/extension';
 import { deleteElementCache, getElementCache, getStyle, setElementCache } from '../lib/dom';
 
 export default class External<T extends Node> extends Extension<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public beforeInit(init = false) {

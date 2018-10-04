@@ -1,12 +1,12 @@
 import { ExtensionResult } from './lib/types';
 import Node from '../base/node';
 import Extension from '../base/extension';
-import { NODE_STANDARD } from '../lib/constants';
+import { NODE_STANDARD } from '../base/lib/constants';
 import { EXT_NAME } from './lib/constants';
 
 export default abstract class Custom<T extends Node> extends Extension<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
         this.require(EXT_NAME.EXTERNAL, true);
     }
 

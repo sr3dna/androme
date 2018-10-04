@@ -1,16 +1,17 @@
 import { ExtensionResult, ListData } from '../../extension/lib/types';
-import ResourceAndroid from '../resource';
 import List from '../../extension/list';
 import View from '../view';
+import ResourceAndroid from '../resource';
 import { convertInt, formatPX } from '../../lib/util';
 import { delimitDimens, parseRTL } from '../lib/util';
-import { BOX_STANDARD, NODE_ALIGNMENT, NODE_STANDARD } from '../../lib/constants';
+import { NODE_ALIGNMENT, NODE_STANDARD } from '../../base/lib/constants';
+import { BOX_STANDARD } from '../../lib/constants';
 import { NODE_ANDROID } from '../constants';
 import { EXT_NAME } from '../../extension/lib/constants';
 
 export default class ListAndroid<T extends View> extends List<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public processChild(): ExtensionResult {

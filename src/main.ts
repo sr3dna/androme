@@ -1,11 +1,12 @@
 import { FunctionMap } from './base/lib/types';
 import { Image, Null, ObjectMap } from './lib/types';
-import Application from './base/application';
 import Node from './base/node';
+import Application from './base/application';
 import Extension from './base/extension';
 import { convertCamelCase, convertPX, convertWord, hasValue, isPercent, isString, optional } from './lib/util';
 import { getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
 import { formatRGB, getByColorName } from './lib/color';
+import { APP_FRAMEWORK } from './base/lib/constants';
 
 import android from './android/main';
 
@@ -152,7 +153,7 @@ export function setFramework(name: string, cached = false) {
                     settings = Object.assign(appBase.settings, settings);
                 }
                 system = android.system;
-                main = new Application();
+                main = new Application(APP_FRAMEWORK.ANDROID);
                 main.settings = settings;
                 main.builtInExtensions = appBase.builtInExtensions;
                 main.Node = appBase.Node;

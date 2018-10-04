@@ -1,4 +1,4 @@
-import { ViewData } from '../base/lib/types';
+import { ViewData } from './lib/types';
 import { PlainFile, ResourceMap, StringMap } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';

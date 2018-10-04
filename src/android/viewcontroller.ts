@@ -1,16 +1,17 @@
 import { ControllerSettings, DisplaySettings, ViewData } from '../base/lib/types';
 import { Null, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
 import NodeList from '../base/nodelist';
-import View from './view';
-import ViewGroup from './viewgroup';
 import Controller from '../base/controller';
 import Resource from '../base/resource';
+import View from './view';
+import ViewGroup from './viewgroup';
 import { capitalize, convertEnum, convertInt, formatPX, hasValue, indexOf, isPercent, isUnit, optional, repeat, sameValue, searchObject, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { delimitDimens, generateId, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
 import { formatResource } from './extension/lib/util';
 import { getElementsBetweenSiblings, getRangeClientRect, hasLineBreak, isLineBreak } from '../lib/dom';
 import { formatPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
-import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../base/lib/constants';
+import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
 
 const MAP_LAYOUT = {

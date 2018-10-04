@@ -2,13 +2,13 @@ import { ExtensionResult } from './lib/types';
 import Node from '../base/node';
 import Extension from '../base/extension';
 import { convertFloat, convertInt, formatPX, hasBit, isPercent, isUnit } from '../lib/util';
-import { EXT_NAME } from './lib/constants';
 import { cssInherit, getStyle } from '../lib/dom';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
+import { EXT_NAME } from './lib/constants';
 
 export default abstract class Table<T extends Node> extends Extension<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public processNode(): ExtensionResult {

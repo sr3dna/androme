@@ -1,4 +1,4 @@
-import { LayoutMapX, LayoutMapY } from '../base/lib/types';
+import { LayoutMapX, LayoutMapY } from './lib/types';
 import { ObjectMap, StringMap } from '../lib/types';
 import { ExtensionDependency, ExtensionResult, IExtension } from '../extension/lib/types';
 import Node from './node';
@@ -19,6 +19,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
 
     constructor(
         public readonly name: string,
+        public readonly framework: number,
         tagNames?: string[],
         options?: {})
     {

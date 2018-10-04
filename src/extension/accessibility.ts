@@ -2,11 +2,11 @@ import Extension from '../base/extension';
 import Node from '../base/node';
 import { hasValue } from '../lib/util';
 import { getNodeFromElement } from '../lib/dom';
-import { NODE_PROCEDURE } from '../lib/constants';
+import { NODE_PROCEDURE } from '../base/lib/constants';
 
-export default class Accessibility<T extends Node> extends Extension<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+export default abstract class Accessibility<T extends Node> extends Extension<T> {
+    constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public afterInit() {

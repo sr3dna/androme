@@ -1,17 +1,17 @@
 import { ExtensionResult } from '../../../extension/lib/types';
 import Button from '../../../extension/button';
-import ResourceAndroid from '../../resource';
 import View from '../../view';
+import ResourceAndroid from '../../resource';
 import { formatPX, hasValue } from '../../../lib/util';
 import { parseRTL } from '../../lib/util';
 import { overwriteDefault } from '../lib/util';
 import { parseRGBA } from '../../../lib/color';
-import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../lib/constants';
+import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../base/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
 export default class FloatingActionButton<T extends View> extends Button<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public processNode(): ExtensionResult {

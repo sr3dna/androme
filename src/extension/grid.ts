@@ -1,18 +1,18 @@
 import { LayoutMapX } from '../base/lib/types';
 import { ObjectIndex } from '../lib/types';
-import { ExtensionResult } from './lib/types';
-import { GridCellData, GridData } from './lib/types';
+import { ExtensionResult, GridCellData, GridData } from './lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import Extension from '../base/extension';
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
-import { NODE_ALIGNMENT, BOX_STANDARD } from '../lib/constants';
-import { EXT_NAME } from './lib/constants';
 import { getBoxRect, getNodeFromElement } from '../lib/dom';
+import { NODE_ALIGNMENT } from '../base/lib/constants';
+import { BOX_STANDARD } from '../lib/constants';
+import { EXT_NAME } from './lib/constants';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
-    constructor(name: string, tagNames?: string[], options?: {}) {
-        super(name, tagNames, options);
+    constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
+        super(name, framework, tagNames, options);
     }
 
     public condition() {

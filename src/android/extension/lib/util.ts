@@ -1,9 +1,9 @@
 import { Null, ObjectMap, StringMap } from '../../../lib/types';
-import ResourceAndroid from '../../resource';
 import View from '../../view';
+import ResourceAndroid from '../../resource';
 import { includes, optional } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
-import { NODE_RESOURCE } from '../../../lib/constants';
+import { NODE_RESOURCE } from '../../../base/lib/constants';
 
 type T = View;
 

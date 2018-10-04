@@ -1,9 +1,10 @@
-import { INode, DisplaySettings, InitialValues } from '../base/lib/types';
+import { INode, DisplaySettings, InitialValues } from './lib/types';
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject } from '../lib/util';
 import { assignBounds, getBoxModel, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
-import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { APP_SECTION, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from './lib/constants';
+import { BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT } from '../lib/constants';
 
 type T = Node;
 

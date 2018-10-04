@@ -1,15 +1,16 @@
 import { ViewData } from '../base/lib/types';
 import { BorderAttribute, BoxStyle, FontAttribute, Image, NameValue, Null, ObjectMap, ObjectMapNested, StringMap } from '../lib/types';
 import NodeList from '../base/nodelist';
-import View from './view';
 import Resource from '../base/resource';
 import File from '../base/file';
+import View from './view';
 import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, isString, lastIndexOf, trimString } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
 import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setElementCache } from '../lib/dom';
 import { getColorNearest, parseHex, parseRGBA, reduceHexToRGB } from '../lib/color';
-import { BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/constants';
+import { NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../base/lib/constants';
+import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
 
 import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
