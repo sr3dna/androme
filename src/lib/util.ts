@@ -185,17 +185,17 @@ export function isPercent(value: string) {
 }
 
 export function includes(source: Null<string>, value: string, delimiter = ',') {
-    return source != null ? source
-                                .split(delimiter)
-                                .map(segment => segment.trim())
-                                .includes(value)
-                          : false;
+    return source ? source
+                        .split(delimiter)
+                        .map(segment => segment.trim())
+                        .includes(value)
+                  : false;
 }
 
-export function optional(obj: any, value: string, type?: string) {
+export function optional(obj: Null<{}>, value: string, type?: string) {
     let valid = false;
     let result: any = null;
-    if (obj != null) {
+    if (typeof obj === 'object') {
         result = obj;
         const attrs = value.split('.');
         let i = 0;

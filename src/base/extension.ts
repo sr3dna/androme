@@ -26,7 +26,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
         if (Array.isArray(tagNames)) {
             this.tagNames = tagNames.map(value => value.trim().toUpperCase());
         }
-        if (options != null) {
+        if (options) {
             Object.assign(this.options, options);
         }
     }
@@ -46,7 +46,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
     }
 
     public included(element?: Element) {
-        if (element == null) {
+        if (!element) {
             element = <Element> this.element;
         }
         return includes(optional(element, 'dataset.ext'), this.name);
@@ -58,7 +58,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
                 .filter(item => item.init)
                 .forEach(item => {
                     const ext = this.application.getExtension(item.name);
-                    if (ext != null) {
+                    if (ext) {
                         ext.setTarget(this.node, this.parent, this.element);
                         ext.beforeInit(true);
                     }
@@ -76,7 +76,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
                 .filter(item => item.init)
                 .forEach(item => {
                     const ext = this.application.getExtension(item.name);
-                    if (ext != null) {
+                    if (ext) {
                         ext.setTarget(this.node, this.parent, this.element);
                         ext.afterInit(true);
                     }

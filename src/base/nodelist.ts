@@ -17,7 +17,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         let left: T[] = [];
         const nodes = list.slice();
         for (const node of list) {
-            if (node.companion != null) {
+            if (node.companion) {
                 nodes.push(node.companion as T);
             }
         }
@@ -214,7 +214,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                                             node = node.companion as T;
                                         }
                                         const previous = node.previousSibling();
-                                        if (previous != null) {
+                                        if (previous) {
                                             return !node.alignedVertically(previous, cleared);
                                         }
                                     }
@@ -266,7 +266,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                                         node = node.companion as T;
                                     }
                                     const previous = node.previousSibling();
-                                    if (previous != null) {
+                                    if (previous) {
                                         return node.alignedVertically(previous, cleared);
                                     }
                                 }
@@ -280,7 +280,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
 
     private static documentParent<T extends Node>(nodes: T[]) {
         for (const node of nodes) {
-            if (node.companion == null && node.domElement) {
+            if (!node.companion && node.domElement) {
                 return node.documentParent;
             }
         }

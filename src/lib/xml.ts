@@ -111,12 +111,12 @@ export function parseTemplate(template: string) {
 }
 
 export function insertTemplateData(template: ObjectMap<string>, data: {}, index?: string, include?: {}, exclude?: {}) {
-    let output = index != null ? template[index] : '';
-    if (data['#include'] != null) {
+    let output = index ? template[index] : '';
+    if (data['#include']) {
         include = data['#include'];
         delete data['#include'];
     }
-    if (data['#exclude'] != null) {
+    if (data['#exclude']) {
         exclude = data['#exclude'];
         delete data['#exclude'];
     }
@@ -135,7 +135,7 @@ export function insertTemplateData(template: ObjectMap<string>, data: {}, index?
             value = data[i];
         }
         if (isString(value)) {
-            output = index != null ? output.replace(new RegExp(`{[%@&]*${i}}`, 'g'), value) : value.trim();
+            output = index ? output.replace(new RegExp(`{[%@&]*${i}}`, 'g'), value) : value.trim();
         }
         else if (value === false || new RegExp(`{%${i}}`).test(output)) {
             output = output.replace(`{%${i}}`, '');

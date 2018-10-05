@@ -56,7 +56,7 @@ export default class Application<T extends Node> implements AppBase<T> {
             Object.assign(found.options, ext.options);
         }
         else {
-            if ((ext.framework === 0 || hasBit(ext.framework, this.framework)) && ext.dependencies.every(item => this.getExtension(item.name) != null)) {
+            if ((ext.framework === 0 || hasBit(ext.framework, this.framework)) && ext.dependencies.every(item => !!this.getExtension(item.name))) {
                 ext.application = this;
                 this.extensions.push(ext);
             }
@@ -154,7 +154,7 @@ export default class Application<T extends Node> implements AppBase<T> {
             ext.beforeInit();
         }
         const rootNode = this.insertNode(rootElement);
-        if (rootNode != null) {
+        if (rootNode) {
             rootNode.parent = new this.nodeObject(0, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
             this.viewController.initNode(rootNode);
             rootNode.documentRoot = true;
@@ -166,7 +166,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         const supportInline = this.settings.renderInlineText ? ['BR'] : this.viewController.supportInline;
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
-            return (styleMap == null || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.children.length === 0;
+            return (!styleMap || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.children.length === 0;
         }
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.elements.has(element)) {
@@ -177,7 +177,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                     }
                     let valid = true;
                     let current = element.parentElement;
-                    while (current != null) {
+                    while (current) {
                         if (current === rootElement) {
                             break;
                         }
@@ -272,7 +272,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                 if (node.hasElement) {
                     const element = <HTMLElement> node.element;
                     const attrs = preAlignment[node.id];
-                    if (attrs != null) {
+                    if (attrs) {
                         for (const attr in attrs) {
                             element.style[attr] = attrs[attr];
                         }
@@ -296,10 +296,10 @@ export default class Application<T extends Node> implements AppBase<T> {
             for (const node of this.cache) {
                 if (!node.documentRoot) {
                     let parent: Null<T> = node.getParentElementAsNode(this.settings.supportNegativeLeftTop, this.cache.parent) as T;
-                    if (parent == null && !node.pageflow) {
+                    if (!parent && !node.pageflow) {
                         parent = this.cache.parent;
                     }
-                    if (parent != null) {
+                    if (parent) {
                         node.parent = parent;
                         node.documentParent = parent;
                     }
@@ -342,9 +342,9 @@ export default class Application<T extends Node> implements AppBase<T> {
             if (!mapY.has(depth)) {
                 mapY.set(depth, new Map<number, T>());
             }
-            const indexY = mapY.get(depth);
-            if (indexY != null) {
-                indexY.set(id, node);
+            const mapIndex = mapY.get(depth);
+            if (mapIndex) {
+                mapIndex.set(id, node);
             }
         }
         function deleteMapY(id: number) {
@@ -393,7 +393,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                     data.set(key, new Map<number, string>());
                 }
                 const template = data.get(key);
-                if (template != null) {
+                if (template) {
                     template.set(node.id, value);
                 }
             }
@@ -434,7 +434,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                             }
                             else if (hasValue(parent.dataset.target)) {
                                 const target = document.getElementById(parent.dataset.target as string);
-                                if (target != null) {
+                                if (target) {
                                     application.addRenderQueue(parent.nodeId, [xml]);
                                     node.dataset.target = parent.nodeId;
                                     return;
@@ -446,7 +446,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                 }
             }
             for (const parent of depth.values()) {
-                if (parent.children.length === 0 || parent.renderAs != null) {
+                if (parent.children.length === 0 || parent.renderAs) {
                     continue;
                 }
                 const axisY: T[] = [];
@@ -497,7 +497,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                             parentY = cloneParent;
                         }
                     }
-                    if (nodeY.renderAs != null) {
+                    if (nodeY.renderAs) {
                         parentY.remove(nodeY);
                         nodeY.hide();
                         nodeY = nodeY.renderAs as T;
@@ -545,7 +545,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                         }
                                         const previousSibling = adjacent.previousSibling() as T;
                                         const nextSibling = adjacent.nextSibling(true);
-                                        if (m === 0 && nextSibling != null) {
+                                        if (m === 0 && nextSibling) {
                                             if (adjacent.blockStatic || nextSibling.alignedVertically(adjacent, cleared, true)) {
                                                 vertical.push(adjacent);
                                             }
@@ -553,7 +553,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                                 horizontal.push(adjacent);
                                             }
                                         }
-                                        else if (previousSibling != null) {
+                                        else if (previousSibling) {
                                             const floated = NodeList.floated([...horizontal, ...vertical]);
                                             const pending = [...horizontal, ...vertical, adjacent];
                                             const clearedPartial = NodeList.cleared(pending);
@@ -707,7 +707,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                     }
                                 }
                             }
-                            if (group != null) {
+                            if (group) {
                                 renderXml(group, parentY, groupXml, '', true);
                                 parentY = nodeY.parent as T;
                             }
@@ -979,7 +979,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                 const [parentId, position] = id.split(':');
                 const views = Array.from(templates.values());
                 if (views.length > 0) {
-                    if (this._sorted[parentId] != null) {
+                    if (this._sorted[parentId]) {
                         const parsed: string[] = [];
                         this._sorted[parentId].forEach(value => {
                             const result = views.find(view => view.indexOf(formatPlaceholder(value, '@')) !== -1);
@@ -994,7 +994,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                     if (content.length === 0) {
                         content.push(...views);
                     }
-                    id = parentId + (position != null ? `:${position}` : '');
+                    id = parentId + (position ? `:${position}` : '');
                     const placeholder = formatPlaceholder(id);
                     if (baseTemplate.indexOf(placeholder) !== -1) {
                         baseTemplate = replacePlaceholder(baseTemplate, placeholder, content.join(''));
@@ -1049,7 +1049,7 @@ export default class Application<T extends Node> implements AppBase<T> {
             else {
                 if (!a.domElement) {
                     const nodeA = getNodeFromElement(a.baseElement);
-                    if (nodeA != null) {
+                    if (nodeA) {
                         a = nodeA as T;
                     }
                     else {
@@ -1058,7 +1058,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                 }
                 if (!b.domElement) {
                     const nodeB = getNodeFromElement(a.baseElement);
-                    if (nodeB != null) {
+                    if (nodeB) {
                         b = nodeB as T;
                     }
                     else {
@@ -1491,7 +1491,7 @@ export default class Application<T extends Node> implements AppBase<T> {
 
     public writeFrameLayoutVertical(group: Null<T>, parent: T, nodes: T[], cleared: Map<T, string>) {
         let xml = '';
-        if (group == null) {
+        if (!group) {
             group = parent;
             xml = formatPlaceholder(group.id);
         }
@@ -1561,7 +1561,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                         subgroup.parent = basegroup;
                         basegroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
                     }
-                    if (subgroup != null) {
+                    if (subgroup) {
                         children.push(subgroup);
                         if (i === 0 && leadingMargin > 0) {
                             subgroup.modifyBox(BOX_STANDARD.MARGIN_TOP, leadingMargin);
@@ -1575,7 +1575,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                         subgroup = pageflow[0];
                         subgroup.parent = basegroup;
                     }
-                    if (subgroup != null) {
+                    if (subgroup) {
                         children.push(subgroup);
                     }
                     basegroup.init();
@@ -1610,14 +1610,14 @@ export default class Application<T extends Node> implements AppBase<T> {
             let replaceId = originalId;
             if (!isNumber(replaceId)) {
                 const target = getNodeFromElement(document.getElementById(replaceId));
-                if (target != null) {
+                if (target) {
                     replaceId = target.id.toString();
                 }
             }
             let output = this.renderQueue[id].join('\n');
             if (replaceId !== originalId) {
                 const target = this.cacheSession.locate('id', parseInt(replaceId));
-                if (target != null) {
+                if (target) {
                     const depth = target.renderDepth + 1;
                     output = replaceIndent(output, depth);
                     const pattern = /{@([0-9]+)}/g;
@@ -1625,7 +1625,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                     let i = 0;
                     while ((match = pattern.exec(output)) != null) {
                         const node = this.cacheSession.locate('id', parseInt(match[1]));
-                        if (node != null) {
+                        if (node) {
                             if (i++ === 0) {
                                 node.renderDepth = depth;
                             }
@@ -1754,7 +1754,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                 sorted = true;
             }
         }
-        if (preserve && sorted && parent != null) {
+        if (preserve && sorted && parent) {
             this.saveSortOrder(parent.id, children);
         }
         return children;
@@ -1785,7 +1785,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                         node.inherit(parent, 'style');
                     }
                     else {
-                        node.css('whiteSpace', (element.parentElement != null ? getStyle(element.parentElement).whiteSpace : null) || 'normal');
+                        node.css('whiteSpace', (element.parentElement ? getStyle(element.parentElement).whiteSpace : null) || 'normal');
                     }
                     node.css({
                         position: 'static',
@@ -1815,7 +1815,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                 elementNode.visible = false;
             }
         }
-        if (node != null) {
+        if (node) {
             this.cache.append(node);
         }
         return node;
@@ -1824,7 +1824,7 @@ export default class Application<T extends Node> implements AppBase<T> {
     private prioritizeExtensions(available: IExtension[], element: Element) {
         let extensions: string[] = [];
         let current: Null<Element> = element;
-        while (current != null) {
+        while (current) {
             extensions = [
                 ...extensions,
                 ...optional(current, 'dataset.ext')
@@ -1901,12 +1901,12 @@ export default class Application<T extends Node> implements AppBase<T> {
     }
 
     set appName(value) {
-        if (this.resourceHandler != null) {
+        if (this.resourceHandler) {
             this.resourceHandler.file.appName = value;
         }
     }
     get appName() {
-        return this.resourceHandler != null ? this.resourceHandler.file.appName : '';
+        return this.resourceHandler ? this.resourceHandler.file.appName : '';
     }
 
     set layoutProcessing(value) {

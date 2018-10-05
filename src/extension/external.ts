@@ -9,11 +9,11 @@ export default class External<T extends Node> extends Extension<T> {
     }
 
     public beforeInit(init = false) {
-        if (this.element != null && (init || this.included())) {
-            if (getElementCache(this.element, 'andromeExternalDisplay') == null) {
+        if (this.element && (init || this.included())) {
+            if (!getElementCache(this.element, 'andromeExternalDisplay')) {
                 const display: string[] = [];
                 let current: Null<HTMLElement> = <HTMLElement> this.element;
-                while (current != null) {
+                while (current) {
                     display.push(getStyle(current).display as string);
                     current.style.display = 'block';
                     current = current.parentElement;
@@ -31,13 +31,13 @@ export default class External<T extends Node> extends Extension<T> {
     }
 
     public afterInit(internal = false) {
-        if (this.element != null && (internal || this.included())) {
+        if (this.element && (internal || this.included())) {
             const data = getElementCache(this.element, 'andromeExternalDisplay');
             if (data) {
                 const display: string[] = data;
                 let current: Null<HTMLElement> = <HTMLElement> this.element;
                 let i = 0;
-                while (current != null) {
+                while (current) {
                     current.style.display = display[i];
                     current = current.parentElement;
                     i++;

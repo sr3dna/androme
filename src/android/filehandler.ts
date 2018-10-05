@@ -285,7 +285,7 @@ export default class FileHandler<T extends View> extends File<T> {
                         });
                     }
                 }
-                else if (images['mdpi'] != null) {
+                else if (images['mdpi']) {
                     root.push({
                         name: `res/drawable/${name}.${lastIndexOf(images['mdpi'], '.')}`,
                         value: `<!-- image: ${images['mdpi']} -->`

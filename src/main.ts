@@ -102,7 +102,7 @@ function setStyleMap() {
                                     });
                             }
                             const data = getElementCache(element, 'styleMap');
-                            if (data != null) {
+                            if (data) {
                                 Object.assign(data, styleMap);
                             }
                             else {
@@ -169,7 +169,7 @@ export function setFramework(name: string, cached = false) {
                 const extensions = <ObjectMap<Extension<T>>> main.builtInExtensions;
                 for (let namespace of settings.builtInExtensions) {
                     namespace = namespace.toLowerCase().trim();
-                    if (extensions[namespace] != null) {
+                    if (extensions[namespace]) {
                         register.add(extensions[namespace]);
                     }
                     else {

@@ -143,7 +143,7 @@ export default class Menu<T extends View> extends Nav<T> {
                     }
                     else {
                         const image = node.children.find(item => item.imageElement);
-                        if (image != null) {
+                        if (image) {
                             src = ResourceHandler.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
                             if (src !== '') {
                                 options.android.icon = `@drawable/${src}`;
@@ -197,10 +197,10 @@ export default class Menu<T extends View> extends Nav<T> {
     private parseDataSet(validator: ObjectMap<RegExp>, element: HTMLElement, options: {}) {
         for (const attr in element.dataset) {
             const value = element.dataset[attr];
-            if (value != null && validator[attr] != null) {
+            if (value && validator[attr]) {
                 const match = value.match(validator[attr]);
                 if (match) {
-                    const namespace = (this.options.appCompat == null || this.options.appCompat) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
+                    const namespace = (this.options.appCompat == null || this.options.appCompat === true) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
                     options[namespace][attr] =
                         Array
                             .from(new Set(match))

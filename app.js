@@ -25,9 +25,8 @@ if (app.get('env') === 'development') {
 }
 
 app.post('/api/savetodisk', (req, res) => {
-    const directory = req.query.directory != null && req.query.directory !== '';
     const dirname = `${__dirname.replace(/\\/g, '/')}/temp/${uuid()}`;
-    const diroutput = dirname + (directory ? `/${req.query.directory}` : '');
+    const diroutput = dirname + (req.query.directory  ? `/${req.query.directory}` : '');
     const processingTime = !isNaN(parseInt(req.query.processingtime) ? parseInt(req.query.processingtime) : 30) * 1000;
     const finalizeTime = Date.now() + processingTime;
     try {
@@ -59,7 +58,7 @@ app.post('/api/savetodisk', (req, res) => {
                 const filename = `${pathname}/${file.filename}`;
                 try {
                     mkdirp.sync(pathname);
-                    const entrydata = { name: `${(directory ? `${req.query.directory}/` : '')}${file.pathname}/${file.filename}` };
+                    const entrydata = { name: `${(req.query.directory ? `${req.query.directory}/` : '')}${file.pathname}/${file.filename}` };
                     if (file.content && file.content.trim() !== '') {
                         delayed++;
                         fs.writeFile(filename, file.content, (err) => {

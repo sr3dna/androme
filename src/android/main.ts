@@ -177,7 +177,7 @@ const appBase: AppFramework<T> = {
             XMLNS_ANDROID[name] = uri;
         },
         customize(build: number, widget: string, options: {}) {
-            if (API_ANDROID[build] != null) {
+            if (API_ANDROID[build]) {
                 const customizations = API_ANDROID[build].customizations;
                 if (customizations[widget] == null) {
                     customizations[widget] = {};

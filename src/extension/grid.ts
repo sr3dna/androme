@@ -176,7 +176,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                         }
                         else {
                             const current = columns.length - 1;
-                            if (columns[current] != null) {
+                            if (columns[current]) {
                                 const minLeft = columns[current].reduce((a: number, b: T) => Math.min(a, b.linear.left), Number.MAX_VALUE);
                                 const maxRight = columns[current].reduce((a: number, b: T) => Math.max(a, b.linear.right), 0);
                                 if (left > minLeft && right > maxRight) {
@@ -207,7 +207,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     }
                 }
                 for (let l = 0; l < columns.length; l++) {
-                    if (columns[l] != null) {
+                    if (columns[l]) {
                         columnEnd.push(columnRight[l]);
                     }
                 }

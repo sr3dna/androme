@@ -18,7 +18,7 @@ export default class ListAndroid<T extends View> extends List<T> {
     public processChild(): ExtensionResult {
         const node = this.node;
         const mainData: ListData = node.data(EXT_NAME.LIST, 'mainData');
-        if (mainData != null) {
+        if (mainData) {
             const parent = this.parent as T;
             const controller = this.application.viewController;
             const settings = <SettingsAndroid> this.application.settings;
@@ -193,7 +193,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 const current = children[i];
                 const previous = children[i - 1];
                 let spaceHeight = 0;
-                if (previous != null) {
+                if (previous) {
                     const marginBottom = convertInt(previous.android('layout_marginBottom'));
                     if (marginBottom > 0) {
                         spaceHeight += convertInt(previous.android('layout_marginBottom'));

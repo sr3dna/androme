@@ -87,7 +87,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 }
                 if (!td.has('background') && !td.has('backgroundColor')) {
                     const item = <HTMLElement> td.element;
-                    if (colgroup != null) {
+                    if (colgroup) {
                         const style = getStyle(colgroup.children[columnIndex[i]]);
                         if (style.background) {
                             item.style.background = style.background;
@@ -112,7 +112,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 const columnWidth = td.styleMap.width;
                 const m = columnIndex[i];
                 if (i === 0 || mapWidth[m] == null || !tableFixed) {
-                    if (columnWidth == null || columnWidth === 'auto') {
+                    if (!columnWidth || columnWidth === 'auto') {
                         if (mapWidth[m] == null) {
                             mapWidth[m] = columnWidth || '0px';
                             mapBounds[m] = 0;
@@ -209,7 +209,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         }
         const caption = node.children.find(item => item.tagName === 'CAPTION');
         node.children.length = 0;
-        if (caption != null) {
+        if (caption) {
             if (!caption.has('textAlign', CSS_STANDARD.LEFT)) {
                 caption.css('textAlign', 'center');
             }

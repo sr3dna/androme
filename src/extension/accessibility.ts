@@ -24,11 +24,11 @@ export default abstract class Accessibility<T extends Node> extends Extension<T>
                                     if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                         node.companion = label;
                                     }
-                                    else if (label.textElement && labelParent != null) {
+                                    else if (label.textElement && labelParent) {
                                         node.companion = label;
                                         labelParent.renderAs = node;
                                     }
-                                    if (node.companion != null) {
+                                    if (node.companion) {
                                         label.hide();
                                         return true;
                                     }

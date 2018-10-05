@@ -162,7 +162,7 @@ for (const i in X11_CSS3) {
     const x11: Color = X11_CSS3[i];
     for (const j in x11) {
         const rgb = convertHextoRGB(x11[j]);
-        if (rgb != null) {
+        if (rgb) {
             x11.rgb = rgb;
             x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
         }
@@ -178,7 +178,7 @@ HSL_SORTED.sort(sortHSL);
 
 function convertHextoHSL(value: string) {
     const rgb = convertHextoRGB(value);
-    if (rgb != null) {
+    if (rgb) {
         return convertRGBtoHSL(rgb.r, rgb.g, rgb.b);
     }
     return null;
@@ -221,7 +221,7 @@ function convertRGBtoHSL(r: number, g: number, b: number) {
 }
 
 function sortHSL(a: Color, b: Color) {
-    if (a.hsl != null && b.hsl != null) {
+    if (a.hsl && b.hsl) {
         let [c, d] = [a.hsl.h, b.hsl.h];
         if (c === d) {
             [c, d] = [a.hsl.s, b.hsl.s];
@@ -242,7 +242,7 @@ export function getColorNearest(value: string) {
     }
     else {
         const hsl = convertHextoHSL(value);
-        if (hsl != null) {
+        if (hsl) {
             result.push({
                 name: '',
                 hsl,
@@ -267,7 +267,7 @@ export function getByColorName(value: string) {
 }
 
 export function formatRGB({ rgb }: Color) {
-    return rgb != null ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
+    return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
 }
 
 export function parseRGBA(value: string, opacity = '1'): string[] {
@@ -332,7 +332,7 @@ export function parseHex(value: string) {
 
 export function reduceHexToRGB(value: string, percent: number) {
     const rgb = convertHextoRGB(value);
-    if (rgb != null) {
+    if (rgb) {
         const base = percent < 0 ? 0 : 255;
         percent = Math.abs(percent);
         return `rgb(${Math.round((base - rgb.r) * percent) + rgb.r}, ${Math.round((base - rgb.g) * percent) + rgb.g}, ${Math.round((base - rgb.b) * percent) + rgb.b})`;

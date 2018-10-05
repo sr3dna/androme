@@ -68,7 +68,7 @@ export default abstract class Node implements INode {
             styleMap: {},
             bounds: getClientRect()
         };
-        if (element != null) {
+        if (element) {
             this._element = element;
             this.init();
         }
@@ -154,12 +154,12 @@ export default abstract class Node implements INode {
 
     public get(obj: string): StringMap {
         const name = `_${obj || '_'}`;
-        return this[name] != null ? this[name] : {};
+        return this[name] || {};
     }
 
     public delete(obj: string, ...attrs: string[]) {
         const name = `_${obj || '_'}`;
-        if (this[name] != null) {
+        if (this[name]) {
             for (const attr of attrs) {
                 if (attr.indexOf('*') !== -1) {
                     for (const [key] of searchObject(this[name], attr)) {
@@ -218,7 +218,7 @@ export default abstract class Node implements INode {
         const attr = xml ? 'parent' : 'documentParent';
         let current: T = this[attr];
         let i = -1;
-        while (current != null && current.id !== 0 && !result.includes(current)) {
+        while (current && current.id !== 0 && !result.includes(current)) {
             result.push(current);
             if (++i === levels) {
                 break;
@@ -405,9 +405,9 @@ export default abstract class Node implements INode {
 
     public cssParent(attr: string, startChild = false, ignoreHidden = false) {
         let result = '';
-        if (this.baseElement != null) {
+        if (this.baseElement) {
             let current = startChild ? this : getNodeFromElement(this.baseElement.parentElement);
-            while (current != null) {
+            while (current) {
                 result = current.initial.styleMap[attr] || '';
                 if (result || current.documentBody) {
                     if (ignoreHidden && !current.visible) {
@@ -448,7 +448,7 @@ export default abstract class Node implements INode {
                 case 'rgba(0, 0, 0, 0)':
                     return false;
                 default:
-                    if (options != null) {
+                    if (options) {
                         if (options.not != null) {
                             if (Array.isArray(options.not)) {
                                 for (const exclude of options.not) {
@@ -504,7 +504,7 @@ export default abstract class Node implements INode {
         if (this.hasElement) {
             [['excludeSection', APP_SECTION], ['excludeProcedure', NODE_PROCEDURE], ['excludeResource', NODE_RESOURCE]].forEach((item: [string, any]) => {
                 let exclude = this.dataset[item[0]] || '';
-                if (this._element.parentElement != null) {
+                if (this._element.parentElement) {
                     exclude += '|' + (this._element.parentElement.dataset[`${item[0]}Child`] || '').trim();
                 }
                 exclude
@@ -520,20 +520,20 @@ export default abstract class Node implements INode {
     }
 
     public setBounds(calibrate = false) {
-        if (this._element != null) {
+        if (this._element) {
             if (!calibrate) {
                 if (this.hasElement) {
                     this.bounds = assignBounds(this._element.getBoundingClientRect());
                 }
                 else {
                     const bounds = getRangeClientRect(this._element);
-                    if (bounds[0] != null) {
+                    if (bounds[0]) {
                         this.bounds = <ClientRect> bounds[0];
                     }
                 }
             }
         }
-        if (this.bounds != null) {
+        if (this.bounds) {
             if (this.initial.bounds.width === 0 && this.initial.bounds.height === 0) {
                 Object.assign(this.initial.bounds, assignBounds(this.bounds));
             }
@@ -579,7 +579,7 @@ export default abstract class Node implements INode {
     }
 
     public setMultiLine() {
-        if (this._element != null) {
+        if (this._element) {
             this._multiLine = false;
             switch (this._element.tagName) {
                 case 'IMG':
@@ -593,7 +593,7 @@ export default abstract class Node implements INode {
                     if (this.textElement) {
                         const [bounds, multiLine] = getRangeClientRect(this._element);
                         if (this.plainText) {
-                            if (bounds != null) {
+                            if (bounds) {
                                 this.bounds = bounds;
                                 this.setBounds(true);
                             }
@@ -621,7 +621,7 @@ export default abstract class Node implements INode {
     }
 
     public getParentElementAsNode(negative = false, containerDefault?: T) {
-        if (this._element != null) {
+        if (this._element) {
             let parent = getNodeFromElement(this._element.parentElement);
             if (!this.pageflow) {
                 let found = false;
@@ -629,7 +629,7 @@ export default abstract class Node implements INode {
                 let relativeParent: Null<T> = null;
                 let outside = false;
                 while (parent && parent.id !== 0) {
-                    if (relativeParent == null && this.position === 'absolute') {
+                    if (!relativeParent && this.position === 'absolute') {
                         if (!['static', 'initial'].includes(parent.position)) {
                             const top = convertInt(this.top);
                             const left = convertInt(this.left);
@@ -673,7 +673,7 @@ export default abstract class Node implements INode {
                     parent = getNodeFromElement(parent.element.parentElement);
                 }
                 if (!found) {
-                    parent = outside && containerDefault != null ? containerDefault : relativeParent;
+                    parent = outside && containerDefault ? containerDefault : relativeParent;
                 }
             }
             return parent;
@@ -702,14 +702,14 @@ export default abstract class Node implements INode {
         }
         for (const attr of attrs) {
             this._boxReset[attr] = 1;
-            if (node != null) {
+            if (node) {
                 node.modifyBox(attr, this[attr], negative);
             }
         }
     }
 
     public removeElement() {
-        if (this._element != null) {
+        if (this._element) {
             if (this._nodeName == null) {
                 this._nodeName = this.nodeName;
             }
@@ -723,14 +723,14 @@ export default abstract class Node implements INode {
 
     public previousSibling(pageflow = false, lineBreak = true, excluded = true) {
         let element: Null<Element> = null;
-        if (this._element != null) {
+        if (this._element) {
             element = <Element> this._element.previousSibling;
         }
         else if (this.initial.children.length > 0) {
             const list = this.initial.children.filter(node => pageflow ? node.pageflow : node.siblingflow);
             element = list.length > 0 ? <Element> list[0].element.previousSibling : null;
         }
-        while (element != null) {
+        while (element) {
             const node = getNodeFromElement(element);
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
@@ -748,14 +748,14 @@ export default abstract class Node implements INode {
 
     public nextSibling(pageflow = false, lineBreak = true, excluded = true) {
         let element: Null<Element> = null;
-        if (this._element != null) {
+        if (this._element) {
             element = <Element> this._element.nextSibling;
         }
         else if (this.initial.children.length > 0) {
             const list = this.initial.children.filter(node => pageflow ? node.pageflow : node.siblingflow);
             element = list.length > 0 ? <Element> list[0].element.nextSibling : null;
         }
-        while (element != null) {
+        while (element) {
             const node = getNodeFromElement(element);
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
@@ -772,11 +772,11 @@ export default abstract class Node implements INode {
     }
 
     public actualLeft(dimension = 'linear') {
-        return this.companion && this.companion[dimension] != null ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left;
+        return this.companion && this.companion[dimension] ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left;
     }
 
     public actualRight(dimension = 'linear') {
-        return this.companion && this.companion[dimension] != null ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right;
+        return this.companion && this.companion[dimension] ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right;
     }
 
     private boxAttribute(region: string, direction: string) {
@@ -824,12 +824,12 @@ export default abstract class Node implements INode {
 
     set parent(value) {
         if (value !== this._parent) {
-            if (this._parent != null) {
+            if (this._parent) {
                 this._parent.children = this._parent.children.filter(node => node !== this);
             }
             this._parent = value;
         }
-        if (value != null) {
+        if (value) {
             if (!value.children.includes(this)) {
                 value.children.push(this);
                 if (!value.hasElement && this.siblingIndex !== -1) {
@@ -901,7 +901,7 @@ export default abstract class Node implements INode {
                 this._renderDepth = 0;
             }
             else {
-                if (this.parent != null) {
+                if (this.parent) {
                     this._renderDepth = this.parent.renderDepth + 1;
                 }
             }
@@ -919,7 +919,7 @@ export default abstract class Node implements INode {
 
     get flex(): Flexbox {
         const style = this.style;
-        if (style != null) {
+        if (style) {
             return {
                 enabled: ((style.display as string).indexOf('flex') !== -1),
                 direction: style.flexDirection as string,
@@ -1080,7 +1080,7 @@ export default abstract class Node implements INode {
                         (this.children.length === 0 || this.children.every(node => !!getElementCache(node.element, 'supportInline'))) &&
                         (this._element.childNodes.length === 0 || !Array.from(this._element.childNodes).some((element: Element) => {
                             const node = getNodeFromElement(element);
-                            return node != null && !node.lineBreak && (!node.excluded || !node.visible);
+                            return !!node && !node.lineBreak && (!node.excluded || !node.visible);
                         }))
                     );
                     break;
@@ -1152,7 +1152,7 @@ export default abstract class Node implements INode {
     }
 
     get textContent() {
-        if (this._element != null) {
+        if (this._element) {
             if (this._element instanceof HTMLElement) {
                 return this._element.innerText || this._element.innerHTML;
             }
@@ -1233,7 +1233,7 @@ export default abstract class Node implements INode {
 
     get previousElementSibling() {
         let element = <Element> this.baseElement.previousSibling;
-        while (element != null) {
+        while (element) {
             if (isPlainText(element) || element instanceof HTMLElement || element.tagName === 'BR') {
                 return element;
             }
@@ -1243,7 +1243,7 @@ export default abstract class Node implements INode {
     }
     get nextElementSibling() {
         let element = <Element> this.baseElement.nextSibling;
-        while (element != null) {
+        while (element) {
             if (isPlainText(element) || element instanceof HTMLElement || element.tagName === 'BR') {
                 return element;
             }

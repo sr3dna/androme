@@ -114,7 +114,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
                 }
                 else if (item.length > 0) {
                     const element = cascade(item.nodes as T[]);
-                    if (element != null) {
+                    if (element) {
                         return element;
                     }
                 }

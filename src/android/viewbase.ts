@@ -197,10 +197,10 @@ export default (Base: Constructor<Node>) => {
 
         public applyCustomizations({ customizationsOverwritePrivilege = false }) {
             for (const build of [API_ANDROID[this.api], API_ANDROID[0]]) {
-                if (build && build.customizations != null) {
+                if (build && build.customizations) {
                     for (const nodeName of [this.tagName, this.controlName]) {
                         const customizations = build.customizations[nodeName];
-                        if (customizations != null) {
+                        if (customizations) {
                             for (const obj in customizations) {
                                 for (const attr in customizations[obj]) {
                                     this.attr(obj, attr, customizations[obj][attr], customizationsOverwritePrivilege);
@@ -274,14 +274,14 @@ export default (Base: Constructor<Node>) => {
                 const parent = this.documentParent;
                 const renderParent = this.renderParent;
                 const renderChildren = this.renderChildren;
-                const width = this.linear != null ? this.linear.width
-                                                : (this.hasElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0);
-                const height = this.linear != null ? this.linear.height
-                                                : (this.hasElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0);
-                const widthParent = parent.initial.box != null ? parent.initial.box.width
-                                                            : (parent.element instanceof HTMLElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0);
-                const heightParent = parent.initial.box != null ? parent.initial.box.height
-                                                                : (parent.element instanceof HTMLElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0);
+                const width = this.linear ? this.linear.width
+                                          : (this.hasElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0);
+                const height = this.linear ? this.linear.height
+                                           : (this.hasElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0);
+                const widthParent = parent.initial.box ? parent.initial.box.width
+                                                       : (parent.element instanceof HTMLElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0);
+                const heightParent = parent.initial.box ? parent.initial.box.height
+                                                        : (parent.element instanceof HTMLElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0);
                 const styleMap = this.styleMap;
                 const constraint = this.constraint;
                 const tableElement = this.tagName === 'TABLE';
@@ -392,7 +392,7 @@ export default (Base: Constructor<Node>) => {
                                     (this.hasElement && this.blockStatic && (
                                         this.documentParent.documentBody ||
                                         this.ascend().every(node => node.blockStatic) ||
-                                        (this.documentParent.blockStatic && this.nodeType <= NODE_STANDARD.LINEAR && ((previousSibling == null || !previousSibling.floating) && (nextSibling == null || !nextSibling.floating)))
+                                        (this.documentParent.blockStatic && this.nodeType <= NODE_STANDARD.LINEAR && ((!previousSibling || !previousSibling.floating) && (!nextSibling || !nextSibling.floating)))
                                     )) ||
                                     (this.is(NODE_STANDARD.FRAME) && renderChildren.some(node => node.blockStatic && (node.autoMarginHorizontal || node.autoMarginLeft))) ||
                                     (!this.hasElement && this.length > 0 && renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !renderChildren.some(item => item.plainText && item.multiLine)))
@@ -1101,8 +1101,8 @@ export default (Base: Constructor<Node>) => {
                         return sibling;
                     })();
                     if (getElementsBetweenSiblings(
-                            previous != null ? previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement
-                                            : null,
+                            previous ? previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement
+                                     : null,
                             node.baseElement)
                                 .some(element => {
                                     const item = getNodeFromElement(element);
@@ -1115,7 +1115,7 @@ export default (Base: Constructor<Node>) => {
                         )
                     {
                         let bottom: number;
-                        if (previous == null) {
+                        if (!previous) {
                             bottom = this.box.top;
                         }
                         else {
@@ -1151,7 +1151,7 @@ export default (Base: Constructor<Node>) => {
             this._controlName = value;
         }
         get controlName() {
-            if (this._controlName != null) {
+            if (this._controlName) {
                 return this._controlName;
             }
             else {
@@ -1164,7 +1164,7 @@ export default (Base: Constructor<Node>) => {
             this._documentParent = value;
         }
         get documentParent() {
-            if (this._documentParent != null) {
+            if (this._documentParent) {
                 return this._documentParent as View;
             }
             else if (this.id === 0) {

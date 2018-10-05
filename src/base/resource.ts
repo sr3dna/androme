@@ -24,7 +24,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
 
     public static insertStoredAsset(asset: string, name: string, value: any) {
         const stored: Map<string, any> = Resource.STORED[asset];
-        if (stored != null) {
+        if (stored) {
             let storedName = '';
             for (const [storedKey, storedValue] of stored.entries()) {
                 if (JSON.stringify(value) === JSON.stringify(storedValue)) {
@@ -81,7 +81,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
 
     public setBoxSpacing() {
         this.cache.elements.each(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (getElementCache(node.element, 'boxSpacing') == null || this.settings.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (!getElementCache(node.element, 'boxSpacing') || this.settings.alwaysReevaluateResources)) {
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
                 for (const attr in result) {
@@ -99,7 +99,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
 
     public setBoxStyle() {
         this.cache.elements.each(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (getElementCache(node.element, 'boxStyle') == null || this.settings.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (!getElementCache(node.element, 'boxStyle') || this.settings.alwaysReevaluateResources)) {
                 const result: ObjectMap<any> = {
                     borderTop: this.parseBorderStyle,
                     borderRight: this.parseBorderStyle,
@@ -148,7 +148,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
 
     public setFontStyle() {
         this.cache.each(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (getElementCache(node.element, 'fontStyle') == null || this.settings.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (!getElementCache(node.element, 'fontStyle') || this.settings.alwaysReevaluateResources)) {
                 const backgroundImage = this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
                 if (node.length > 0 ||
                     node.imageElement ||
@@ -256,7 +256,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
         }
         this.cache.visible.each(node => {
             const element = node.element;
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (getElementCache(element, 'valueString') == null || this.settings.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (!getElementCache(element, 'valueString') || this.settings.alwaysReevaluateResources)) {
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
@@ -273,7 +273,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
                             value = element.value.trim();
                             break;
                         default:
-                            if (node.companion != null) {
+                            if (node.companion) {
                                 value = node.companion.textContent.trim();
                             }
                             break;
@@ -312,7 +312,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
                         const previousSibling = node.previousSibling();
                         const nextSibling = node.nextSibling();
                         let previousSpaceEnd = false;
-                        if (previousSibling == null || previousSibling.multiLine || previousSibling.lineBreak) {
+                        if (!previousSibling || previousSibling.multiLine || previousSibling.lineBreak) {
                             value = value.replace(/^\s+/, '');
                         }
                         else {
@@ -343,7 +343,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
                                     ) ? ''
                                       : '&#160;')
                                 );
-                                value = value.replace(/\s+$/, nextSibling != null && nextSibling.lineBreak ? '' : '&#160;');
+                                value = value.replace(/\s+$/, nextSibling && nextSibling.lineBreak ? '' : '&#160;');
                             }
                             else if (value.length > 0) {
                                 value = '&#160;' + value.substring(1);
@@ -366,7 +366,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
                 !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
             ).each(node => {
                 const element = <HTMLSelectElement> node.element;
-                if (getElementCache(element, 'optionArray') == null || this.settings.alwaysReevaluateResources) {
+                if (!getElementCache(element, 'optionArray') || this.settings.alwaysReevaluateResources) {
                     const stringArray: string[] = [];
                     let numberArray: Null<string[]> = [];
                     let i = -1;
@@ -398,7 +398,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
     }
 
     protected borderVisible(border?: BorderAttribute) {
-        return border != null && !(border.style === 'none' || border.width === '0px');
+        return border && !(border.style === 'none' || border.width === '0px');
     }
 
     protected hasDrawableBackground(object?: BoxStyle) {

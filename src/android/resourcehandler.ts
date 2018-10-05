@@ -319,7 +319,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
         super.setBoxSpacing();
         this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)).each(node => {
             const stored: StringMap = getElementCache(node.element, 'boxSpacing');
-            if (stored != null) {
+            if (stored) {
                 if (stored.marginLeft === stored.marginRight &&
                     node.alignParent('left', this.settings) &&
                     node.alignParent('right', this.settings) &&
@@ -343,7 +343,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
         super.setBoxStyle();
         this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE)).each(node => {
             const stored: BoxStyle = getElementCache(node.element, 'boxStyle');
-            if (stored != null) {
+            if (stored) {
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
@@ -877,14 +877,14 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         {
                             const sizeParent: Image = { width: 0, height: 0 };
                             backgroundDimensions.forEach(item => {
-                                if (item != null) {
+                                if (item) {
                                     sizeParent.width = Math.max(sizeParent.width, item.width);
                                     sizeParent.height = Math.max(sizeParent.height, item.height);
                                 }
                             });
                             if (sizeParent.width === 0) {
                                 let current = node;
-                                while (current != null && !current.documentBody) {
+                                while (current && !current.documentBody) {
                                     if (current.hasWidth) {
                                         sizeParent.width = current.bounds.width;
                                     }
@@ -918,7 +918,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         }
                     }
                 }
-                else if (getElementCache(node.element, 'fontStyle') == null && isString(stored.backgroundColor)) {
+                else if (!getElementCache(node.element, 'fontStyle') && isString(stored.backgroundColor)) {
                     node.formatted(formatString(method['backgroundColor'], stored.backgroundColor as string), node.renderExtension.size === 0);
                 }
             }
@@ -977,11 +977,11 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     if (Array.isArray(stored.color) && stored.color.length > 0) {
                         stored.color = `@color/${ResourceHandler.addColor(stored.color[0], stored.color[2])}`;
                     }
-                    if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily] != null) {
+                    if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily]) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
-                    if ((FONT_ANDROID[fontFamily] != null && this.settings.targetAPI >= FONT_ANDROID[fontFamily]) ||
-                        (this.settings.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] != null && this.settings.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]]))
+                    if ((FONT_ANDROID[fontFamily] && this.settings.targetAPI >= FONT_ANDROID[fontFamily]) ||
+                        (this.settings.fontAliasResourceValue && FONTALIAS_ANDROID[fontFamily] && this.settings.targetAPI >= FONT_ANDROID[FONTALIAS_ANDROID[fontFamily]]))
                     {
                         system = true;
                         stored.fontFamily = fontFamily;
@@ -1028,7 +1028,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
             if (tagStyle) {
                 for (let i = 0; i < tagStyle.length; i++) {
                     for (const attr in tagStyle[i]) {
-                        if (sorted[i][attr] != null) {
+                        if (sorted[i][attr]) {
                             sorted[i][attr].push(...tagStyle[i][attr]);
                         }
                         else {
@@ -1053,7 +1053,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                 !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)
             ).each(node => {
                 const element = <HTMLImageElement> node.element;
-                if (getElementCache(element, 'imageSource') == null || this.settings.alwaysReevaluateResources) {
+                if (!getElementCache(element, 'imageSource') || this.settings.alwaysReevaluateResources) {
                     const result = node.imageElement ? ResourceHandler.addImageSrcSet(element)
                                                      : ResourceHandler.addImage({ 'mdpi': element.src });
                     if (result !== '') {
@@ -1074,10 +1074,10 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                 !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
             ).each(node => {
                 const stored: ObjectMap<string[]> = getElementCache(node.element, 'optionArray');
-                if (stored != null) {
+                if (stored) {
                     const method = METHOD_ANDROID['optionArray'];
                     let result: string[] = [];
-                    if (stored.numberArray != null) {
+                    if (stored.numberArray) {
                         if (!this.settings.numberResourceValue) {
                             result = stored.numberArray;
                         }
@@ -1085,7 +1085,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                             stored.stringArray = stored.numberArray;
                         }
                     }
-                    if (stored.stringArray != null) {
+                    if (stored.stringArray) {
                         result =
                             stored.stringArray
                                 .map(value => {
@@ -1119,7 +1119,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                 !node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING))
             .each(node => {
                 const stored: NameValue = getElementCache(node.element, 'valueString');
-                if (stored != null) {
+                if (stored) {
                     if (node.renderParent.is(NODE_STANDARD.RELATIVE)) {
                         if (node.alignParent('left', this.settings) && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                             const value = node.textContent;
@@ -1170,7 +1170,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
 
     public addTheme(template: string, templateData: {}, options: ObjectMap<any>) {
         const map: ObjectMap<string> = parseTemplate(template);
-        if (options.item != null) {
+        if (options.item) {
             const root = getTemplateLevel(templateData, '0');
             for (const name in options.item) {
                 let value = options.item[name];
@@ -1208,7 +1208,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                             countA += a[attr].length;
                         }
                         for (const attr in b) {
-                            if (b[attr] != null) {
+                            if (b[attr]) {
                                 maxB = Math.max(b[attr].length, maxB);
                                 countB += b[attr].length;
                             }
@@ -1237,7 +1237,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     const styleKey: ObjectMap<number[]> = {};
                     const layoutKey: ObjectMap<number[]> = {};
                     for (let i = 0; i < sorted.length; i++) {
-                        if (sorted[i] == null) {
+                        if (!sorted[i]) {
                             continue;
                         }
                         const filtered: ObjectMap<number[]> = {};
@@ -1246,7 +1246,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         for (const attr1 in sorted[i]) {
                             const ids: number[] = sorted[i][attr1];
                             let revalidate = false;
-                            if (ids == null || ids.length === 0) {
+                            if (!ids || ids.length === 0) {
                                 continue;
                             }
                             else if (ids.length === count) {
@@ -1263,7 +1263,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                 const found: ObjectMap<number[]> = {};
                                 let merged = false;
                                 for (let j = 0; j < sorted.length; j++) {
-                                    if (i !== j && sorted[j] != null) {
+                                    if (i !== j && sorted[j]) {
                                         for (const attr in sorted[j]) {
                                             const compare = sorted[j][attr];
                                             if (compare.length > 0) {
@@ -1294,7 +1294,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                             for (const attr2 in filtered) {
                                 if (attr1 !== attr2 && filtered[attr1].join('') === filtered[attr2].join('')) {
                                     const index = filtered[attr1].join(',');
-                                    if (combined[index] != null) {
+                                    if (combined[index]) {
                                         combined[index] = new Set([...combined[index], ...attr2.split(';')]);
                                     }
                                     else {
@@ -1344,7 +1344,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     }
                     sorted =
                         sorted.filter((item: ObjectMap<number[]>) => {
-                            if (item != null) {
+                            if (item) {
                                 for (const attr in item) {
                                     if (item[attr] && item[attr].length > 0) {
                                         return true;
@@ -1400,7 +1400,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
         }
         for (const id in mapNode) {
             const node = viewData.cache.locate('id', parseInt(id));
-            if (node != null) {
+            if (node) {
                 const styles = mapNode[id].styles;
                 const attrs = mapNode[id].attributes;
                 if (styles.length > 0) {
@@ -1432,7 +1432,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
             .split(';')
             .forEach(value => {
                 for (let i = 0; i < sorted.length; i++) {
-                    if (sorted[i] != null) {
+                    if (sorted[i]) {
                         let index = -1;
                         let key = '';
                         for (const j in sorted[i]) {

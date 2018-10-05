@@ -70,9 +70,9 @@ export default class Drawer<T extends View> extends Extension<T> {
     public beforeInsert() {
         const application = this.application;
         const node = this.node;
-        if (application.renderQueue[node.nodeId] != null) {
+        if (application.renderQueue[node.nodeId]) {
             const target = application.cacheSession.locate(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
-            if (target != null) {
+            if (target) {
                 application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
                 delete application.renderQueue[node.nodeId];
             }

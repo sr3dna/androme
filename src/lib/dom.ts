@@ -36,17 +36,17 @@ export function getBoxModel() {
 }
 
 export function setElementCache(element: Null<Element>, attr: string, data: any) {
-    if (element != null) {
+    if (element) {
         element[`__${attr}`] = data;
     }
 }
 
 export function getElementCache(element: Null<Element>, attr: string) {
-    return element != null ? element[`__${attr}`] : null;
+    return element ? element[`__${attr}`] : null;
 }
 
 export function deleteElementCache(element: Null<Element>, ...attrs: string[]) {
-    if (element != null) {
+    if (element) {
         for (const attr of attrs) {
             delete element[`__${attr}`];
         }
@@ -98,15 +98,15 @@ export function assignBounds(bounds: ClientRect | DOMRect): ClientRect {
 }
 
 export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclaration {
-    if (element != null) {
+    if (element) {
         if (cache) {
             const node = getNodeFromElement(element);
             const style = getElementCache(element, 'style');
-            if (style != null) {
+            if (style) {
                 return style;
             }
-            else if (node != null) {
-                if (node.style != null) {
+            else if (node) {
+                if (node.style) {
                     return node.style;
                 }
                 else if (node.plainText) {
@@ -161,7 +161,7 @@ export function parseBackgroundUrl(value: string) {
 export function cssInherit(element: Element, attr: string, tagName = '', exclude?: string[]) {
     let result = '';
     let current: Null<Element> = element.parentElement;
-    while (current != null && current.tagName !== tagName) {
+    while (current && current.tagName !== tagName) {
         result = getStyle(current)[attr] || '';
         if (exclude && exclude.some(value => result.indexOf(value) !== -1)) {
             result = '';
@@ -180,17 +180,17 @@ export function cssParent(element: Element, attr: string, ...styles: string[]) {
             return true;
         }
     }
-    if (element.parentElement != null) {
+    if (element.parentElement) {
         return styles.includes(getStyle(element.parentElement)[attr]);
     }
     return false;
 }
 
 export function cssFromParent(element: Element, attr: string) {
-    if (element instanceof HTMLElement && element.parentElement != null) {
+    if (element instanceof HTMLElement && element.parentElement) {
         const node = getNodeFromElement(element);
         const style = getStyle(element);
-        return (style && style[attr] === getStyle(element.parentElement)[attr] && (node == null || node.styleMap[attr] == null));
+        return (style && style[attr] === getStyle(element.parentElement)[attr] && (!node || !node.styleMap[attr]));
     }
     return false;
 }
@@ -255,11 +255,11 @@ export function isPlainText(element: Null<Element>, whiteSpace = false) {
 }
 
 export function hasLineBreak(element: Null<Element>) {
-    if (element != null) {
+    if (element) {
         const node = getNodeFromElement(element);
         const fromParent = element.nodeName === '#text';
         let whiteSpace = '';
-        if (node != null) {
+        if (node) {
             whiteSpace = node.css('whiteSpace');
         }
         else {
@@ -278,7 +278,7 @@ export function hasLineBreak(element: Null<Element>) {
 
 export function isLineBreak(element: Null<Element>, excluded = true) {
     const node = getNodeFromElement(element);
-    if (node != null) {
+    if (node) {
         return (
             node.tagName === 'BR' ||
             (excluded && node.block && (
@@ -291,11 +291,11 @@ export function isLineBreak(element: Null<Element>, excluded = true) {
 }
 
 export function getElementsBetweenSiblings(firstElement: Null<Element>, secondElement: Element, cacheNode = false, whiteSpace = false) {
-    if (firstElement == null || firstElement.parentElement === secondElement.parentElement) {
+    if (!firstElement || firstElement.parentElement === secondElement.parentElement) {
         const parentElement = secondElement.parentElement;
-        if (parentElement != null) {
+        if (parentElement) {
             const elements = <Element[]> Array.from(parentElement.childNodes);
-            const firstIndex = firstElement != null ? elements.findIndex(element => element === firstElement) : 0;
+            const firstIndex = firstElement ? elements.findIndex(element => element === firstElement) : 0;
             const secondIndex = elements.findIndex(element => element === secondElement);
             if (firstIndex !== -1 && secondIndex !== -1 && firstIndex !== secondIndex) {
                 let result = elements.slice(Math.min(firstIndex, secondIndex) + 1, Math.max(firstIndex, secondIndex));
@@ -342,7 +342,7 @@ export function isElementVisible(element: Element) {
                 else {
                     let current = element.parentElement;
                     let valid = true;
-                    while (current != null) {
+                    while (current) {
                         if (getStyle(current).display === 'none') {
                             valid = false;
                             break;

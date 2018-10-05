@@ -19,7 +19,7 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
                         .from(element.children)
                         .every(item => item.tagName === tagName);
                 let current = element.parentElement;
-                while (current != null) {
+                while (current) {
                     if (current.tagName === 'NAV' && this.application.elements.has(current)) {
                         valid = false;
                         break;

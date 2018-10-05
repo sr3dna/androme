@@ -16,7 +16,7 @@ export default class AccessibilityAndroid<T extends View> extends Accessibility<
                 const element = node.element;
                 switch (node.controlName) {
                     case NODE_ANDROID.EDIT:
-                        if (node.companion == null) {
+                        if (!node.companion) {
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
                                 const label = getNodeFromElement(sibling) as T;
                                 const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) as T : null;
@@ -25,7 +25,7 @@ export default class AccessibilityAndroid<T extends View> extends Accessibility<
                                         label.android('labelFor', node.stringId);
                                         return true;
                                     }
-                                    else if (label.textElement && labelParent != null) {
+                                    else if (label.textElement && labelParent) {
                                         labelParent.android('labelFor', node.stringId);
                                         return true;
                                     }

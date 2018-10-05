@@ -65,12 +65,12 @@ export default abstract class File<T extends Node> {
                 .then((response: Response) => response.json())
                 .then(result => {
                     if (result) {
-                        if (result.zipname != null) {
+                        if (result.zipname) {
                             fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(result.zipname)}`)
                                 .then((res: Response) => res.blob())
                                 .then(blob => this.downloadToDisk(blob, lastIndexOf(result.zipname)));
                         }
-                        else if (result.system != null) {
+                        else if (result.system) {
                             alert(`${result.application}\n\n${result.system}`);
                         }
                     }

@@ -34,11 +34,11 @@ export function generateId(section: string, name: string) {
 }
 
 export function stripId(value: Null<string>) {
-    return value != null ? value.replace(/@\+?id\//, '') : '';
+    return value ? value.replace(/@\+?id\//, '') : '';
 }
 
 export function convertDP(value: any, dpi = 160, font = false) {
-    if (value != null) {
+    if (value) {
         value = parseFloat(value);
         if (!isNaN(value)) {
             value /= (dpi / 160);
