@@ -3,7 +3,7 @@ import { ObjectMap, StringMap } from '../lib/types';
 import { ExtensionDependency, ExtensionResult, IExtension } from '../extension/lib/types';
 import Node from './node';
 import Application from './application';
-import { capitalize, convertCamelCase, includes, optional } from '../lib/util';
+import { capitalize, convertCamelCase, includes } from '../lib/util';
 
 export default abstract class Extension<T extends Node> implements IExtension {
     public application: Application<T>;
@@ -31,7 +31,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
         }
     }
 
-    public setTarget(node: T, parent?: T, element?: Element) {
+    public setTarget(node: T, parent?: T, element?: HTMLElement) {
         this.node = node;
         this.parent = parent;
         this.element = element || this.node.element;
@@ -45,11 +45,11 @@ export default abstract class Extension<T extends Node> implements IExtension {
         this.dependencies.push({ name: value, init });
     }
 
-    public included(element?: Element) {
+    public included(element?: HTMLElement) {
         if (!element) {
-            element = <Element> this.element;
+            element = <HTMLElement> this.element;
         }
-        return includes(optional(element, 'dataset.ext'), this.name);
+        return element ? includes(element.dataset.ext, this.name) : false;
     }
 
     public beforeInit(internal = false) {
@@ -66,7 +66,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
         }
     }
 
-    public init(element: Element) {
+    public init(element: HTMLElement) {
         return false;
     }
 
@@ -86,9 +86,9 @@ export default abstract class Extension<T extends Node> implements IExtension {
 
     public condition() {
         const node = this.node;
-        if (node && node.hasElement) {
-            const ext: string = optional(node.element, 'dataset.ext');
-            if (ext === '') {
+        if (node && node.element instanceof HTMLElement) {
+            const ext = node.dataset.ext;
+            if (!ext) {
                 return this.tagNames.length > 0;
             }
             else {

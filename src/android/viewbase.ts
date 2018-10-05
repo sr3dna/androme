@@ -3,7 +3,7 @@ import { Constructor, Null, StringMap } from '../lib/types';
 import { Constraint } from './lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, lastIndexOf, isString, withinFraction } from '../lib/util';
+import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, lastIndexOf, isString, trimNull, withinFraction } from '../lib/util';
 import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
 import { getElementsBetweenSiblings, getNodeFromElement } from '../lib/dom';
 import API_ANDROID from './customizations';
@@ -229,7 +229,7 @@ export default (Base: Constructor<Node>) => {
             }
             if (!this.nodeId) {
                 const element = <HTMLInputElement> this.element;
-                let name = (element.id || element.name || '').trim();
+                let name = trimNull(element.id || element.name);
                 if (RESERVED_JAVA.includes(name)) {
                     name += '_1';
                 }
@@ -480,7 +480,7 @@ export default (Base: Constructor<Node>) => {
             let floating = '';
             function mergeGravity(original?: Null<string>, ...alignment: string[]) {
                 const direction = [
-                        ...(original || '').split('|'),
+                        ...trimNull(original).split('|'),
                         ...alignment
                     ]
                     .filter(value => value);

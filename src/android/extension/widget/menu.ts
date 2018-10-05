@@ -4,7 +4,6 @@ import { SettingsAndroid } from '../../lib/types';
 import Nav from '../../../extension/nav';
 import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
-import { optional } from '../../../lib/util';
 import { NODE_RESOURCE, NODE_STANDARD, NODE_PROCEDURE } from '../../../base/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 
@@ -93,9 +92,11 @@ export default class Menu<T extends View> extends Nav<T> {
                         .from(node.element.childNodes)
                         .some((item: HTMLElement) => {
                             if (item.nodeName === '#text') {
-                                title = optional(item, 'textContent').trim();
-                                if (title !== '') {
-                                    return true;
+                                if (item.textContent) {
+                                    title = item.textContent.trim();
+                                    if (title !== '') {
+                                        return true;
+                                    }
                                 }
                                 return false;
                             }
@@ -189,7 +190,7 @@ export default class Menu<T extends View> extends Nav<T> {
 
     public afterRender() {
         super.afterRender();
-        if (this.included(this.node.element)) {
+        if (this.included(<HTMLElement> this.node.element)) {
             this.application.layoutProcessing.pathname = 'res/menu';
         }
     }

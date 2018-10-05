@@ -1,7 +1,7 @@
 import { INode, Settings, InitialValues } from './lib/types';
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
-import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject } from '../lib/util';
+import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
 import { assignBounds, getBoxModel, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
 import { APP_SECTION, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from './lib/constants';
 import { BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT } from '../lib/constants';
@@ -505,7 +505,7 @@ export default abstract class Node implements INode {
             [['excludeSection', APP_SECTION], ['excludeProcedure', NODE_PROCEDURE], ['excludeResource', NODE_RESOURCE]].forEach((item: [string, any]) => {
                 let exclude = this.dataset[item[0]] || '';
                 if (this._element.parentElement) {
-                    exclude += '|' + (this._element.parentElement.dataset[`${item[0]}Child`] || '').trim();
+                    exclude += '|' + trimNull(this._element.parentElement.dataset[`${item[0]}Child`]);
                 }
                 exclude
                     .split('|')

@@ -72,7 +72,7 @@ export function convertWord(value: string) {
 }
 
 export function capitalize(value: string, upper = true) {
-    return value ? value.charAt(0)[(upper ? 'toUpperCase' : 'toLowerCase')]() + value.substring(1)[(upper ? 'toLowerCase' : 'toString')]() : '';
+    return value ? value.charAt(0)[upper ? 'toUpperCase' : 'toLowerCase']() + value.substring(1)[upper ? 'toLowerCase' : 'toString']() : '';
 }
 
 export function convertInt(value: any) {
@@ -250,8 +250,12 @@ export function resolvePath(value: string) {
     return value;
 }
 
+export function trimNull(value: Null<string>) {
+    return value ? value.trim() : '';
+}
+
 export function trimString(value: string, char: string) {
-    return trimStart(trimEnd(value, char), char);
+    return value ? trimStart(trimEnd(value, char), char) : '';
 }
 
 export function trimStart(value: string, char: string) {

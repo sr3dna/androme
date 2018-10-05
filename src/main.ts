@@ -3,7 +3,7 @@ import { Image, Null, ObjectMap } from './lib/types';
 import Node from './base/node';
 import Application from './base/application';
 import Extension from './base/extension';
-import { convertCamelCase, convertInt, convertPX, convertWord, hasValue, isPercent, isString, optional } from './lib/util';
+import { convertCamelCase, convertInt, convertPX, convertWord, hasValue, isPercent, isString, trimNull } from './lib/util';
 import { getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
 import { formatRGB, getByColorName } from './lib/color';
 import { APP_FRAMEWORK } from './base/lib/constants';
@@ -229,11 +229,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                     element.id = `content_${main.size}`;
                 }
             }
-            const filename: string =
-                optional(element, 'dataset.filename')
-                    .trim()
-                    .replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '')
-                || element.id;
+            const filename = trimNull(element.dataset.filename).replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '') || element.id;
             const iteration = convertInt(element.dataset.iteration) + 1;
             element.dataset.iteration = iteration.toString();
             element.dataset.layoutName = convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);

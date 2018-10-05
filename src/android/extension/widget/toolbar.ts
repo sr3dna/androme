@@ -33,11 +33,11 @@ export default class Toolbar<T extends View> extends Extension<T> {
                     }
                     return false;
                 });
-            if (hasValue(element.dataset.target)) {
-                const target = document.getElementById(element.dataset.target as string);
+            if (element.dataset.target) {
+                const target = document.getElementById(element.dataset.target);
                 if (target &&
                     element.parentElement !== target &&
-                    !includes(optional(target, 'dataset.ext'), WIDGET_NAME.COORDINATOR))
+                    !includes(target.dataset.ext, WIDGET_NAME.COORDINATOR))
                 {
                     this.application.elements.add(element);
                 }

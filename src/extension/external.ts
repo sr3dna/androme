@@ -23,9 +23,9 @@ export default class External<T extends Node> extends Extension<T> {
         }
     }
 
-    public init(element: Element) {
+    public init(element: HTMLElement) {
         if (this.included(element)) {
-            this.application.elements.add(<HTMLElement> element);
+            this.application.elements.add(element);
         }
         return false;
     }

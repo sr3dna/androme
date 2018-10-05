@@ -5,7 +5,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import Controller from './controller';
 import Resource from './resource';
-import { convertInt, hasBit, hasValue, isNumber, optional, sortAsc, trimString, isUnit } from '../lib/util';
+import { convertInt, hasBit, hasValue, isNumber, isUnit, optional, sortAsc, trimString, trimNull } from '../lib/util';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { APP_SECTION, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from './lib/constants';
@@ -484,7 +484,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                     }
                     let parentY = nodeY.parent as T;
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
-                        const filename: string = optional(nodeY, 'dataset.include').trim();
+                        const filename = trimNull(nodeY.dataset.include);
                         if (filename !== '' && includes.indexOf(filename) === -1) {
                             renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), includes.length > 0 ? includes[includes.length - 1] : '');
                             includes.push(filename);
@@ -743,37 +743,39 @@ export default class Application<T extends Node> implements AppBase<T> {
                         if (next) {
                             continue;
                         }
-                        const processed: IExtension[] = [];
-                        this.prioritizeExtensions(this.extensions, nodeY.element).some(item => {
-                            if (item.is(nodeY)) {
-                                item.setTarget(nodeY, parentY);
-                                if (item.condition()) {
-                                    const result =  item.processNode(mapX, mapY);
-                                    if (result.output !== '') {
-                                        renderNode(nodeY, parentY, result.output, current);
-                                    }
-                                    if (result.parent) {
-                                        parentY = result.parent as T;
-                                    }
-                                    if (result.output !== '' || result.include) {
-                                        processed.push(item);
-                                    }
-                                    next = result.next || false;
-                                    if (result.complete || result.next) {
-                                        return true;
+                        if (nodeY.element instanceof HTMLElement) {
+                            const processed: IExtension[] = [];
+                            this.prioritizeExtensions(this.extensions, nodeY.element).some(item => {
+                                if (item.is(nodeY)) {
+                                    item.setTarget(nodeY, parentY);
+                                    if (item.condition()) {
+                                        const result =  item.processNode(mapX, mapY);
+                                        if (result.output !== '') {
+                                            renderNode(nodeY, parentY, result.output, current);
+                                        }
+                                        if (result.parent) {
+                                            parentY = result.parent as T;
+                                        }
+                                        if (result.output !== '' || result.include) {
+                                            processed.push(item);
+                                        }
+                                        next = result.next || false;
+                                        if (result.complete || result.next) {
+                                            return true;
+                                        }
                                     }
                                 }
+                                return false;
+                            });
+                            if (processed.length > 0) {
+                                for (const ext of processed) {
+                                    ext.subscribers.add(nodeY);
+                                    nodeY.renderExtension.add(ext);
+                                }
                             }
-                            return false;
-                        });
-                        if (processed.length > 0) {
-                            for (const ext of processed) {
-                                ext.subscribers.add(nodeY);
-                                nodeY.renderExtension.add(ext);
+                            if (next) {
+                                continue;
                             }
-                        }
-                        if (next) {
-                            continue;
                         }
                     }
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.RENDER) && !nodeY.rendered) {
@@ -1017,7 +1019,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         }
         const root = this.cache.parent as T;
         if (!hasValue(root.dataset.target) || root.renderExtension.size === 0) {
-            const pathname = trimString(optional(root, 'dataset.folder').trim(), '/');
+            const pathname = trimString(trimNull(root.dataset.folder), '/');
             this.updateLayout(
                 empty ? '' : baseTemplate,
                 pathname,
@@ -1821,15 +1823,15 @@ export default class Application<T extends Node> implements AppBase<T> {
         return node;
     }
 
-    private prioritizeExtensions(available: IExtension[], element: Element) {
+    private prioritizeExtensions(available: IExtension[], element: HTMLElement) {
         let extensions: string[] = [];
-        let current: Null<Element> = element;
+        let current: Null<HTMLElement> = element;
         while (current) {
             extensions = [
                 ...extensions,
-                ...optional(current, 'dataset.ext')
+                ...trimNull(current.dataset.ext)
                     .split(',')
-                    .map((value: string) => value.trim())
+                    .map(value => value.trim())
             ];
             current = current.parentElement;
         }

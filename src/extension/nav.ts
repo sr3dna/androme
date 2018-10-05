@@ -9,7 +9,7 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
         this.require(EXT_NAME.EXTERNAL, true);
     }
 
-    public init(element: Element) {
+    public init(element: HTMLElement) {
         if (this.included(element)) {
             let valid = false;
             if (element.children.length > 0) {
@@ -45,7 +45,7 @@ export default abstract class Menu<T extends Node> extends Extension<T> {
 
     public afterRender() {
         const node = this.node;
-        if (this.included(node.element)) {
+        if (this.included(<HTMLElement> node.element)) {
             Array
                 .from(node.element.querySelectorAll('NAV'))
                 .forEach((item: HTMLElement) => {

@@ -1,7 +1,7 @@
 import { Null, ObjectMap, StringMap } from '../../../lib/types';
 import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
-import { includes, optional } from '../../../lib/util';
+import { includes } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../base/lib/constants';
 
@@ -20,11 +20,11 @@ export function createPlaceholder(nextId: number, node: T, children: T[] = []) {
     return placeholder;
 }
 
-export function locateExtension(node: T, extension: string): Null<Element> {
+export function locateExtension(node: T, extension: string): Null<HTMLElement> {
     return (
         Array
             .from(node.element.children)
-            .find((element: Element) => includes(optional(element, 'dataset.ext'), extension)) as Element
+            .find((element: HTMLElement) => includes(element.dataset.ext, extension)) as HTMLElement
     );
 }
 

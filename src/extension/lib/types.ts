@@ -20,7 +20,7 @@ export interface IExtension {
     require(value: string): void;
     included(element?: Element): boolean;
     beforeInit(internal?: boolean): void;
-    init(element: Element): boolean;
+    init(element: HTMLElement): boolean;
     afterInit(internal?: boolean): void;
     condition(): boolean;
     processNode(mapX?: LayoutMapX<{}>, mapY?: LayoutMapY<{}>): ExtensionResult;
