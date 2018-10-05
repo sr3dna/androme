@@ -14,7 +14,6 @@ export interface Settings {
     supportRTL: boolean;
     alwaysReevaluateResources: boolean;
     renderInlineText: boolean;
-    ellipsisOnTextOverflow: boolean;
     preloadImages: boolean;
     autoSizeBackgroundImage: boolean;
     autoSizePaddingAndBorderWidth: boolean;
@@ -24,13 +23,17 @@ export interface Settings {
     floatOverlapDisabled: boolean;
     collapseUnattributedElements: boolean;
     customizationsOverwritePrivilege: boolean;
-    autoCloseOnWrite: boolean;
     insertSpaces: number;
+    autoCloseOnWrite: boolean;
     outputDirectory: string;
     outputMainFileName: string;
     outputArchiveFileType: string;
     outputMaxProcessingTime: number;
 }
+
+export type SettingsInternal = {
+    layoutDirectory: string;
+};
 
 export interface INode extends BoxModel {
     id: number;
@@ -240,8 +243,4 @@ export type InitialValues<T> = {
     depth: number,
     linear?: ClientRect,
     box?: ClientRect
-};
-
-export type SettingsInternal = {
-    layoutDirectory: string;
 };

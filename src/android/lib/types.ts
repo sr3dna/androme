@@ -7,6 +7,7 @@ export interface SettingsAndroid extends Settings {
     dimensResourceValue: boolean;
     numberResourceValue: boolean;
     fontAliasResourceValue: boolean;
+    ellipsisOnTextOverflow: boolean;
     constraintChainDisabled: boolean;
     constraintChainPackedHorizontalOffset: number;
     constraintChainPackedVerticalOffset: number;

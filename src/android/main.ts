@@ -51,8 +51,9 @@ let builtInExtensions: ObjectMap<IExtension>;
 
 const appBase: AppFramework<T> = {
     create() {
+        settings = Object.assign({}, Settings);
         viewController = new ViewController<T>();
-        fileHandler = new FileHandler<T>(Settings);
+        fileHandler = new FileHandler<T>(settings);
         resourceHandler = new ResourceHandler<T>(fileHandler);
         builtInExtensions = {
             [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, APP_FRAMEWORK.ANDROID),
@@ -69,7 +70,6 @@ const appBase: AppFramework<T> = {
             [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, APP_FRAMEWORK.ANDROID),
             [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER, APP_FRAMEWORK.ANDROID)
         };
-        settings = Object.assign({}, Settings);
         initialized = true;
         return {
             settings,

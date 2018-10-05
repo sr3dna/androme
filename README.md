@@ -106,11 +106,11 @@ androme.settings = {
     supportNegativeLeftTop: true,
     floatOverlapDisabled: false,
     collapseUnattributedElements: true,
-    showAttributes: true,
     customizationsOverwritePrivilege: false,
-    autoCloseOnWrite: true,
+    showAttributes: true,
     insertSpaces: 4, // tabs: 0
     convertPixels: 'dp',
+    autoCloseOnWrite: true,
     outputDirectory: 'app/src/main',
     outputMainFileName: 'activity_main.xml',
     outputArchiveFileType: 'zip', // zip | tar

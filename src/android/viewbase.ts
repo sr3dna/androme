@@ -1,4 +1,4 @@
-import { Settings } from '../base/lib/types';
+import { SettingsAndroid } from './lib/types';
 import { Constructor, Null, StringMap } from '../lib/types';
 import { Constraint } from './lib/types';
 import Node from '../base/node';
@@ -193,23 +193,6 @@ export default (Base: Constructor<Node>) => {
                     }
                 })
             );
-        }
-
-        public applyCustomizations({ customizationsOverwritePrivilege = false }) {
-            for (const build of [API_ANDROID[this.api], API_ANDROID[0]]) {
-                if (build && build.customizations) {
-                    for (const nodeName of [this.tagName, this.controlName]) {
-                        const customizations = build.customizations[nodeName];
-                        if (customizations) {
-                            for (const obj in customizations) {
-                                for (const attr in customizations[obj]) {
-                                    this.attr(obj, attr, customizations[obj][attr], customizationsOverwritePrivilege);
-                                }
-                            }
-                        }
-                    }
-                }
-            }
         }
 
         public clone(id?: number, children = false): View {
@@ -486,7 +469,7 @@ export default (Base: Constructor<Node>) => {
             }
         }
 
-        public setAlignment(settings: Settings) {
+        public setAlignment(settings: SettingsAndroid) {
             const renderParent = this.renderParent;
             const textAlignParent = this.cssParent('textAlign');
             const obj = renderParent.is(NODE_STANDARD.GRID) ? 'app' : 'android';
@@ -702,7 +685,7 @@ export default (Base: Constructor<Node>) => {
             this.android('gravity', mergeGravity(this.android('gravity'), convertHorizontal(textAlign), verticalAlign));
         }
 
-        public setBoxSpacing(settings: Settings) {
+        public setBoxSpacing(settings: SettingsAndroid) {
             if (!this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
                 ['padding', 'margin'].forEach(region => {
                     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
@@ -745,7 +728,7 @@ export default (Base: Constructor<Node>) => {
             }
         }
 
-        public applyOptimizations(settings: Settings) {
+        public applyOptimizations(settings: SettingsAndroid) {
             const renderParent = this.renderParent;
             const renderChildren = this.renderChildren;
             if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
@@ -1067,7 +1050,24 @@ export default (Base: Constructor<Node>) => {
             }
         }
 
-        private bindWhiteSpace(settings: Settings) {
+        public applyCustomizations(settings: SettingsAndroid) {
+            for (const build of [API_ANDROID[this.api], API_ANDROID[0]]) {
+                if (build && build.customizations) {
+                    for (const nodeName of [this.tagName, this.controlName]) {
+                        const customizations = build.customizations[nodeName];
+                        if (customizations) {
+                            for (const obj in customizations) {
+                                for (const attr in customizations[obj]) {
+                                    this.attr(obj, attr, customizations[obj][attr], settings.customizationsOverwritePrivilege);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private bindWhiteSpace(settings: SettingsAndroid) {
             if (!this.hasAlign(NODE_ALIGNMENT.FLOAT) && (
                 this.linearHorizontal ||
                 this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL, NODE_ALIGNMENT.MULTILINE) ||
