@@ -1,4 +1,4 @@
-import { AppBase, DisplaySettings, LayoutMapX, LayoutMapY, ViewData } from './lib/types';
+import { AppBase, Settings, LayoutMapX, LayoutMapY, ViewData } from './lib/types';
 import { ArrayIndex, Null, ObjectIndex, ObjectMap, PlainFile, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import Node from './node';
@@ -16,11 +16,11 @@ export default class Application<T extends Node> implements AppBase<T> {
     public readonly cacheSession: NodeList<T> = new NodeList<T>();
     public readonly elements: Set<HTMLElement> = new Set();
     public readonly extensions: IExtension[] = [];
-    public Node: { new (id: number, api: number, element?: Element): T };
+    public Node: { new (id: number, element?: Element): T };
     public Controller: Controller<T>;
     public Resource: Resource<T>;
     public builtInExtensions: ObjectMap<IExtension>;
-    public settings: ObjectMap<any>;
+    public settings: Settings;
     public renderQueue: ObjectIndex<string[]> = {};
     public loading = false;
     public closed = false;
@@ -65,26 +65,20 @@ export default class Application<T extends Node> implements AppBase<T> {
 
     public finalize() {
         const visible = this.cacheSession.visible.list.filter(node => !node.hasAlign(NODE_ALIGNMENT.SPACE));
-        const displaySettings: DisplaySettings = {
-            supportRTL: this.settings.supportRTL,
-            autoSizePaddingAndBorderWidth: this.settings.autoSizePaddingAndBorderWidth,
-            autoSizeBackgroundImage: this.settings.autoSizeBackgroundImage,
-            ellipsisOnTextOverflow: this.settings.ellipsisOnTextOverflow
-        };
         for (const node of visible) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                 node.setLayout();
             }
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ALIGNMENT)) {
-                node.setAlignment(displaySettings);
+                node.setAlignment(this.settings);
             }
         }
         for (const node of visible) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.OPTIMIZATION)) {
-                node.applyOptimizations(displaySettings);
+                node.applyOptimizations(this.settings);
             }
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.CUSTOMIZATION)) {
-                node.applyCustomizations(this.settings.customizationsOverwritePrivilege);
+                node.applyCustomizations(this.settings);
             }
         }
         this.Controller.setBoxSpacing(this.viewData);
@@ -161,15 +155,15 @@ export default class Application<T extends Node> implements AppBase<T> {
         }
         const rootNode = this.insertNode(rootElement);
         if (rootNode != null) {
-            rootNode.parent = new this.Node(0, this.settings.targetAPI, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
+            rootNode.parent = new this.Node(0, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
+            this.Controller.initNode(rootNode);
             rootNode.documentRoot = true;
             this.cache.parent = rootNode;
         }
         else {
             return false;
         }
-        const supportInline = this.settings.renderInlineText ? ['BR']
-                                                        : this.Controller.supportInline;
+        const supportInline = this.settings.renderInlineText ? ['BR'] : this.Controller.supportInline;
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
             return (styleMap == null || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.children.length === 0;
@@ -301,7 +295,7 @@ export default class Application<T extends Node> implements AppBase<T> {
             }
             for (const node of this.cache) {
                 if (!node.documentRoot) {
-                    let parent: Null<T> = node.getParentElementAsNode(this.settings.constraintSupportNegativeLeftTop, this.cache.parent) as T;
+                    let parent: Null<T> = node.getParentElementAsNode(this.settings.supportNegativeLeftTop, this.cache.parent) as T;
                     if (parent == null && !node.pageflow) {
                         parent = this.cache.parent;
                     }
@@ -342,7 +336,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         const application = this;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
-        let output = `<?xml version="1.0" encoding="utf-8"?>\n{:0}`;
+        let baseTemplate = this.Controller.baseTemplate;
         let empty = true;
         function setMapY(depth: number, id: number, node: T) {
             if (!mapY.has(depth)) {
@@ -952,7 +946,8 @@ export default class Application<T extends Node> implements AppBase<T> {
                                                     if (getElementsBetweenSiblings(
                                                                 children[0].baseElement,
                                                                 children[children.length - 1].baseElement)
-                                                            .filter(element => isLineBreak(element)).length === 0
+                                                            .filter(element => isLineBreak(element))
+                                                            .length === 0
                                                         )
                                                     {
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
@@ -1001,8 +996,8 @@ export default class Application<T extends Node> implements AppBase<T> {
                     }
                     id = parentId + (position != null ? `:${position}` : '');
                     const placeholder = formatPlaceholder(id);
-                    if (output.indexOf(placeholder) !== -1) {
-                        output = replacePlaceholder(output, placeholder, content.join(''));
+                    if (baseTemplate.indexOf(placeholder) !== -1) {
+                        baseTemplate = replacePlaceholder(baseTemplate, placeholder, content.join(''));
                         empty = false;
                     }
                     else {
@@ -1024,7 +1019,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         if (!hasValue(root.dataset.target) || root.renderExtension.size === 0) {
             const pathname = trimString(optional(root, 'dataset.folder').trim(), '/');
             this.updateLayout(
-                !empty ? output : '',
+                empty ? '' : baseTemplate,
                 pathname,
                 root.renderExtension.size > 0 && Array.from(root.renderExtension).some(item => item.documentRoot)
             );
@@ -1679,7 +1674,7 @@ export default class Application<T extends Node> implements AppBase<T> {
     }
 
     public updateLayout(content: string, pathname = '', documentRoot = false) {
-        pathname = pathname || this.Controller.localSettings.folderLayout;
+        pathname = pathname || this.Controller.settingsInternal.layoutDirectory;
         if (documentRoot &&
             this._views.length > 0 &&
             this._views[0].content === '')
@@ -1700,7 +1695,7 @@ export default class Application<T extends Node> implements AppBase<T> {
 
     public addInclude(filename: string, content: string) {
         this._includes.push({
-            pathname: this.Controller.localSettings.folderLayout,
+            pathname: this.Controller.settingsInternal.layoutDirectory,
             filename,
             content
         });
@@ -1782,7 +1777,8 @@ export default class Application<T extends Node> implements AppBase<T> {
         if (element.nodeName.charAt(0) === '#') {
             if (element.nodeName === '#text') {
                 if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                    node = new this.Node(this.cache.nextId, this.settings.targetAPI, element);
+                    node = new this.Node(this.cache.nextId, element);
+                    this.Controller.initNode(node);
                     node.nodeName = 'PLAINTEXT';
                     if (parent) {
                         node.parent = parent;
@@ -1808,7 +1804,8 @@ export default class Application<T extends Node> implements AppBase<T> {
                 case 'AREA':
                     return null;
             }
-            const elementNode = new this.Node(this.cache.nextId, this.settings.targetAPI, element);
+            const elementNode = new this.Node(this.cache.nextId, element);
+            this.Controller.initNode(elementNode);
             if (isElementVisible(element)) {
                 node = elementNode;
                 node.setExclusions();
@@ -1828,7 +1825,12 @@ export default class Application<T extends Node> implements AppBase<T> {
         let extensions: string[] = [];
         let current: Null<Element> = element;
         while (current != null) {
-            extensions = [...extensions, ...optional(current, 'dataset.ext').split(',').map((value: string) => value.trim())];
+            extensions = [
+                ...extensions,
+                ...optional(current, 'dataset.ext')
+                    .split(',')
+                    .map((value: string) => value.trim())
+            ];
             current = current.parentElement;
         }
         extensions = extensions.filter(value => value);

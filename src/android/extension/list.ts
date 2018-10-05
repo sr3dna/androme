@@ -1,4 +1,5 @@
 import { ExtensionResult, ListData } from '../../extension/lib/types';
+import { SettingsAndroid } from '../lib/types';
 import List from '../../extension/list';
 import View from '../view';
 import ResourceAndroid from '../resource';
@@ -20,6 +21,7 @@ export default class ListAndroid<T extends View> extends List<T> {
         if (mainData != null) {
             const parent = this.parent as T;
             const controller = this.application.Controller;
+            const settings = <SettingsAndroid> this.application.settings;
             const parentLeft = convertInt(parent.css('paddingLeft')) + convertInt(parent.cssInitial('marginLeft', true));
             let columnCount = 0;
             let paddingLeft = node.marginLeft;
@@ -60,7 +62,6 @@ export default class ListAndroid<T extends View> extends List<T> {
                 }
             }
             else {
-                const settings = this.application.settings;
                 const columnWeight = columnCount > 0 ? '0' : '';
                 const positionInside = node.css('listStylePosition') === 'inside';
                 const listStyleImage = !['', 'none'].includes(node.css('listStyleImage'));
@@ -102,7 +103,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 };
                 if (positionInside) {
                     if (marginLeftValue !== '') {
-                        marginLeftValue = delimitDimens(node.nodeName, parseRTL('margin_left', settings), marginLeftValue, this.application.settings);
+                        marginLeftValue = delimitDimens(node.nodeName, parseRTL('margin_left', settings), marginLeftValue, settings);
                     }
                     controller.prependBefore(
                         node.id,
@@ -121,7 +122,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                         )
                     );
                     Object.assign(options.android, {
-                        minWidth: delimitDimens(node.nodeName, parseRTL('min_width', settings), formatPX(24), this.application.settings)
+                        minWidth: delimitDimens(node.nodeName, parseRTL('min_width', settings), formatPX(24), settings)
                     });
                 }
                 else {
@@ -151,7 +152,8 @@ export default class ListAndroid<T extends View> extends List<T> {
                     else {
                         Object.assign(options.android, { text: mainData.ordinal });
                     }
-                    const companion = new View(this.application.cache.nextId, node.api, document.createElement('SPAN')) as T;
+                    const companion = new View(this.application.cache.nextId, document.createElement('SPAN')) as T;
+                    companion.api = node.api;
                     companion.alignmentType = NODE_ALIGNMENT.SPACE;
                     companion.nodeName = `${node.tagName}_ORDINAL`;
                     companion.setNodeType(NODE_ANDROID.SPACE);

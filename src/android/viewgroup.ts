@@ -13,7 +13,8 @@ export default class ViewGroup extends ViewBase(NodeGroup as Constructor<Node>) 
         parent: T,
         children: T[])
     {
-        super(id, node.api);
+        super(id);
+        this.api = node.api;
         this.parent = parent;
         this.children = children;
         this.depth = node.depth;

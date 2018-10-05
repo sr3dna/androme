@@ -1,4 +1,5 @@
-import { ControllerSettings, DisplaySettings, ViewData } from '../base/lib/types';
+import { SettingsInternal, ViewData } from '../base/lib/types';
+import { SettingsAndroid } from './lib/types';
 import { Null, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
 import NodeList from '../base/nodelist';
 import Controller from '../base/controller';
@@ -13,6 +14,8 @@ import { formatPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
 import { NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../base/lib/constants';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './constants';
+
+import BASE_TMPL from './template/base';
 
 const MAP_LAYOUT = {
     relativeParent: {
@@ -45,11 +48,17 @@ const MAP_CHAIN = {
 };
 
 export default class ViewController<T extends View> extends Controller<T> {
+    public settings: SettingsAndroid;
+
     private _merge = {};
 
     constructor() {
         super();
         resetId();
+    }
+
+    public initNode(node: T) {
+        node.api = this.settings.targetAPI;
     }
 
     public finalize(data: ViewData<NodeList<T>>) {
@@ -148,10 +157,13 @@ export default class ViewController<T extends View> extends Controller<T> {
                     }
                     else {
                         const floatEnd =
-                            Math.max.apply(null,
-                                node.documentParent.initial.children
+                            Math.max.apply(
+                                null,
+                                node.documentParent
+                                    .initial.children
                                     .filter(item => item.float === 'left' && item.siblingIndex < node.siblingIndex)
-                                    .map(item => item.linear.right));
+                                    .map(item => item.linear.right)
+                            );
                         if (nodes.list.some(item => item.linear.left === floatEnd)) {
                             boxWidth = node.box.right - floatEnd;
                         }
@@ -1521,8 +1533,8 @@ export default class ViewController<T extends View> extends Controller<T> {
         return xml;
     }
 
-    public createGroup(parent: T, node: T, children: T[]): T {
-        const group = <View> new ViewGroup(this.cache.nextId, node, parent, children) as T;
+    public createGroup(parent: T, node: T, children: T[]) {
+        const group = new ViewGroup(this.cache.nextId, node, parent, children) as T;
         if (children.length > 0) {
             children.forEach(item => item.inherit(group, 'data'));
         }
@@ -1573,7 +1585,8 @@ export default class ViewController<T extends View> extends Controller<T> {
             }
             let previous: Null<T> = null;
             const scrollView = overflow.map((nodeName, index) => {
-                const container = new View(this.cache.nextId, this.settings.targetAPI, index === 0 ? node.element : undefined) as T;
+                const container = new View(this.cache.nextId, index === 0 ? node.element : undefined) as T;
+                container.api = this.settings.targetAPI;
                 container.nodeName = node.nodeName;
                 container.documentParent = node.documentParent;
                 container.setNodeType(nodeName);
@@ -1698,7 +1711,8 @@ export default class ViewController<T extends View> extends Controller<T> {
                         const left = node.toInt('left');
                         const top = node.toInt('top');
                         if (left < 0 || top < 0) {
-                            const container = new View(this.cache.nextId, this.settings.targetAPI, node.element) as T;
+                            const container = new View(this.cache.nextId, node.element) as T;
+                            container.api = this.settings.targetAPI;
                             container.excludeProcedure |= NODE_PROCEDURE.ALL;
                             container.excludeResource |= NODE_RESOURCE.ALL;
                             container.android('layout_width', width > 0 ? formatPX(width) : 'wrap_content');
@@ -1877,7 +1891,8 @@ export default class ViewController<T extends View> extends Controller<T> {
 
     public renderNodeStatic(nodeName: number | string, depth: number, options = {}, width = '', height = '', node?: T, children?: boolean) {
         if (node == null) {
-            node = new View(0, this.settings.targetAPI) as T;
+            node = new View() as T;
+            node.api = this.settings.targetAPI;
         }
         node.apply(formatResource(options, this.settings));
         const renderDepth = Math.max(0, depth);
@@ -1939,6 +1954,7 @@ export default class ViewController<T extends View> extends Controller<T> {
         let xml = value.join('');
         if (this._merge[name]) {
             const node = new View() as T;
+            node.api = this.settings.targetAPI;
             node.documentRoot = true;
             xml =
                 this.renderNodeStatic(
@@ -1960,14 +1976,8 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     public setBoxSpacing(data: ViewData<NodeList<T>>) {
-        const displaySettings: DisplaySettings = {
-            supportRTL: this.settings.supportRTL,
-            autoSizePaddingAndBorderWidth: this.settings.autoSizePaddingAndBorderWidth,
-            autoSizeBackgroundImage: this.settings.autoSizeBackgroundImage,
-            ellipsisOnTextOverflow: this.settings.ellipsisOnTextOverflow
-        };
         for (const node of data.cache.visible) {
-            node.setBoxSpacing(displaySettings);
+            node.setBoxSpacing(this.settings);
         }
     }
 
@@ -2434,6 +2444,10 @@ export default class ViewController<T extends View> extends Controller<T> {
         return this.cache.locate('stringId', id);
     }
 
+    get baseTemplate(): string {
+        return BASE_TMPL;
+    }
+
     get supportInline() {
         return WEBVIEW_ANDROID;
     }
@@ -2442,9 +2456,9 @@ export default class ViewController<T extends View> extends Controller<T> {
         return true;
     }
 
-    get localSettings(): ControllerSettings {
+    get settingsInternal(): SettingsInternal {
         return {
-            folderLayout: 'res/layout'
+            layoutDirectory: 'res/layout'
         };
     }
 }

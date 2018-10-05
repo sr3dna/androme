@@ -1,4 +1,5 @@
 import { ExtensionResult } from '../../../extension/lib/types';
+import { SettingsAndroid } from '../../lib/types';
 import Button from '../../../extension/button';
 import View from '../../view';
 import ResourceAndroid from '../../resource';
@@ -91,7 +92,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
     }
 
     private setFrameGravity<T extends View>(node: T) {
-        const settings = this.application.settings;
+        const settings = <SettingsAndroid> this.application.settings;
         const parent = node.documentParent;
         const horizontalBias = node.horizontalBias(settings);
         const verticalBias = node.verticalBias(settings);

@@ -1,4 +1,4 @@
-import { FunctionMap } from './base/lib/types';
+import { FunctionMap, Settings } from './base/lib/types';
 import { Image, Null, ObjectMap } from './lib/types';
 import Node from './base/node';
 import Application from './base/application';
@@ -13,7 +13,7 @@ import android from './android/main';
 type T = Node;
 
 let main: Application<T>;
-let settings: ObjectMap<any> = {};
+let settings: Settings = {} as any;
 let system: FunctionMap;
 let framework = '';
 
@@ -293,16 +293,20 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
         });
         Promise
             .all(queue)
-            .then(result => {
-                try {
-                    result.forEach((evt: Event) => setImageCache(<HTMLImageElement> evt.srcElement));
-                }
-                catch {
+            .then((result: Event[]) => {
+                if (Array.isArray(result)) {
+                    result.forEach(item => {
+                        try {
+                            setImageCache(<HTMLImageElement> item.srcElement);
+                        }
+                        catch {
+                        }
+                    });
                 }
                 parseResume();
             })
-            .catch((err: Event) => {
-                const message = err.srcElement ? (<HTMLImageElement> err.srcElement).src : '';
+            .catch((error: Event) => {
+                const message = error.srcElement ? (<HTMLImageElement> error.srcElement).src : '';
                 if (!hasValue(message) || confirm(`FAIL: ${message}`)) {
                     parseResume();
                 }

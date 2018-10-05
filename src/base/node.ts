@@ -1,4 +1,4 @@
-import { INode, DisplaySettings, InitialValues } from './lib/types';
+import { INode, Settings, InitialValues } from './lib/types';
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject } from '../lib/util';
@@ -78,10 +78,10 @@ export default abstract class Node implements INode {
 
     public abstract setNodeType(viewName: string): void;
     public abstract setLayout(width?: number, height?: number): void;
-    public abstract setAlignment(settings: DisplaySettings): void;
-    public abstract setBoxSpacing(settings: DisplaySettings): void;
-    public abstract applyOptimizations(options: DisplaySettings): void;
-    public abstract applyCustomizations(overwrite: boolean): void;
+    public abstract setAlignment(settings: Settings): void;
+    public abstract setBoxSpacing(settings: Settings): void;
+    public abstract applyOptimizations(settings: Settings): void;
+    public abstract applyCustomizations(settings: Settings): void;
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     public abstract valueBox(region: number): string[];
     public abstract clone(id?: number, children?: boolean): T;

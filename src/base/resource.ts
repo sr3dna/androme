@@ -1,4 +1,4 @@
-import { AppCurrent, ViewData } from './lib/types';
+import { AppCurrent, Settings, ViewData } from './lib/types';
 import { BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
@@ -57,9 +57,10 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
     }
 
     public cache: NodeList<T>;
-    public settings: ObjectMap<any>;
     public application: Application<T>;
     public imageDimensions: Map<string, Image>;
+
+    public abstract settings: Settings;
 
     constructor(public file: File<T>) {
     }
@@ -369,11 +370,12 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
                 if (getElementCache(element, 'optionArray') == null || this.settings.alwaysReevaluateResources) {
                     const stringArray: string[] = [];
                     let numberArray: Null<string[]> = [];
-                    for (let i = 0; i < element.children.length; i++) {
+                    let i = -1;
+                    while (++i < element.children.length) {
                         const item = <HTMLOptionElement> element.children[i];
                         const value = item.text.trim();
                         if (value !== '') {
-                            if (!this.settings.numberResourceValue && numberArray != null && stringArray.length === 0 && isNumber(value)) {
+                            if (numberArray && stringArray.length === 0 && isNumber(value)) {
                                 numberArray.push(value);
                             }
                             else {

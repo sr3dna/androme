@@ -1,5 +1,6 @@
 import { Null } from '../../../lib/types';
 import { ExtensionResult } from '../../../extension/lib/types';
+import { SettingsAndroid } from '../../lib/types';
 import Extension from '../../../base/extension';
 import View from '../../view';
 import ResourceAndroid from '../../resource';
@@ -189,7 +190,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
         let collapsingToolbarNode: Null<T> = null;
         if (appBar) {
             overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? delimitDimens('appbar', 'height', formatPX(node.viewHeight), this.application.settings) : 'wrap_content');
+            overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? delimitDimens('appbar', 'height', formatPX(node.viewHeight), <SettingsAndroid> this.application.settings) : 'wrap_content');
             overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
             if (hasMenu) {
                 if (optionsAppBar.android.theme != null) {

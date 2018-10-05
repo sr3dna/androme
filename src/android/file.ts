@@ -30,7 +30,7 @@ export default class FileAndroid<T extends View> extends File<T> {
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
             const view = views[i];
-            files.push(this.getLayoutFile(view.pathname, i === 0 ? this.settings.outputActivityMainFileName : `${view.filename}.xml`, view.content));
+            files.push(this.getLayoutFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
         }
         const xml = this.resourceDrawableToXml();
         files.push(...this.parseFileDetails(this.resourceStringToXml()));
@@ -51,7 +51,7 @@ export default class FileAndroid<T extends View> extends File<T> {
             const view = views[i];
             result[view.filename] = view.content;
             if (saveToDisk) {
-                files.push(this.getLayoutFile(view.pathname, i === 0 ? this.settings.outputActivityMainFileName : `${view.filename}.xml`, view.content));
+                files.push(this.getLayoutFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
             }
         }
         if (saveToDisk) {

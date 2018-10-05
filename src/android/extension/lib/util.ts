@@ -8,7 +8,8 @@ import { NODE_RESOURCE } from '../../../base/lib/constants';
 type T = View;
 
 export function createPlaceholder(nextId: number, node: T, children: T[] = []) {
-    const placeholder = new View(nextId, node.api, node.element);
+    const placeholder = new View(nextId, node.element);
+    placeholder.api = node.api;
     placeholder.parent = node.parent;
     for (const child of children) {
         child.parent = placeholder;

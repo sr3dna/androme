@@ -9,6 +9,29 @@ import NodeList from '../nodelist';
 export type Constructor<T> = new(...args: any[]) => T;
 export type FunctionMap = ObjectMap<(...args: any[]) => any>;
 
+export interface Settings {
+    builtInExtensions: string[];
+    supportRTL: boolean;
+    alwaysReevaluateResources: boolean;
+    renderInlineText: boolean;
+    ellipsisOnTextOverflow: boolean;
+    preloadImages: boolean;
+    autoSizeBackgroundImage: boolean;
+    autoSizePaddingAndBorderWidth: boolean;
+    whitespaceHorizontalOffset: number;
+    whitespaceVerticalOffset: number;
+    supportNegativeLeftTop: boolean;
+    floatOverlapDisabled: boolean;
+    collapseUnattributedElements: boolean;
+    customizationsOverwritePrivilege: boolean;
+    autoCloseOnWrite: boolean;
+    insertSpaces: number;
+    outputDirectory: string;
+    outputMainFileName: string;
+    outputArchiveFileType: string;
+    outputMaxProcessingTime: number;
+}
+
 export interface INode extends BoxModel {
     id: number;
     style: CSSStyleDeclaration;
@@ -124,10 +147,10 @@ export interface INode extends BoxModel {
     readonly center: Point;
     setNodeType(viewName: string): void;
     setLayout(): void;
-    setAlignment(settings: DisplaySettings): void;
-    setBoxSpacing(settings: DisplaySettings): void;
-    applyOptimizations(options: DisplaySettings): void;
-    applyCustomizations(overwrite: boolean): void;
+    setAlignment(settings: Settings): void;
+    setBoxSpacing(settings: Settings): void;
+    applyOptimizations(settings: Settings): void;
+    applyCustomizations(settings: Settings): void;
     modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     valueBox(region: number): string[];
     clone(id?: number, children?: boolean): {};
@@ -188,12 +211,12 @@ export interface AppBase<T extends Node> {
     Controller: Controller<T>;
     Resource: Resource<T>;
     builtInExtensions: ObjectMap<IExtension>;
-    settings: ObjectMap<any>;
+    settings: Settings;
 }
 
 export interface AppCurrent<T extends Node> {
     cache: NodeList<T>;
-    settings: ObjectMap<any>;
+    settings: Settings;
     application: Application<T>;
 }
 
@@ -219,13 +242,6 @@ export type InitialValues<T> = {
     box?: ClientRect
 };
 
-export type DisplaySettings = {
-    supportRTL: boolean;
-    autoSizePaddingAndBorderWidth: boolean;
-    autoSizeBackgroundImage: boolean;
-    ellipsisOnTextOverflow: boolean;
-};
-
-export type ControllerSettings = {
-    folderLayout: string;
+export type SettingsInternal = {
+    layoutDirectory: string;
 };

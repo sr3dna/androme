@@ -72,6 +72,7 @@ NOTE: Calling "save" or "write" methods before the images have completely loaded
 These settings are available in the global variable "androme" to customize your desired XML structure. Compatible attributes are generated based on the targetAPI setting. I have not validated every attribute in relation to the API version but the customization code can easily be modified to support your project.
 
 ```javascript
+// android settings
 androme.settings = {
     builtInExtensions: [
         'androme.external',
@@ -101,8 +102,8 @@ androme.settings = {
     constraintChainPackedHorizontalOffset: 3.5,
     constraintChainPackedVerticalOffset: 16,
     constraintCirclePositionAbsolute: false,
-    constraintSupportNegativeLeftTop: true,
     constraintPercentAccuracy: 4, // eq: 1px
+    supportNegativeLeftTop: true,
     floatOverlapDisabled: false,
     collapseUnattributedElements: true,
     showAttributes: true,
@@ -111,7 +112,7 @@ androme.settings = {
     insertSpaces: 4, // tabs: 0
     convertPixels: 'dp',
     outputDirectory: 'app/src/main',
-    outputActivityMainFileName: 'activity_main.xml',
+    outputMainFileName: 'activity_main.xml',
     outputArchiveFileType: 'zip', // zip | tar
     outputMaxProcessingTime: 30
 };

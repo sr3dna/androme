@@ -49,7 +49,9 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const tableFixed = node.css('tableLayout') === 'fixed';
         const borderCollapse = node.css('borderCollapse') === 'collapse';
         const [horizontal, vertical] = borderCollapse ? [0, 0]
-                                                      : node.css('borderSpacing').split(' ').map(value => parseInt(value));
+                                                      : node.css('borderSpacing')
+                                                            .split(' ')
+                                                            .map(value => parseInt(value));
         if (horizontal > 0) {
             node.modifyBox(BOX_STANDARD.PADDING_LEFT, horizontal);
             node.modifyBox(BOX_STANDARD.PADDING_RIGHT, horizontal);

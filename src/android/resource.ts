@@ -1,5 +1,6 @@
 import { ViewData } from '../base/lib/types';
 import { BorderAttribute, BoxStyle, FontAttribute, Image, NameValue, Null, ObjectMap, ObjectMapNested, StringMap } from '../lib/types';
+import { SettingsAndroid } from './lib/types';
 import NodeList from '../base/nodelist';
 import Resource from '../base/resource';
 import File from '../base/file';
@@ -217,6 +218,8 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
         }
         return ['', ''];
     }
+
+    public settings: SettingsAndroid;
 
     private tagStyle: ObjectMap<StyleList> = {};
     private tagCount: ObjectMap<number> = {};
@@ -1074,6 +1077,14 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                 if (stored != null) {
                     const method = METHOD_ANDROID['optionArray'];
                     let result: string[] = [];
+                    if (stored.numberArray != null) {
+                        if (!this.settings.numberResourceValue) {
+                            result = stored.numberArray;
+                        }
+                        else {
+                            stored.stringArray = stored.numberArray;
+                        }
+                    }
                     if (stored.stringArray != null) {
                         result =
                             stored.stringArray
@@ -1082,9 +1093,6 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                                     return name !== '' ? `@string/${name}` : '';
                                 })
                                 .filter(name => name);
-                    }
-                    if (stored.numberArray != null) {
-                        result = stored.numberArray;
                     }
                     let arrayName = '';
                     const arrayValue = result.join('-');

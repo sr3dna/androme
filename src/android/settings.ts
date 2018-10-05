@@ -1,6 +1,7 @@
+import { SettingsAndroid } from './lib/types';
 import { BUILD_ANDROID, DENSITY_ANDROID } from './constants';
 
-export default {
+const settings: SettingsAndroid = {
     builtInExtensions: [
         'androme.external',
         'androme.origin',
@@ -29,8 +30,8 @@ export default {
     constraintChainPackedHorizontalOffset: 3.5,
     constraintChainPackedVerticalOffset: 16,
     constraintCirclePositionAbsolute: false,
-    constraintSupportNegativeLeftTop: true,
     constraintPercentAccuracy: 4,
+    supportNegativeLeftTop: true,
     floatOverlapDisabled: false,
     collapseUnattributedElements: true,
     showAttributes: true,
@@ -39,7 +40,9 @@ export default {
     insertSpaces: 4,
     convertPixels: 'dp',
     outputDirectory: 'app/src/main',
-    outputActivityMainFileName: 'activity_main.xml',
+    outputMainFileName: 'activity_main.xml',
     outputArchiveFileType: 'zip',
     outputMaxProcessingTime: 30
 };
+
+export default settings;

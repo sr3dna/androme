@@ -5,9 +5,8 @@ import ViewBase from './viewbase';
 export default class View extends ViewBase(Node as Constructor<Node>) {
     constructor(
         id = 0,
-        public api = 0,
         element?: Element)
     {
-        super(id, api, element);
+        super(id, element);
     }
 }

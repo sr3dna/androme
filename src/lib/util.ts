@@ -145,8 +145,8 @@ export function convertAlpha(value: number) {
 }
 
 export function convertRoman(value: number) {
-    let result = '';
     const digits = value.toString().split('');
+    let result = '';
     let i = 3;
     while (i--) {
         result = (NUMERALS[parseInt(digits.pop() || '') + (i * 10)] || '') + result;
@@ -185,7 +185,10 @@ export function isPercent(value: string) {
 }
 
 export function includes(source: Null<string>, value: string, delimiter = ',') {
-    return source != null ? source.split(delimiter).map(segment => segment.trim()).includes(value)
+    return source != null ? source
+                                .split(delimiter)
+                                .map(segment => segment.trim())
+                                .includes(value)
                           : false;
 }
 

@@ -1,13 +1,14 @@
-import { AppCurrent, ControllerSettings, ViewData } from './lib/types';
-import { ObjectIndex, ObjectMap } from '../lib/types';
+import { AppCurrent, SettingsInternal, Settings, ViewData } from './lib/types';
+import { ObjectIndex } from '../lib/types';
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
 import { repeat } from '../lib/util';
 
 export default abstract class Controller<T extends Node> implements AppCurrent<T> {
+    public abstract settings: Settings;
+
     public cache: NodeList<T>;
-    public settings: ObjectMap<any>;
     public application: Application<T>;
 
     private _before: ObjectIndex<string[]> = {};
@@ -16,6 +17,7 @@ export default abstract class Controller<T extends Node> implements AppCurrent<T
     constructor() {
     }
 
+    public abstract initNode(node: T): void;
     public abstract createGroup(parent: T, node: T, children: T[]): T;
     public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
     public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
@@ -29,9 +31,10 @@ export default abstract class Controller<T extends Node> implements AppCurrent<T
     public abstract getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan?: number): string;
     public abstract finalize(data: ViewData<NodeList<T>>): void;
 
+    public abstract get baseTemplate(): string;
     public abstract get supportInline(): string[];
     public abstract get supportInclude(): boolean;
-    public abstract get localSettings(): ControllerSettings;
+    public abstract get settingsInternal(): SettingsInternal;
 
     public reset() {
         this._before = {};

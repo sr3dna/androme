@@ -2,6 +2,7 @@
 import { AppFramework } from '../base/lib/types';
 import { ObjectMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
+import { SettingsAndroid } from './lib/types';
 import View from './view';
 import ViewController from './viewcontroller';
 import ResourceAndroid from './resource';
@@ -44,7 +45,8 @@ let initialized = false;
 let Controller: ViewController<T>;
 let File: FileAndroid<T>;
 let Resource: ResourceAndroid<T>;
-let settings: ObjectMap<any>;
+
+let settings: SettingsAndroid;
 let builtInExtensions: ObjectMap<IExtension>;
 
 const appBase: AppFramework<T> = {

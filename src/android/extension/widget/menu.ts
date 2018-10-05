@@ -1,5 +1,6 @@
 import { ObjectMap, StringMap } from '../../../lib/types';
 import { ExtensionResult } from '../../../extension/lib/types';
+import { SettingsAndroid } from '../../lib/types';
 import Nav from '../../../extension/nav';
 import View from '../../view';
 import ResourceAndroid from '../../resource';
@@ -157,7 +158,7 @@ export default class Menu<T extends View> extends Nav<T> {
         }
         if (node.android('title') === '') {
             if (title !== '') {
-                const name = ResourceAndroid.addString(title, '', this.application.settings);
+                const name = ResourceAndroid.addString(title, '', <SettingsAndroid> this.application.settings);
                 if (name !== '') {
                     title = `@string/${name}`;
                 }

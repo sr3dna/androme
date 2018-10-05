@@ -1,4 +1,4 @@
-import { DisplaySettings } from '../base/lib/types';
+import { Settings } from '../base/lib/types';
 import { Constructor, Null, StringMap } from '../lib/types';
 import { Constraint } from './lib/types';
 import Node from '../base/node';
@@ -15,7 +15,7 @@ export default (Base: Constructor<Node>) => {
     return class View extends Base {
         public static documentBody() {
             if (View._documentBody == null) {
-                const body = new View(0, 0, document.body);
+                const body = new View(0, document.body);
                 body.hide();
                 body.setBounds();
                 View._documentBody = body;
@@ -30,8 +30,9 @@ export default (Base: Constructor<Node>) => {
         private static _documentBody: View;
 
         public readonly renderChildren: View[] = [];
+        public constraint: Constraint;
+        public api = 0;
         public children: View[] = [];
-        public constraint: Constraint<View>;
 
         protected _namespaces = new Set(['android', 'app']);
 
@@ -40,7 +41,6 @@ export default (Base: Constructor<Node>) => {
 
         constructor(
             id = 0,
-            public api = 0,
             element?: Element)
         {
             super(id, element);
@@ -195,7 +195,7 @@ export default (Base: Constructor<Node>) => {
             );
         }
 
-        public applyCustomizations(overwrite = false) {
+        public applyCustomizations({ customizationsOverwritePrivilege = false }) {
             for (const build of [API_ANDROID[this.api], API_ANDROID[0]]) {
                 if (build && build.customizations != null) {
                     for (const nodeName of [this.tagName, this.controlName]) {
@@ -203,7 +203,7 @@ export default (Base: Constructor<Node>) => {
                         if (customizations != null) {
                             for (const obj in customizations) {
                                 for (const attr in customizations[obj]) {
-                                    this.attr(obj, attr, customizations[obj][attr], overwrite);
+                                    this.attr(obj, attr, customizations[obj][attr], customizationsOverwritePrivilege);
                                 }
                             }
                         }
@@ -213,7 +213,8 @@ export default (Base: Constructor<Node>) => {
         }
 
         public clone(id?: number, children = false): View {
-            const node = new View(id || this.id, this.api, this.element);
+            const node = new View(id || this.id, this.element);
+            node.api = this.api;
             node.nodeId = this.nodeId;
             node.nodeType = this.nodeType;
             node.controlName = this.controlName;
@@ -485,7 +486,7 @@ export default (Base: Constructor<Node>) => {
             }
         }
 
-        public setAlignment(settings: DisplaySettings) {
+        public setAlignment(settings: Settings) {
             const renderParent = this.renderParent;
             const textAlignParent = this.cssParent('textAlign');
             const obj = renderParent.is(NODE_STANDARD.GRID) ? 'app' : 'android';
@@ -495,7 +496,11 @@ export default (Base: Constructor<Node>) => {
             let verticalAlign = '';
             let floating = '';
             function mergeGravity(original?: Null<string>, ...alignment: string[]) {
-                const direction = [...(original || '').split('|'), ...alignment].filter(value => value);
+                const direction = [
+                        ...(original || '').split('|'),
+                        ...alignment
+                    ]
+                    .filter(value => value);
                 switch (direction.length) {
                     case 0:
                         return '';
@@ -697,7 +702,7 @@ export default (Base: Constructor<Node>) => {
             this.android('gravity', mergeGravity(this.android('gravity'), convertHorizontal(textAlign), verticalAlign));
         }
 
-        public setBoxSpacing(settings: DisplaySettings) {
+        public setBoxSpacing(settings: Settings) {
             if (!this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
                 ['padding', 'margin'].forEach(region => {
                     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
@@ -740,7 +745,7 @@ export default (Base: Constructor<Node>) => {
             }
         }
 
-        public applyOptimizations(settings: DisplaySettings) {
+        public applyOptimizations(settings: Settings) {
             const renderParent = this.renderParent;
             const renderChildren = this.renderChildren;
             if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
@@ -1062,7 +1067,7 @@ export default (Base: Constructor<Node>) => {
             }
         }
 
-        private bindWhiteSpace(settings: DisplaySettings) {
+        private bindWhiteSpace(settings: Settings) {
             if (!this.hasAlign(NODE_ALIGNMENT.FLOAT) && (
                 this.linearHorizontal ||
                 this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL, NODE_ALIGNMENT.MULTILINE) ||
