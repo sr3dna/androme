@@ -31,12 +31,12 @@ export default abstract class List<T extends Node> extends Extension<T> {
     public processNode(): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;
-        let xml = '';
+        let output = '';
         if (NodeList.linearY(node.children)) {
-            xml = this.application.writeGridLayout(node, parent, node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2);
+            output = this.application.writeGridLayout(node, parent, node.children.some(item => item.css('listStylePosition') === 'inside') ? 3 : 2);
         }
         else {
-            xml = this.application.writeLinearLayout(node, parent, true);
+            output = this.application.writeLinearLayout(node, parent, true);
         }
         let i = 0;
         node.each((item: T) => {
@@ -101,7 +101,7 @@ export default abstract class List<T extends Node> extends Extension<T> {
             }
             item.data(EXT_NAME.LIST, 'mainData', mainData);
         });
-        return { xml, complete: true };
+        return { output, complete: true };
     }
 
     public afterRender() {

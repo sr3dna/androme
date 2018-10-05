@@ -101,6 +101,6 @@ export default class TableAndroid<T extends View> extends Table<T> {
                 )
             );
         }
-        return { xml: '', complete: true };
+        return { output: '', complete: true };
     }
 }

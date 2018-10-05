@@ -137,7 +137,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         this.resourceHandler.reset();
     }
 
-    public createNodeCache(rootElement: HTMLElement) {
+    public initCache(rootElement: HTMLElement) {
         let nodeTotal = 0;
         if (rootElement === document.body) {
             Array
@@ -332,7 +332,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         return false;
     }
 
-    public createLayoutXml() {
+    public convertDocument() {
         const application = this;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
@@ -397,8 +397,8 @@ export default class Application<T extends Node> implements AppBase<T> {
                     template.set(node.id, value);
                 }
             }
-            function renderXml(node: T, parent: T, xml: string, current = '', group = false) {
-                if (xml !== '') {
+            function renderNode(node: T, parent: T, output: string, current = '', group = false) {
+                if (output !== '') {
                     if (group) {
                         node.each((item: T) => {
                             [partial, external].some(data => {
@@ -420,14 +420,14 @@ export default class Application<T extends Node> implements AppBase<T> {
                         });
                     }
                     if (current !== '') {
-                        insertViewTemplate(external, node, current, xml, current);
+                        insertViewTemplate(external, node, current, output, current);
                     }
                     else {
                         if (!application.elements.has(<HTMLElement> node.element)) {
                             if (hasValue(node.dataset.target)) {
                                 const target = document.getElementById(node.dataset.target as string);
                                 if (target && target !== parent.element) {
-                                    application.addRenderQueue(node.dataset.target as string, [xml]);
+                                    application.addRenderQueue(node.dataset.target as string, [output]);
                                     node.auto = false;
                                     return;
                                 }
@@ -435,13 +435,13 @@ export default class Application<T extends Node> implements AppBase<T> {
                             else if (hasValue(parent.dataset.target)) {
                                 const target = document.getElementById(parent.dataset.target as string);
                                 if (target) {
-                                    application.addRenderQueue(parent.nodeId, [xml]);
+                                    application.addRenderQueue(parent.nodeId, [output]);
                                     node.dataset.target = parent.nodeId;
                                     return;
                                 }
                             }
                         }
-                        insertViewTemplate(partial, node, parent.id.toString(), xml, current);
+                        insertViewTemplate(partial, node, parent.id.toString(), output, current);
                     }
                 }
             }
@@ -486,7 +486,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
                         const filename: string = optional(nodeY, 'dataset.include').trim();
                         if (filename !== '' && includes.indexOf(filename) === -1) {
-                            renderXml(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), includes.length > 0 ? includes[includes.length - 1] : '');
+                            renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), includes.length > 0 ? includes[includes.length - 1] : '');
                             includes.push(filename);
                         }
                         current = includes.length > 0 ? includes[includes.length - 1] : '';
@@ -634,12 +634,12 @@ export default class Application<T extends Node> implements AppBase<T> {
                                 }
                             }
                             let group: Null<T> = null;
-                            let groupXml = '';
+                            let groupOutput = '';
                             if (horizontal.length > 1) {
                                 const clearedPartial = NodeList.cleared(horizontal);
                                 if (this.isFrameHorizontal(horizontal, clearedPartial)) {
                                     group = this.viewController.createGroup(parentY, nodeY, horizontal);
-                                    groupXml = this.writeFrameLayoutHorizontal(group, parentY, horizontal, clearedPartial);
+                                    groupOutput = this.writeFrameLayoutHorizontal(group, parentY, horizontal, clearedPartial);
                                 }
                                 else {
                                     if (horizontal.length === axisY.length) {
@@ -652,17 +652,17 @@ export default class Application<T extends Node> implements AppBase<T> {
                                             horizontal.every(node => node.has('width', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT)))
                                         {
                                             group = this.viewController.createGroup(parentY, nodeY, horizontal);
-                                            groupXml = this.writeConstraintLayout(group, parentY);
+                                            groupOutput = this.writeConstraintLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.PERCENT;
                                         }
                                         else if (this.isRelativeHorizontal(horizontal, clearedPartial)) {
                                             group = this.viewController.createGroup(parentY, nodeY, horizontal);
-                                            groupXml = this.writeRelativeLayout(group, parentY);
+                                            groupOutput = this.writeRelativeLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                         }
                                         else {
                                             group = this.viewController.createGroup(parentY, nodeY, horizontal);
-                                            groupXml = this.writeLinearLayout(group, parentY, true);
+                                            groupOutput = this.writeLinearLayout(group, parentY, true);
                                             if (floated.size > 0) {
                                                 group.alignmentType |= NODE_ALIGNMENT.FLOAT;
                                                 group.alignmentType |= horizontal.every(node => node.float === 'right' || node.autoMarginLeft) ? NODE_ALIGNMENT.RIGHT : NODE_ALIGNMENT.LEFT;
@@ -683,11 +683,11 @@ export default class Application<T extends Node> implements AppBase<T> {
                                 {
                                     if (parentY.linearVertical) {
                                         group = nodeY;
-                                        groupXml = this.writeFrameLayoutVertical(null, parentY, vertical, clearedPartial);
+                                        groupOutput = this.writeFrameLayoutVertical(null, parentY, vertical, clearedPartial);
                                     }
                                     else {
                                         group = this.viewController.createGroup(parentY, nodeY, vertical);
-                                        groupXml = this.writeFrameLayoutVertical(group, parentY, vertical, clearedPartial);
+                                        groupOutput = this.writeFrameLayoutVertical(group, parentY, vertical, clearedPartial);
                                     }
                                 }
                                 else {
@@ -696,7 +696,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                     }
                                     else if (!linearVertical) {
                                         group = this.viewController.createGroup(parentY, nodeY, vertical);
-                                        groupXml = this.writeLinearLayout(group, parentY, false);
+                                        groupOutput = this.writeLinearLayout(group, parentY, false);
                                         group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                                     }
                                 }
@@ -708,7 +708,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                 }
                             }
                             if (group) {
-                                renderXml(group, parentY, groupXml, '', true);
+                                renderNode(group, parentY, groupOutput, '', true);
                                 parentY = nodeY.parent as T;
                             }
                             if (nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE)) {
@@ -728,8 +728,8 @@ export default class Application<T extends Node> implements AppBase<T> {
                             for (const ext of [...parentY.renderExtension, ...subscribed]) {
                                 ext.setTarget(nodeY, parentY);
                                 const result = ext.processChild();
-                                if (result.xml !== '') {
-                                    renderXml(nodeY, parentY, result.xml, current);
+                                if (result.output !== '') {
+                                    renderNode(nodeY, parentY, result.output, current);
                                 }
                                 if (result.parent) {
                                     parentY = result.parent as T;
@@ -749,13 +749,13 @@ export default class Application<T extends Node> implements AppBase<T> {
                                 item.setTarget(nodeY, parentY);
                                 if (item.condition()) {
                                     const result =  item.processNode(mapX, mapY);
-                                    if (result.xml !== '') {
-                                        renderXml(nodeY, parentY, result.xml, current);
+                                    if (result.output !== '') {
+                                        renderNode(nodeY, parentY, result.output, current);
                                     }
                                     if (result.parent) {
                                         parentY = result.parent as T;
                                     }
-                                    if (result.xml !== '' || result.include) {
+                                    if (result.output !== '' || result.include) {
                                         processed.push(item);
                                     }
                                     next = result.next || false;
@@ -777,7 +777,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                         }
                     }
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.RENDER) && !nodeY.rendered) {
-                        let xml = '';
+                        let output = '';
                         if (nodeY.alignmentType === NODE_ALIGNMENT.NONE &&
                             nodeY.has('width', CSS_STANDARD.PERCENT, { not: '100%' }) &&
                             !nodeY.imageElement && (
@@ -786,9 +786,9 @@ export default class Application<T extends Node> implements AppBase<T> {
                            ))
                         {
                             const group = this.viewController.createGroup(parentY, nodeY, [nodeY]);
-                            const groupXml = this.writeGridLayout(group, parentY, 2, 1);
+                            const groupOutput = this.writeGridLayout(group, parentY, 2, 1);
                             group.alignmentType |= NODE_ALIGNMENT.PERCENT;
-                            renderXml(group, parentY, groupXml, current);
+                            renderNode(group, parentY, groupOutput, current);
                             this.viewController[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${(100 - nodeY.toInt('width'))}%`));
                             parentY = group;
                         }
@@ -800,7 +800,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                             if (nodeY.children.length === 0) {
                                 const freeFormText = hasFreeFormText(nodeY.element, this.settings.renderInlineText ? 0 : 1);
                                 if (freeFormText || (borderVisible && nodeY.textContent.length > 0)) {
-                                    xml = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
+                                    output = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
                                 }
                                 else if (
                                     backgroundImage &&
@@ -809,14 +809,14 @@ export default class Application<T extends Node> implements AppBase<T> {
                                 {
                                     nodeY.alignmentType |= NODE_ALIGNMENT.SINGLE;
                                     nodeY.excludeResource |= NODE_RESOURCE.FONT_STYLE | NODE_RESOURCE.VALUE_STRING;
-                                    xml = this.writeNode(nodeY, parentY, NODE_STANDARD.IMAGE);
+                                    output = this.writeNode(nodeY, parentY, NODE_STANDARD.IMAGE);
                                 }
                                 else if (
                                     nodeY.block &&
                                     (backgroundColor || backgroundImage) &&
                                     (borderVisible || nodeY.paddingTop + nodeY.paddingRight + nodeY.paddingRight + nodeY.paddingLeft > 0))
                                 {
-                                    xml = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
+                                    output = this.writeNode(nodeY, parentY, NODE_STANDARD.LINE);
                                 }
                                 else if (!nodeY.documentRoot) {
                                     if (this.settings.collapseUnattributedElements &&
@@ -829,10 +829,10 @@ export default class Application<T extends Node> implements AppBase<T> {
                                         nodeY.hide();
                                     }
                                     else if (backgroundVisible) {
-                                        xml = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
+                                        output = this.writeNode(nodeY, parentY, NODE_STANDARD.TEXT);
                                     }
                                     else {
-                                        xml = this.writeFrameLayout(nodeY, parentY);
+                                        output = this.writeFrameLayout(nodeY, parentY);
                                     }
                                 }
                             }
@@ -841,7 +841,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                     nodeY.children.some(node => !node.pageflow) ||
                                     nodeY.has('columnCount'))
                                 {
-                                    xml = this.writeConstraintLayout(nodeY, parentY);
+                                    output = this.writeConstraintLayout(nodeY, parentY);
                                 }
                                 else {
                                     if (nodeY.children.length === 1) {
@@ -885,7 +885,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                             continue;
                                         }
                                         else {
-                                            xml = this.writeFrameLayout(nodeY, parentY);
+                                            output = this.writeFrameLayout(nodeY, parentY);
                                         }
                                     }
                                     else {
@@ -898,22 +898,22 @@ export default class Application<T extends Node> implements AppBase<T> {
                                             if (linearX && clearedInside.size === 0) {
                                                 if (floated.size === 0 && children.every(node => node.toInt('verticalAlign') === 0)) {
                                                     if (children.some(node => ['text-top', 'text-bottom'].includes(node.css('verticalAlign')))) {
-                                                        xml = this.writeConstraintLayout(nodeY, parentY);
+                                                        output = this.writeConstraintLayout(nodeY, parentY);
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                     }
                                                     else if (this.isRelativeHorizontal(children)) {
-                                                        xml = this.writeRelativeLayout(nodeY, parentY);
+                                                        output = this.writeRelativeLayout(nodeY, parentY);
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                     }
                                                 }
-                                                if (xml === '') {
+                                                if (output === '') {
                                                     if (floated.size === 0 || !floated.has('right')) {
                                                         if (this.isRelativeHorizontal(children)) {
-                                                            xml = this.writeRelativeLayout(nodeY, parentY);
+                                                            output = this.writeRelativeLayout(nodeY, parentY);
                                                             nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                         }
                                                         else {
-                                                            xml = this.writeLinearLayout(nodeY, parentY, true);
+                                                            output = this.writeLinearLayout(nodeY, parentY, true);
                                                             nodeY.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                                         }
                                                     }
@@ -929,20 +929,20 @@ export default class Application<T extends Node> implements AppBase<T> {
                                                         return false;
                                                     })))
                                                 {
-                                                    xml = this.writeLinearLayout(nodeY, parentY, false);
+                                                    output = this.writeLinearLayout(nodeY, parentY, false);
                                                     if (linearY && !nodeY.documentRoot) {
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                                                     }
                                                 }
                                             }
                                         }
-                                        if (xml === '') {
+                                        if (output === '') {
                                             if (relativeWrap) {
                                                 if (this.isFrameHorizontal(children, clearedInside, true)) {
-                                                    xml = this.writeFrameLayoutHorizontal(nodeY, parentY, children, clearedInside);
+                                                    output = this.writeFrameLayoutHorizontal(nodeY, parentY, children, clearedInside);
                                                 }
                                                 else {
-                                                    xml = this.writeRelativeLayout(nodeY, parentY);
+                                                    output = this.writeRelativeLayout(nodeY, parentY);
                                                     if (getElementsBetweenSiblings(
                                                                 children[0].baseElement,
                                                                 children[children.length - 1].baseElement)
@@ -955,7 +955,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                                 }
                                             }
                                             else {
-                                                xml = this.writeConstraintLayout(nodeY, parentY);
+                                                output = this.writeConstraintLayout(nodeY, parentY);
                                             }
                                         }
                                     }
@@ -963,9 +963,9 @@ export default class Application<T extends Node> implements AppBase<T> {
                             }
                         }
                         else {
-                            xml = this.writeNode(nodeY, parentY, nodeY.controlName);
+                            output = this.writeNode(nodeY, parentY, nodeY.controlName);
                         }
-                        renderXml(nodeY, parentY, xml, current);
+                        renderNode(nodeY, parentY, output, current);
                     }
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
                         if (includes.length > 0 && optional(nodeY, 'dataset.includeEnd') === 'true') {
@@ -1009,8 +1009,8 @@ export default class Application<T extends Node> implements AppBase<T> {
                 for (const [current, views] of external.entries()) {
                     const templates = Array.from(views.values());
                     if (templates.length > 0) {
-                        const xml = this.viewController.renderMerge(current, templates);
-                        this.addInclude(current, xml);
+                        const output = this.viewController.renderMerge(current, templates);
+                        this.addInclude(current, output);
                     }
                 }
             }
@@ -1107,7 +1107,7 @@ export default class Application<T extends Node> implements AppBase<T> {
 
     public writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>) {
         type LayerIndex = ArrayIndex<T[] | T[][]>;
-        let xml = '';
+        let output = '';
         let layers: LayerIndex = [];
         if (cleared.size === 0 && !nodes.some(node => node.autoMargin)) {
             const inline: T[] = [];
@@ -1132,33 +1132,33 @@ export default class Application<T extends Node> implements AppBase<T> {
                     group.alignmentType |= NODE_ALIGNMENT.RIGHT;
                 }
                 if (this.isRelativeHorizontal(nodes, cleared)) {
-                    xml = this.writeRelativeLayout(group, parent);
-                    return xml;
+                    output = this.writeRelativeLayout(group, parent);
+                    return output;
                 }
                 else {
-                    xml = this.writeLinearLayout(group, parent, true);
-                    return xml;
+                    output = this.writeLinearLayout(group, parent, true);
+                    return output;
                 }
             }
             else if (left.length === 0 || right.length === 0) {
                 const subgroup = right.length === 0 ? [...left, ...inline] : [...inline, ...right];
                 if (NodeList.linearY(subgroup)) {
-                    xml = this.writeLinearLayout(group, parent, false);
+                    output = this.writeLinearLayout(group, parent, false);
                     group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
-                    return xml;
+                    return output;
                 }
                 else {
                     if (this.isRelativeHorizontal(subgroup, cleared)) {
-                        xml = this.writeRelativeLayout(group, parent);
+                        output = this.writeRelativeLayout(group, parent);
                         group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                         if (right.length > 0) {
                             group.alignmentType |= NODE_ALIGNMENT.RIGHT;
                         }
-                        return xml;
+                        return output;
                     }
                     else if (right.length === 0) {
                         if (!this.settings.floatOverlapDisabled) {
-                            xml = this.writeLinearLayout(group, parent, true);
+                            output = this.writeLinearLayout(group, parent, true);
                             layers = <LayerIndex> [left, inline];
                             group.alignmentType |= NODE_ALIGNMENT.FLOAT;
                         }
@@ -1335,24 +1335,24 @@ export default class Application<T extends Node> implements AppBase<T> {
             }
             if (this.settings.floatOverlapDisabled) {
                 if (parent.linearVertical) {
-                    xml = formatPlaceholder(group.id);
+                    output = formatPlaceholder(group.id);
                     group.renderDepth--;
                 }
                 else {
-                    xml = this.writeLinearLayout(group, parent, false);
+                    output = this.writeLinearLayout(group, parent, false);
                 }
                 layers.push(inlineAbove, [leftAbove, rightAbove], inlineBelow);
             }
             else {
                 if (inlineAbove.length === 0 &&
                     (leftSub.length === 0 || rightSub.length === 0)) {
-                    xml = this.writeLinearLayout(group, parent, false);
+                    output = this.writeLinearLayout(group, parent, false);
                     if (rightSub.length > 0) {
                         group.alignmentType |= NODE_ALIGNMENT.RIGHT;
                     }
                 }
                 else {
-                    xml = this.writeFrameLayout(group, parent, true);
+                    output = this.writeFrameLayout(group, parent, true);
                 }
                 if (inlineAbove.length > 0) {
                     if (rightBelow.length > 0) {
@@ -1396,10 +1396,10 @@ export default class Application<T extends Node> implements AppBase<T> {
                     grouping.sort(NodeList.siblingIndex);
                     floatgroup = this.viewController.createGroup(group, grouping[0], grouping);
                     if (this.settings.floatOverlapDisabled) {
-                        xml = replacePlaceholder(xml, group.id, this.writeFrameLayout(floatgroup, group, true));
+                        output = replacePlaceholder(output, group.id, this.writeFrameLayout(floatgroup, group, true));
                     }
                     else {
-                        xml = replacePlaceholder(xml, group.id, this.writeLinearLayout(floatgroup, group, false));
+                        output = replacePlaceholder(output, group.id, this.writeLinearLayout(floatgroup, group, false));
                         if ((item as T[][]).some(list => list === rightSub || list === rightAbove)) {
                             floatgroup.alignmentType |= NODE_ALIGNMENT.RIGHT;
                         }
@@ -1415,16 +1415,16 @@ export default class Application<T extends Node> implements AppBase<T> {
                         basegroup = floatgroup;
                     }
                     if (section.length > 1) {
-                        let groupXml = '';
+                        let groupOutput = '';
                         const subgroup = this.viewController.createGroup(basegroup, section[0], section);
                         const floatLeft = section.some(node => node.float === 'left');
                         const floatRight = section.some(node => node.float === 'right');
                         if (this.isRelativeHorizontal(section, NodeList.cleared(section))) {
-                            groupXml = this.writeRelativeLayout(subgroup, basegroup);
+                            groupOutput = this.writeRelativeLayout(subgroup, basegroup);
                             subgroup.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                         }
                         else {
-                            groupXml = this.writeLinearLayout(subgroup, basegroup, NodeList.linearX(section));
+                            groupOutput = this.writeLinearLayout(subgroup, basegroup, NodeList.linearX(section));
                             if (floatRight && subgroup.children.some(node => node.marginLeft < 0)) {
                                 const sorted: T[] = [];
                                 let marginRight = 0;
@@ -1470,7 +1470,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                 subgroup.alignmentType |= NODE_ALIGNMENT.RIGHT;
                             }
                         }
-                        xml = replacePlaceholder(xml, basegroup.id, groupXml);
+                        output = replacePlaceholder(output, basegroup.id, groupOutput);
                         basegroup.renderAppend(subgroup);
                     }
                     else if (section.length > 0) {
@@ -1480,23 +1480,23 @@ export default class Application<T extends Node> implements AppBase<T> {
                             single.alignmentType |= NODE_ALIGNMENT.RIGHT;
                         }
                         single.renderPosition = index;
-                        xml = replacePlaceholder(xml, basegroup.id, `{:${basegroup.id}:${index}}`);
+                        output = replacePlaceholder(output, basegroup.id, `{:${basegroup.id}:${index}}`);
                         basegroup.renderAppend(single);
                     }
                 });
             });
         }
-        return xml;
+        return output;
     }
 
     public writeFrameLayoutVertical(group: Null<T>, parent: T, nodes: T[], cleared: Map<T, string>) {
-        let xml = '';
+        let output = '';
         if (!group) {
             group = parent;
-            xml = formatPlaceholder(group.id);
+            output = formatPlaceholder(group.id);
         }
         else {
-            xml = this.writeLinearLayout(group, parent, false);
+            output = this.writeLinearLayout(group, parent, false);
             group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
         }
         const rowsCurrent: T[][] = [];
@@ -1592,9 +1592,9 @@ export default class Application<T extends Node> implements AppBase<T> {
                     });
                 }
             }
-            xml = replacePlaceholder(xml, group.id, content);
+            output = replacePlaceholder(output, group.id, content);
         }
-        return xml;
+        return output;
     }
 
     public appendRenderQueue() {
@@ -1674,7 +1674,7 @@ export default class Application<T extends Node> implements AppBase<T> {
     }
 
     public updateLayout(content: string, pathname = '', documentRoot = false) {
-        pathname = pathname || this.viewController.settingsInternal.layoutDirectory;
+        pathname = pathname || this.viewController.settingsInternal.layout.directory;
         if (documentRoot &&
             this._views.length > 0 &&
             this._views[0].content === '')
@@ -1695,7 +1695,7 @@ export default class Application<T extends Node> implements AppBase<T> {
 
     public addInclude(filename: string, content: string) {
         this._includes.push({
-            pathname: this.viewController.settingsInternal.layoutDirectory,
+            pathname: this.viewController.settingsInternal.layout.directory,
             filename,
             content
         });

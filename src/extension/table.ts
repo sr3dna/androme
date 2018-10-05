@@ -23,7 +23,6 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 .from(node.element.children)
                 .find(element => element.tagName === 'COLGROUP');
         const tableWidth = node.css('width');
-        let xml = '';
         if (thead.length > 0) {
             thead[0]
                 .cascade()
@@ -346,7 +345,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                 borderLeftWidth: hasBit(borderInside, 4) ? '0px' : ''
             });
         }
-        xml = this.application.writeGridLayout(node, parent, columnCount, rowCount);
-        return { xml, complete: true };
+        const output = this.application.writeGridLayout(node, parent, columnCount, rowCount);
+        return { output, complete: true };
     }
 }

@@ -37,7 +37,7 @@ export type ExtensionDependency = {
 };
 
 export type ExtensionResult = {
-    xml: string;
+    output: string;
     complete: boolean;
     next?: boolean;
     parent?: {};

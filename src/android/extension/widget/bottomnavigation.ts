@@ -19,7 +19,7 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
         const parent = this.parent as T;
         const options = Object.assign({}, this.options[node.element.id]);
         overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
-        const xml =
+        const output =
             this.application.viewController.renderNodeStatic(
                 VIEW_SUPPORT.BOTTOM_NAVIGATION,
                 node.depth,
@@ -37,7 +37,7 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ASSET;
         this.createResourceTheme();
-        return { xml, complete: true };
+        return { output, complete: true };
     }
 
     public beforeInsert() {

@@ -47,7 +47,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         if (src !== '') {
             overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
-        const xml =
+        const output =
             this.application.viewController.renderNodeStatic(
                 VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
                 target ? -1 : parent.renderDepth + 1,
@@ -82,7 +82,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         else {
             node.render(parent);
         }
-        return { xml, complete: true };
+        return { output, complete: true };
     }
 
     public afterInsert() {

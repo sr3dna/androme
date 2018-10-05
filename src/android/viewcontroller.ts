@@ -2037,6 +2037,23 @@ export default class ViewController<T extends View> extends Controller<T> {
         }
     }
 
+    private getEnclosingTag(depth: number, controlName: string, id: number, xml = '', preXml = '', postXml = '') {
+        const indent = repeat(Math.max(0, depth));
+        let output = preXml +
+                     `{<${id}}`;
+        if (xml !== '') {
+            output += indent + `<${controlName}${(depth === 0 ? '{#0}' : '')}{@${id}}>\n` +
+                               xml +
+                      indent + `</${controlName}>\n`;
+        }
+        else {
+            output += indent + `<${controlName}${(depth === 0 ? '{#0}' : '')}{@${id}} />\n`;
+        }
+        output += `{>${id}}` +
+                  postXml;
+        return output;
+    }
+
     private valueBox(node: T, region: string | number) {
         const name = convertEnum(parseInt(region as string), BOX_STANDARD, BOX_ANDROID);
         if (name !== '') {
@@ -2458,7 +2475,10 @@ export default class ViewController<T extends View> extends Controller<T> {
 
     get settingsInternal(): SettingsInternal {
         return {
-            layoutDirectory: 'res/layout'
+            layout: {
+                directory: 'res/layout',
+                fileExtension: 'xml'
+            }
         };
     }
 }

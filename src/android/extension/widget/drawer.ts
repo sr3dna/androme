@@ -50,7 +50,7 @@ export default class Drawer<T extends View> extends Extension<T> {
             navView.android('layout_height', 'match_parent');
             navView.auto = false;
         }
-        const xml =
+        const output =
             this.application.viewController.renderNodeStatic(
                 VIEW_SUPPORT.DRAWER,
                 node.depth,
@@ -64,7 +64,7 @@ export default class Drawer<T extends View> extends Extension<T> {
         node.rendered = true;
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
-        return { xml, complete: true };
+        return { output, complete: true };
     }
 
     public beforeInsert() {
@@ -90,7 +90,7 @@ export default class Drawer<T extends View> extends Extension<T> {
             overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
-            const xml =
+            const output =
                 application.viewController.renderNodeStatic(
                     VIEW_SUPPORT.NAVIGATION_VIEW,
                     node.depth + 1,
@@ -98,7 +98,7 @@ export default class Drawer<T extends View> extends Extension<T> {
                     'wrap_content',
                     'match_parent'
                 );
-            application.addRenderQueue(node.id.toString(), [xml]);
+            application.addRenderQueue(node.id.toString(), [output]);
         }
     }
 

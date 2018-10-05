@@ -59,7 +59,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
         const collapsingToolbarChildren: T[] = [];
         const hasMenu = locateExtension(node, WIDGET_NAME.MENU) != null;
         const backgroundImage = node.has('backgroundImage');
-        let xml = '';
+        let output = '';
         let depth = target ? 0 : node.depth;
         let children = node.children.filter(item => item.auto).length;
         Array
@@ -140,7 +140,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
             }
         }
         const innerDepth = depth + (hasAppBar ? 1 : 0) + (hasCollapsingToolbar ? 1 : 0);
-        xml =
+        output =
             controller.renderNodeStatic(
                 VIEW_SUPPORT.TOOLBAR,
                 innerDepth,
@@ -173,7 +173,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                 overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                 overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
-                xml =
+                output =
                     controller.renderNodeStatic(
                         NODE_ANDROID.IMAGE,
                         innerDepth,
@@ -181,7 +181,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                         'match_parent',
                         'match_parent'
                     )
-                    + xml;
+                    + output;
                 node.excludeResource |= NODE_RESOURCE.IMAGE_SOURCE;
             }
         }
@@ -243,8 +243,8 @@ export default class Toolbar<T extends View> extends Extension<T> {
             }
         }
         if (appBarNode) {
-            xml = collapsingToolbarNode ? replacePlaceholder(outer, collapsingToolbarNode.id, xml)
-                                        : replacePlaceholder(outer, appBarNode.id, xml);
+            output = collapsingToolbarNode ? replacePlaceholder(outer, collapsingToolbarNode.id, output)
+                                           : replacePlaceholder(outer, appBarNode.id, output);
             appBarNode.render(target ? appBarNode : parent);
             if (!collapsingToolbarNode) {
                 node.parent = appBarNode;
@@ -267,16 +267,16 @@ export default class Toolbar<T extends View> extends Extension<T> {
         }
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
-        return { xml, complete: false };
+        return { output, complete: false };
     }
 
     public processChild(): ExtensionResult {
         const node = this.node;
         if (node.imageElement && (hasValue(node.dataset.navigationIcon) || hasValue(node.dataset.collapseIcon))) {
             node.hide();
-            return { xml: '', complete: true, next: true };
+            return { output: '', complete: true, next: true };
         }
-        return { xml: '', complete: false };
+        return { output: '', complete: false };
     }
 
     public beforeInsert() {

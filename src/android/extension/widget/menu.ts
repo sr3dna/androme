@@ -51,7 +51,7 @@ export default class Menu<T extends View> extends Nav<T> {
 
     public processNode(): ExtensionResult {
         const node = this.node;
-        const xml =
+        const output =
             this.application.viewController.renderNodeStatic(
                 VIEW_NAVIGATION.MENU,
                 0,
@@ -67,7 +67,7 @@ export default class Menu<T extends View> extends Nav<T> {
         node.excludeProcedure |= NODE_PROCEDURE.ALL;
         node.rendered = true;
         node.cascade().forEach(item => this.subscribersChild.add(item as T));
-        return { xml, complete: true };
+        return { output, complete: true };
     }
 
     public processChild(): ExtensionResult {
@@ -75,7 +75,7 @@ export default class Menu<T extends View> extends Nav<T> {
         const parent = this.parent as T;
         if (node.plainText) {
             node.hide();
-            return { xml: '', complete: true, next: true };
+            return { output: '', complete: true, next: true };
         }
         const element = <HTMLElement> node.element;
         const options: ObjectMap<StringMap> = { android: {}, app: {} };
@@ -171,7 +171,7 @@ export default class Menu<T extends View> extends Nav<T> {
         else {
             node.controlName = nodeName;
         }
-        const xml =
+        const output =
             this.application.viewController.renderNodeStatic(
                 nodeName,
                 parent.renderDepth + 1,
@@ -184,7 +184,7 @@ export default class Menu<T extends View> extends Nav<T> {
         node.excludeResource |= NODE_RESOURCE.ALL;
         node.excludeProcedure |= NODE_PROCEDURE.ALL;
         node.rendered = true;
-        return { xml, complete: true, next };
+        return { output, complete: true, next };
     }
 
     public afterRender() {

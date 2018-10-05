@@ -34,7 +34,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         const node = this.node;
         const parent = this.parent as T;
         const columnBalance = this.options.columnBalance;
-        let xml = '';
+        let output = '';
         let columns: T[][] = [];
         const mainData: GridData = {
             padding: getBoxRect(),
@@ -133,7 +133,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 for (let l = 0; l < nextCoordsX.length; l++) {
                     const nextAxisX = sortAsc(nextMapX[parseInt(nextCoordsX[l])].filter(item => item.documentParent.documentParent.id === node.id), 'linear.top');
                     if (l === 0 && nextAxisX.length === 0) {
-                        return { xml: '', complete: false };
+                        return { output: '', complete: false };
                     }
                     columnRight[l] = l === 0 ? 0 : columnRight[l - 1];
                     for (let m = 0; m < nextAxisX.length; m++) {
@@ -228,7 +228,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         }
         if (columns.length > 1 && columns[0].length === node.children.length) {
             mainData.columnCount = columnBalance ? columns[0].length : columns.length;
-            xml = this.application.writeGridLayout(node, parent, mainData.columnCount);
+            output = this.application.writeGridLayout(node, parent, mainData.columnCount);
             node.children.length = 0;
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;
@@ -305,7 +305,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             node.data(EXT_NAME.GRID, 'mainData', mainData);
             node.render(parent);
         }
-        return { xml, complete: true };
+        return { output, complete: true };
     }
 
     public processChild(): ExtensionResult {
@@ -313,7 +313,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         const parent = this.parent as T;
         const mainData: GridData = parent.data(EXT_NAME.GRID, 'mainData');
         const cellData: GridCellData = node.data(EXT_NAME.GRID, 'cellData');
-        let xml = '';
+        let output = '';
         if (mainData && cellData) {
             let siblings: T[];
             if (this.options.columnBalance) {
@@ -342,15 +342,15 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
                 const group = this.application.viewController.createGroup(parent, node, siblings);
                 if (linearX || linearY) {
-                    xml = this.application.writeLinearLayout(group, parent, linearX);
+                    output = this.application.writeLinearLayout(group, parent, linearX);
                     group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
                 }
                 else {
-                    xml = this.application.writeConstraintLayout(group, parent);
+                    output = this.application.writeConstraintLayout(group, parent);
                 }
-                return { xml, parent: group, complete: true };
+                return { output, parent: group, complete: true };
             }
         }
-        return { xml, complete: true };
+        return { output, complete: true };
     }
 }

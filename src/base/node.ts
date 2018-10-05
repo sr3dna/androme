@@ -213,9 +213,9 @@ export default abstract class Node implements INode {
         return this._data[obj] != null ? this._data[obj][attr] : null;
     }
 
-    public ascend(xml = false, levels = -1) {
+    public ascend(generated = false, levels = -1) {
         const result: T[] = [];
-        const attr = xml ? 'parent' : 'documentParent';
+        const attr = generated ? 'parent' : 'documentParent';
         let current: T = this[attr];
         let i = -1;
         while (current && current.id !== 0 && !result.includes(current)) {

@@ -32,7 +32,10 @@ export interface Settings {
 }
 
 export type SettingsInternal = {
-    layoutDirectory: string;
+    layout: {
+        directory: string;
+        fileExtension: string;
+    }
 };
 
 export interface INode extends BoxModel {
@@ -168,7 +171,7 @@ export interface INode extends BoxModel {
     render(parent: {}): void;
     hide(): void;
     data(obj: string, attr: string, value?: any, overwrite?: boolean): any;
-    ascend(xml: boolean, levels?: number): {}[];
+    ascend(generated: boolean, levels?: number): {}[];
     cascade(): {}[];
     inherit(node: {}, ...props: string[]): void;
     alignedVertically(previous: {}, cleared?: Map<any, string>, firstNode?: boolean): boolean;

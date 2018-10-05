@@ -14,13 +14,13 @@ export default abstract class Custom<T extends Node> extends Extension<T> {
         const node = this.node;
         const parent = this.parent as T;
         const data = this.getData();
-        let xml = '';
+        let output = '';
         if (data.tag) {
             if (node.children.length > 0) {
-                xml = this.application.viewController.renderGroup(node, parent, data.tag);
+                output = this.application.viewController.renderGroup(node, parent, data.tag);
             }
             else {
-                xml = this.application.viewController.renderNode(node, parent, data.tag);
+                output = this.application.viewController.renderNode(node, parent, data.tag);
             }
             node.nodeType = node.blockStatic ? NODE_STANDARD.BLOCK : NODE_STANDARD.INLINE;
         }
@@ -32,6 +32,6 @@ export default abstract class Custom<T extends Node> extends Extension<T> {
                 }
             });
         }
-        return { xml, complete: false };
+        return { output, complete: false };
     }
 }

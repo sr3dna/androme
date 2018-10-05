@@ -99,11 +99,11 @@ export default abstract class Extension<T extends Node> implements IExtension {
     }
 
     public processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult {
-        return { xml: '', complete: false };
+        return { output: '', complete: false };
     }
 
     public processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult {
-        return { xml: '', complete: false };
+        return { output: '', complete: false };
     }
 
     public afterRender() {

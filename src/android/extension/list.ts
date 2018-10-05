@@ -40,18 +40,18 @@ export default class ListAndroid<T extends View> extends List<T> {
                     Math.abs(convertInt(item.cssInitial('marginLeft', true))) <= convertInt(item.documentParent.cssInitial('marginLeft', true))
                 ) as T;
             if (ordinal && mainData.ordinal === '') {
-                let xml = '';
+                let output = '';
                 ordinal.parent = parent;
                 if (ordinal.inlineText || ordinal.children.length === 0) {
-                    xml = controller.renderNode(ordinal, parent, NODE_STANDARD.TEXT);
+                    output = controller.renderNode(ordinal, parent, NODE_STANDARD.TEXT);
                 }
                 else if (ordinal.children.every(item => item.pageflow)) {
-                    xml = controller.renderGroup(ordinal, parent, NODE_STANDARD.RELATIVE);
+                    output = controller.renderGroup(ordinal, parent, NODE_STANDARD.RELATIVE);
                 }
                 else {
-                    xml = controller.renderGroup(ordinal, parent, NODE_STANDARD.CONSTRAINT);
+                    output = controller.renderGroup(ordinal, parent, NODE_STANDARD.CONSTRAINT);
                 }
-                controller.prependBefore(node.id, xml);
+                controller.prependBefore(node.id, output);
                 if (columnCount === 3) {
                     node.app('layout_columnSpan', '2');
                 }
@@ -181,7 +181,7 @@ export default class ListAndroid<T extends View> extends List<T> {
                 node.app('layout_columnWeight', '1');
             }
         }
-        return { xml: '', complete: true };
+        return { output: '', complete: true };
     }
 
     public beforeInsert() {

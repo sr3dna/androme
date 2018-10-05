@@ -3,7 +3,6 @@ import { ObjectIndex } from '../lib/types';
 import Application from './application';
 import Node from './node';
 import NodeList from './nodelist';
-import { repeat } from '../lib/util';
 
 export default abstract class Controller<T extends Node> implements AppCurrent<T> {
     public abstract settings: Settings;
@@ -49,48 +48,31 @@ export default abstract class Controller<T extends Node> implements AppCurrent<T
         return output;
     }
 
-    public prependBefore(id: number, xml: string, index = -1) {
+    public prependBefore(id: number, output: string, index = -1) {
         if (this._before[id] == null) {
             this._before[id] = [];
         }
         if (index !== -1 && index < this._before[id].length) {
-            this._before[id].splice(index, 0, xml);
+            this._before[id].splice(index, 0, output);
         }
         else {
-            this._before[id].push(xml);
+            this._before[id].push(output);
         }
     }
 
-    public appendAfter(id: number, xml: string, index = -1) {
+    public appendAfter(id: number, output: string, index = -1) {
         if (this._after[id] == null) {
             this._after[id] = [];
         }
         if (index !== -1 && index < this._after[id].length) {
-            this._after[id].splice(index, 0, xml);
+            this._after[id].splice(index, 0, output);
         }
         else {
-            this._after[id].push(xml);
+            this._after[id].push(output);
         }
     }
 
     public hasAppendProcessing(id: number) {
         return this._before[id] != null || this._after[id] != null;
-    }
-
-    protected getEnclosingTag(depth: number, controlName: string, id: number, xml = '', preXml = '', postXml = '') {
-        const indent = repeat(Math.max(0, depth));
-        let output = preXml +
-                     `{<${id}}`;
-        if (xml !== '') {
-            output += indent + `<${controlName}${(depth === 0 ? '{#0}' : '')}{@${id}}>\n` +
-                               xml +
-                      indent + `</${controlName}>\n`;
-        }
-        else {
-            output += indent + `<${controlName}${(depth === 0 ? '{#0}' : '')}{@${id}} />\n`;
-        }
-        output += `{>${id}}` +
-                  postXml;
-        return output;
     }
 }

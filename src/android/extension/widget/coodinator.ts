@@ -14,7 +14,7 @@ export default class Coordinator<T extends View> extends Extension<T> {
     public processNode(): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;
-        const xml = this.application.viewController.renderGroup(node, parent, VIEW_SUPPORT.COORDINATOR);
+        const output = this.application.viewController.renderGroup(node, parent, VIEW_SUPPORT.COORDINATOR);
         node.apply(this.options[node.element.id]);
         node.nodeType = NODE_STANDARD.BLOCK;
         node.excludeResource |= NODE_RESOURCE.ASSET;
@@ -28,7 +28,7 @@ export default class Coordinator<T extends View> extends Extension<T> {
                 }
             }
         }
-        return { xml, complete: false };
+        return { output, complete: false };
     }
 
     public afterInsert() {
