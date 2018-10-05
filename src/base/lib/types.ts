@@ -207,16 +207,16 @@ export interface AppFramework<T extends Node> {
 }
 
 export interface AppBase<T extends Node> {
-    Node: Constructor<T>;
-    Controller: Controller<T>;
-    Resource: Resource<T>;
-    builtInExtensions: ObjectMap<IExtension>;
     settings: Settings;
+    nodeObject: Constructor<T>;
+    viewController: Controller<T>;
+    resourceHandler: Resource<T>;
+    builtInExtensions: ObjectMap<IExtension>;
 }
 
 export interface AppCurrent<T extends Node> {
-    cache: NodeList<T>;
     settings: Settings;
+    cache: NodeList<T>;
     application: Application<T>;
 }
 

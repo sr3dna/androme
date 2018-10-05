@@ -56,11 +56,10 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
         return '';
     }
 
+    public abstract settings: Settings;
     public cache: NodeList<T>;
     public application: Application<T>;
     public imageDimensions: Map<string, Image>;
-
-    public abstract settings: Settings;
 
     constructor(public file: File<T>) {
     }

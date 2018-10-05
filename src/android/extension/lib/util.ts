@@ -1,6 +1,6 @@
 import { Null, ObjectMap, StringMap } from '../../../lib/types';
 import View from '../../view';
-import ResourceAndroid from '../../resource';
+import ResourceHandler from '../../resourcehandler';
 import { includes, optional } from '../../../lib/util';
 import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../base/lib/constants';
@@ -40,7 +40,7 @@ export function formatResource(options: {}, settings: ObjectMap<any> = {}) {
                             switch (attr) {
                                 case 'text':
                                     if (!value.startsWith('@string/')) {
-                                        value = ResourceAndroid.addString(value, '', settings);
+                                        value = ResourceHandler.addString(value, '', settings);
                                         if (value !== '') {
                                             object[attr] = `@string/${value}`;
                                             continue;
@@ -49,7 +49,7 @@ export function formatResource(options: {}, settings: ObjectMap<any> = {}) {
                                     break;
                                 case 'src':
                                     if (/^\w+:\/\//.test(value)) {
-                                        value = ResourceAndroid.addImage({ 'mdpi': value });
+                                        value = ResourceHandler.addImage({ 'mdpi': value });
                                         if (value !== '') {
                                             object[attr] = `@drawable/${value}`;
                                             continue;
@@ -61,7 +61,7 @@ export function formatResource(options: {}, settings: ObjectMap<any> = {}) {
                     }
                     const hex = parseHex(value);
                     if (hex !== '') {
-                        object[attr] = `@color/${ResourceAndroid.addColor(hex)}`;
+                        object[attr] = `@color/${ResourceHandler.addColor(hex)}`;
                     }
                 }
             }

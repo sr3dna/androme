@@ -9,7 +9,9 @@ import { BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT } from '../lib/constants';
 type T = Node;
 
 export default abstract class Node implements INode {
-    public readonly initial: InitialValues<T>;
+    public abstract children: T[];
+    public abstract constraint: ObjectMap<any>;
+    public abstract readonly renderChildren: T[];
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
     public nodeId: string;
@@ -32,18 +34,14 @@ export default abstract class Node implements INode {
     public visible = true;
     public excluded = false;
     public rendered = false;
+    public readonly initial: InitialValues<T>;
 
-    public abstract readonly renderChildren: T[];
-    public abstract children: T[];
-    public abstract constraint: ObjectMap<any>;
-
-    protected readonly _boxAdjustment: BoxModel = getBoxModel();
-    protected readonly _boxReset: BoxModel = getBoxModel();
+    protected abstract _namespaces: Set<string>;
     protected _controlName: string;
     protected _renderParent: T;
     protected _documentParent: T;
-
-    protected abstract _namespaces: Set<string>;
+    protected readonly _boxAdjustment: BoxModel = getBoxModel();
+    protected readonly _boxReset: BoxModel = getBoxModel();
 
     private _element: Element;
     private _baseElement: Element;
@@ -85,7 +83,6 @@ export default abstract class Node implements INode {
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     public abstract valueBox(region: number): string[];
     public abstract clone(id?: number, children?: boolean): T;
-
     public abstract set controlName(value: string);
     public abstract get controlName();
     public abstract set documentParent(value: T);

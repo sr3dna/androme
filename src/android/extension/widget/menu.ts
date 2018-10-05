@@ -3,7 +3,7 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import { SettingsAndroid } from '../../lib/types';
 import Nav from '../../../extension/nav';
 import View from '../../view';
-import ResourceAndroid from '../../resource';
+import ResourceHandler from '../../resourcehandler';
 import { optional } from '../../../lib/util';
 import { NODE_RESOURCE, NODE_STANDARD, NODE_PROCEDURE } from '../../../base/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
@@ -52,7 +52,7 @@ export default class Menu<T extends View> extends Nav<T> {
     public processNode(): ExtensionResult {
         const node = this.node;
         const xml =
-            this.application.Controller.renderNodeStatic(
+            this.application.viewController.renderNodeStatic(
                 VIEW_NAVIGATION.MENU,
                 0,
                 {},
@@ -137,14 +137,14 @@ export default class Menu<T extends View> extends Nav<T> {
             case VIEW_NAVIGATION.ITEM:
                 this.parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') === '') {
-                    let src = ResourceAndroid.addImageURL(element.style.backgroundImage as string, DRAWABLE_PREFIX.MENU);
+                    let src = ResourceHandler.addImageURL(element.style.backgroundImage as string, DRAWABLE_PREFIX.MENU);
                     if (src !== '') {
                         options.android.icon = `@drawable/${src}`;
                     }
                     else {
                         const image = node.children.find(item => item.imageElement);
                         if (image != null) {
-                            src = ResourceAndroid.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
+                            src = ResourceHandler.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
                             if (src !== '') {
                                 options.android.icon = `@drawable/${src}`;
                             }
@@ -158,7 +158,7 @@ export default class Menu<T extends View> extends Nav<T> {
         }
         if (node.android('title') === '') {
             if (title !== '') {
-                const name = ResourceAndroid.addString(title, '', <SettingsAndroid> this.application.settings);
+                const name = ResourceHandler.addString(title, '', <SettingsAndroid> this.application.settings);
                 if (name !== '') {
                     title = `@string/${name}`;
                 }
@@ -172,7 +172,7 @@ export default class Menu<T extends View> extends Nav<T> {
             node.controlName = nodeName;
         }
         const xml =
-            this.application.Controller.renderNodeStatic(
+            this.application.viewController.renderNodeStatic(
                 nodeName,
                 parent.renderDepth + 1,
                 options,

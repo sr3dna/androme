@@ -63,7 +63,7 @@ type BackgroundImage = {
 
 type StyleList = ObjectMap<number[]>[];
 
-export default class ResourceAndroid<T extends View> extends Resource<T> {
+export default class ResourceHandler<T extends View> extends Resource<T> {
     public static addString(value: string, name = '', { numberResourceValue = false }) {
         if (value !== '') {
             if (name === '') {
@@ -141,7 +141,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
         if (images['mdpi'] == null) {
             images['mdpi'] = element.src;
         }
-        return ResourceAndroid.addImage(images, prefix);
+        return ResourceHandler.addImage(images, prefix);
     }
 
     public static addImage(images: StringMap, prefix = '') {
@@ -170,7 +170,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
     public static addImageURL(value: string, prefix = '') {
         const url = parseBackgroundUrl(value);
         if (url !== '') {
-            return ResourceAndroid.addImage({ 'mdpi': url }, prefix);
+            return ResourceHandler.addImage({ 'mdpi': url }, prefix);
         }
         return '';
     }
@@ -345,7 +345,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
             const stored: BoxStyle = getElementCache(node.element, 'boxStyle');
             if (stored != null) {
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
-                    stored.backgroundColor = ResourceAndroid.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
+                    stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
                 let backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
                 let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
@@ -357,7 +357,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                         backgroundImageUrl.push(backgroundImage[i]);
                         const image = this.imageDimensions.get(parseBackgroundUrl(backgroundImage[i]));
                         backgroundDimensions.push(image);
-                        backgroundImage[i] = ResourceAndroid.addImageURL(backgroundImage[i]);
+                        backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
                     }
                     else {
                         backgroundImage[i] = '';
@@ -376,7 +376,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                 {
                     const boxStyle: BoxStyle = getElementCache(companion.element, 'boxStyle');
                     if (Array.isArray(boxStyle.backgroundColor) && boxStyle.backgroundColor.length > 0) {
-                        stored.backgroundColor = ResourceAndroid.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
+                        stored.backgroundColor = ResourceHandler.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
                     }
                 }
                 const hasBorder = (
@@ -395,7 +395,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                     ];
                     borders.forEach((item: BorderAttribute) => {
                         if (Array.isArray(item.color) && item.color.length > 0) {
-                            item.color = ResourceAndroid.addColor(item.color[0], item.color[2]);
+                            item.color = ResourceHandler.addColor(item.color[0], item.color[2]);
                         }
                     });
                     let data;
@@ -408,7 +408,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                         let tileMode = '';
                         let tileModeX = '';
                         let tileModeY = '';
-                        let [left, top] = ResourceAndroid.parseBackgroundPosition(backgroundPosition[i], node.css('fontSize'));
+                        let [left, top] = ResourceHandler.parseBackgroundPosition(backgroundPosition[i], node.css('fontSize'));
                         let right = '';
                         let bottom = '';
                         const image = backgroundDimensions[i];
@@ -944,7 +944,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                 if (match) {
                     const color = parseRGBA(match[1]);
                     if (color.length > 0) {
-                        node.android('shadowColor', `@color/${ResourceAndroid.addColor(color[0], color[2])}`);
+                        node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
                     }
                     node.android('shadowDx', convertInt(match[2]).toString());
                     node.android('shadowDy', convertInt(match[3]).toString());
@@ -963,7 +963,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                 const element = node.element;
                 const stored: FontAttribute = Object.assign({}, getElementCache(element, 'fontStyle'));
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
-                    stored.backgroundColor = `@color/${ResourceAndroid.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
+                    stored.backgroundColor = `@color/${ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
                 }
                 if (stored.fontFamily) {
                     let fontFamily =
@@ -975,7 +975,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                     let fontStyle = '';
                     let fontWeight = '';
                     if (Array.isArray(stored.color) && stored.color.length > 0) {
-                        stored.color = `@color/${ResourceAndroid.addColor(stored.color[0], stored.color[2])}`;
+                        stored.color = `@color/${ResourceHandler.addColor(stored.color[0], stored.color[2])}`;
                     }
                     if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily] != null) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
@@ -1054,8 +1054,8 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
             ).each(node => {
                 const element = <HTMLImageElement> node.element;
                 if (getElementCache(element, 'imageSource') == null || this.settings.alwaysReevaluateResources) {
-                    const result = node.imageElement ? ResourceAndroid.addImageSrcSet(element)
-                                                     : ResourceAndroid.addImage({ 'mdpi': element.src });
+                    const result = node.imageElement ? ResourceHandler.addImageSrcSet(element)
+                                                     : ResourceHandler.addImage({ 'mdpi': element.src });
                     if (result !== '') {
                         const method = METHOD_ANDROID['imageSource'];
                         node.formatted(formatString(method['src'], result), node.renderExtension.size === 0);
@@ -1089,7 +1089,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                         result =
                             stored.stringArray
                                 .map(value => {
-                                    const name = ResourceAndroid.addString(value, '', this.settings);
+                                    const name = ResourceHandler.addString(value, '', this.settings);
                                     return name !== '' ? `@string/${name}` : '';
                                 })
                                 .filter(name => name);
@@ -1157,7 +1157,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                             }
                         }
                     }
-                    const name = ResourceAndroid.addString(stored.value, stored.name, this.settings);
+                    const name = ResourceHandler.addString(stored.value, stored.name, this.settings);
                     if (name !== '') {
                         const method = METHOD_ANDROID['valueString'];
                         if (node.toInt('textIndent') + node.bounds.width > 0) {
@@ -1176,7 +1176,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                 let value = options.item[name];
                 const hex = parseHex(value);
                 if (hex !== '') {
-                    value = `@color/${ResourceAndroid.addColor(hex)}`;
+                    value = `@color/${ResourceHandler.addColor(hex)}`;
                 }
                 root['1'].push({ name, value });
             }
@@ -1502,7 +1502,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
         const groove = border.style === 'groove';
         if (parseInt(border.width) > 1 && (groove || border.style === 'ridge')) {
             let colorName = border.color;
-            let hexValue = ResourceAndroid.getColor(colorName as string);
+            let hexValue = ResourceHandler.getColor(colorName as string);
             if (hexValue !== '') {
                 let opacity = '1';
                 if (hexValue.length === 9) {
@@ -1511,7 +1511,7 @@ export default class ResourceAndroid<T extends View> extends Resource<T> {
                 }
                 const reduced = parseRGBA(reduceHexToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
                 if (reduced.length > 0) {
-                    colorName = ResourceAndroid.addColor(reduced[0], opacity);
+                    colorName = ResourceHandler.addColor(reduced[0], opacity);
                 }
             }
             const colorReduced = `android:color="@color/${colorName}"`;

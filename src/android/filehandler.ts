@@ -20,7 +20,7 @@ function caseInsensitve(a: string | string[], b: string | string[]) {
     return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
 }
 
-export default class FileAndroid<T extends View> extends File<T> {
+export default class FileHandler<T extends View> extends File<T> {
     constructor(public readonly settings: ObjectMap<any>) {
         super(settings.outputDirectory, settings.outputMaxProcessingTime, settings.outputArchiveFileType);
     }

@@ -2,11 +2,6 @@ import { LayoutMapX, LayoutMapY } from '../../base/lib/types';
 import { BoxRect, Inheritable, ObjectMap } from '../../lib/types';
 
 export interface IExtension {
-    readonly dependencies: ExtensionDependency[];
-    readonly subscribers: Set<{}>;
-    readonly subscribersChild: Set<{}>;
-    readonly name: string;
-    readonly framework: number;
     application: any;
     node: {};
     parent?: {};
@@ -14,6 +9,11 @@ export interface IExtension {
     tagNames: string[];
     options: ObjectMap<any>;
     documentRoot: boolean;
+    readonly dependencies: ExtensionDependency[];
+    readonly subscribers: Set<{}>;
+    readonly subscribersChild: Set<{}>;
+    readonly name: string;
+    readonly framework: number;
     setTarget(node: {}, parent?: {}, element?: Element): void;
     getData(): void;
     is(node: {}): boolean;

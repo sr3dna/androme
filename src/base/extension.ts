@@ -6,9 +6,6 @@ import Application from './application';
 import { capitalize, convertCamelCase, includes, optional } from '../lib/util';
 
 export default abstract class Extension<T extends Node> implements IExtension {
-    public readonly dependencies: ExtensionDependency[] = [];
-    public readonly subscribers = new Set<T>();
-    public readonly subscribersChild = new Set<T>();
     public application: Application<T>;
     public node: T;
     public parent?: T;
@@ -16,6 +13,9 @@ export default abstract class Extension<T extends Node> implements IExtension {
     public options: ObjectMap<any> = {};
     public tagNames: string[] = [];
     public documentRoot = false;
+    public readonly dependencies: ExtensionDependency[] = [];
+    public readonly subscribers = new Set<T>();
+    public readonly subscribersChild = new Set<T>();
 
     constructor(
         public readonly name: string,

@@ -289,8 +289,8 @@ export default class NodeList<T extends Node> implements Iterable<T> {
 
     public delegateAppend?: (nodes: T[]) => void;
 
-    private readonly _list: T[] = [];
     private _currentId = 0;
+    private readonly _list: T[] = [];
 
     constructor(
         nodes?: T[],

@@ -12,23 +12,23 @@ import { APP_SECTION, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDA
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
 
 export default class Application<T extends Node> implements AppBase<T> {
-    public readonly cache: NodeList<T> = new NodeList<T>();
-    public readonly cacheSession: NodeList<T> = new NodeList<T>();
-    public readonly elements: Set<HTMLElement> = new Set();
-    public readonly extensions: IExtension[] = [];
-    public Node: { new (id: number, element?: Element): T };
-    public Controller: Controller<T>;
-    public Resource: Resource<T>;
+    public viewController: Controller<T>;
+    public resourceHandler: Resource<T>;
+    public nodeObject: { new (id: number, element?: Element): T };
     public builtInExtensions: ObjectMap<IExtension>;
     public settings: Settings;
     public renderQueue: ObjectIndex<string[]> = {};
     public loading = false;
     public closed = false;
+    public readonly cache: NodeList<T> = new NodeList<T>();
+    public readonly cacheSession: NodeList<T> = new NodeList<T>();
+    public readonly elements: Set<HTMLElement> = new Set();
+    public readonly extensions: IExtension[] = [];
 
-    private readonly _views: PlainFile[] = [];
-    private readonly _includes: PlainFile[] = [];
     private _sorted: ObjectMap<number[]> = {};
     private _currentIndex = -1;
+    private readonly _views: PlainFile[] = [];
+    private readonly _includes: PlainFile[] = [];
 
     constructor(public readonly framework: number) {
     }
@@ -37,14 +37,14 @@ export default class Application<T extends Node> implements AppBase<T> {
         controller.application = this;
         controller.settings = this.settings;
         controller.cache = this.cache;
-        this.Controller = controller;
+        this.viewController = controller;
     }
 
     public registerResource(resource: Resource<T>) {
         resource.application = this;
         resource.settings = this.settings;
         resource.cache = this.cache;
-        this.Resource = resource;
+        this.resourceHandler = resource;
     }
 
     public registerExtension(ext: IExtension) {
@@ -81,11 +81,11 @@ export default class Application<T extends Node> implements AppBase<T> {
                 node.applyCustomizations(this.settings);
             }
         }
-        this.Controller.setBoxSpacing(this.viewData);
+        this.viewController.setBoxSpacing(this.viewData);
         this.appendRenderQueue();
-        this.Controller.setDimensions(this.viewData);
-        this.Resource.finalize(this.viewData);
-        this.Controller.finalize(this.viewData);
+        this.viewController.setDimensions(this.viewData);
+        this.resourceHandler.finalize(this.viewData);
+        this.viewController.finalize(this.viewData);
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
                 ext.setTarget(node);
@@ -117,24 +117,24 @@ export default class Application<T extends Node> implements AppBase<T> {
     }
 
     public setConstraints() {
-        this.Controller.setConstraints();
+        this.viewController.setConstraints();
     }
 
     public resetController() {
-        this.Controller.reset();
+        this.viewController.reset();
     }
 
     public setResources() {
-        this.Resource.setBoxStyle();
-        this.Resource.setFontStyle();
-        this.Resource.setBoxSpacing();
-        this.Resource.setValueString();
-        this.Resource.setOptionArray();
-        this.Resource.setImageSource();
+        this.resourceHandler.setBoxStyle();
+        this.resourceHandler.setFontStyle();
+        this.resourceHandler.setBoxSpacing();
+        this.resourceHandler.setValueString();
+        this.resourceHandler.setOptionArray();
+        this.resourceHandler.setImageSource();
     }
 
     public resetResource() {
-        this.Resource.reset();
+        this.resourceHandler.reset();
     }
 
     public createNodeCache(rootElement: HTMLElement) {
@@ -155,15 +155,15 @@ export default class Application<T extends Node> implements AppBase<T> {
         }
         const rootNode = this.insertNode(rootElement);
         if (rootNode != null) {
-            rootNode.parent = new this.Node(0, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
-            this.Controller.initNode(rootNode);
+            rootNode.parent = new this.nodeObject(0, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
+            this.viewController.initNode(rootNode);
             rootNode.documentRoot = true;
             this.cache.parent = rootNode;
         }
         else {
             return false;
         }
-        const supportInline = this.settings.renderInlineText ? ['BR'] : this.Controller.supportInline;
+        const supportInline = this.settings.renderInlineText ? ['BR'] : this.viewController.supportInline;
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
             return (styleMap == null || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.children.length === 0;
@@ -336,7 +336,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         const application = this;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
-        let baseTemplate = this.Controller.baseTemplate;
+        let baseTemplate = this.viewController.baseTemplate;
         let empty = true;
         function setMapY(depth: number, id: number, node: T) {
             if (!mapY.has(depth)) {
@@ -483,16 +483,16 @@ export default class Application<T extends Node> implements AppBase<T> {
                         continue;
                     }
                     let parentY = nodeY.parent as T;
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.Controller.supportInclude) {
+                    if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
                         const filename: string = optional(nodeY, 'dataset.include').trim();
                         if (filename !== '' && includes.indexOf(filename) === -1) {
-                            renderXml(nodeY, parentY, this.Controller.renderInclude(nodeY, parentY, filename), includes.length > 0 ? includes[includes.length - 1] : '');
+                            renderXml(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), includes.length > 0 ? includes[includes.length - 1] : '');
                             includes.push(filename);
                         }
                         current = includes.length > 0 ? includes[includes.length - 1] : '';
                         if (current !== '') {
                             const cloneParent = parentY.clone() as T;
-                            cloneParent.renderDepth = this.Controller.baseRenderDepth(current);
+                            cloneParent.renderDepth = this.viewController.baseRenderDepth(current);
                             nodeY.parent = cloneParent;
                             parentY = cloneParent;
                         }
@@ -638,7 +638,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                             if (horizontal.length > 1) {
                                 const clearedPartial = NodeList.cleared(horizontal);
                                 if (this.isFrameHorizontal(horizontal, clearedPartial)) {
-                                    group = this.Controller.createGroup(parentY, nodeY, horizontal);
+                                    group = this.viewController.createGroup(parentY, nodeY, horizontal);
                                     groupXml = this.writeFrameLayoutHorizontal(group, parentY, horizontal, clearedPartial);
                                 }
                                 else {
@@ -651,17 +651,17 @@ export default class Application<T extends Node> implements AppBase<T> {
                                             horizontal.some(node => node.has('width', CSS_STANDARD.PERCENT)) &&
                                             horizontal.every(node => node.has('width', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT)))
                                         {
-                                            group = this.Controller.createGroup(parentY, nodeY, horizontal);
+                                            group = this.viewController.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeConstraintLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.PERCENT;
                                         }
                                         else if (this.isRelativeHorizontal(horizontal, clearedPartial)) {
-                                            group = this.Controller.createGroup(parentY, nodeY, horizontal);
+                                            group = this.viewController.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeRelativeLayout(group, parentY);
                                             group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                                         }
                                         else {
-                                            group = this.Controller.createGroup(parentY, nodeY, horizontal);
+                                            group = this.viewController.createGroup(parentY, nodeY, horizontal);
                                             groupXml = this.writeLinearLayout(group, parentY, true);
                                             if (floated.size > 0) {
                                                 group.alignmentType |= NODE_ALIGNMENT.FLOAT;
@@ -686,7 +686,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                         groupXml = this.writeFrameLayoutVertical(null, parentY, vertical, clearedPartial);
                                     }
                                     else {
-                                        group = this.Controller.createGroup(parentY, nodeY, vertical);
+                                        group = this.viewController.createGroup(parentY, nodeY, vertical);
                                         groupXml = this.writeFrameLayoutVertical(group, parentY, vertical, clearedPartial);
                                     }
                                 }
@@ -695,7 +695,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                         parentY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                                     }
                                     else if (!linearVertical) {
-                                        group = this.Controller.createGroup(parentY, nodeY, vertical);
+                                        group = this.viewController.createGroup(parentY, nodeY, vertical);
                                         groupXml = this.writeLinearLayout(group, parentY, false);
                                         group.alignmentType |= NODE_ALIGNMENT.VERTICAL;
                                     }
@@ -785,11 +785,11 @@ export default class Application<T extends Node> implements AppBase<T> {
                                 (parentY.is(NODE_STANDARD.FRAME) && nodeY.singleChild)
                            ))
                         {
-                            const group = this.Controller.createGroup(parentY, nodeY, [nodeY]);
+                            const group = this.viewController.createGroup(parentY, nodeY, [nodeY]);
                             const groupXml = this.writeGridLayout(group, parentY, 2, 1);
                             group.alignmentType |= NODE_ALIGNMENT.PERCENT;
                             renderXml(group, parentY, groupXml, current);
-                            this.Controller[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${(100 - nodeY.toInt('width'))}%`));
+                            this.viewController[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${(100 - nodeY.toInt('width'))}%`));
                             parentY = group;
                         }
                         if (nodeY.controlName === '') {
@@ -863,7 +863,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                             !backgroundVisible &&
                                             !nodeY.has('textAlign') && !nodeY.has('verticalAlign') &&
                                             nodeY.float !== 'right' && !nodeY.autoMargin && nodeY.alignOrigin &&
-                                            !this.Controller.hasAppendProcessing(nodeY.id)) ||
+                                            !this.viewController.hasAppendProcessing(nodeY.id)) ||
                                             (nodeY.documentRoot && targeted.length === 1))
                                         {
                                             const child = nodeY.children[0];
@@ -967,7 +967,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                         }
                         renderXml(nodeY, parentY, xml, current);
                     }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.Controller.supportInclude) {
+                    if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
                         if (includes.length > 0 && optional(nodeY, 'dataset.includeEnd') === 'true') {
                             includes.pop();
                         }
@@ -1005,11 +1005,11 @@ export default class Application<T extends Node> implements AppBase<T> {
                     }
                 }
             }
-            if (this.Controller.supportInclude) {
+            if (this.viewController.supportInclude) {
                 for (const [current, views] of external.entries()) {
                     const templates = Array.from(views.values());
                     if (templates.length > 0) {
-                        const xml = this.Controller.renderMerge(current, templates);
+                        const xml = this.viewController.renderMerge(current, templates);
                         this.addInclude(current, xml);
                     }
                 }
@@ -1078,31 +1078,31 @@ export default class Application<T extends Node> implements AppBase<T> {
 
     public writeFrameLayout(node: T, parent: T, children = false) {
         if (!children && node.children.length === 0) {
-            return this.Controller.renderNode(node, parent, NODE_STANDARD.FRAME);
+            return this.viewController.renderNode(node, parent, NODE_STANDARD.FRAME);
         }
         else {
-            return this.Controller.renderGroup(node, parent, NODE_STANDARD.FRAME);
+            return this.viewController.renderGroup(node, parent, NODE_STANDARD.FRAME);
         }
     }
 
     public writeLinearLayout(node: T, parent: T, horizontal: boolean) {
-        return this.Controller.renderGroup(node, parent, NODE_STANDARD.LINEAR, { horizontal });
+        return this.viewController.renderGroup(node, parent, NODE_STANDARD.LINEAR, { horizontal });
     }
 
     public writeGridLayout(node: T, parent: T, columns: number, rows: number = 0) {
-        return this.Controller.renderGroup(node, parent, NODE_STANDARD.GRID, { columns, rows });
+        return this.viewController.renderGroup(node, parent, NODE_STANDARD.GRID, { columns, rows });
     }
 
     public writeRelativeLayout(node: T, parent: T) {
-        return this.Controller.renderGroup(node, parent, NODE_STANDARD.RELATIVE);
+        return this.viewController.renderGroup(node, parent, NODE_STANDARD.RELATIVE);
     }
 
     public writeConstraintLayout(node: T, parent: T) {
-        return this.Controller.renderGroup(node, parent, NODE_STANDARD.CONSTRAINT);
+        return this.viewController.renderGroup(node, parent, NODE_STANDARD.CONSTRAINT);
     }
 
     public writeNode(node: T, parent: T, nodeName: number | string) {
-        return this.Controller.renderNode(node, parent, nodeName);
+        return this.viewController.renderNode(node, parent, nodeName);
     }
 
     public writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>) {
@@ -1394,7 +1394,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                     const grouping: T[] = [];
                     (item as T[][]).forEach(list => grouping.push(...list));
                     grouping.sort(NodeList.siblingIndex);
-                    floatgroup = this.Controller.createGroup(group, grouping[0], grouping);
+                    floatgroup = this.viewController.createGroup(group, grouping[0], grouping);
                     if (this.settings.floatOverlapDisabled) {
                         xml = replacePlaceholder(xml, group.id, this.writeFrameLayout(floatgroup, group, true));
                     }
@@ -1416,7 +1416,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                     }
                     if (section.length > 1) {
                         let groupXml = '';
-                        const subgroup = this.Controller.createGroup(basegroup, section[0], section);
+                        const subgroup = this.viewController.createGroup(basegroup, section[0], section);
                         const floatLeft = section.some(node => node.float === 'left');
                         const floatRight = section.some(node => node.float === 'right');
                         if (this.isRelativeHorizontal(section, NodeList.cleared(section))) {
@@ -1549,11 +1549,11 @@ export default class Application<T extends Node> implements AppBase<T> {
                 const pageflow = rowsCurrent[i] || [];
                 if (pageflow.length > 0 || floating.length > 0) {
                     const baseNode = floating[0] || pageflow[0];
-                    const basegroup = this.Controller.createGroup(group, baseNode, []);
+                    const basegroup = this.viewController.createGroup(group, baseNode, []);
                     const children: T[] = [];
                     let subgroup: Null<T> = null;
                     if (floating.length > 1) {
-                        subgroup = this.Controller.createGroup(basegroup, floating[0], floating);
+                        subgroup = this.viewController.createGroup(basegroup, floating[0], floating);
                         basegroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
                     }
                     else if (floating.length > 0) {
@@ -1569,7 +1569,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                         subgroup = null;
                     }
                     if (pageflow.length > 1) {
-                        subgroup = this.Controller.createGroup(basegroup, pageflow[0], pageflow);
+                        subgroup = this.viewController.createGroup(basegroup, pageflow[0], pageflow);
                     }
                     else if (pageflow.length > 0) {
                         subgroup = pageflow[0];
@@ -1650,7 +1650,7 @@ export default class Application<T extends Node> implements AppBase<T> {
             for (const id in template) {
                 value.content = value.content.replace(formatPlaceholder(id), template[id]);
             }
-            value.content = this.Controller.appendRenderQueue(value.content);
+            value.content = this.viewController.appendRenderQueue(value.content);
         }
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
@@ -1661,7 +1661,7 @@ export default class Application<T extends Node> implements AppBase<T> {
     }
 
     public getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan?: number) {
-        return this.Controller.getEmptySpacer(nodeType, depth, width, height, columnSpan);
+        return this.viewController.getEmptySpacer(nodeType, depth, width, height, columnSpan);
     }
 
     public createLayout(filename: string) {
@@ -1674,7 +1674,7 @@ export default class Application<T extends Node> implements AppBase<T> {
     }
 
     public updateLayout(content: string, pathname = '', documentRoot = false) {
-        pathname = pathname || this.Controller.settingsInternal.layoutDirectory;
+        pathname = pathname || this.viewController.settingsInternal.layoutDirectory;
         if (documentRoot &&
             this._views.length > 0 &&
             this._views[0].content === '')
@@ -1695,7 +1695,7 @@ export default class Application<T extends Node> implements AppBase<T> {
 
     public addInclude(filename: string, content: string) {
         this._includes.push({
-            pathname: this.Controller.settingsInternal.layoutDirectory,
+            pathname: this.viewController.settingsInternal.layoutDirectory,
             filename,
             content
         });
@@ -1777,8 +1777,8 @@ export default class Application<T extends Node> implements AppBase<T> {
         if (element.nodeName.charAt(0) === '#') {
             if (element.nodeName === '#text') {
                 if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                    node = new this.Node(this.cache.nextId, element);
-                    this.Controller.initNode(node);
+                    node = new this.nodeObject(this.cache.nextId, element);
+                    this.viewController.initNode(node);
                     node.nodeName = 'PLAINTEXT';
                     if (parent) {
                         node.parent = parent;
@@ -1804,8 +1804,8 @@ export default class Application<T extends Node> implements AppBase<T> {
                 case 'AREA':
                     return null;
             }
-            const elementNode = new this.Node(this.cache.nextId, element);
-            this.Controller.initNode(elementNode);
+            const elementNode = new this.nodeObject(this.cache.nextId, element);
+            this.viewController.initNode(elementNode);
             if (isElementVisible(element)) {
                 node = elementNode;
                 node.setExclusions();
@@ -1901,12 +1901,12 @@ export default class Application<T extends Node> implements AppBase<T> {
     }
 
     set appName(value) {
-        if (this.Resource != null) {
-            this.Resource.file.appName = value;
+        if (this.resourceHandler != null) {
+            this.resourceHandler.file.appName = value;
         }
     }
     get appName() {
-        return this.Resource != null ? this.Resource.file.appName : '';
+        return this.resourceHandler != null ? this.resourceHandler.file.appName : '';
     }
 
     set layoutProcessing(value) {

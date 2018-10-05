@@ -51,7 +51,7 @@ export default class Drawer<T extends View> extends Extension<T> {
             navView.auto = false;
         }
         const xml =
-            this.application.Controller.renderNodeStatic(
+            this.application.viewController.renderNodeStatic(
                 VIEW_SUPPORT.DRAWER,
                 node.depth,
                 options,
@@ -91,7 +91,7 @@ export default class Drawer<T extends View> extends Extension<T> {
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
             const xml =
-                application.Controller.renderNodeStatic(
+                application.viewController.renderNodeStatic(
                     VIEW_SUPPORT.NAVIGATION_VIEW,
                     node.depth + 1,
                     options,
@@ -125,6 +125,6 @@ export default class Drawer<T extends View> extends Extension<T> {
         };
         overwriteDefault(options, 'output', 'path', 'res/values-v21');
         overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-        this.application.Resource.addTheme(EXTENSION_DRAWER_TMPL, data, options);
+        this.application.resourceHandler.addTheme(EXTENSION_DRAWER_TMPL, data, options);
     }
 }

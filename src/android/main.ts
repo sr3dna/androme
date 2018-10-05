@@ -5,8 +5,8 @@ import { IExtension } from '../extension/lib/types';
 import { SettingsAndroid } from './lib/types';
 import View from './view';
 import ViewController from './viewcontroller';
-import ResourceAndroid from './resource';
-import FileAndroid from './file';
+import ResourceHandler from './resourcehandler';
+import FileHandler from './filehandler';
 import Settings from './settings';
 import API_ANDROID from './customizations';
 import { APP_FRAMEWORK } from '../base/lib/constants';
@@ -30,7 +30,7 @@ import BottomNavigation from './extension/widget/bottomnavigation';
 import Drawer from './extension/widget/drawer';
 
 function autoClose() {
-    const main = Controller.application;
+    const main = viewController.application;
     if (main.settings.autoCloseOnWrite && !main.loading && !main.closed) {
         main.finalize();
         return true;
@@ -42,18 +42,18 @@ type T = View;
 
 let initialized = false;
 
-let Controller: ViewController<T>;
-let File: FileAndroid<T>;
-let Resource: ResourceAndroid<T>;
+let viewController: ViewController<T>;
+let fileHandler: FileHandler<T>;
+let resourceHandler: ResourceHandler<T>;
 
 let settings: SettingsAndroid;
 let builtInExtensions: ObjectMap<IExtension>;
 
 const appBase: AppFramework<T> = {
     create() {
-        Controller = new ViewController<T>();
-        File = new FileAndroid<T>(Settings);
-        Resource = new ResourceAndroid<T>(File);
+        viewController = new ViewController<T>();
+        fileHandler = new FileHandler<T>(Settings);
+        resourceHandler = new ResourceHandler<T>(fileHandler);
         builtInExtensions = {
             [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, APP_FRAMEWORK.ANDROID),
             [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, APP_FRAMEWORK.ANDROID),
@@ -73,9 +73,9 @@ const appBase: AppFramework<T> = {
         initialized = true;
         return {
             settings,
-            Node: View,
-            Controller,
-            Resource,
+            nodeObject: View,
+            viewController,
+            resourceHandler,
             builtInExtensions
         };
     },
@@ -83,9 +83,9 @@ const appBase: AppFramework<T> = {
         if (initialized) {
             return {
                 settings,
-                Node: View,
-                Controller,
-                Resource,
+                nodeObject: View,
+                viewController,
+                resourceHandler,
                 builtInExtensions
             };
         }
@@ -94,81 +94,81 @@ const appBase: AppFramework<T> = {
     system: {
         writeLayoutAllXml(saveToDisk = false) {
             if (initialized) {
-                const main = Controller.application;
+                const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return Resource.file.layoutAllToXml(main.viewData, saveToDisk);
+                    return resourceHandler.file.layoutAllToXml(main.viewData, saveToDisk);
                 }
             }
             return '';
         },
         writeResourceAllXml(saveToDisk = false) {
             if (initialized) {
-                const main = Controller.application;
+                const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return Resource.file.resourceAllToXml(saveToDisk);
+                    return resourceHandler.file.resourceAllToXml(saveToDisk);
                 }
             }
             return '';
         },
         writeResourceStringXml(saveToDisk = false) {
             if (initialized) {
-                const main = Controller.application;
+                const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return Resource.file.resourceStringToXml(saveToDisk);
+                    return resourceHandler.file.resourceStringToXml(saveToDisk);
                 }
             }
             return '';
         },
         writeResourceArrayXml(saveToDisk = false) {
             if (initialized) {
-                const main = Controller.application;
+                const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return Resource.file.resourceStringArrayToXml(saveToDisk);
+                    return resourceHandler.file.resourceStringArrayToXml(saveToDisk);
                 }
             }
             return '';
         },
         writeResourceFontXml(saveToDisk = false) {
             if (initialized) {
-                const main = Controller.application;
+                const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return Resource.file.resourceFontToXml(saveToDisk);
+                    return resourceHandler.file.resourceFontToXml(saveToDisk);
                 }
             }
             return '';
         },
         writeResourceColorXml(saveToDisk = false) {
             if (initialized) {
-                const main = Controller.application;
+                const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return Resource.file.resourceColorToXml(saveToDisk);
+                    return resourceHandler.file.resourceColorToXml(saveToDisk);
                 }
             }
             return '';
         },
         writeResourceStyleXml(saveToDisk = false) {
             if (initialized) {
-                const main = Controller.application;
+                const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return Resource.file.resourceStyleToXml(saveToDisk);
+                    return resourceHandler.file.resourceStyleToXml(saveToDisk);
                 }
             }
             return '';
         },
         writeResourceDimenXml(saveToDisk = false) {
             if (initialized) {
-                const main = Controller.application;
+                const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return Resource.file.resourceDimenToXml(saveToDisk);
+                    return resourceHandler.file.resourceDimenToXml(saveToDisk);
                 }
             }
             return '';
         },
         writeResourceDrawableXml(saveToDisk = false) {
             if (initialized) {
-                const main = Controller.application;
+                const main = viewController.application;
                 if (main.closed || autoClose()) {
-                    return Resource.file.resourceDrawableToXml(saveToDisk);
+                    return resourceHandler.file.resourceDrawableToXml(saveToDisk);
                 }
             }
             return '';

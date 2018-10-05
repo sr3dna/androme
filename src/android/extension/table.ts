@@ -88,9 +88,9 @@ export default class TableAndroid<T extends View> extends Table<T> {
             node.app('layout_columnSpan', columnSpan.toString());
         }
         if (spaceSpan > 0) {
-            this.application.Controller.appendAfter(
+            this.application.viewController.appendAfter(
                 node.id,
-                this.application.Controller.renderNodeStatic(
+                this.application.viewController.renderNodeStatic(
                     NODE_STANDARD.SPACE,
                     parent.renderDepth + 1,
                     {

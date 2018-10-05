@@ -29,10 +29,10 @@ export default (Base: Constructor<Node>) => {
 
         private static _documentBody: View;
 
-        public readonly renderChildren: View[] = [];
         public constraint: Constraint;
         public api = 0;
         public children: View[] = [];
+        public readonly renderChildren: View[] = [];
 
         protected _namespaces = new Set(['android', 'app']);
 

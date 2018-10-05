@@ -2,7 +2,7 @@ import { ExtensionResult, ListData } from '../../extension/lib/types';
 import { SettingsAndroid } from '../lib/types';
 import List from '../../extension/list';
 import View from '../view';
-import ResourceAndroid from '../resource';
+import ResourceHandler from '../resourcehandler';
 import { convertInt, formatPX } from '../../lib/util';
 import { delimitDimens, parseRTL } from '../lib/util';
 import { NODE_ALIGNMENT, NODE_STANDARD } from '../../base/lib/constants';
@@ -20,7 +20,7 @@ export default class ListAndroid<T extends View> extends List<T> {
         const mainData: ListData = node.data(EXT_NAME.LIST, 'mainData');
         if (mainData != null) {
             const parent = this.parent as T;
-            const controller = this.application.Controller;
+            const controller = this.application.viewController;
             const settings = <SettingsAndroid> this.application.settings;
             const parentLeft = convertInt(parent.css('paddingLeft')) + convertInt(parent.cssInitial('marginLeft', true));
             let columnCount = 0;
@@ -68,8 +68,8 @@ export default class ListAndroid<T extends View> extends List<T> {
                 let image = '';
                 let [left, top] = [0, 0];
                 if (mainData.imageSrc !== '') {
-                    image = ResourceAndroid.addImageURL(mainData.imageSrc);
-                    [left, top] = ResourceAndroid.parseBackgroundPosition(mainData.imagePosition, node.css('fontSize')).map(value => convertInt(value));
+                    image = ResourceHandler.addImageURL(mainData.imageSrc);
+                    [left, top] = ResourceHandler.parseBackgroundPosition(mainData.imagePosition, node.css('fontSize')).map(value => convertInt(value));
                 }
                 const gravity = (image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right';
                 if (gravity === '') {
@@ -208,9 +208,9 @@ export default class ListAndroid<T extends View> extends List<T> {
                     current.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
                 }
                 if (spaceHeight > 0) {
-                    this.application.Controller.prependBefore(
+                    this.application.viewController.prependBefore(
                         current.id,
-                        this.application.Controller.renderNodeStatic(
+                        this.application.viewController.renderNodeStatic(
                             NODE_STANDARD.SPACE,
                             current.renderDepth,
                             {

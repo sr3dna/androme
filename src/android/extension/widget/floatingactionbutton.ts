@@ -2,7 +2,7 @@ import { ExtensionResult } from '../../../extension/lib/types';
 import { SettingsAndroid } from '../../lib/types';
 import Button from '../../../extension/button';
 import View from '../../view';
-import ResourceAndroid from '../../resource';
+import ResourceHandler from '../../resourcehandler';
 import { formatPX, hasValue } from '../../../lib/util';
 import { parseRTL } from '../../lib/util';
 import { overwriteDefault } from '../lib/util';
@@ -22,7 +22,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
         const target = hasValue(node.dataset.target);
-        overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceAndroid.addColor(backgroundColor[0], backgroundColor[2])}`
+        overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceHandler.addColor(backgroundColor[0], backgroundColor[2])}`
                                                                                           : '?attr/colorAccent');
         if (node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
             overwriteDefault(options, 'android', 'focusable', 'false');
@@ -30,25 +30,25 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         let src = '';
         switch (element.tagName) {
             case 'IMG':
-                src = ResourceAndroid.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.DIALOG);
+                src = ResourceHandler.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.DIALOG);
                 break;
             case 'INPUT':
                 if ((<HTMLInputElement> element).type === 'image') {
-                    src = ResourceAndroid.addImage({ 'mdpi': (<HTMLInputElement> element).src }, DRAWABLE_PREFIX.DIALOG);
+                    src = ResourceHandler.addImage({ 'mdpi': (<HTMLInputElement> element).src }, DRAWABLE_PREFIX.DIALOG);
                 }
                 else {
-                    src = ResourceAndroid.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
+                    src = ResourceHandler.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
                 }
                 break;
             case 'BUTTON':
-                src = ResourceAndroid.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
+                src = ResourceHandler.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
                 break;
         }
         if (src !== '') {
             overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
         const xml =
-            this.application.Controller.renderNodeStatic(
+            this.application.viewController.renderNodeStatic(
                 VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
                 target ? -1 : parent.renderDepth + 1,
                 options,

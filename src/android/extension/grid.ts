@@ -53,9 +53,9 @@ export default class GridAndroid<T extends View> extends Grid<T> {
                                         padding.bottom = heightBottom;
                                     }
                                     else {
-                                        this.application.Controller.appendAfter(
+                                        this.application.viewController.appendAfter(
                                             item.id,
-                                            this.application.Controller.renderNodeStatic(
+                                            this.application.viewController.renderNodeStatic(
                                                 NODE_STANDARD.SPACE,
                                                 item.renderDepth,
                                                 {

@@ -156,9 +156,9 @@ export function setFramework(name: string, cached = false) {
                 main = new Application(APP_FRAMEWORK.ANDROID);
                 main.settings = settings;
                 main.builtInExtensions = appBase.builtInExtensions;
-                main.Node = appBase.Node;
-                main.registerController(appBase.Controller);
-                main.registerResource(appBase.Resource);
+                main.nodeObject = appBase.nodeObject;
+                main.registerController(appBase.viewController);
+                main.registerResource(appBase.resourceHandler);
                 framework = name;
                 break;
         }
@@ -216,7 +216,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 .from(rootElement.getElementsByClassName('androme.preload'))
                 .forEach(element => rootElement.removeChild(element));
         }
-        main.Resource.imageDimensions = cacheImage;
+        main.resourceHandler.imageDimensions = cacheImage;
         for (const element of main.elements) {
             if (main.appName === '') {
                 if (element.id === '') {
@@ -385,7 +385,7 @@ export function saveAllToDisk() {
         if (!main.closed) {
             main.finalize();
         }
-        main.Resource.file.saveAllToDisk(main.viewData);
+        main.resourceHandler.file.saveAllToDisk(main.viewData);
     }
 }
 
