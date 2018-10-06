@@ -1,4 +1,4 @@
-import { FunctionMap, Settings } from './base/lib/types';
+import { AppBase, AppFramework, FunctionMap, Settings } from './base/lib/types';
 import { Image, Null, ObjectMap } from './lib/types';
 import Node from './base/node';
 import Application from './base/application';
@@ -6,16 +6,13 @@ import Extension from './base/extension';
 import { convertCamelCase, convertInt, convertPX, convertWord, hasValue, isPercent, isString, trimNull } from './lib/util';
 import { getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
 import { formatRGB, getByColorName } from './lib/color';
-import { APP_FRAMEWORK } from './base/lib/constants';
-
-import android from './android/main';
 
 type T = Node;
 
 let main: Application<T>;
 let settings: Settings = {} as any;
-let system: FunctionMap;
-let framework = '';
+let system: FunctionMap = {} as any;
+let framework: AppFramework<T>;
 
 const cacheRoot: Set<HTMLElement> = new Set();
 const cacheImage: Map<string, Image> = new Map();
@@ -135,62 +132,49 @@ function setImageCache(element: HTMLImageElement) {
     }
 }
 
-function checkFramework() {
-    if (!main) {
-        setFramework('android');
-    }
-}
-
-export function setFramework(name: string, cached = false) {
-    if (framework !== name) {
-        switch (name) {
-            case 'android':
-                const appBase = cached ? android.cached() : android.create();
-                if (main || Object.keys(settings).length === 0) {
-                    settings = appBase.settings;
+export function setFramework(module: AppFramework<T>, cached = false) {
+    if (framework !== module) {
+        const appBase: AppBase<T> = cached ? module.cached() : module.create();
+        if (main || Object.keys(settings).length === 0) {
+            settings = appBase.settings;
+        }
+        else {
+            settings = Object.assign(appBase.settings, settings);
+        }
+        main = new Application(appBase.framework);
+        main.settings = settings;
+        main.builtInExtensions = appBase.builtInExtensions;
+        main.nodeObject = appBase.nodeObject;
+        main.registerController(appBase.viewController);
+        main.registerResource(appBase.resourceHandler);
+        if (Array.isArray(settings.builtInExtensions)) {
+            const register = new Set<Extension<T>>();
+            const extensions = <ObjectMap<Extension<T>>> main.builtInExtensions;
+            for (let namespace of settings.builtInExtensions) {
+                namespace = namespace.toLowerCase().trim();
+                if (extensions[namespace]) {
+                    register.add(extensions[namespace]);
                 }
                 else {
-                    settings = Object.assign(appBase.settings, settings);
-                }
-                system = android.system;
-                main = new Application(APP_FRAMEWORK.ANDROID);
-                main.settings = settings;
-                main.builtInExtensions = appBase.builtInExtensions;
-                main.nodeObject = appBase.nodeObject;
-                main.registerController(appBase.viewController);
-                main.registerResource(appBase.resourceHandler);
-                framework = name;
-                break;
-        }
-        if (framework === name) {
-            reset();
-            if (Array.isArray(settings.builtInExtensions)) {
-                const register = new Set<Extension<T>>();
-                const extensions = <ObjectMap<Extension<T>>> main.builtInExtensions;
-                for (let namespace of settings.builtInExtensions) {
-                    namespace = namespace.toLowerCase().trim();
-                    if (extensions[namespace]) {
-                        register.add(extensions[namespace]);
-                    }
-                    else {
-                        for (const ext in extensions) {
-                            if (ext.startsWith(`${namespace}.`)) {
-                                register.add(extensions[ext]);
-                            }
+                    for (const ext in extensions) {
+                        if (ext.startsWith(`${namespace}.`)) {
+                            register.add(extensions[ext]);
                         }
                     }
                 }
-                for (const ext of register) {
-                    main.registerExtension(ext);
-                }
+            }
+            for (const ext of register) {
+                main.registerExtension(ext);
             }
         }
+        framework = module;
+        system = module.system;
     }
+    reset();
 }
 
 export function parseDocument(...elements: Null<string | HTMLElement>[]) {
-    checkFramework();
-    if (main.closed) {
+    if (!main || main.closed) {
         return;
     }
     let __THEN: () => void;
@@ -326,23 +310,22 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
 }
 
 export function registerExtension(ext: Extension<T>) {
-    checkFramework();
-    if (ext instanceof Extension && isString(ext.name) && Array.isArray(ext.tagNames)) {
+    if (main && ext instanceof Extension && isString(ext.name) && Array.isArray(ext.tagNames)) {
         main.registerExtension(ext);
     }
 }
 
 export function configureExtension(name: string, options: {}) {
-    checkFramework();
-    const ext = main.getExtension(name);
-    if (ext && typeof options === 'object') {
-        Object.assign(ext.options, options);
+    if (main) {
+        const ext = main.getExtension(name);
+        if (ext && typeof options === 'object') {
+            Object.assign(ext.options, options);
+        }
     }
 }
 
 export function getExtension(name: string) {
-    checkFramework();
-    return main.getExtension(name);
+    return main && main.getExtension(name);
 }
 
 export function ext(name: any, options?: {}) {
@@ -360,8 +343,7 @@ export function ext(name: any, options?: {}) {
 }
 
 export function ready() {
-    checkFramework();
-    return !main.loading && !main.closed;
+    return main && !main.loading && !main.closed;
 }
 
 export function close() {

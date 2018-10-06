@@ -965,7 +965,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     }
                 }
                 else if (!getElementCache(node.element, 'fontStyle') && isString(stored.backgroundColor)) {
-                    node.formatted(formatString(method['backgroundColor'], stored.backgroundColor as string), node.renderExtension.size === 0);
+                    node.formatted(formatString(method['backgroundColor'], stored.backgroundColor), node.renderExtension.size === 0);
                 }
             }
         });

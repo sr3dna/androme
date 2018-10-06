@@ -212,6 +212,7 @@ export interface AppFramework<T extends Node> {
 }
 
 export interface AppBase<T extends Node> {
+    framework: number;
     settings: Settings;
     nodeObject: Constructor<T>;
     viewController: Controller<T>;

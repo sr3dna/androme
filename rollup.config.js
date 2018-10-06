@@ -25,7 +25,28 @@ export default [
             name: 'androme',
             format: 'umd',
             banner: `/* androme ${version}\n   https://github.com/anpham6/androme */\n`
+        }
+    },
+    {
+        input: './build/android/main.js',
+        treeshake: false,
+        output: {
+            file: './dist/android.framework.min.js',
+            name: 'android',
+            format: 'umd'
         },
-        plugins: []
+        plugins: [
+            babel(),
+            minify()
+        ]
+    },
+    {
+        input: './build/android/main.js',
+        treeshake: false,
+        output: {
+            file: './dist/android.framework.js',
+            name: 'android',
+            format: 'umd'
+        }
     }
 ];

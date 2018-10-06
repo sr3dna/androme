@@ -72,6 +72,7 @@ const appBase: AppFramework<T> = {
         };
         initialized = true;
         return {
+            framework: APP_FRAMEWORK.ANDROID,
             settings,
             nodeObject: View,
             viewController,
@@ -82,6 +83,7 @@ const appBase: AppFramework<T> = {
     cached() {
         if (initialized) {
             return {
+                framework: APP_FRAMEWORK.ANDROID,
                 settings,
                 nodeObject: View,
                 viewController,
