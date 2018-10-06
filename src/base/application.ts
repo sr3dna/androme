@@ -156,8 +156,8 @@ export default class Application<T extends Node> implements AppBase<T> {
         const rootNode = this.insertNode(rootElement);
         if (rootNode) {
             rootNode.parent = new this.nodeObject(0, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
-            this.viewController.initNode(rootNode);
             rootNode.documentRoot = true;
+            this.viewController.initNode(rootNode);
             this.cache.parent = rootNode;
         }
         else {
@@ -318,7 +318,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                             item.siblingIndex = i++;
                         }
                     });
-                node.sort();
+                node.children.sort(NodeList.siblingIndex);
                 node.initial.children.push(...node.children.slice());
             }
             this.cache.sortAsc('depth', 'id');
@@ -332,7 +332,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         return false;
     }
 
-    public convertDocument() {
+    public createDocument() {
         const application = this;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
@@ -387,7 +387,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         for (const depth of mapY.values()) {
             const partial = new Map<string, Map<number, string>>();
             const external = new Map<string, Map<number, string>>();
-            function insertViewTemplate(data: Map<string, Map<number, string>>, node: T, parentId: string, value: string, current: string) {
+            function insertNodeTemplate(data: Map<string, Map<number, string>>, node: T, parentId: string, value: string, current: string) {
                 const key = parentId + (current === '' && node.renderPosition !== -1 ? `:${node.renderPosition}` : '');
                 if (!data.has(key)) {
                     data.set(key, new Map<number, string>());
@@ -410,7 +410,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                             template = replaceIndent(template, indent);
                                             item.renderDepth = indent;
                                         }
-                                        insertViewTemplate(data, item, node.id.toString(), template, current);
+                                        insertNodeTemplate(data, item, node.id.toString(), template, current);
                                         views.delete(item.id);
                                         return true;
                                     }
@@ -420,7 +420,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                         });
                     }
                     if (current !== '') {
-                        insertViewTemplate(external, node, current, output, current);
+                        insertNodeTemplate(external, node, current, output, current);
                     }
                     else {
                         if (!application.elements.has(<HTMLElement> node.element)) {
@@ -441,7 +441,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                 }
                             }
                         }
-                        insertViewTemplate(partial, node, parent.id.toString(), output, current);
+                        insertNodeTemplate(partial, node, parent.id.toString(), output, current);
                     }
                 }
             }

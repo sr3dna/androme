@@ -1,7 +1,7 @@
 import { ObjectMap, StringMap } from '../lib/types';
 import { BUILD_ANDROID } from './constants';
 
-type UserSupport = {
+type Customizations = {
     [index: number]: {
         android: string[];
         app: string[];
@@ -11,7 +11,7 @@ type UserSupport = {
     };
 };
 
-const API_ANDROID: UserSupport = {
+const API_ANDROID: Customizations = {
     [BUILD_ANDROID.PIE]: {
         android: [],
         app: [],

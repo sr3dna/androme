@@ -1,6 +1,5 @@
-import { SettingsAndroid } from './lib/types';
 import { Constructor, Null, StringMap } from '../lib/types';
-import { Constraint } from './lib/types';
+import { Constraint, SettingsAndroid } from './lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, lastIndexOf, isString, trimNull, withinFraction } from '../lib/util';
@@ -292,7 +291,7 @@ export default (Base: Constructor<Node>) => {
                                 !this.inlineStatic ||
                                 renderParent.is(NODE_STANDARD.GRID) ||
                                 !this.has('width', 0, { map: 'initial' })
-                        ))
+                           ))
                         {
                             if (this.has('width', CSS_STANDARD.PERCENT)) {
                                 if (styleMap.width === '100%') {

@@ -1,14 +1,13 @@
 import { SettingsInternal, ViewData } from '../base/lib/types';
-import { SettingsAndroid } from './lib/types';
 import { Null, ObjectIndex, ObjectMap, StringMap } from '../lib/types';
+import { SettingsAndroid } from './lib/types';
 import NodeList from '../base/nodelist';
 import Controller from '../base/controller';
-import Resource from '../base/resource';
 import View from './view';
 import ViewGroup from './viewgroup';
+import ResourceHandler from './resourcehandler';
 import { capitalize, convertEnum, convertInt, formatPX, hasValue, indexOf, isPercent, isUnit, optional, repeat, sameValue, searchObject, sortAsc, withinFraction, withinRange } from '../lib/util';
 import { delimitDimens, generateId, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
-import { formatResource } from './extension/lib/util';
 import { getElementsBetweenSiblings, getRangeClientRect, hasLineBreak, isLineBreak } from '../lib/dom';
 import { formatPlaceholder, removePlaceholders, replaceTab } from '../lib/xml';
 import { NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../base/lib/constants';
@@ -1894,7 +1893,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             node = new View() as T;
             node.api = this.settings.targetAPI;
         }
-        node.apply(formatResource(options, this.settings));
+        node.apply(ResourceHandler.formatOptions(options, this.settings));
         const renderDepth = Math.max(0, depth);
         const viewName = typeof nodeName === 'number' ? View.getControlName(nodeName) : nodeName;
         switch (viewName) {
@@ -2024,7 +2023,7 @@ export default class ViewController<T extends View> extends Controller<T> {
             }
         }
         if (this.settings.dimensResourceValue) {
-            const resource = <Map<string, string>> Resource.STORED.dimens;
+            const resource: Map<string, string> = ResourceHandler.getStored('dimens');
             for (const nodeName in groups) {
                 const group: ObjectMap<T[]> = groups[nodeName];
                 for (const name in group) {
@@ -2064,7 +2063,7 @@ export default class ViewController<T extends View> extends Controller<T> {
     }
 
     private parseDimensions(content: string) {
-        const resource = Resource.STORED.dimens;
+        const resource: Map<string, string> = ResourceHandler.getStored('dimens');
         const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
         let match: Null<RegExpExecArray>;
         while ((match = pattern.exec(content)) != null) {

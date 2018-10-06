@@ -64,6 +64,52 @@ type BackgroundImage = {
 type StyleList = ObjectMap<number[]>[];
 
 export default class ResourceHandler<T extends View> extends Resource<T> {
+    public static getStored(name: string) {
+        return Resource.STORED[name];
+    }
+
+    public static formatOptions(options: {}, settings: SettingsAndroid) {
+        for (const namespace in options) {
+            const object: StringMap = options[namespace];
+            if (typeof object === 'object') {
+                for (const attr in object) {
+                    if (object[attr] != null) {
+                        let value = object[attr].toString();
+                        switch (namespace) {
+                            case 'android':
+                                switch (attr) {
+                                    case 'text':
+                                        if (!value.startsWith('@string/')) {
+                                            value = ResourceHandler.addString(value, '', settings);
+                                            if (value !== '') {
+                                                object[attr] = `@string/${value}`;
+                                                continue;
+                                            }
+                                        }
+                                        break;
+                                    case 'src':
+                                        if (/^\w+:\/\//.test(value)) {
+                                            value = ResourceHandler.addImage({ 'mdpi': value });
+                                            if (value !== '') {
+                                                object[attr] = `@drawable/${value}`;
+                                                continue;
+                                            }
+                                        }
+                                        break;
+                                }
+                                break;
+                        }
+                        const hex = parseHex(value);
+                        if (hex !== '') {
+                            object[attr] = `@color/${ResourceHandler.addColor(hex)}`;
+                        }
+                    }
+                }
+            }
+        }
+        return options;
+    }
+
     public static addString(value: string, name = '', { numberResourceValue = false }) {
         if (value !== '') {
             if (name === '') {

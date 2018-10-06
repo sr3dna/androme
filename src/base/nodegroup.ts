@@ -17,7 +17,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
             this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
             item.parent = this;
         });
-        this.parent.sort();
+        this.parent.children.sort(NodeList.siblingIndex);
         this.initial.children.push(...this.children.slice());
         this.setBounds();
         this.css('direction', this.documentParent.dir);

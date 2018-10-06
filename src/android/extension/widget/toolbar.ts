@@ -203,6 +203,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
             appBarNode = createPlaceholder(this.application.cache.nextId, node, appBarChildren) as T;
+            appBarNode.parent = node.parent;
             appBarNode.nodeId = stripId(optionsAppBar.android.id);
             this.application.cache.append(appBarNode);
             outer =
@@ -225,6 +226,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
                 collapsingToolbarNode = createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren) as T;
+                collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
                     collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
                     this.application.cache.append(collapsingToolbarNode);
@@ -258,7 +260,7 @@ export default class Toolbar<T extends View> extends Extension<T> {
             node.render(node.parent);
         }
         else if (collapsingToolbarNode) {
-            collapsingToolbarNode.render((target ? collapsingToolbarNode : parent));
+            collapsingToolbarNode.render(target ? collapsingToolbarNode : parent);
             node.parent = collapsingToolbarNode;
             node.render(collapsingToolbarNode);
         }

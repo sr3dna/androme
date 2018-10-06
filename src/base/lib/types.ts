@@ -194,7 +194,6 @@ export interface INode extends BoxModel {
     setBounds(calibrate?: boolean): void;
     setDimensions(region?: string[]): void;
     setMultiLine(): void;
-    sort(): void;
     getParentElementAsNode(negative?: boolean, containerDefault?: {}): Null<{}>;
     remove(node: {}): void;
     renderAppend(node: {}): void;
@@ -246,4 +245,15 @@ export type InitialValues<T> = {
     depth: number,
     linear?: ClientRect,
     box?: ClientRect
+};
+
+export type ResourceMap = {
+    strings: Map<string, string>;
+    arrays: Map<string, string[]>;
+    fonts: Map<string, {}>;
+    colors: Map<string, string>;
+    styles: Map<string, any>;
+    dimens: Map<string, string>;
+    drawables: Map<string, string>;
+    images: Map<string, {}>;
 };

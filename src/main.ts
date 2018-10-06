@@ -234,7 +234,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
             element.dataset.iteration = iteration.toString();
             element.dataset.layoutName = convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);
             if (main.initCache(element)) {
-                main.convertDocument();
+                main.createDocument();
                 main.setConstraints();
                 main.setResources();
                 cacheRoot.add(element);

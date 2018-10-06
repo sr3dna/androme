@@ -616,10 +616,6 @@ export default abstract class Node implements INode {
         }
     }
 
-    public sort() {
-        this.children.sort((a, b) => a.siblingIndex <= b.siblingIndex ? -1 : 1);
-    }
-
     public getParentElementAsNode(negative = false, containerDefault?: T) {
         if (this._element) {
             let parent = getNodeFromElement(this._element.parentElement);

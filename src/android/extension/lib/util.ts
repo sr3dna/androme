@@ -1,18 +1,16 @@
-import { Null, ObjectMap, StringMap } from '../../../lib/types';
+import { Null } from '../../../lib/types';
 import View from '../../view';
-import ResourceHandler from '../../resourcehandler';
 import { includes } from '../../../lib/util';
-import { parseHex } from '../../../lib/color';
 import { NODE_RESOURCE } from '../../../base/lib/constants';
 
 type T = View;
 
 export function createPlaceholder(nextId: number, node: T, children: T[] = []) {
-    const placeholder = new View(nextId, node.element);
+    const placeholder = new View(nextId);
+    placeholder.init();
     placeholder.api = node.api;
-    placeholder.parent = node.parent;
-    for (const child of children) {
-        child.parent = placeholder;
+    for (const item of children) {
+        item.parent = placeholder;
     }
     placeholder.inherit(node, 'dimensions');
     placeholder.auto = false;
@@ -26,48 +24,6 @@ export function locateExtension(node: T, extension: string): Null<HTMLElement> {
             .from(node.element.children)
             .find((element: HTMLElement) => includes(element.dataset.ext, extension)) as HTMLElement
     );
-}
-
-export function formatResource(options: {}, settings: ObjectMap<any> = {}) {
-    for (const namespace in options) {
-        const object: StringMap = options[namespace];
-        if (typeof object === 'object') {
-            for (const attr in object) {
-                if (object[attr] != null) {
-                    let value = object[attr].toString();
-                    switch (namespace) {
-                        case 'android':
-                            switch (attr) {
-                                case 'text':
-                                    if (!value.startsWith('@string/')) {
-                                        value = ResourceHandler.addString(value, '', settings);
-                                        if (value !== '') {
-                                            object[attr] = `@string/${value}`;
-                                            continue;
-                                        }
-                                    }
-                                    break;
-                                case 'src':
-                                    if (/^\w+:\/\//.test(value)) {
-                                        value = ResourceHandler.addImage({ 'mdpi': value });
-                                        if (value !== '') {
-                                            object[attr] = `@drawable/${value}`;
-                                            continue;
-                                        }
-                                    }
-                                    break;
-                            }
-                            break;
-                    }
-                    const hex = parseHex(value);
-                    if (hex !== '') {
-                        object[attr] = `@color/${ResourceHandler.addColor(hex)}`;
-                    }
-                }
-            }
-        }
-    }
-    return options;
 }
 
 export function overwriteDefault(options: {}, namespace: string, attr: string, value: string) {

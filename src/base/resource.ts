@@ -1,5 +1,5 @@
-import { AppCurrent, Settings, ViewData } from './lib/types';
-import { BorderAttribute, BoxStyle, FontAttribute, Image, Null, ObjectMap, ResourceMap } from '../lib/types';
+import { AppCurrent, ResourceMap, Settings, ViewData } from './lib/types';
+import { BorderAttribute, BoxStyle, FontAttribute, Image, Null } from '../lib/types';
 import Node from './node';
 import NodeList from './nodelist';
 import Application from './application';
@@ -100,7 +100,7 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
     public setBoxStyle() {
         this.cache.elements.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (!getElementCache(node.element, 'boxStyle') || this.settings.alwaysReevaluateResources)) {
-                const result: ObjectMap<any> = {
+                const boxModel = {
                     borderTop: this.parseBorderStyle,
                     borderRight: this.parseBorderStyle,
                     borderBottom: this.parseBorderStyle,
@@ -112,19 +112,20 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
                     backgroundRepeat: true,
                     backgroundPosition: true
                 };
-                for (const attr in result) {
+                const result: BoxStyle = {} as any;
+                for (const attr in boxModel) {
                     const value = node.css(attr);
-                    if (typeof result[attr] === 'function') {
-                        result[attr] = result[attr](value, node, attr);
+                    if (typeof boxModel[attr] === 'function') {
+                        result[attr] = boxModel[attr](value, node, attr);
                     }
-                    else if (result[attr] === true) {
+                    else if (boxModel[attr] === true) {
                         result[attr] = value;
                     }
                     else {
                         result[attr] = '';
                     }
                 }
-                if (result.backgroundColor.length > 0 &&
+                if (Array.isArray(result.backgroundColor) &&
                     !node.has('backgroundColor') && (
                         node.cssParent('backgroundColor', false, true) === result.backgroundColor[1] ||
                         (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))

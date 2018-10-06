@@ -95,17 +95,6 @@ export type ArrayIndex<T> = {
     filter(callbackfn: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[];
 };
 
-export type ResourceMap = {
-    strings: Map<string, string>;
-    arrays: Map<string, string[]>;
-    fonts: Map<string, {}>;
-    colors: Map<string, string>;
-    styles: Map<string, any>;
-    dimens: Map<string, string>;
-    drawables: Map<string, string>;
-    images: Map<string, {}>;
-};
-
 export type BorderAttribute = {
     style: string;
     width: string;
