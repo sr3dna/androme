@@ -41,6 +41,11 @@
             margin-left: 8px;
             float: left;
         }
+        #fab_browse_page {
+            bottom: 0px;
+            right: 0px;
+            background-image: url(../demos/images/icons8-browse-page-24.png);
+        }
         h3 {
             margin-top: 0px;
         }
@@ -54,8 +59,12 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        System.import('/build/main.js').then(function(result) {
-            androme = result;
+        Promise.all([
+            System.import('/build/main.js'),
+            System.import('/build/android/main.js')
+        ]).then((modules) => {
+            androme = modules[0];
+            androme.setFramework(modules[1]['default']);
             androme.ext('androme.widget.toolbar', {
                 toolbar_demo: {
                     appBar: {}
@@ -116,7 +125,7 @@
                 </div>
             </div>
         </div>
-        <button id="fab_browse_page" data-ext="androme.widget.floatingactionbutton" data-exclude-procedure="ACCESSIBILITY" style="bottom: 0px; right: 0px; background-image: url(../demos/images/icons8-browse-page-24.png);"></button>
+        <button id="fab_browse_page" data-ext="androme.widget.floatingactionbutton" data-exclude-procedure="ACCESSIBILITY"></button>
     </div>
     <!-- END: DEMO -->
 

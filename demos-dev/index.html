@@ -98,9 +98,12 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        System.import('/build/main.js').then(function(result) {
-            androme = result;
-            androme.setFramework('android');
+        Promise.all([
+            System.import('/build/main.js'),
+            System.import('/build/android/main.js')
+        ]).then((modules) => {
+            androme = modules[0];
+            androme.setFramework(modules[1]['default']);
             androme.system.customize(androme.settings.targetAPI, 'Button', {
                 android: {
                     minWidth: '35px',

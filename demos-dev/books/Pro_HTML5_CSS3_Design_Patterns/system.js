@@ -18,8 +18,12 @@ System.config({
    transpiler: 'plugin-babel'
 });
 
-System.import('/build/main.js').then(function(result) {
-    androme = result;
+Promise.all([
+    System.import('/build/main.js'),
+    System.import('/build/android/main.js')
+]).then((modules) => {
+    androme = modules[0];
+    androme.setFramework(modules[1]['default']);
     androme.parseDocument().then(function() {
         androme.close();
         androme.saveAllToDisk();

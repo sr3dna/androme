@@ -60,6 +60,16 @@
             margin-top: 4px;
             float: left;
         }
+        #fab_menu {
+            position: static;
+            background-image: url(../demos/images/icons8-squared-menu-24.png);
+            float: right;
+        }
+        #drawer_demo #fab_left {
+            bottom: 0px;
+            left: 0px;
+            background-image: url(../demos/images/icons8-left-24.png);
+        }
         .content {
             font-size: 12px;
             color: #fff;
@@ -70,8 +80,12 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        System.import('/build/main.js').then(function(result) {
-            androme = result;
+        Promise.all([
+            System.import('/build/main.js'),
+            System.import('/build/android/main.js')
+        ]).then((modules) => {
+            androme = modules[0];
+            androme.setFramework(modules[1]['default']);
             androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
@@ -105,10 +119,10 @@
                         content content content content content content content content content content
                         content content content content content content content content content content
                     </div>
-                    <input id="fab_menu" type="button" data-ext="androme.widget.floatingactionbutton" style="position: static; background-image: url(../demos/images/icons8-squared-menu-24.png); float: right;" />
+                    <input id="fab_menu" type="button" data-ext="androme.widget.floatingactionbutton" />
                     <br /><br /><br /><br /><br /><br />
                 </div>
-                <button id="fab_left" data-ext="androme.widget.floatingactionbutton" style="bottom: 0px; left: 0px; background-image: url(../demos/images/icons8-left-24.png);"></button>
+                <button id="fab_left" data-ext="androme.widget.floatingactionbutton"></button>
             </div>
             <aside id="drawer_aside">
                 <div>

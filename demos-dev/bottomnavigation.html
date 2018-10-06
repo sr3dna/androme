@@ -10,7 +10,7 @@
             position: relative;
             background-color: #fff;
         }
-        #bottomnavigation {
+        #bottomnavigation_demo {
             position: absolute;
             width: 100%;
             left: 0px;
@@ -19,20 +19,20 @@
             background-color: #fff;
             border-top: solid 1px #aaa;
         }
-        #bottomnavigation nav {
+        #bottomnavigation_demo nav {
             display: flex;
         }
-        #bottomnavigation div {
+        #bottomnavigation_demo div {
             font-size: 10px;
             text-align: center;
             padding: 8px;
             flex: 1;
         }
-        #bottomnavigation div:hover {
+        #bottomnavigation_demo div:hover {
             background-color: azure;
             cursor: pointer;
         }
-        #bottomnavigation div img {
+        #bottomnavigation_demo div img {
             width: 20px;
             height: 20px;
         }
@@ -46,10 +46,14 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        System.import('/build/main.js').then(function(result) {
-            androme = result;
-            androme.ext('androme.widget.bottomnavigation', { // optional: default configuration is provided
-                bottomnavigation: {
+        Promise.all([
+            System.import('/build/main.js'),
+            System.import('/build/android/main.js')
+        ]).then((modules) => {
+            androme = modules[0];
+            androme.setFramework(modules[1]['default']);
+            androme.ext('androme.widget.bottomnavigation', {
+                bottomnavigation_demo: {
                     android: {
                         background: '?android:attr/windowBackground'
                     },
@@ -96,7 +100,7 @@
         <br />
         <br />
         <br />
-        <div id="bottomnavigation" data-ext="androme.widget.bottomnavigation">
+        <div id="bottomnavigation_demo" data-ext="androme.widget.bottomnavigation">
             <nav id="bottomnavigation_menu" data-ext="androme.widget.menu">
                 <div>
                     <img src="../demos/images/icons8-chrome.png" /><br />

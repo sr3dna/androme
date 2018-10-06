@@ -22,6 +22,8 @@
         #toolbar_demo {
             position: relative;
             height: 180px;
+            background-image: url(../demos/images/android_background.jpg);
+            background-size: 100% 100%;
         }
         #toolbar_demo button {
             position: absolute;
@@ -47,6 +49,11 @@
             margin-left: 8px;
             float: left;
         }
+        #fab_menu {
+            bottom: 0px;
+            right: 0px;
+            background-image: url(../demos/images/icons8-menu-24.png);
+        }
         h3 {
             margin-top: 0px;
         }
@@ -60,9 +67,13 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        System.import('/build/main.js').then(function(result) {
-            androme = result;
-            androme.ext('androme.widget.toolbar', { // optional: default configuration is provided
+        Promise.all([
+            System.import('/build/main.js'),
+            System.import('/build/android/main.js')
+        ]).then((modules) => {
+            androme = modules[0];
+            androme.setFramework(modules[1]['default']);
+            androme.ext('androme.widget.toolbar', {
                 toolbar_demo: {
                     appBar: {
                         android: {
@@ -108,7 +119,7 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" data-ext="androme.widget.coordinator">
-        <div id="toolbar_demo" data-ext="androme.widget.toolbar" style="background-image: url(../demos/images/android_background.jpg); background-size: 100% 100%;">
+        <div id="toolbar_demo" data-ext="androme.widget.toolbar">
             <nav id="toolbar_menu" data-ext="androme.widget.menu">
                 <div
                     data-show-as-action="always"
@@ -121,7 +132,7 @@
                     <img src="../demos/images/icons8-browse-page-24.png" />
                 </div>
             </nav>
-            <button id="fab_menu" data-ext="androme.widget.floatingactionbutton" data-target="androme_ui" style="bottom: 0px; right: 0px; background-image: url(../demos/images/icons8-menu-24.png);"></button>
+            <button id="fab_menu" data-ext="androme.widget.floatingactionbutton" data-target="androme_ui"></button>
         </div>
         <div
             data-ext="androme.custom"

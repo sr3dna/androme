@@ -12,8 +12,6 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 *** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML page from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also use your preferred browser Safari/Edge/FireFox. The latest version of Chrome is ideally what you should use to generate the production version of your program. ***
 
-download [only required file]: [https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js](https://cdn.jsdelivr.net/npm/androme/dist/androme.min.js)
-
 Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server. 
 
 * Install Node.js: http://www.nodejs.org
@@ -35,6 +33,7 @@ GitHub
 
 ```javascript
 <script src="/dist/androme.min.js"></script>
+<script src="/dist/android.framework.min.js"></script>
 <script>
     // optional
     androme.settings.targetAPI = 19;
@@ -43,19 +42,26 @@ GitHub
     // without Express: use either console.log() or element.innerHTML to display using "write" commands
 
     document.addEventListener('DOMContentLoaded', function() {
-        // optional: default 'android'
-        // required: before any calls to "system" methods
-        androme.setFramework('android');
+        // required
+        androme.setFramework(android);
 
-        // required: zero or more
+        // required: zero or more DOM elements
         androme.parseDocument(/* document.getElementById('mainview') */, /* 'subview' */, /* etc... */);
         androme.close();
         androme.saveAllToDisk(); /* Express required */
 
-        // start new "parseDocument" session
+        // optional: start new "parseDocument" session
         androme.reset();
+    });
+</script>
+```
+Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session. The application will continuously and progressively build into a single entity with combined shared resources.
 
-        // only required when you are using IMG tags to display images
+NOTE: Calling "save" or "write" methods before the images have completely loaded can sometimes cause them to be excluded from the generated layout. In these cases you should use the "parseDocument" chain method "then" to set a callback for your commands.
+```javascript
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        androme.setFramework(android);
         androme.parseDocument(/* 'mainview' */, /* 'subview' */).then(function() {
             androme.close();
             androme.saveAllToDisk();
@@ -63,10 +69,6 @@ GitHub
     });
 </script>
 ```
-Library files are in the /dist folder. There is a babel minified for production (ES5) and non-babel version for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session. The application will continuously and progressively build into a single entity with combined shared resources.
-
-NOTE: Calling "save" or "write" methods before the images have completely loaded can sometimes cause them to be excluded from the generated layout. In these cases you should use the "parseDocument" chain method "then" to set a callback for your commands.
-
 ### User settings
 
 These settings are available in the global variable "androme" to customize your desired XML structure. Compatible attributes are generated based on the targetAPI setting. I have not validated every attribute in relation to the API version but the customization code can easily be modified to support your project.
