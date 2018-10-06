@@ -55,10 +55,10 @@ export default class Toolbar<T extends View> extends Extension<T> {
         const optionsToolbar = Object.assign({}, options.toolbar);
         const optionsAppBar = Object.assign({}, options.appBar);
         const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
-        const appBarChildren: T[] = [];
-        const collapsingToolbarChildren: T[] = [];
         const hasMenu = locateExtension(node, WIDGET_NAME.MENU) != null;
         const backgroundImage = node.has('backgroundImage');
+        const appBarChildren: T[] = [];
+        const collapsingToolbarChildren: T[] = [];
         let output = '';
         let depth = target ? 0 : node.depth;
         let children = node.children.filter(item => item.auto).length;

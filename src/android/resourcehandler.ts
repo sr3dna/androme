@@ -7,8 +7,8 @@ import File from '../base/file';
 import View from './view';
 import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, isString, lastIndexOf, trimString } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
-import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setElementCache } from '../lib/dom';
+import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
 import { getColorNearest, parseHex, parseRGBA, reduceHexToRGB } from '../lib/color';
 import { NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../base/lib/constants';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
@@ -27,8 +27,8 @@ const METHOD_ANDROID = {
         'fontStyle': 'android:textStyle="{0}"',
         'fontWeight': 'android:fontWeight="{0}"',
         'fontSize': 'android:textSize="{0}"',
-        'color': 'android:textColor="{0}"',
-        'backgroundColor': 'android:background="{0}"'
+        'color': 'android:textColor="@color/{0}"',
+        'backgroundColor': 'android:background="@color/{0}"'
     },
     'valueString': {
         'text': 'android:text="{0}"'
@@ -1009,7 +1009,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                 const element = node.element;
                 const stored: FontAttribute = Object.assign({}, getElementCache(element, 'fontStyle'));
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
-                    stored.backgroundColor = `@color/${ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
+                    stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
                 if (stored.fontFamily) {
                     let fontFamily =
@@ -1021,7 +1021,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     let fontStyle = '';
                     let fontWeight = '';
                     if (Array.isArray(stored.color) && stored.color.length > 0) {
-                        stored.color = `@color/${ResourceHandler.addColor(stored.color[0], stored.color[2])}`;
+                        stored.color = ResourceHandler.addColor(stored.color[0], stored.color[2]);
                     }
                     if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily]) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];

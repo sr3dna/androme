@@ -7,12 +7,6 @@
     (factory((global.androme = {})));
 }(this, (function (exports) { 'use strict';
 
-    const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-    const NUMERALS = [
-        '', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
-        '', 'X', 'XX', 'XXX', 'XL', 'L', 'LX', 'LXX', 'LXXX', 'XC',
-        '', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX'
-    ];
     function sort(list, asc = 0, ...attrs) {
         return list.sort((a, b) => {
             for (const attr of attrs) {
@@ -42,22 +36,6 @@
         }
         return [valid, invalid];
     }
-    function formatString(value, ...params) {
-        for (let i = 0; i < params.length; i++) {
-            value = value.replace(`{${i}}`, params[i]);
-        }
-        return value;
-    }
-    function cameltoLowerCase(value) {
-        value = value.charAt(0).toLowerCase() + value.substring(1);
-        const result = value.match(/([a-z]{1}[A-Z]{1})/g);
-        if (result) {
-            for (const match of result) {
-                value = value.replace(match, `${match[0]}_${match[1].toLowerCase()}`);
-            }
-        }
-        return value;
-    }
     function convertCamelCase(value, char = '-') {
         value = value.replace(new RegExp(`^${char}+`), '');
         const result = value.match(new RegExp(`(${char}{1}[a-z]{1})`, 'g'));
@@ -76,9 +54,6 @@
     }
     function convertInt(value) {
         return (value && parseInt(value)) || 0;
-    }
-    function convertFloat(value) {
-        return (value && parseFloat(value)) || 0;
     }
     function convertPX(value, fontSize) {
         if (hasValue(value)) {
@@ -102,58 +77,6 @@
             }
         }
         return '0px';
-    }
-    function replaceWhiteSpace(value) {
-        value = value.replace(/\u00A0/g, '&#160;');
-        value = value.replace(/\u2002/g, '&#8194;');
-        value = value.replace(/\u2003/g, '&#8195;');
-        value = value.replace(/\u2009/g, '&#8201;');
-        value = value.replace(/\u200C/g, '&#8204;');
-        value = value.replace(/\u200D/g, '&#8205;');
-        value = value.replace(/\u200E/g, '&#8206;');
-        value = value.replace(/\u200F/g, '&#8207;');
-        return value;
-    }
-    function formatPX(value) {
-        value = parseFloat(value);
-        return `${!isNaN(value) ? Math.round(value) : 0}px`;
-    }
-    function convertAlpha(value) {
-        let result = '';
-        while (value >= ALPHABET.length) {
-            const base = Math.floor(value / ALPHABET.length);
-            if (base > 1 && base <= ALPHABET.length) {
-                result += ALPHABET.charAt(base - 1);
-                value -= base * ALPHABET.length;
-            }
-            else if (base > ALPHABET.length) {
-                result += convertAlpha(base * ALPHABET.length);
-                value -= base * ALPHABET.length;
-            }
-            const index = value % ALPHABET.length;
-            result += ALPHABET.charAt(index);
-            value -= index + ALPHABET.length;
-        }
-        result = ALPHABET.charAt(value) + result;
-        return result;
-    }
-    function convertRoman(value) {
-        const digits = value.toString().split('');
-        let result = '';
-        let i = 3;
-        while (i--) {
-            result = (NUMERALS[parseInt(digits.pop() || '') + (i * 10)] || '') + result;
-        }
-        return 'M'.repeat(parseInt(digits.join(''))) + result;
-    }
-    function convertEnum(value, base, derived) {
-        for (const key of Object.keys(base)) {
-            const index = base[key];
-            if (value === index) {
-                return derived[key];
-            }
-        }
-        return '';
     }
     function hasBit(value, type) {
         return (value & type) === type;
@@ -247,56 +170,6 @@
     function repeat(n, value = '\t') {
         return value.repeat(n);
     }
-    function indexOf(value, ...terms) {
-        for (const term of terms) {
-            const index = value.indexOf(term);
-            if (index !== -1) {
-                return index;
-            }
-        }
-        return -1;
-    }
-    function lastIndexOf(value, char = '/') {
-        return value.substring(value.lastIndexOf(char) + 1);
-    }
-    function sameValue(obj1, obj2, ...attrs) {
-        for (const attr of attrs) {
-            const result = compareObject(obj1, obj2, attr);
-            if (!result || result[0] !== result[1]) {
-                return false;
-            }
-        }
-        return true;
-    }
-    function searchObject(obj, value) {
-        const result = [];
-        if (typeof value === 'object') {
-            for (const term in value) {
-                const attr = value[term];
-                if (hasValue(obj[attr])) {
-                    result.push([attr, obj[attr]]);
-                }
-            }
-        }
-        else {
-            let filter = (a) => (a === value);
-            if (/^\*.+\*$/.test(value)) {
-                filter = (a) => (a.indexOf(value.replace(/\*/g, '')) !== -1);
-            }
-            else if (/^\*/.test(value)) {
-                filter = (a) => (a.endsWith(value.replace(/\*/, '')));
-            }
-            else if (/\*$/.test(value)) {
-                filter = (a) => (a.startsWith(value.replace(/\*/, '')));
-            }
-            for (const i in obj) {
-                if (filter(i)) {
-                    result.push([i, obj[i]]);
-                }
-            }
-        }
-        return result;
-    }
     function compareObject(obj1, obj2, attr) {
         const namespaces = attr.split('.');
         let current1 = obj1;
@@ -326,12 +199,6 @@
     function hasValue(value) {
         return typeof value !== 'undefined' && value !== null && value.toString().trim() !== '';
     }
-    function withinRange(a, b, n = 0) {
-        return b >= (a - n) && b <= (a + n);
-    }
-    function withinFraction(lower, upper) {
-        return lower === upper || Math.floor(lower) === Math.floor(upper) || Math.ceil(lower) === Math.ceil(upper) || Math.ceil(lower) === Math.floor(upper) || Math.floor(lower) === Math.ceil(upper);
-    }
     function sortAsc(list, ...attrs) {
         return sort(list, 0, ...attrs);
     }
@@ -339,36 +206,6 @@
         return sort(list, 1, ...attrs);
     }
 
-    function getBoxRect() {
-        return {
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0
-        };
-    }
-    function getClientRect() {
-        return {
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: 0,
-            height: 0
-        };
-    }
-    function getBoxModel() {
-        return {
-            marginTop: 0,
-            marginRight: 0,
-            marginBottom: 0,
-            marginLeft: 0,
-            paddingTop: 0,
-            paddingRight: 0,
-            paddingBottom: 0,
-            paddingLeft: 0
-        };
-    }
     function setElementCache(element, attr, data) {
         if (element) {
             element[`__${attr}`] = data;
@@ -386,44 +223,6 @@
     }
     function getNodeFromElement(element) {
         return getElementCache(element, 'node');
-    }
-    function getRangeClientRect(element) {
-        const range = document.createRange();
-        range.selectNodeContents(element);
-        const domRect = Array.from(range.getClientRects());
-        let multiLine = false;
-        let result = null;
-        if (domRect.length > 0) {
-            result = assignBounds(domRect[0]);
-            const top = new Set([result.top]);
-            const bottom = new Set([result.bottom]);
-            for (let i = 1; i < domRect.length; i++) {
-                const rect = domRect[i];
-                top.add(rect.top);
-                bottom.add(rect.bottom);
-                result.width += rect.width;
-                result.right = Math.max(rect.right, result.right);
-                result.height = Math.max(rect.height, result.height);
-            }
-            if (top.size > 1 && bottom.size > 1) {
-                result.top = Math.min.apply(null, Array.from(top));
-                result.bottom = Math.max.apply(null, Array.from(bottom));
-                if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
-                    multiLine = true;
-                }
-            }
-        }
-        return [result, multiLine];
-    }
-    function assignBounds(bounds) {
-        return {
-            top: bounds.top,
-            right: bounds.right,
-            bottom: bounds.bottom,
-            left: bounds.left,
-            width: bounds.width,
-            height: bounds.height
-        };
     }
     function getStyle(element, cache = true) {
         if (element) {
@@ -450,53 +249,12 @@
         }
         return {};
     }
-    function getBoxSpacing(element, complete = false, merge = false) {
-        const result = {};
-        const node = getNodeFromElement(element);
-        const style = getStyle(element);
-        ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
-            let total = 0;
-            ['padding', 'margin'].forEach(region => {
-                const attr = region + direction;
-                const value = convertInt((node || style)[attr]);
-                if (complete || value !== 0) {
-                    result[attr] = value;
-                }
-                total += value;
-            });
-            if (merge) {
-                result[`padding${direction}`] = total;
-                if (complete) {
-                    result[`margin${direction}`] = 0;
-                }
-                else {
-                    delete result[`margin${direction}`];
-                }
-            }
-        });
-        return result;
-    }
     function parseBackgroundUrl(value) {
         const match = value.match(/^url\("?(.*?)"?\)$/);
         if (match) {
             return resolvePath(match[1]);
         }
         return '';
-    }
-    function cssInherit(element, attr, tagName = '', exclude) {
-        let result = '';
-        let current = element.parentElement;
-        while (current && current.tagName !== tagName) {
-            result = getStyle(current)[attr] || '';
-            if (exclude && exclude.some(value => result.indexOf(value) !== -1)) {
-                result = '';
-            }
-            if (current === document.body || result) {
-                break;
-            }
-            current = current.parentElement;
-        }
-        return result;
     }
     function cssParent(element, attr, ...styles) {
         if (element.nodeName.charAt(0) !== '#') {
@@ -506,14 +264,6 @@
         }
         if (element.parentElement) {
             return styles.includes(getStyle(element.parentElement)[attr]);
-        }
-        return false;
-    }
-    function cssFromParent(element, attr) {
-        if (element instanceof HTMLElement && element.parentElement) {
-            const node = getNodeFromElement(element);
-            const style = getStyle(element);
-            return (style && style[attr] === getStyle(element.parentElement)[attr] && (!node || !node.styleMap[attr]));
         }
         return false;
     }
@@ -570,23 +320,6 @@
             else {
                 return element.textContent.trim() !== '';
             }
-        }
-        return false;
-    }
-    function hasLineBreak(element) {
-        if (element) {
-            const node = getNodeFromElement(element);
-            const fromParent = element.nodeName === '#text';
-            let whiteSpace = '';
-            if (node) {
-                whiteSpace = node.css('whiteSpace');
-            }
-            else {
-                whiteSpace = getStyle(element).whiteSpace || '';
-            }
-            return ((element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) ||
-                (/\n/.test(element.textContent || '') && (['pre', 'pre-wrap'].includes(whiteSpace) ||
-                    (fromParent && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')))));
         }
         return false;
     }
@@ -1126,9 +859,6 @@
         const placeholder = typeof id === 'number' ? formatPlaceholder(id) : id;
         return value.replace(placeholder, (before ? placeholder : '') + content + (before ? '' : placeholder));
     }
-    function removePlaceholders(value) {
-        return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
-    }
     function replaceIndent(value, depth) {
         if (depth >= 0) {
             let indent = -1;
@@ -1147,122 +877,6 @@
                 .join('\n'));
         }
         return value;
-    }
-    function replaceTab(value, { insertSpaces = 4 }, preserve = false) {
-        if (insertSpaces > 0) {
-            if (preserve) {
-                value =
-                    value
-                        .split('\n')
-                        .map(line => {
-                        const match = line.match(/^(\t+)(.*)$/);
-                        if (match) {
-                            return ' '.repeat(insertSpaces * match[1].length) + match[2];
-                        }
-                        return line;
-                    })
-                        .join('\n');
-            }
-            else {
-                value = value.replace(/\t/g, ' '.repeat(insertSpaces));
-            }
-        }
-        return value;
-    }
-    function replaceEntity(value) {
-        value = value.replace(/&#([0-9]+);/g, (match, capture) => String.fromCharCode(parseInt(capture)));
-        value = value.replace(/&nbsp;/g, '&#160;');
-        return replaceWhiteSpace(value);
-    }
-    function getTemplateLevel(data, ...levels) {
-        let current = data;
-        for (const level of levels) {
-            const [index, array = '0'] = level.split('-');
-            current = current[index][array];
-        }
-        return current;
-    }
-    function parseTemplate(template) {
-        const result = {};
-        let pattern = null;
-        let match = false;
-        let section = 0;
-        let characters = template.length;
-        do {
-            if (match) {
-                const segment = match[0].replace(new RegExp(match[1], 'g'), '');
-                for (const index in result) {
-                    result[index] = result[index].replace(new RegExp(match[0], 'g'), `{%${match[2]}}`);
-                }
-                result[match[2]] = segment;
-                characters -= match[0].length;
-            }
-            if (match == null || characters === 0) {
-                template = result[section++];
-                if (!template) {
-                    break;
-                }
-                characters = template.length;
-                match = null;
-            }
-            if (!match) {
-                pattern = /(!([0-9]+)\n?)[\w\W]*\1/g;
-            }
-            if (pattern) {
-                match = pattern.exec(template);
-            }
-            else {
-                break;
-            }
-        } while (true);
-        return result;
-    }
-    function insertTemplateData(template, data, index, include, exclude) {
-        let output = index ? template[index] : '';
-        if (data['#include']) {
-            include = data['#include'];
-            delete data['#include'];
-        }
-        if (data['#exclude']) {
-            exclude = data['#exclude'];
-            delete data['#exclude'];
-        }
-        for (const i in data) {
-            let value = '';
-            if (data[i] === false) {
-                output = output.replace(`{%${i}}`, '');
-                continue;
-            }
-            else if (Array.isArray(data[i])) {
-                for (const j in data[i]) {
-                    value += insertTemplateData(template, data[i][j], i, include, exclude);
-                }
-            }
-            else {
-                value = data[i];
-            }
-            if (isString(value)) {
-                output = index ? output.replace(new RegExp(`{[%@&]*${i}}`, 'g'), value) : value.trim();
-            }
-            else if (value === false || new RegExp(`{%${i}}`).test(output)) {
-                output = output.replace(`{%${i}}`, '');
-            }
-            else if (new RegExp(`{&${i}}`).test(output)) {
-                output = '';
-            }
-            const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
-            let match;
-            while ((match = pattern.exec(output)) != null) {
-                if (include && include[match[1]]) {
-                    const attr = `{#${match[1]}=${match[2]}}`;
-                    output = output.replace(attr, data[match[2]] || match[2]);
-                }
-                else if (exclude && exclude[match[1]]) {
-                    output = output.replace(match[0], '');
-                }
-            }
-        }
-        return output.replace(/\s+[\w:]+="{@\w+}"/g, '');
     }
 
     var BOX_STANDARD;
@@ -1313,82 +927,6 @@
         TEXTAREA: NODE_STANDARD.EDIT,
         IFRAME: NODE_STANDARD.WEB_VIEW
     };
-    const BLOCK_ELEMENT = [
-        'ADDRESS',
-        'ARTICLE',
-        'ASIDE',
-        'BLOCKQUOTE',
-        'CANVAS',
-        'DD',
-        'DIV',
-        'DL',
-        'DT',
-        'FIELDSET',
-        'FIGCAPTION',
-        'FIGURE',
-        'FOOTER',
-        'FORM',
-        'H1',
-        'H2',
-        'H3',
-        'H4',
-        'H5',
-        'H6',
-        'HEADER',
-        'LI',
-        'MAIN',
-        'NAV',
-        'OL',
-        'OUTPUT',
-        'P',
-        'PRE',
-        'SECTION',
-        'TFOOT',
-        'TH',
-        'THEAD',
-        'TR',
-        'UL',
-        'VIDEO'
-    ];
-    const INLINE_ELEMENT = [
-        'A',
-        'ABBR',
-        'ACRONYM',
-        'B',
-        'BDO',
-        'BIG',
-        'BR',
-        'BUTTON',
-        'CITE',
-        'CODE',
-        'DFN',
-        'EM',
-        'I',
-        'IFRAME',
-        'IMG',
-        'INPUT',
-        'KBD',
-        'LABEL',
-        'MAP',
-        'OBJECT',
-        'Q',
-        'S',
-        'SAMP',
-        'SCRIPT',
-        'SELECT',
-        'SMALL',
-        'SPAN',
-        'STRIKE',
-        'STRONG',
-        'SUB',
-        'SUP',
-        'TEXTAREA',
-        'TIME',
-        'TT',
-        'U',
-        'VAR',
-        'PLAINTEXT'
-    ];
 
     class Application {
         constructor(framework) {
@@ -3489,13 +3027,6 @@
         }
     }
     HSL_SORTED.sort(sortHSL);
-    function convertHextoHSL(value) {
-        const rgb = convertHextoRGB(value);
-        if (rgb) {
-            return convertRGBtoHSL(rgb.r, rgb.g, rgb.b);
-        }
-        return null;
-    }
     function convertRGBtoHSL(r, g, b) {
         r = r / 255;
         g = g / 255;
@@ -3544,28 +3075,6 @@
         }
         return 0;
     }
-    function getColorNearest(value) {
-        const result = HSL_SORTED.slice();
-        let index = result.findIndex(item => item.hex === value);
-        if (index !== -1) {
-            return result[index];
-        }
-        else {
-            const hsl = convertHextoHSL(value);
-            if (hsl) {
-                result.push({
-                    name: '',
-                    hsl,
-                    rgb: { r: -1, g: -1, b: -1 },
-                    hex: ''
-                });
-                result.sort(sortHSL);
-                index = result.findIndex(item => item.name === '');
-                return result[Math.min(index + 1, result.length - 1)];
-            }
-            return '';
-        }
-    }
     function getByColorName(value) {
         for (const color in X11_CSS3) {
             if (color.toLowerCase() === value.trim().toLowerCase()) {
@@ -3576,35 +3085,6 @@
     }
     function formatRGB({ rgb }) {
         return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
-    }
-    function parseRGBA(value, opacity = '1') {
-        if (value !== '') {
-            const color = getByColorName(value);
-            if (color !== '') {
-                return [color.hex, formatRGB(color), opacity];
-            }
-            const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9\.]{1,3}))?\)/);
-            if (match && match.length >= 4 && match[4] !== '0') {
-                if (match[4] == null) {
-                    match[4] = opacity;
-                }
-                return [
-                    `#${convertRGBtoHex(match[1]) + convertRGBtoHex(match[2]) + convertRGBtoHex(match[3])}`,
-                    match[0],
-                    parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1'
-                ];
-            }
-        }
-        return [];
-    }
-    function convertRGBtoHex(value) {
-        const hex = '0123456789ABCDEF';
-        let rgb = parseInt(value);
-        if (isNaN(rgb)) {
-            return '00';
-        }
-        rgb = Math.max(0, Math.min(rgb, 255));
-        return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
     }
     function convertHextoRGB(value) {
         value = value.replace('#', '').trim();
@@ -3619,28 +3099,6 @@
             };
         }
         return null;
-    }
-    function parseHex(value) {
-        if (value !== '') {
-            value = value.trim();
-            const color = parseRGBA(value);
-            if (color.length > 0) {
-                value = color[0];
-            }
-            if (value.charAt(0) === '#' && /^#[a-zA-Z0-9]{3,6}$/.test(value)) {
-                return value.length === 4 ? parseRGBA(formatRGB({ rgb: convertHextoRGB(value) }))[0] : value;
-            }
-        }
-        return '';
-    }
-    function reduceHexToRGB(value, percent) {
-        const rgb = convertHextoRGB(value);
-        if (rgb) {
-            const base = percent < 0 ? 0 : 255;
-            percent = Math.abs(percent);
-            return `rgb(${Math.round((base - rgb.r) * percent) + rgb.r}, ${Math.round((base - rgb.g) * percent) + rgb.g}, ${Math.round((base - rgb.b) * percent) + rgb.b})`;
-        }
-        return value;
     }
 
     let main;

@@ -1,10 +1,10 @@
 import { BoxModel, Flexbox, Null, ObjectIndex, ObjectMap, PlainFile, Point, StringMap } from '../../lib/types';
 import { IExtension } from '../../extension/lib/types';
+import Node from '../node';
+import NodeList from '../nodelist';
 import Application from '../application';
 import Controller from '../controller';
 import Resource from '../resource';
-import Node from '../node';
-import NodeList from '../nodelist';
 
 export type Constructor<T> = new(...args: any[]) => T;
 export type FunctionMap = ObjectMap<(...args: any[]) => any>;

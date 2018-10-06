@@ -5,8 +5,8 @@ import NodeList from './nodelist';
 import Application from './application';
 import File from './file';
 import { convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
-import { replaceEntity } from '../lib/xml';
 import { cssFromParent, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
+import { replaceEntity } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE } from './lib/constants';
 

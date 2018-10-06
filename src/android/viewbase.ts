@@ -2,7 +2,7 @@ import { Constructor, Null, StringMap } from '../lib/types';
 import { Constraint, SettingsAndroid } from './lib/types';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
-import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, lastIndexOf, isString, trimNull, withinFraction } from '../lib/util';
+import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, isString, lastIndexOf, trimNull, withinFraction } from '../lib/util';
 import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
 import { getElementsBetweenSiblings, getNodeFromElement } from '../lib/dom';
 import API_ANDROID from './customizations';

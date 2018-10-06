@@ -626,57 +626,6 @@
         }
         return [];
     }
-    function isElementVisible(element) {
-        if (!getElementCache(element, 'supportInline')) {
-            if (element instanceof HTMLElement) {
-                switch (element.tagName) {
-                    case 'BR':
-                    case 'OPTION':
-                    case 'MAP':
-                    case 'AREA':
-                        return false;
-                }
-                if (typeof element.getBoundingClientRect === 'function') {
-                    const bounds = element.getBoundingClientRect();
-                    if ((bounds.width !== 0 && bounds.height !== 0) ||
-                        hasValue(element.dataset.ext) ||
-                        getStyle(element).clear !== 'none') {
-                        return true;
-                    }
-                    else {
-                        let current = element.parentElement;
-                        let valid = true;
-                        while (current) {
-                            if (getStyle(current).display === 'none') {
-                                valid = false;
-                                break;
-                            }
-                            current = current.parentElement;
-                        }
-                        if (valid) {
-                            if (element.children.length > 0) {
-                                return (Array
-                                    .from(element.children)
-                                    .some((item) => {
-                                    const style = getStyle(item);
-                                    const float = style.cssFloat;
-                                    const position = style.position;
-                                    return ((position !== 'static' && position !== 'initial') ||
-                                        float === 'left' ||
-                                        float === 'right');
-                                }));
-                            }
-                        }
-                    }
-                }
-                return false;
-            }
-            else {
-                return isPlainText(element);
-            }
-        }
-        return false;
-    }
 
     var APP_FRAMEWORK;
     (function (APP_FRAMEWORK) {
@@ -807,43 +756,6 @@
         TEXTAREA: NODE_STANDARD.EDIT,
         IFRAME: NODE_STANDARD.WEB_VIEW
     };
-    const BLOCK_ELEMENT = [
-        'ADDRESS',
-        'ARTICLE',
-        'ASIDE',
-        'BLOCKQUOTE',
-        'CANVAS',
-        'DD',
-        'DIV',
-        'DL',
-        'DT',
-        'FIELDSET',
-        'FIGCAPTION',
-        'FIGURE',
-        'FOOTER',
-        'FORM',
-        'H1',
-        'H2',
-        'H3',
-        'H4',
-        'H5',
-        'H6',
-        'HEADER',
-        'LI',
-        'MAIN',
-        'NAV',
-        'OL',
-        'OUTPUT',
-        'P',
-        'PRE',
-        'SECTION',
-        'TFOOT',
-        'TH',
-        'THEAD',
-        'TR',
-        'UL',
-        'VIDEO'
-    ];
     const INLINE_ELEMENT = [
         'A',
         'ABBR',
@@ -4030,25 +3942,6 @@
     function removePlaceholders(value) {
         return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
     }
-    function replaceIndent(value, depth) {
-        if (depth >= 0) {
-            let indent = -1;
-            return (value
-                .split('\n')
-                .map(line => {
-                const match = /^({.*?})(\t*)(<.*)/.exec(line);
-                if (match) {
-                    if (indent === -1) {
-                        indent = match[2].length;
-                    }
-                    return match[1] + repeat(depth + (match[2].length - indent)) + match[3];
-                }
-                return line;
-            })
-                .join('\n'));
-        }
-        return value;
-    }
     function replaceTab(value, { insertSpaces = 4 }, preserve = false) {
         if (insertSpaces > 0) {
             if (preserve) {
@@ -4976,8 +4869,8 @@
             'fontStyle': 'android:textStyle="{0}"',
             'fontWeight': 'android:fontWeight="{0}"',
             'fontSize': 'android:textSize="{0}"',
-            'color': 'android:textColor="{0}"',
-            'backgroundColor': 'android:background="{0}"'
+            'color': 'android:textColor="@color/{0}"',
+            'backgroundColor': 'android:background="@color/{0}"'
         },
         'valueString': {
             'text': 'android:text="{0}"'
@@ -5905,7 +5798,7 @@
                     const element = node.element;
                     const stored = Object.assign({}, getElementCache(element, 'fontStyle'));
                     if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
-                        stored.backgroundColor = `@color/${ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2])}`;
+                        stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                     }
                     if (stored.fontFamily) {
                         let fontFamily = stored.fontFamily
@@ -5916,7 +5809,7 @@
                         let fontStyle = '';
                         let fontWeight = '';
                         if (Array.isArray(stored.color) && stored.color.length > 0) {
-                            stored.color = `@color/${ResourceHandler.addColor(stored.color[0], stored.color[2])}`;
+                            stored.color = ResourceHandler.addColor(stored.color[0], stored.color[2]);
                         }
                         if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily]) {
                             fontFamily = FONTREPLACE_ANDROID[fontFamily];
@@ -10778,7 +10671,6 @@
             super(name, framework, tagNames, options);
         }
         processNode() {
-            const result = super.processNode();
             const node = this.node;
             const columnCount = convertInt(node.app('columnCount'));
             if (columnCount > 1) {
@@ -10838,10 +10730,9 @@
                     }
                 }
             }
-            return result;
+            return super.processNode();
         }
         processChild() {
-            const parent = this.parent;
             const node = this.node;
             const rowSpan = convertInt(node.data(EXT_NAME.TABLE, 'rowSpan'));
             const columnSpan = convertInt(node.data(EXT_NAME.TABLE, 'colSpan'));
@@ -10853,6 +10744,7 @@
                 node.app('layout_columnSpan', columnSpan.toString());
             }
             if (spaceSpan > 0) {
+                const parent = this.parent;
                 this.application.viewController.appendAfter(node.id, this.application.viewController.renderNodeStatic(NODE_STANDARD.SPACE, parent.renderDepth + 1, {
                     app: { layout_columnSpan: spaceSpan.toString() }
                 }, 'wrap_content', 'wrap_content'));
@@ -10914,10 +10806,10 @@
         processNode() {
             const node = this.node;
             const parent = this.parent;
+            const target = hasValue(node.dataset.target);
             const element = node.element;
             const options = Object.assign({}, this.options[element.id]);
             const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-            const target = hasValue(node.dataset.target);
             overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceHandler.addColor(backgroundColor[0], backgroundColor[2])}`
                 : '?attr/colorAccent');
             if (node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
@@ -11132,14 +11024,14 @@
             }
             const element = node.element;
             const options = { android: {}, app: {} };
-            let next = false;
             let nodeName = VIEW_NAVIGATION.ITEM;
             let title = '';
+            let next = false;
             let layout = false;
             if (node.children.some(item => (!item.inlineElement || !item.blockStatic) && item.children.length > 0)) {
                 if (node.children.some(item => item.tagName === 'NAV')) {
                     if (element.title !== '') {
-                        title = element.title.trim();
+                        title = element.title;
                     }
                     else {
                         Array
@@ -11245,10 +11137,7 @@
                     const match = value.match(validator[attr]);
                     if (match) {
                         const namespace = (this.options.appCompat == null || this.options.appCompat === true) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
-                        options[namespace][attr] =
-                            Array
-                                .from(new Set(match))
-                                .join('|');
+                        options[namespace][attr] = Array.from(new Set(match)).join('|');
                     }
                 }
             }
@@ -11273,8 +11162,7 @@
             if (toolbar) {
                 const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
                 if (ext) {
-                    const collapsingToolbar = ext.options[toolbar.element.id] ? ext.options[toolbar.element.id].collapsingToolbar : null;
-                    if (collapsingToolbar) {
+                    if (ext.options[toolbar.element.id] && ext.options[toolbar.element.id].collapsingToolbar) {
                         node.android('fitsSystemWindows', 'true');
                     }
                 }
@@ -11346,10 +11234,10 @@
             const optionsToolbar = Object.assign({}, options.toolbar);
             const optionsAppBar = Object.assign({}, options.appBar);
             const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
-            const appBarChildren = [];
-            const collapsingToolbarChildren = [];
             const hasMenu = locateExtension(node, WIDGET_NAME.MENU) != null;
             const backgroundImage = node.has('backgroundImage');
+            const appBarChildren = [];
+            const collapsingToolbarChildren = [];
             let output = '';
             let depth = target ? 0 : node.depth;
             let children = node.children.filter(item => item.auto).length;
@@ -11680,16 +11568,16 @@
         }
         processNode() {
             const node = this.node;
-            const options = Object.assign({}, this.options.drawer);
+            const options = Object.assign({}, this.options.self);
             if (locateExtension(node, WIDGET_NAME.MENU)) {
                 overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
                 this.createResourceTheme();
             }
             else {
-                const optionsNavigation = Object.assign({}, this.options.navigation);
-                overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
+                const optionsNavigationView = Object.assign({}, this.options.navigationView);
+                overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
                 const navView = node.children[node.children.length - 1];
-                navView.android('layout_gravity', optionsNavigation.android.layout_gravity);
+                navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
                 navView.android('layout_height', 'match_parent');
                 navView.auto = false;
             }

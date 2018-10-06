@@ -1,4 +1,4 @@
-import { INode, Settings, InitialValues } from './lib/types';
+import { INode, InitialValues, Settings } from './lib/types';
 import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
 import { IExtension } from '../extension/lib/types';
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';

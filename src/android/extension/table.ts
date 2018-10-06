@@ -12,7 +12,6 @@ export default class TableAndroid<T extends View> extends Table<T> {
     }
 
     public processNode(): ExtensionResult {
-        const result = super.processNode();
         const node = this.node;
         const columnCount = convertInt(node.app('columnCount'));
         if (columnCount > 1) {
@@ -72,11 +71,10 @@ export default class TableAndroid<T extends View> extends Table<T> {
                 }
             }
         }
-        return result;
+        return super.processNode();
     }
 
     public processChild(): ExtensionResult {
-        const parent = this.parent as T;
         const node = this.node;
         const rowSpan = convertInt(node.data(EXT_NAME.TABLE, 'rowSpan'));
         const columnSpan = convertInt(node.data(EXT_NAME.TABLE, 'colSpan'));
@@ -88,6 +86,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
             node.app('layout_columnSpan', columnSpan.toString());
         }
         if (spaceSpan > 0) {
+            const parent = this.parent as T;
             this.application.viewController.appendAfter(
                 node.id,
                 this.application.viewController.renderNodeStatic(

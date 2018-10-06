@@ -37,16 +37,16 @@ export default class Drawer<T extends View> extends Extension<T> {
 
     public processNode(): ExtensionResult {
         const node = this.node;
-        const options = Object.assign({}, this.options.drawer);
+        const options = Object.assign({}, this.options.self);
         if (locateExtension(node, WIDGET_NAME.MENU)) {
             overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             this.createResourceTheme();
         }
         else {
-            const optionsNavigation = Object.assign({}, this.options.navigation);
-            overwriteDefault(optionsNavigation, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
+            const optionsNavigationView = Object.assign({}, this.options.navigationView);
+            overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
             const navView = node.children[node.children.length - 1];
-            navView.android('layout_gravity', optionsNavigation.android.layout_gravity);
+            navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
             navView.auto = false;
         }

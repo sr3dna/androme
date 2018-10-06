@@ -15,7 +15,7 @@ export default abstract class File<T extends Node> {
     constructor(
         private _directory: string,
         private _processingTime: number,
-        compression: string)
+        compression?: string)
     {
         if (compression) {
             this._compression = compression;

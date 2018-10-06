@@ -5,7 +5,7 @@ import minify from 'rollup-plugin-babel-minify';
 export default [
     {
         input: './build/main.js',
-        treeshake: false,
+        treeshake: true,
         output: {
             file: './dist/androme.min.js',
             name: 'androme',
@@ -19,7 +19,7 @@ export default [
     },
     {
         input: './build/main.js',
-        treeshake: false,
+        treeshake: true,
         output: {
             file: './dist/androme.js',
             name: 'androme',
@@ -29,7 +29,7 @@ export default [
     },
     {
         input: './build/android/main.js',
-        treeshake: false,
+        treeshake: true,
         output: {
             file: './dist/android.framework.min.js',
             name: 'android',
@@ -42,7 +42,7 @@ export default [
     },
     {
         input: './build/android/main.js',
-        treeshake: false,
+        treeshake: true,
         output: {
             file: './dist/android.framework.js',
             name: 'android',

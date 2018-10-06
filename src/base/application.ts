@@ -6,8 +6,8 @@ import NodeList from './nodelist';
 import Controller from './controller';
 import Resource from './resource';
 import { convertInt, hasBit, hasValue, isNumber, isUnit, optional, sortAsc, trimString, trimNull } from '../lib/util';
-import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 import { cssParent, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
+import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 import { APP_SECTION, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from './lib/constants';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
 

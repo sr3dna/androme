@@ -22,8 +22,7 @@ export default class Coordinator<T extends View> extends Extension<T> {
         if (toolbar) {
             const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
             if (ext) {
-                const collapsingToolbar = ext.options[toolbar.element.id] ? ext.options[toolbar.element.id].collapsingToolbar : null;
-                if (collapsingToolbar) {
+                if (ext.options[toolbar.element.id] && ext.options[toolbar.element.id].collapsingToolbar) {
                     node.android('fitsSystemWindows', 'true');
                 }
             }

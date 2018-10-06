@@ -1,5 +1,6 @@
 import { ViewData } from '../base/lib/types';
-import { Null, ObjectMap, PlainFile } from '../lib/types';
+import { Null, PlainFile } from '../lib/types';
+import { SettingsAndroid } from './lib/types';
 import NodeList from '../base/nodelist';
 import File from '../base/file';
 import View from './view';
@@ -21,7 +22,7 @@ function caseInsensitve(a: string | string[], b: string | string[]) {
 }
 
 export default class FileHandler<T extends View> extends File<T> {
-    constructor(public readonly settings: ObjectMap<any>) {
+    constructor(public readonly settings: SettingsAndroid) {
         super(settings.outputDirectory, settings.outputMaxProcessingTime, settings.outputArchiveFileType);
     }
 

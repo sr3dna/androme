@@ -78,14 +78,14 @@ export default class Menu<T extends View> extends Nav<T> {
         }
         const element = <HTMLElement> node.element;
         const options: ObjectMap<StringMap> = { android: {}, app: {} };
-        let next = false;
         let nodeName = VIEW_NAVIGATION.ITEM;
         let title = '';
+        let next = false;
         let layout = false;
         if (node.children.some(item => (!item.inlineElement || !item.blockStatic) && item.children.length > 0)) {
             if (node.children.some(item => item.tagName === 'NAV')) {
                 if (element.title !== '') {
-                    title = element.title.trim();
+                    title = element.title;
                 }
                 else {
                     Array
@@ -202,10 +202,7 @@ export default class Menu<T extends View> extends Nav<T> {
                 const match = value.match(validator[attr]);
                 if (match) {
                     const namespace = (this.options.appCompat == null || this.options.appCompat === true) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
-                    options[namespace][attr] =
-                        Array
-                            .from(new Set(match))
-                            .join('|');
+                    options[namespace][attr] = Array.from(new Set(match)).join('|');
                 }
             }
         }
