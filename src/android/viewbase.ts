@@ -22,6 +22,15 @@ export default (Base: Constructor<Node>) => {
             return View._documentBody;
         }
 
+        public static getCustomizationValue(api: number, tagName: string, obj: string, attr: string) {
+            for (const build of [API_ANDROID[api], API_ANDROID[0]]) {
+                if (build && build.customizations && build.customizations[tagName] && build.customizations[tagName][obj] && isString(build.customizations[tagName][obj][attr])) {
+                    return build.customizations[tagName][obj][attr];
+                }
+            }
+            return '';
+        }
+
         public static getControlName(nodeType: number): string {
             return NODE_ANDROID[NODE_STANDARD[nodeType]];
         }
@@ -730,6 +739,9 @@ export default (Base: Constructor<Node>) => {
         public applyOptimizations(settings: SettingsAndroid) {
             const renderParent = this.renderParent;
             const renderChildren = this.renderChildren;
+            function getPaddedHeight(node: View) {
+                return node.paddingTop + node.paddingBottom + node.borderTopWidth + node.borderBottomWidth;
+            }
             if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
                 const linearHorizontal = this.linearHorizontal;
                 if (this.blockWidth && !this.blockStatic) {
@@ -772,56 +784,6 @@ export default (Base: Constructor<Node>) => {
                         if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
                             node.android('singleLine', 'true');
                         }
-                    }
-                }
-            }
-            if (this.linearHorizontal || this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL)) {
-                const pageflow = renderChildren.filter(node => !node.floating && (node.hasElement || node.renderChildren.length === 0));
-                if (pageflow.length > 0 &&
-                    pageflow.some(node => node.imageElement && node.toInt('verticalAlign') > 0) &&
-                    pageflow.every(node => node.baseline || node.has('verticalAlign', CSS_STANDARD.UNIT)))
-                {
-                    const marginTop: number = Math.max.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
-                    const tallest: View[] = [];
-                    let offsetTop = 0;
-                    if (marginTop > 0) {
-                        pageflow.forEach(node => {
-                            const offset = node.toInt('verticalAlign');
-                            const offsetHeight = (node.imageElement ? node.bounds.height : 0) + (offset > 0 ? offset : 0);
-                            if (offsetHeight >= offsetTop) {
-                                if (offsetHeight > offsetTop) {
-                                    tallest.length = 0;
-                                }
-                                tallest.push(node);
-                                offsetTop = offsetHeight;
-                            }
-                        });
-                        tallest.sort(a => a.imageElement ? -1 : 1);
-                        pageflow.forEach(node => {
-                            if (!tallest.includes(node)) {
-                                const offset = node.toInt('verticalAlign');
-                                if (marginTop > 0) {
-                                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageElement ? node.bounds.height : 0));
-                                }
-                                if (offset !== 0) {
-                                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset * -1, true);
-                                    node.css('verticalAlign', '0px');
-                                }
-                            }
-                        });
-                        tallest.forEach(node => node.css('verticalAlign', '0px'));
-                    }
-                }
-            }
-            if (this.inline && !this.floating) {
-                const offset = this.toInt('verticalAlign');
-                if (offset !== 0) {
-                    this.modifyBox(BOX_STANDARD.MARGIN_TOP, offset * -1, true);
-                    if (offset < 0 &&
-                        renderParent.layoutHorizontal &&
-                        renderParent.inlineHeight)
-                    {
-                        renderParent.android('layout_height', formatPX(renderParent.bounds.height));
                     }
                 }
             }
@@ -964,7 +926,7 @@ export default (Base: Constructor<Node>) => {
                             const minWidth = convertInt(this.android('minWidth'));
                             const minHeight = convertInt(this.android('minHeight'));
                             const paddedWidth = this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
-                            const paddedHeight = this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth;
+                            const paddedHeight = getPaddedHeight(this);
                             if (layoutWidth > 0 &&
                                 this.toInt('width', 0, { map: 'initial' }) > 0 &&
                                 paddedWidth > 0)
@@ -996,6 +958,64 @@ export default (Base: Constructor<Node>) => {
                     this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.borderRightWidth);
                     this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.borderBottomWidth);
                     this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
+                }
+            }
+            if (this.linearHorizontal || this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL)) {
+                const pageflow = renderChildren.filter(node => !node.floating && (node.hasElement || node.renderChildren.length === 0));
+                if (pageflow.length > 0 &&
+                    pageflow.every(node => node.baseline || node.has('verticalAlign', CSS_STANDARD.UNIT)) && (
+                        pageflow.some(node => node.imageElement && node.toInt('verticalAlign') !== 0) ||
+                        (pageflow.some(node => node.toInt('verticalAlign') < 0) && pageflow.some(node => node.toInt('verticalAlign') > 0))
+                   ))
+                {
+                    const marginTop: number = Math.max.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
+                    const tallest: View[] = [];
+                    let offsetTop = 0;
+                    if (marginTop > 0) {
+                        pageflow.forEach(node => {
+                            const offset = node.toInt('verticalAlign');
+                            const offsetHeight = (node.imageElement ? node.bounds.height : 0) + (offset > 0 ? offset : 0);
+                            if (offsetHeight >= offsetTop) {
+                                if (offsetHeight > offsetTop) {
+                                    tallest.length = 0;
+                                }
+                                tallest.push(node);
+                                offsetTop = offsetHeight;
+                            }
+                        });
+                        tallest.sort(a => a.imageElement ? -1 : 1);
+                        pageflow.forEach(node => {
+                            if (!tallest.includes(node)) {
+                                const offset = node.toInt('verticalAlign');
+                                if (marginTop > 0) {
+                                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageElement ? node.bounds.height : 0));
+                                }
+                                if (offset !== 0) {
+                                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset * -1, true);
+                                    node.css('verticalAlign', '0px');
+                                }
+                            }
+                        });
+                        tallest.forEach(node => node.css('verticalAlign', '0px'));
+                    }
+                }
+                if (renderChildren.some(node => node.tagName === 'SUB') && this.inlineHeight) {
+                    const offsetHeight = convertInt(View.getCustomizationValue(this.api, 'SUB', 'android', 'layout_marginTop'));
+                    if (offsetHeight > 0) {
+                        this.android('layout_height', formatPX(this.bounds.height + offsetHeight + getPaddedHeight(this)));
+                    }
+                }
+            }
+            if (this.inline && !this.floating) {
+                const offset = this.toInt('verticalAlign');
+                if (offset !== 0) {
+                    this.modifyBox(BOX_STANDARD.MARGIN_TOP, offset * -1, true);
+                    if (offset < 0 &&
+                        renderParent.layoutHorizontal &&
+                        renderParent.inlineHeight)
+                    {
+                        renderParent.android('layout_height', formatPX(renderParent.bounds.height + getPaddedHeight(renderParent)));
+                    }
                 }
             }
             if (this.position === 'relative' || renderParent.is(NODE_STANDARD.FRAME)) {
@@ -1050,7 +1070,7 @@ export default (Base: Constructor<Node>) => {
         }
 
         public applyCustomizations(settings: SettingsAndroid) {
-            for (const build of [API_ANDROID[this.api], API_ANDROID[0]]) {
+            for (const build of [API_ANDROID[0], API_ANDROID[this.api]]) {
                 if (build && build.customizations) {
                     for (const nodeName of [this.tagName, this.controlName]) {
                         const customizations = build.customizations[nodeName];
@@ -1099,20 +1119,20 @@ export default (Base: Constructor<Node>) => {
                         while (sibling && !this.initial.children.includes(sibling));
                         return sibling;
                     })();
-                    if (getElementsBetweenSiblings(
-                            previous ? previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement
-                                     : null,
-                            node.baseElement)
-                                .some(element => {
-                                    const item = getNodeFromElement(element);
-                                    if (item && (item.lineBreak || (item.excluded && item.blockStatic))) {
-                                        return true;
-                                    }
-                                    return false;
+                    const elements =
+                        getElementsBetweenSiblings(
+                                previous ? (previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement)
+                                         : null,
+                                node.baseElement)
+                            .filter(element => {
+                                const item = getNodeFromElement(element);
+                                if (item && (item.lineBreak || (item.excluded && item.blockStatic))) {
+                                    return true;
                                 }
-                            )
-                        )
-                    {
+                                return false;
+                            }
+                        );
+                    if (elements.length > 0) {
                         let bottom: number;
                         if (!previous) {
                             bottom = this.box.top;
@@ -1132,6 +1152,9 @@ export default (Base: Constructor<Node>) => {
                                 }
                                 return previous.linear.bottom;
                             })();
+                        }
+                        if (elements.length === 1 && elements[0].tagName === 'BR' && previous && previous.inline && node.inline) {
+                            return;
                         }
                         const height = Math.round(node.linear.top - bottom);
                         if (height >= 1) {

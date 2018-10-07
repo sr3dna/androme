@@ -166,7 +166,11 @@ export default class Application<T extends Node> implements AppBase<T> {
         const supportInline = this.settings.renderInlineText ? ['BR'] : this.viewController.supportInline;
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
-            return (!styleMap || Object.keys(styleMap).length === 0) && supportInline.includes(element.tagName) && element.children.length === 0;
+            return (
+                (!styleMap || Object.keys(styleMap).length === 0) &&
+                element.children.length === 0 &&
+                supportInline.includes(element.tagName)
+            );
         }
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.elements.has(element)) {
@@ -188,6 +192,18 @@ export default class Application<T extends Node> implements AppBase<T> {
                         current = current.parentElement;
                     }
                     if (valid) {
+                        let styleMap = getElementCache(element, 'styleMap');
+                        if (!styleMap) {
+                            styleMap = {};
+                            setElementCache(element, 'styleMap', styleMap);
+                        }
+                        switch (element.tagName) {
+                            case 'SELECT':
+                                if (styleMap['verticalAlign'] == null && (<HTMLSelectElement> element).size > 1) {
+                                    styleMap['verticalAlign'] = 'text-bottom';
+                                }
+                                break;
+                        }
                         this.insertNode(element);
                     }
                 }

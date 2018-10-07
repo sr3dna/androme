@@ -93,7 +93,8 @@ export default class ListAndroid<T extends View> extends List<T> {
                     }
                 })();
                 let marginLeftValue = left > 0 ? formatPX(left) : '';
-                const paddingLeftValue = gravity === '' && image === '' ? formatPX(paddingRight) : '';
+                const paddingLeftValue = gravity === '' && image === '' ? formatPX(paddingRight)
+                                                                        : (paddingLeft === 20 ? '2px' : '');
                 const paddingRightValue = gravity === 'right' && paddingLeft > 20 ? formatPX(paddingRight) : '';
                 const options = {
                     android: {},
@@ -131,7 +132,8 @@ export default class ListAndroid<T extends View> extends List<T> {
                         gravity: paddingLeft > 20 ? parseRTL(gravity, settings) : '',
                         [parseRTL('layout_marginLeft', settings)]: marginLeftValue,
                         [parseRTL('paddingLeft', settings)]: paddingLeftValue,
-                        [parseRTL('paddingRight', settings)]: paddingRightValue
+                        [parseRTL('paddingRight', settings)]: paddingRightValue,
+                        paddingTop: node.paddingTop > 0 ? formatPX(node.paddingTop) : ''
                     });
                     if (columnCount === 3) {
                         node.app('layout_columnSpan', '2');

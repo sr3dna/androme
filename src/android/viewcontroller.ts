@@ -183,7 +183,7 @@ export default class ViewController<T extends View> extends Controller<T> {
                         let dimension = current.bounds;
                         if (current.inlineText && !current.hasWidth) {
                             const [bounds, multiLine] = getRangeClientRect(current.element);
-                            if (bounds && multiLine) {
+                            if (bounds && (multiLine || bounds.width < dimension.width)) {
                                 dimension = bounds;
                             }
                         }
@@ -261,6 +261,13 @@ export default class ViewController<T extends View> extends Controller<T> {
                                     this.checkSingleLine(previous.children[previous.children.length - 1] as T, true);
                                 }
                                 if (rowPaddingLeft > 0) {
+                                    if (this.settings.ellipsisOnTextOverflow &&
+                                        rows.length === 1 &&
+                                        rows[0].length === 1 &&
+                                        rows[0][0].textElement)
+                                    {
+                                        this.checkSingleLine(rows[0][0], true);
+                                    }
                                     current.modifyBox(BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
                                 }
                                 this.adjustBaseline(baseline);
@@ -288,9 +295,10 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                         }
                         rowWidth += dimension.width + current.marginLeft + current.marginRight + (
-                                        previous && !previous.floating && !previous.plainText && !previous.preserveWhiteSpace && previous.textContent.trim() !== '' && !/\s+$/.test(previous.textContent) &&
-                                        !current.floating && !current.plainText && !current.preserveWhiteSpace && current.textContent.trim() !== '' && !/^\s+/.test(current.textContent)
-                                            ? this.settings.whitespaceHorizontalOffset : 0
+                                        previous && !previous.floating && !previous.plainText && !previous.preserveWhiteSpace &&
+                                        previous.textContent.trim() !== '' && !/\s+$/.test(previous.textContent) &&
+                                        !current.floating && !current.plainText && !current.preserveWhiteSpace &&
+                                        current.textContent.trim() !== '' && !/^\s+/.test(current.textContent) ? this.settings.whitespaceHorizontalOffset : 0
                                     );
                         if (!current.floating) {
                             baseline.push(current);
@@ -317,15 +325,24 @@ export default class ViewController<T extends View> extends Controller<T> {
                             }
                         });
                     }
-                    if (this.settings.ellipsisOnTextOverflow &&
-                        (rows.length === 1 || node.hasAlign(NODE_ALIGNMENT.HORIZONTAL)) &&
-                        !node.ascend(true).some(item => item.is(NODE_STANDARD.GRID)))
-                    {
+                    if (this.settings.ellipsisOnTextOverflow) {
                         const widthParent = !node.ascend().some(parent => parent.hasWidth);
-                        for (let i = 1; i < nodes.length; i++) {
-                            const item = nodes.get(i);
-                            if (!item.multiLine && !item.floating && (rows.length === 1 || !item.alignParent('left', this.settings))) {
-                                this.checkSingleLine(item, false, widthParent);
+                        if ((rows.length === 1 || node.hasAlign(NODE_ALIGNMENT.HORIZONTAL)) && !node.ascend(true).some(item => item.is(NODE_STANDARD.GRID))) {
+                            for (let i = 1; i < nodes.length; i++) {
+                                const item = nodes.get(i);
+                                if (!item.multiLine && !item.floating && !item.alignParent('left', this.settings)) {
+                                    this.checkSingleLine(item, false, widthParent);
+                                }
+                            }
+                        }
+                        else {
+                            for (const row of rows) {
+                                if (row.length > 1) {
+                                    const item = row[row.length - 1];
+                                    if (item.inlineText) {
+                                        this.checkSingleLine(item, false, widthParent);
+                                    }
+                                }
                             }
                         }
                     }

@@ -12,6 +12,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
     }
 
     public processNode(): ExtensionResult {
+        const result = super.processNode();
         const node = this.node;
         const columnCount = convertInt(node.app('columnCount'));
         if (columnCount > 1) {
@@ -71,7 +72,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
                 }
             }
         }
-        return super.processNode();
+        return result;
     }
 
     public processChild(): ExtensionResult {
