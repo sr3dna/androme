@@ -3,7 +3,12 @@ import View from './view';
 import { generateId, replaceUnit } from './lib/util';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
-const [$enum, $util, $dom, $xml, $color, $resource] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom, androme.lib.xml, androme.lib.color, androme.lib.base.Resource];
+import $enum = androme.lib.enumeration;
+import $util = androme.lib.util;
+import $dom = androme.lib.dom;
+import $xml = androme.lib.xml;
+import $color = androme.lib.color;
+import $resource = androme.lib.base.Resource;
 
 import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
 import LAYERLIST_TMPL from './template/resource/layer-list';

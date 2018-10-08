@@ -2,7 +2,10 @@ import View from '../../view';
 import { parseRTL } from '../../lib/util';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
-const [$enum, $const, $util, $dom] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom];
+import $enum = androme.lib.enumeration;
+import $const = androme.lib.constant;
+import $util = androme.lib.util;
+import $dom = androme.lib.dom;
 
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 

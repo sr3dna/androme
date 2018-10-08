@@ -3,7 +3,11 @@ import API_ANDROID from './customizations';
 import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
 import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
 
-const [$enum, $const, $util, $dom, $nodelist] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom, androme.lib.base.NodeList];
+import $enum = androme.lib.enumeration;
+import $const = androme.lib.constant;
+import $util = androme.lib.util;
+import $dom = androme.lib.dom;
+import $nodelist = androme.lib.base.NodeList;
 
 export default (Base: Constructor<androme.lib.base.Node>) => {
     return class View extends Base {

@@ -140,7 +140,7 @@ type Point = {
     y: number;
 };
 
-type InitialValues<T> = {
+type Initialization<T> = {
     readonly styleMap: StringMap,
     readonly children: T[],
     readonly bounds: BoxDimensionsRect,

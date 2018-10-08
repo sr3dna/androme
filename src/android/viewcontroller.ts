@@ -5,7 +5,11 @@ import ResourceHandler from './resourcehandler';
 import { delimitDimens, generateId, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
 
-const [$enum, $util, $dom, $xml, $nodelist] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom, androme.lib.xml, androme.lib.base.NodeList];
+import $enum = androme.lib.enumeration;
+import $util = androme.lib.util;
+import $dom = androme.lib.dom;
+import $xml = androme.lib.xml;
+import $nodelist = androme.lib.base.NodeList;
 
 import BASE_TMPL from './template/base';
 

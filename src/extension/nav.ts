@@ -3,7 +3,7 @@ import Extension from '../base/extension';
 import { deleteElementCache, getElementCache, getStyle, setElementCache } from '../lib/dom';
 import { EXT_NAME } from '../lib/constant';
 
-export default abstract class Menu<T extends Node> extends Extension<T> {
+export default abstract class Nav<T extends Node> extends Extension<T> {
     constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
         this.require(EXT_NAME.EXTERNAL, true);

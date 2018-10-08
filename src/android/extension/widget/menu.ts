@@ -3,7 +3,7 @@ import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 
-const $enum = androme.lib.enumeration;
+import $enum = androme.lib.enumeration;
 
 const VALIDATE_ITEM = {
     id: /^@\+id\/\w+$/,

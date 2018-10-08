@@ -3,7 +3,8 @@ import View from './view';
 import { replaceUnit } from './lib/util';
 import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './lib/constant';
 
-const [$util, $xml] = [androme.lib.util, androme.lib.xml];
+import $util = androme.lib.util;
+import $xml = androme.lib.xml;
 
 import STRING_TMPL from './template/resource/string';
 import STRINGARRAY_TMPL from './template/resource/string-array';

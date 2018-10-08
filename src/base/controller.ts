@@ -2,7 +2,7 @@ import Node from './node';
 import NodeList from './nodelist';
 import Application from './application';
 
-export default abstract class Controller<T extends Node> implements AppCurrent<T> {
+export default abstract class Controller<T extends Node> implements androme.lib.base.Controller<T> {
     public abstract settings: Settings;
     public cache: NodeList<T>;
     public application: Application<T>;

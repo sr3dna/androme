@@ -1,7 +1,9 @@
 import View from '../../view';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
-const [$enum, $util, $dom] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom];
+import $enum = androme.lib.enumeration;
+import $util = androme.lib.util;
+import $dom = androme.lib.dom;
 
 import EXTENSION_GENERIC_TMPL from '../../template/extension/generic';
 

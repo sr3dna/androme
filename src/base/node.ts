@@ -32,7 +32,7 @@ export default abstract class Node implements androme.lib.base.Node {
     public visible = true;
     public excluded = false;
     public rendered = false;
-    public readonly initial: InitialValues<T>;
+    public readonly initial: Initialization<T>;
 
     protected abstract _namespaces: Set<string>;
     protected abstract _controlName: string;

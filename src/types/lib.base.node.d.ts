@@ -30,7 +30,7 @@ declare global {
             public rendered: boolean;
             public children: any[];
             public constraint: ObjectMap<any>;
-            public readonly initial: InitialValues<T>;
+            public readonly initial: Initialization<T>;
             public readonly renderChildren: any[];
             public readonly documentParent: T;
             public readonly linearHorizontal: boolean;
