@@ -1,5 +1,5 @@
 import View from '../../view';
-import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
+import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;

@@ -3,7 +3,7 @@ import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
 import { delimitDimens, stripId } from '../../lib/util';
 import { NODE_ANDROID } from '../../lib/constant';
-import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
+import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;

@@ -379,7 +379,11 @@ var android = (function () {
         return value;
     }
 
-    const [$enum, $const, $util, $dom, $nodelist] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom, androme.lib.base.NodeList];
+    var $enum = androme.lib.enumeration;
+    var $const = androme.lib.constant;
+    var $util = androme.lib.util;
+    var $dom = androme.lib.dom;
+    var $nodelist = androme.lib.base.NodeList;
     var ViewBase = (Base) => {
         return class View extends Base {
             constructor(id = 0, element) {
@@ -1603,7 +1607,12 @@ var android = (function () {
     ];
     var LAYERLIST_TMPL = template$1.join('\n');
 
-    const [$enum$1, $util$1, $dom$1, $xml, $color, $resource] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom, androme.lib.xml, androme.lib.color, androme.lib.base.Resource];
+    var $enum$1 = androme.lib.enumeration;
+    var $util$1 = androme.lib.util;
+    var $dom$1 = androme.lib.dom;
+    var $xml = androme.lib.xml;
+    var $color = androme.lib.color;
+    var $resource = androme.lib.base.Resource;
     const METHOD_ANDROID = {
         'boxStyle': {
             'background': 'android:background="@drawable/{0}"',
@@ -3150,7 +3159,11 @@ var android = (function () {
 
     var BASE_TMPL = '<?xml version="1.0" encoding="utf-8"?>\n{:0}';
 
-    const [$enum$2, $util$2, $dom$2, $xml$1, $nodelist$1] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom, androme.lib.xml, androme.lib.base.NodeList];
+    var $enum$2 = androme.lib.enumeration;
+    var $util$2 = androme.lib.util;
+    var $dom$2 = androme.lib.dom;
+    var $xml$1 = androme.lib.xml;
+    var $nodelist$1 = androme.lib.base.NodeList;
     const MAP_LAYOUT = {
         relativeParent: {
             top: 'layout_alignParentTop',
@@ -5566,7 +5579,8 @@ var android = (function () {
     ];
     var DRAWABLE_TMPL = template$8.join('\n');
 
-    const [$util$3, $xml$2] = [androme.lib.util, androme.lib.xml];
+    var $util$3 = androme.lib.util;
+    var $xml$2 = androme.lib.xml;
     function caseInsensitve(a, b) {
         return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
     }
@@ -5969,7 +5983,9 @@ var android = (function () {
         }
     }
 
-    const [$enum$3, $util$4, $dom$3] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom];
+    var $enum$3 = androme.lib.enumeration;
+    var $util$4 = androme.lib.util;
+    var $dom$3 = androme.lib.dom;
     class AccessibilityAndroid extends androme.lib.base.extensions.Accessibility {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -6011,7 +6027,9 @@ var android = (function () {
         }
     }
 
-    const [$enum$4, $const$1, $util$5] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util];
+    var $enum$4 = androme.lib.enumeration;
+    var $const$1 = androme.lib.constant;
+    var $util$5 = androme.lib.util;
     class ListAndroid extends androme.lib.base.extensions.List {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -6203,7 +6221,10 @@ var android = (function () {
         }
     }
 
-    const [$enum$5, $const$2, $util$6, $dom$4] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom];
+    var $enum$5 = androme.lib.enumeration;
+    var $const$2 = androme.lib.constant;
+    var $util$6 = androme.lib.util;
+    var $dom$4 = androme.lib.dom;
     class GridAndroid extends androme.lib.base.extensions.Grid {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -6271,7 +6292,8 @@ var android = (function () {
         }
     }
 
-    const [$const$3, $util$7] = [androme.lib.constant, androme.lib.util];
+    var $const$3 = androme.lib.constant;
+    var $util$7 = androme.lib.util;
     class TableAndroid extends androme.lib.base.extensions.Table {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -6360,7 +6382,9 @@ var android = (function () {
         }
     }
 
-    const [$enum$6, $util$8, $color$1] = [androme.lib.enumeration, androme.lib.util, androme.lib.color];
+    var $enum$6 = androme.lib.enumeration;
+    var $util$8 = androme.lib.util;
+    var $color$1 = androme.lib.color;
     class FloatingActionButton extends androme.lib.base.extensions.Button {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -6476,7 +6500,7 @@ var android = (function () {
         }
     }
 
-    const $enum$7 = androme.lib.enumeration;
+    var $enum$7 = androme.lib.enumeration;
     const VALIDATE_ITEM = {
         id: /^@\+id\/\w+$/,
         title: /^.+$/,
@@ -6656,7 +6680,8 @@ var android = (function () {
         }
     }
 
-    const [$enum$8, $dom$5] = [androme.lib.enumeration, androme.lib.dom];
+    var $enum$8 = androme.lib.enumeration;
+    var $dom$5 = androme.lib.dom;
     class Coordinator extends androme.lib.base.Extension {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -6708,7 +6733,11 @@ var android = (function () {
     ];
     var EXTENSION_APPBAR_TMPL = template$9.join('\n');
 
-    const [$enum$9, $const$4, $util$9, $dom$6, $xml$3] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom, androme.lib.xml];
+    var $enum$9 = androme.lib.enumeration;
+    var $const$4 = androme.lib.constant;
+    var $util$9 = androme.lib.util;
+    var $dom$6 = androme.lib.dom;
+    var $xml$3 = androme.lib.xml;
     class Toolbar extends androme.lib.base.Extension {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -6993,7 +7022,9 @@ var android = (function () {
     ];
     var EXTENSION_GENERIC_TMPL = template$a.join('\n');
 
-    const [$enum$a, $util$a, $dom$7] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom];
+    var $enum$a = androme.lib.enumeration;
+    var $util$a = androme.lib.util;
+    var $dom$7 = androme.lib.dom;
     class BottomNavigation extends androme.lib.base.Extension {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
@@ -7068,7 +7099,10 @@ var android = (function () {
     ];
     var EXTENSION_DRAWER_TMPL = template$b.join('\n');
 
-    const [$enum$b, $const$5, $util$b, $dom$8] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom];
+    var $enum$b = androme.lib.enumeration;
+    var $const$5 = androme.lib.constant;
+    var $util$b = androme.lib.util;
+    var $dom$8 = androme.lib.dom;
     class Drawer extends androme.lib.base.Extension {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);

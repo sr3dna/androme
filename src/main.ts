@@ -152,7 +152,7 @@ export function setFramework(module: AppFramework<T>, cached = false) {
         else {
             settings = Object.assign(appBase.settings, settings);
         }
-        main = appBase.application ? appBase.application : new lib.base.Application(appBase.framework);
+        main = appBase.application ? appBase.application : new androme.lib.base.Application(appBase.framework);
         main.settings = settings;
         main.builtInExtensions = appBase.builtInExtensions;
         main.nodeObject = appBase.nodeObject;

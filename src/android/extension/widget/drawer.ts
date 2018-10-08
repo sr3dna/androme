@@ -1,6 +1,6 @@
 import View from '../../view';
 import { parseRTL } from '../../lib/util';
-import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
+import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;

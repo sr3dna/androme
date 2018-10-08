@@ -6113,7 +6113,7 @@ var androme = (function (exports) {
         }
     }
 
-    class Menu extends Extension {
+    class Nav extends Extension {
         constructor(name, framework, tagNames, options) {
             super(name, framework, tagNames, options);
             this.require(EXT_NAME.EXTERNAL, true);
@@ -6721,7 +6721,7 @@ var androme = (function (exports) {
             else {
                 exports.settings = Object.assign(appBase.settings, exports.settings);
             }
-            main = appBase.application ? appBase.application : new lib.base.Application(appBase.framework);
+            main = appBase.application ? appBase.application : new androme.lib.base.Application(appBase.framework);
             main.settings = exports.settings;
             main.builtInExtensions = appBase.builtInExtensions;
             main.nodeObject = appBase.nodeObject;
@@ -6950,7 +6950,7 @@ var androme = (function (exports) {
             External,
             Grid,
             List,
-            Nav: Menu,
+            Nav,
             Origin,
             Table
         },

@@ -1,6 +1,6 @@
 import { version } from './package.json';
 import babel from 'rollup-plugin-babel';
-import minify from 'rollup-plugin-babel-minify';
+import { terser } from 'rollup-plugin-terser';
 
 export default [
     {
@@ -33,7 +33,7 @@ export default [
         },
         plugins: [
             babel(),
-            minify()
+            terser()
         ]
     },
     {
@@ -46,7 +46,7 @@ export default [
         },
         plugins: [
             babel(),
-            minify()
+            terser()
         ]
     }
 ];

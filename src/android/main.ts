@@ -7,7 +7,7 @@ import FileHandler from './filehandler';
 import Settings from './settings';
 import API_ANDROID from './customizations';
 import { XMLNS_ANDROID } from './lib/constant';
-import { WIDGET_NAME } from './extension/lib/constants';
+import { WIDGET_NAME } from './extension/lib/constant';
 
 import External from './extension/external';
 import Origin from './extension/origin';

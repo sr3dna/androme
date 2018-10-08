@@ -1,7 +1,7 @@
 import { SettingsAndroid } from '../../lib/types';
 import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
-import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
+import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constant';
 
 import $enum = androme.lib.enumeration;
 
