@@ -1,8 +1,7 @@
-import { ExtensionResult } from './lib/types';
 import Node from '../base/node';
 import Extension from '../base/extension';
-import { NODE_STANDARD } from '../base/lib/constants';
-import { EXT_NAME } from './lib/constants';
+import { NODE_STANDARD } from '../lib/enumeration';
+import { EXT_NAME } from '../lib/constant';
 
 export default abstract class Custom<T extends Node> extends Extension<T> {
     constructor(name: string, framework: number, tagNames?: string[], options?: {}) {

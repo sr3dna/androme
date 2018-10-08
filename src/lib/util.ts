@@ -1,5 +1,3 @@
-import { Null, ObjectMap, StringMap } from './types';
-
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const NUMERALS = [
     '', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
@@ -22,20 +20,6 @@ function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
         }
         return 0;
     });
-}
-
-export function partition<T>(list: T[], predicate: (value: T) => boolean): [T[], T[]] {
-    const valid: T[] = [];
-    const invalid: T[] = [];
-    for (const node of list) {
-        if (predicate(node)) {
-            valid.push(node);
-        }
-        else {
-            invalid.push(node);
-        }
-    }
-    return [valid, invalid];
 }
 
 export function formatString(value: string, ...params: string[]) {
@@ -361,6 +345,36 @@ export function withinRange(a: number, b: number, n = 0) {
 
 export function withinFraction(lower: number, upper: number) {
     return lower === upper || Math.floor(lower) === Math.floor(upper) || Math.ceil(lower) === Math.ceil(upper) || Math.ceil(lower) === Math.floor(upper) || Math.floor(lower) === Math.ceil(upper);
+}
+
+export function overwriteDefault(options: {}, namespace: string, attr: string, value: string) {
+    if (namespace !== '') {
+        if (options[namespace] == null) {
+            options[namespace] = {};
+        }
+        if (options[namespace][attr] == null) {
+            options[namespace][attr] = value;
+        }
+    }
+    else {
+        if (options[attr] == null) {
+            options[attr] = value;
+        }
+    }
+}
+
+export function partition<T>(list: T[], predicate: (value: T) => boolean): [T[], T[]] {
+    const valid: T[] = [];
+    const invalid: T[] = [];
+    for (const node of list) {
+        if (predicate(node)) {
+            valid.push(node);
+        }
+        else {
+            invalid.push(node);
+        }
+    }
+    return [valid, invalid];
 }
 
 export function sortAsc<T>(list: T[], ...attrs: string[]) {

@@ -1,3 +1,4 @@
+var lib = null;
 var androme = null;
 
 System.config({
@@ -18,14 +19,17 @@ System.config({
    transpiler: 'plugin-babel'
 });
 
-Promise.all([
-    System.import('/build/main.js'),
-    System.import('/build/android/main.js')
-]).then((modules) => {
-    androme = modules[0];
-    androme.setFramework(modules[1]['default']);
-    androme.parseDocument().then(function() {
-        androme.close();
-        androme.saveAllToDisk();
+System.import('/build/lib.js').then((result) => {
+    lib = result;
+    Promise.all([
+        System.import('/build/core.js'),
+        System.import('/build/android/main.js')
+    ]).then((modules) => {
+        androme = modules[0];
+        androme.setFramework(modules[1]['default']);
+        androme.parseDocument().then(function() {
+            androme.close();
+            androme.saveAllToDisk();
+        });
     });
 });

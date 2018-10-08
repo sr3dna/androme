@@ -1,11 +1,18 @@
 import Node from './node';
 import { convertInt, partition, sortAsc, sortDesc } from '../lib/util';
 import { getNodeFromElement } from '../lib/dom';
-import { NODE_STANDARD } from './lib/constants';
+import { NODE_STANDARD } from '../lib/enumeration';
 
-export type FindPredicate<T> = (value: T, index?: number) => boolean;
+function documentParent<T extends Node>(nodes: T[]) {
+    for (const node of nodes) {
+        if (!node.companion && node.domElement) {
+            return node.documentParent;
+        }
+    }
+    return nodes[0].documentParent;
+}
 
-export default class NodeList<T extends Node> implements Iterable<T> {
+export default class NodeList<T extends Node> implements lib.base.NodeList<T> {
     public static siblingIndex<T extends Node>(a: T, b: T) {
         return a.siblingIndex <= b.siblingIndex ? -1 : 1;
     }
@@ -96,10 +103,10 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                         let nodeTypeA = a.nodeType;
                         let nodeTypeB = b.nodeType;
                         if (a.layoutHorizontal) {
-                            nodeTypeA = Math.min.apply(null, a.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                            nodeTypeA = Math.min.apply(null, a.children.map((item: T) => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
                         }
                         if (b.layoutHorizontal) {
-                            nodeTypeB = Math.min.apply(null, b.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                            nodeTypeB = Math.min.apply(null, b.children.map((item: T) => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
                         }
                         return nodeTypeA <= nodeTypeB ? -1 : 1;
                     });
@@ -193,15 +200,15 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             case 1:
                 return true;
             default:
-                const parent = this.documentParent(nodes);
+                const parent = documentParent(nodes);
                 let horizontal = false;
                 if (traverse) {
                     if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
-                        const cleared =
+                        const result =
                             NodeList.cleared(
                                 Array
                                     .from(parent.baseElement.children)
-                                    .map(node => getNodeFromElement(node) as T)
+                                    .map(element => getNodeFromElement(element) as T)
                                     .filter(node => node)
                             );
                         horizontal =
@@ -215,7 +222,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                                         }
                                         const previous = node.previousSibling();
                                         if (previous) {
-                                            return !node.alignedVertically(previous, cleared);
+                                            return !node.alignedVertically(previous, result);
                                         }
                                     }
                                     return true;
@@ -247,13 +254,13 @@ export default class NodeList<T extends Node> implements Iterable<T> {
             case 1:
                 return true;
             default:
-                const parent = this.documentParent(nodes);
+                const parent = documentParent(nodes);
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
-                    const cleared =
+                    const result =
                         NodeList.cleared(
                             Array
                                 .from(parent.baseElement.children)
-                                .map(node => getNodeFromElement(node) as T)
+                                .map(element => getNodeFromElement(element) as T)
                                 .filter(node => node)
                         );
                     return (
@@ -267,7 +274,7 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                                     }
                                     const previous = node.previousSibling();
                                     if (previous) {
-                                        return node.alignedVertically(previous, cleared);
+                                        return node.alignedVertically(previous, result);
                                     }
                                 }
                                 return true;
@@ -276,15 +283,6 @@ export default class NodeList<T extends Node> implements Iterable<T> {
                 }
                 return false;
         }
-    }
-
-    private static documentParent<T extends Node>(nodes: T[]) {
-        for (const node of nodes) {
-            if (!node.companion && node.domElement) {
-                return node.documentParent;
-            }
-        }
-        return nodes[0].documentParent;
     }
 
     public delegateAppend?: (nodes: T[]) => void;
@@ -343,21 +341,21 @@ export default class NodeList<T extends Node> implements Iterable<T> {
         return this._list.splice(start, deleteCount);
     }
 
-    public clone(): NodeList<T> {
-        return new NodeList<T>(this._list.slice());
+    public clone(): lib.base.NodeList<T> {
+        return new lib.base.NodeList<T>(this._list.slice());
     }
 
     public filter(predicate: (value: T) => boolean) {
-        return new NodeList<T>(this._list.filter(predicate));
+        return new lib.base.NodeList<T>(this._list.filter(predicate));
     }
 
     public sort(predicate: (a: T, b: T) => number) {
-        return new NodeList<T>(this._list.slice().sort(predicate));
+        return new lib.base.NodeList<T>(this._list.slice().sort(predicate));
     }
 
     public partition(predicate: (value: T) => boolean) {
         const [valid, invalid]: T[][] = partition(this._list, predicate);
-        return [new NodeList<T>(valid), new NodeList<T>(invalid)];
+        return [new lib.base.NodeList<T>(valid), new lib.base.NodeList<T>(invalid)];
     }
 
     public each(predicate: (value: T, index?: number) => void) {
@@ -376,12 +374,12 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     public sortAsc(...attrs: string[]) {
-        sortAsc<T>(this._list, ...attrs);
+        sortAsc(this._list, ...attrs);
         return this;
     }
 
     public sortDesc(...attrs: string[]) {
-        sortDesc<T>(this._list, ...attrs);
+        sortDesc(this._list, ...attrs);
         return this;
     }
 
@@ -394,11 +392,11 @@ export default class NodeList<T extends Node> implements Iterable<T> {
     }
 
     get visible() {
-        return new NodeList<T>(this._list.filter(node => node.visible));
+        return new lib.base.NodeList<T>(this._list.filter(node => node.visible));
     }
 
     get elements() {
-        return new NodeList<T>(this._list.filter(node => node.visible && node.hasElement));
+        return new lib.base.NodeList<T>(this._list.filter(node => node.visible && node.hasElement));
     }
 
     get nextId() {

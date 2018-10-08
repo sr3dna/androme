@@ -1,10 +1,9 @@
-import { ExtensionResult } from './lib/types';
 import Node from '../base/node';
 import Extension from '../base/extension';
 import { convertFloat, convertInt, formatPX, hasBit, isPercent, isUnit } from '../lib/util';
 import { cssInherit, getStyle } from '../lib/dom';
-import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
-import { EXT_NAME } from './lib/constants';
+import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
+import { EXT_NAME } from '../lib/constant';
 
 export default abstract class Table<T extends Node> extends Extension<T> {
     constructor(name: string, framework: number, tagNames?: string[], options?: {}) {

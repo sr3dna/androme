@@ -1,11 +1,9 @@
-import { ObjectMap, StringMap } from '../../../lib/types';
-import { ExtensionResult } from '../../../extension/lib/types';
 import { SettingsAndroid } from '../../lib/types';
-import Nav from '../../../extension/nav';
 import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
-import { NODE_RESOURCE, NODE_STANDARD, NODE_PROCEDURE } from '../../../base/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
+
+const $enum = lib.enumeration;
 
 const VALIDATE_ITEM = {
     id: /^@\+id\/\w+$/,
@@ -39,7 +37,7 @@ const VALIDATE_GROUP = {
 
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
-export default class Menu<T extends View> extends Nav<T> {
+export default class Menu<T extends View> extends lib.base.extensions.Nav<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }
@@ -61,9 +59,9 @@ export default class Menu<T extends View> extends Nav<T> {
                 true
             );
         node.documentRoot = true;
-        node.nodeType = NODE_STANDARD.BLOCK;
-        node.excludeResource |= NODE_RESOURCE.ALL;
-        node.excludeProcedure |= NODE_PROCEDURE.ALL;
+        node.nodeType = $enum.NODE_STANDARD.BLOCK;
+        node.excludeResource |= $enum.NODE_RESOURCE.ALL;
+        node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
         node.rendered = true;
         node.cascade().forEach(item => this.subscribersChild.add(item as T));
         return { output, complete: true };
@@ -182,8 +180,8 @@ export default class Menu<T extends View> extends Nav<T> {
                 node,
                 layout
             );
-        node.excludeResource |= NODE_RESOURCE.ALL;
-        node.excludeProcedure |= NODE_PROCEDURE.ALL;
+        node.excludeResource |= $enum.NODE_RESOURCE.ALL;
+        node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
         node.rendered = true;
         return { output, complete: true, next };
     }

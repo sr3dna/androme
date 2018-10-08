@@ -1,12 +1,9 @@
-import { Constructor } from '../lib/types';
-import Node from '../base/node';
-import NodeGroup from '../base/nodegroup';
 import View from './view';
 import ViewBase from './viewbase';
 
 type T = View;
 
-export default class ViewGroup extends ViewBase(NodeGroup as Constructor<Node>) {
+export default class ViewGroup extends ViewBase(lib.base.NodeGroup as Constructor<lib.base.Node>) {
     constructor(
         id: number,
         node: T,

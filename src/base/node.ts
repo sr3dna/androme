@@ -1,14 +1,12 @@
-import { INode, InitialValues, Settings } from './lib/types';
-import { BoxModel, ClientRect, Flexbox, Null, ObjectMap, Point, StringMap } from '../lib/types';
-import { IExtension } from '../extension/lib/types';
+import { Settings } from '../types/application';
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
-import { assignBounds, getBoxModel, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
-import { APP_SECTION, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from './lib/constants';
-import { BOX_STANDARD, CSS_STANDARD, INLINE_ELEMENT } from '../lib/constants';
+import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
+import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/enumeration';
+import { INLINE_ELEMENT } from '../lib/constant';
 
 type T = Node;
 
-export default abstract class Node implements INode {
+export default abstract class Node implements lib.base.Node {
     public abstract children: T[];
     public abstract constraint: ObjectMap<any>;
     public abstract readonly renderChildren: T[];
@@ -16,18 +14,18 @@ export default abstract class Node implements INode {
     public styleMap: StringMap = {};
     public nodeId: string;
     public nodeType = 0;
-    public alignmentType = NODE_ALIGNMENT.NONE;
+    public alignmentType = 0;
     public depth = -1;
     public siblingIndex = Number.MAX_VALUE;
     public renderIndex = Number.MAX_VALUE;
     public renderPosition = -1;
-    public box: ClientRect;
-    public bounds: ClientRect;
-    public linear: ClientRect;
-    public excludeSection = APP_SECTION.NONE;
-    public excludeProcedure = NODE_PROCEDURE.NONE;
-    public excludeResource = NODE_RESOURCE.NONE;
-    public renderExtension = new Set<IExtension>();
+    public box: BoxDimensionsRect;
+    public bounds: BoxDimensionsRect;
+    public linear: BoxDimensionsRect;
+    public excludeSection = 0;
+    public excludeProcedure = 0;
+    public excludeResource = 0;
+    public renderExtension = new Set<lib.base.Extension<T>>();
     public companion: T;
     public documentRoot = false;
     public auto = true;
@@ -37,11 +35,11 @@ export default abstract class Node implements INode {
     public readonly initial: InitialValues<T>;
 
     protected abstract _namespaces: Set<string>;
-    protected _controlName: string;
-    protected _renderParent: T;
-    protected _documentParent: T;
-    protected readonly _boxAdjustment: BoxModel = getBoxModel();
-    protected readonly _boxReset: BoxModel = getBoxModel();
+    protected abstract _controlName: string;
+    protected abstract _renderParent: T;
+    protected abstract _documentParent: T;
+    protected abstract readonly _boxAdjustment: BoxModel;
+    protected abstract readonly _boxReset: BoxModel;
 
     private _element: Element;
     private _baseElement: Element;
@@ -192,7 +190,7 @@ export default abstract class Node implements INode {
 
     public render(parent: T) {
         this.renderParent = parent;
-        this.renderDepth = this.documentRoot || this === parent || hasValue(parent.dataset.target) ? 0 : parent.renderDepth + 1;
+        this.renderDepth = this.documentRoot || <any> this === parent || hasValue(parent.dataset.target) ? 0 : parent.renderDepth + 1;
         this.rendered = true;
     }
 
@@ -236,7 +234,7 @@ export default abstract class Node implements INode {
             }
             return current;
         }
-        return cascade(this);
+        return cascade(this as any);
     }
 
     public inherit(node: T, ...props: string[]) {
@@ -337,14 +335,14 @@ export default abstract class Node implements INode {
                 (!previous.floating && ((!this.inlineElement && !this.floating) || this.blockStatic)) ||
                 (previous.plainText && previous.multiLine && (this.parent && !this.parent.is(NODE_STANDARD.RELATIVE))) ||
                 (this.blockStatic && (!previous.inlineElement || (cleared.has(previous) && previous.floating))) ||
-                (!firstNode && cleared.has(this)) ||
+                (!firstNode && cleared.has(this as any)) ||
                 (!firstNode && this.floating && previous.floating && this.linear.top >= previous.linear.bottom)
             );
         }
         return false;
     }
 
-    public intersect(rect: ClientRect, dimension = 'linear') {
+    public intersect(rect: BoxDimensionsRect, dimension = 'linear') {
         const top = rect.top > this[dimension].top && rect.top < this[dimension].bottom;
         const right = Math.floor(rect.right) > Math.ceil(this[dimension].left) && rect.right < this[dimension].right;
         const bottom = Math.floor(rect.bottom) > Math.ceil(this[dimension].top) && rect.bottom < this[dimension].bottom;
@@ -352,7 +350,7 @@ export default abstract class Node implements INode {
         return (top && (left || right)) || (bottom && (left || right));
     }
 
-    public intersectX(rect: ClientRect, dimension = 'linear') {
+    public intersectX(rect: BoxDimensionsRect, dimension = 'linear') {
         return (
             (rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
             (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) ||
@@ -361,7 +359,7 @@ export default abstract class Node implements INode {
         );
     }
 
-    public intersectY(rect: ClientRect, dimension = 'linear') {
+    public intersectY(rect: BoxDimensionsRect, dimension = 'linear') {
         return (
             (rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
             (rect.right > this[dimension].left && rect.right <= this[dimension].right) ||
@@ -370,19 +368,19 @@ export default abstract class Node implements INode {
         );
     }
 
-    public withinX(rect: ClientRect, dimension = 'linear') {
+    public withinX(rect: BoxDimensionsRect, dimension = 'linear') {
         return this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom;
     }
 
-    public withinY(rect: ClientRect, dimension = 'linear') {
+    public withinY(rect: BoxDimensionsRect, dimension = 'linear') {
         return this[dimension].left >= rect.left && this[dimension].right <= rect.right;
     }
 
-    public outsideX(rect: ClientRect, dimension = 'linear') {
+    public outsideX(rect: BoxDimensionsRect, dimension = 'linear') {
         return this[dimension].right < rect.left || this[dimension].left > rect.right;
     }
 
-    public outsideY(rect: ClientRect, dimension = 'linear') {
+    public outsideY(rect: BoxDimensionsRect, dimension = 'linear') {
         return this[dimension].bottom < rect.top || this[dimension].top > rect.bottom;
     }
 
@@ -497,7 +495,7 @@ export default abstract class Node implements INode {
     }
 
     public hasAlign(value: number) {
-        return this.hasBit('alignmentType', value);
+        return hasBit(this.alignmentType, value);
     }
 
     public setExclusions() {
@@ -528,7 +526,7 @@ export default abstract class Node implements INode {
                 else {
                     const bounds = getRangeClientRect(this._element);
                     if (bounds[0]) {
-                        this.bounds = <ClientRect> bounds[0];
+                        this.bounds = <BoxDimensionsRect> bounds[0];
                     }
                 }
             }

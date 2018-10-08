@@ -18,18 +18,21 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        Promise.all([
-            System.import('/build/main.js'),
-            System.import('/build/android/main.js')
-        ]).then((modules) => {
-            androme = modules[0];
-            androme.setFramework(modules[1]['default']);
-            addView();
-            addView();
-            addView();
-            addView();
-            addView();
-            closeDocument();
+        System.import('/build/lib.js').then((result) => {
+            lib = result;
+            Promise.all([
+                System.import('/build/core.js'),
+                System.import('/build/android/main.js')
+            ]).then((modules) => {
+                androme = modules[0];
+                androme.setFramework(modules[1]['default']);
+                addView();
+                addView();
+                addView();
+                addView();
+                addView();
+                closeDocument();
+            });
         });
         var count = 0;
         function addView() {

@@ -1,4 +1,3 @@
-import { ObjectMap, Null } from './types';
 import { isString, repeat, replaceWhiteSpace } from './util';
 
 export function formatPlaceholder(id: string | number, symbol = ':') {

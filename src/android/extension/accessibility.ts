@@ -1,27 +1,25 @@
-import Accessibility from '../../extension/accessibility';
 import View from '../view';
-import { hasValue } from '../../lib/util';
-import { getNodeFromElement } from '../../lib/dom';
-import { NODE_PROCEDURE } from '../../base/lib/constants';
-import { NODE_ANDROID } from '../constants';
+import { NODE_ANDROID } from '../lib/constant';
 
-export default class AccessibilityAndroid<T extends View> extends Accessibility<T> {
+const [$enum, $util, $dom] = [lib.enumeration, lib.util, lib.dom];
+
+export default class AccessibilityAndroid<T extends View> extends lib.base.extensions.Accessibility<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }
 
     public afterRender() {
         for (const node of this.application.cache.elements) {
-            if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
+            if (!node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
                 const element = node.element;
                 switch (node.controlName) {
                     case NODE_ANDROID.EDIT:
                         if (!node.companion) {
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
-                                const label = getNodeFromElement(sibling) as T;
-                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) as T : null;
+                                const label = $dom.getNodeFromElement<T>(sibling);
+                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? $dom.getNodeFromElement<T>(sibling.parentElement) : null;
                                 if (label && label.visible && label.pageflow) {
-                                    if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
+                                    if ($util.hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                         label.android('labelFor', node.stringId);
                                         return true;
                                     }

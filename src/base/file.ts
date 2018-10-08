@@ -1,14 +1,12 @@
-import { ResourceMap, ViewData } from './lib/types';
-import { PlainFile, StringMap } from '../lib/types';
+import { ResourceMap, ViewData } from '../types/application';
 import Node from './node';
 import NodeList from './nodelist';
 import { lastIndexOf, trimString } from '../lib/util';
 
-export default abstract class File<T extends Node> {
+export default abstract class File<T extends Node> implements lib.base.File<T> {
     public appName = '';
     public stored: ResourceMap;
-
-    protected readonly queue: PlainFile[] = [];
+    public readonly queue: PlainFile[] = [];
 
     private _compression = 'zip';
 
@@ -50,7 +48,7 @@ export default abstract class File<T extends Node> {
         this.queue.length = 0;
     }
 
-    protected saveToDisk(files: PlainFile[]) {
+    public saveToDisk(files: PlainFile[]) {
         if (!location.protocol.startsWith('http')) {
             alert('SERVER (required): See README for instructions');
             return;

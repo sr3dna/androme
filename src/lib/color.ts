@@ -1,18 +1,3 @@
-interface Color {
-    name: string;
-    hex: string;
-    rgb?: {
-        r: number;
-        g: number;
-        b: number;
-    };
-    hsl?: {
-        h: number;
-        s: number;
-        l: number;
-    };
-}
-
 const X11_CSS3 = {
     'Pink':                 { 'hex': '#FFC0CB' },
     'LightPink':            { 'hex': '#FFB6C1' },

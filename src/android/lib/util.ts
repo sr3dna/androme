@@ -1,5 +1,4 @@
-import { Null, ObjectMap } from '../.././lib/types';
-import { BUILD_ANDROID } from '../constants';
+import { BUILD_ANDROID } from './constant';
 
 let ID: ObjectMap<string[]>;
 
@@ -66,8 +65,7 @@ export function calculateBias(start: number, end: number, accurracy: number) {
     return (
         parseFloat(
             Math.max(start === 0 ? 0
-                                 : (end === 0 ? 1
-                                              : (start / (start + end))), 0)
+                                 : (end === 0 ? 1 : (start / (start + end))), 0)
                 .toFixed(accurracy)
         )
     );

@@ -1,4 +1,3 @@
-import { Null } from '../lib/types';
 import Node from '../base/node';
 import Extension from '../base/extension';
 import { deleteElementCache, getElementCache, getStyle, setElementCache } from '../lib/dom';

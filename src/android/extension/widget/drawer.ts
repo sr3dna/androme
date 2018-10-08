@@ -1,21 +1,16 @@
-import { ExtensionResult } from '../../../extension/lib/types';
-import Extension from '../../../base/extension';
 import View from '../../view';
-import { hasValue, includes, optional } from '../../../lib/util';
 import { parseRTL } from '../../lib/util';
-import { locateExtension, overwriteDefault } from '../lib/util';
-import { getNodeFromElement } from '../../../lib/dom';
-import { NODE_RESOURCE, NODE_STANDARD } from '../../../base/lib/constants';
-import { EXT_NAME } from '../../../extension/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
+
+const [$enum, $const, $util, $dom] = [lib.enumeration, lib.constant, lib.util, lib.dom];
 
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
-export default class Drawer<T extends View> extends Extension<T> {
+export default class Drawer<T extends View> extends lib.base.Extension<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
         this.documentRoot = true;
-        this.require(EXT_NAME.EXTERNAL, true);
+        this.require($const.EXT_NAME.EXTERNAL, true);
         this.require(WIDGET_NAME.MENU);
         this.require(WIDGET_NAME.COORDINATOR);
     }
@@ -25,8 +20,8 @@ export default class Drawer<T extends View> extends Extension<T> {
             Array
                 .from(element.children)
                 .forEach((item: HTMLElement) => {
-                    if (item.tagName === 'NAV' && !includes(item.dataset.ext, EXT_NAME.EXTERNAL)) {
-                        item.dataset.ext = (hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + EXT_NAME.EXTERNAL;
+                    if (item.tagName === 'NAV' && !$util.includes(item.dataset.ext, $const.EXT_NAME.EXTERNAL)) {
+                        item.dataset.ext = ($util.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const.EXT_NAME.EXTERNAL;
                     }
                 });
             this.application.elements.add(element);
@@ -38,13 +33,13 @@ export default class Drawer<T extends View> extends Extension<T> {
     public processNode(): ExtensionResult {
         const node = this.node;
         const options = Object.assign({}, this.options.self);
-        if (locateExtension(node, WIDGET_NAME.MENU)) {
-            overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
+        if ($dom.locateExtension(node.element, WIDGET_NAME.MENU)) {
+            $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             this.createResourceTheme();
         }
         else {
             const optionsNavigationView = Object.assign({}, this.options.navigationView);
-            overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
+            $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
             const navView = node.children[node.children.length - 1];
             navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
@@ -62,8 +57,8 @@ export default class Drawer<T extends View> extends Extension<T> {
             );
         node.documentRoot = true;
         node.rendered = true;
-        node.nodeType = NODE_STANDARD.BLOCK;
-        node.excludeResource |= NODE_RESOURCE.FONT_STYLE;
+        node.nodeType = $enum.NODE_STANDARD.BLOCK;
+        node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE;
         return { output, complete: true };
     }
 
@@ -77,19 +72,19 @@ export default class Drawer<T extends View> extends Extension<T> {
                 delete application.renderQueue[node.nodeId];
             }
         }
-        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.layoutName');
-        const headerLayout: string = optional(locateExtension(node, EXT_NAME.EXTERNAL), 'dataset.layoutName');
+        const menu: string = $util.optional($dom.locateExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const headerLayout: string = $util.optional($dom.locateExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
         const options: {} = Object.assign({}, this.options.navigation);
         if (menu !== '') {
-            overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
+            $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
         }
         if (headerLayout !== '') {
-            overwriteDefault(options, 'app', 'headerLayout', `@layout/${headerLayout}`);
+            $util.overwriteDefault(options, 'app', 'headerLayout', `@layout/${headerLayout}`);
         }
         if (menu !== '' || headerLayout !== '') {
-            overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
-            overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-            overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
+            $util.overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
+            $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
+            $util.overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
             const output =
                 application.viewController.renderNodeStatic(
                     VIEW_SUPPORT.NAVIGATION_VIEW,
@@ -103,9 +98,9 @@ export default class Drawer<T extends View> extends Extension<T> {
     }
 
     public afterInsert() {
-        const headerLayout = locateExtension(this.node, EXT_NAME.EXTERNAL);
+        const headerLayout = $dom.locateExtension(this.node.element, $const.EXT_NAME.EXTERNAL);
         if (headerLayout) {
-            const node = getNodeFromElement(headerLayout) as T;
+            const node = $dom.getNodeFromElement<T>(headerLayout);
             if (node && !node.hasHeight) {
                 node.android('layout_height', 'wrap_content');
             }
@@ -114,8 +109,8 @@ export default class Drawer<T extends View> extends Extension<T> {
 
     private createResourceTheme() {
         const options = Object.assign({}, this.options.resource);
-        overwriteDefault(options, '', 'appTheme', 'AppTheme');
-        overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
+        $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
+        $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
         const data = {
             '0': [{
                     'appTheme': options.appTheme,
@@ -123,8 +118,8 @@ export default class Drawer<T extends View> extends Extension<T> {
                     '1': []
                 }]
         };
-        overwriteDefault(options, 'output', 'path', 'res/values-v21');
-        overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
+        $util.overwriteDefault(options, 'output', 'path', 'res/values-v21');
+        $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
         this.application.resourceHandler.addTheme(EXTENSION_DRAWER_TMPL, data, options);
     }
 }

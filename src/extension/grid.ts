@@ -1,14 +1,12 @@
-import { LayoutMapX } from '../base/lib/types';
-import { ObjectIndex } from '../lib/types';
-import { ExtensionResult, GridCellData, GridData } from './lib/types';
+import { LayoutMapX } from '../types/application';
+import { GridCellData, GridData } from './types/data';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import Extension from '../base/extension';
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
 import { getBoxRect, getNodeFromElement } from '../lib/dom';
-import { NODE_ALIGNMENT } from '../base/lib/constants';
-import { BOX_STANDARD } from '../lib/constants';
-import { EXT_NAME } from './lib/constants';
+import { BOX_STANDARD, NODE_ALIGNMENT } from '../lib/enumeration';
+import { EXT_NAME } from '../lib/constant';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
     constructor(name: string, framework: number, tagNames?: string[], options?: {}) {

@@ -1,8 +1,7 @@
 import Node from '../base/node';
-import NodeList from '../base/nodelist';
 import Extension from '../base/extension';
 import { convertInt, formatPX } from '../lib/util';
-import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
+import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 
 export default class Origin<T extends Node> extends Extension<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
@@ -57,7 +56,7 @@ export default class Origin<T extends Node> extends Extension<T> {
                     marginLeft.push(leftType);
                 });
                 if (marginRight.length > 0) {
-                    const [sectionLeft, sectionRight] = new NodeList<T>(node.children as T[]).partition((item: T) => !marginRight.includes(item));
+                    const [sectionLeft, sectionRight] = new lib.base.NodeList(node.children as T[]).partition((item: T) => !marginRight.includes(item));
                     if (sectionLeft.length > 0 && sectionRight.length > 0) {
                         if (node.autoMarginLeft) {
                             node.css('marginLeft', node.style.marginLeft as string);

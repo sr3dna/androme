@@ -1,9 +1,8 @@
 import { SettingsAndroid } from '../lib/types';
-import Custom from '../../extension/custom';
 import View from '../view';
 import ResourceHandler from '../resourcehandler';
 
-export default class CustomAndroid<T extends View> extends Custom<T> {
+export default class CustomAndroid<T extends View> extends lib.base.extensions.Custom<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

@@ -1,8 +1,6 @@
-import { Constructor } from '../lib/types';
-import Node from '../base/node';
 import ViewBase from './viewbase';
 
-export default class View extends ViewBase(Node as Constructor<Node>) {
+export default class View extends ViewBase(lib.base.Node) {
     constructor(
         id = 0,
         element?: Element)

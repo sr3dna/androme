@@ -1,18 +1,10 @@
-import { ViewData } from '../base/lib/types';
-import { BorderAttribute, BoxStyle, FontAttribute, Image, NameValue, Null, ObjectMap, ObjectMapNested, StringMap } from '../lib/types';
+import { ViewData } from '../types/application';
 import { SettingsAndroid } from './lib/types';
-import NodeList from '../base/nodelist';
-import Resource from '../base/resource';
-import File from '../base/file';
 import View from './view';
-import { cameltoLowerCase, capitalize, convertInt, convertPX, convertWord, formatPX, formatString, hasValue, isNumber, isPercent, isString, lastIndexOf, trimString } from '../lib/util';
 import { generateId, replaceUnit } from './lib/util';
-import { cssParent, getElementCache, parseBackgroundUrl, cssFromParent, setElementCache } from '../lib/dom';
-import { getTemplateLevel, insertTemplateData, parseTemplate } from '../lib/xml';
-import { getColorNearest, parseHex, parseRGBA, reduceHexToRGB } from '../lib/color';
-import { NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../base/lib/constants';
-import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
-import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './constants';
+import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
+
+const [$enum, $util, $dom, $xml, $color, $resource] = [lib.enumeration, lib.util, lib.dom, lib.xml, lib.color, lib.base.Resource];
 
 import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
 import LAYERLIST_TMPL from './template/resource/layer-list';
@@ -63,9 +55,9 @@ type BackgroundImage = {
 
 type StyleList = ObjectMap<number[]>[];
 
-export default class ResourceHandler<T extends View> extends Resource<T> {
+export default class ResourceHandler<T extends View> extends lib.base.Resource<T> {
     public static getStored(name: string) {
-        return Resource.STORED[name];
+        return $resource.STORED[name];
     }
 
     public static formatOptions(options: {}, settings: SettingsAndroid) {
@@ -99,7 +91,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                 }
                                 break;
                         }
-                        const hex = parseHex(value);
+                        const hex = $color.parseHex(value);
                         if (hex !== '') {
                             object[attr] = `@color/${ResourceHandler.addColor(hex)}`;
                         }
@@ -115,9 +107,9 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
             if (name === '') {
                 name = value;
             }
-            const numeric = isNumber(value);
+            const numeric = $util.isNumber(value);
             if (numberResourceValue || !numeric) {
-                for (const [resourceName, resourceValue] of Resource.STORED.strings.entries()) {
+                for (const [resourceName, resourceValue] of $resource.STORED.strings.entries()) {
                     if (resourceValue === value) {
                         return resourceName;
                     }
@@ -137,10 +129,10 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                 else if (name === '') {
                     name = `__symbol${Math.ceil(Math.random() * 100000)}`;
                 }
-                if (Resource.STORED.strings.has(name)) {
+                if ($resource.STORED.strings.has(name)) {
                     name = generateId('strings', `${name}_1`);
                 }
-                Resource.STORED.strings.set(name, value);
+                $resource.STORED.strings.set(name, value);
             }
             return name;
         }
@@ -160,7 +152,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         if (match[2] == null) {
                             match[2] = '1x';
                         }
-                        const image = filepath + lastIndexOf(match[1]);
+                        const image = filepath + $util.lastIndexOf(match[1]);
                         switch (match[2]) {
                             case '0.75x':
                                 images['ldpi'] = image;
@@ -193,8 +185,8 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
     public static addImage(images: StringMap, prefix = '') {
         let src = '';
         if (images && images['mdpi']) {
-            src = lastIndexOf(images['mdpi']);
-            const format = lastIndexOf(src, '.').toLowerCase();
+            src = $util.lastIndexOf(images['mdpi']);
+            const format = $util.lastIndexOf(src, '.').toLowerCase();
             src = src.replace(/.\w+$/, '').replace(/-/g, '_');
             switch (format) {
                 case 'bmp':
@@ -203,7 +195,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                 case 'ico':
                 case 'jpg':
                 case 'png':
-                    src = Resource.insertStoredAsset('images', prefix + src, images);
+                    src = $resource.insertStoredAsset('images', prefix + src, images);
                     break;
                 default:
                     src = '';
@@ -214,7 +206,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
     }
 
     public static addImageURL(value: string, prefix = '') {
-        const url = parseBackgroundUrl(value);
+        const url = $dom.parseBackgroundUrl(value);
         if (url !== '') {
             return ResourceHandler.addImage({ 'mdpi': url }, prefix);
         }
@@ -227,21 +219,21 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                                : value;
         if (value !== '') {
             let colorName = '';
-            if (!Resource.STORED.colors.has(opaque)) {
-                const color = getColorNearest(value);
+            if (!$resource.STORED.colors.has(opaque)) {
+                const color = $color.getColorNearest(value);
                 if (color !== '') {
-                    color.name = cameltoLowerCase(color.name);
+                    color.name = $util.cameltoLowerCase(color.name);
                     if (value === color.hex && value === opaque) {
                         colorName = color.name;
                     }
                     else {
                         colorName = generateId('color', `${color.name}_1`);
                     }
-                    Resource.STORED.colors.set(opaque, colorName);
+                    $resource.STORED.colors.set(opaque, colorName);
                 }
             }
             else {
-                colorName = Resource.STORED.colors.get(opaque) as string;
+                colorName = $resource.STORED.colors.get(opaque) as string;
             }
             return colorName;
         }
@@ -249,7 +241,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
     }
 
     public static getColor(value: string) {
-        for (const [hex, name] of Resource.STORED.colors.entries()) {
+        for (const [hex, name] of $resource.STORED.colors.entries()) {
             if (name === value) {
                 return hex;
             }
@@ -260,7 +252,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
     public static parseBackgroundPosition(value: string, fontSize: string) {
         const match = new RegExp(/([0-9]+[a-z]{2}) ([0-9]+[a-z]{2})/).exec(value);
         if (match) {
-            return [convertPX(match[1], fontSize), convertPX(match[2], fontSize)];
+            return [$util.convertPX(match[1], fontSize), $util.convertPX(match[2], fontSize)];
         }
         return ['', ''];
     }
@@ -270,9 +262,9 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
     private tagStyle: ObjectMap<StyleList> = {};
     private tagCount: ObjectMap<number> = {};
 
-    constructor(file: File<T>) {
+    constructor(file: lib.base.File<T>) {
         super(file);
-        this.file.stored = Resource.STORED;
+        this.file.stored = $resource.STORED;
     }
 
     public reset() {
@@ -282,7 +274,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
         this.tagCount = {};
     }
 
-    public finalize(viewData: ViewData<NodeList<T>>) {
+    public finalize(viewData: ViewData<lib.base.NodeList<T>>) {
         this.processFontStyle(viewData);
         const styles: ObjectMap<string[]> = {};
         for (const node of viewData.cache) {
@@ -329,7 +321,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     }
                     if (map.size > 1) {
                         if (style !== '') {
-                            style = trimString(style.substring(style.indexOf('/') + 1), '"');
+                            style = $util.trimString(style.substring(style.indexOf('/') + 1), '"');
                         }
                         const common: string[] = [];
                         for (const attr of map.keys()) {
@@ -348,7 +340,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                             }
                         }
                         if (!(name !== '' && style !== '' && name.startsWith(`${style}.`))) {
-                            name = (style !== '' ? `${style}.` : '') + capitalize(node.nodeId);
+                            name = (style !== '' ? `${style}.` : '') + $util.capitalize(node.nodeId);
                             styles[name] = common;
                         }
                         children.forEach(child => child.attr('_', 'style', `@style/${name}`));
@@ -357,14 +349,14 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
             }
         }
         for (const name in styles) {
-            Resource.STORED.styles.set(name, { attributes: styles[name].join(';') });
+            $resource.STORED.styles.set(name, { attributes: styles[name].join(';') });
         }
     }
 
     public setBoxSpacing() {
         super.setBoxSpacing();
-        this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)).each(node => {
-            const stored: StringMap = getElementCache(node.element, 'boxSpacing');
+        this.cache.elements.filter(node => !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)).each(node => {
+            const stored: StringMap = $dom.getElementCache(node.element, 'boxSpacing');
             if (stored) {
                 if (stored.marginLeft === stored.marginRight &&
                     node.alignParent('left', this.settings) &&
@@ -372,14 +364,14 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     !node.blockWidth &&
                     !(node.position === 'relative' && node.alignNegative))
                 {
-                    node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
-                    node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
                 }
                 if (node.css('marginLeft') === 'auto') {
-                    node.modifyBox(BOX_STANDARD.MARGIN_LEFT, null);
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
                 }
                 if (node.css('marginRight') === 'auto') {
-                    node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
                 }
             }
         });
@@ -387,8 +379,8 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
 
     public setBoxStyle() {
         super.setBoxStyle();
-        this.cache.elements.filter(node => !node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE)).each(node => {
-            const stored: BoxStyle = getElementCache(node.element, 'boxStyle');
+        this.cache.elements.filter(node => !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)).each(node => {
+            const stored: BoxStyle = $dom.getElementCache(node.element, 'boxStyle');
             if (stored) {
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
@@ -401,7 +393,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                 for (let i = 0; i < backgroundImage.length; i++) {
                     if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
                         backgroundImageUrl.push(backgroundImage[i]);
-                        const image = this.imageDimensions.get(parseBackgroundUrl(backgroundImage[i]));
+                        const image = this.imageDimensions.get($dom.parseBackgroundUrl(backgroundImage[i]));
                         backgroundDimensions.push(image);
                         backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
                     }
@@ -418,9 +410,9 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                 const companion = node.companion;
                 if (companion &&
                     companion.hasElement &&
-                    !cssFromParent(companion.element, 'backgroundColor'))
+                    !$dom.cssFromParent(companion.element, 'backgroundColor'))
                 {
-                    const boxStyle: BoxStyle = getElementCache(companion.element, 'boxStyle');
+                    const boxStyle: BoxStyle = $dom.getElementCache(companion.element, 'boxStyle');
                     if (Array.isArray(boxStyle.backgroundColor) && boxStyle.backgroundColor.length > 0) {
                         stored.backgroundColor = ResourceHandler.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
                     }
@@ -526,7 +518,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                             return original + (original !== '' ? '|' : '') + alignment;
                                         }
                                         position.forEach((value, index) => {
-                                            if (isPercent(value)) {
+                                            if ($util.isPercent(value)) {
                                                 switch (index) {
                                                     case 0:
                                                         if (value === '0%') {
@@ -536,7 +528,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                                             gravity = mergeGravity(gravity, 'right');
                                                         }
                                                         else {
-                                                            left = formatPX(node.bounds.width * (convertInt(value) / 100));
+                                                            left = $util.formatPX(node.bounds.width * ($util.convertInt(value) / 100));
                                                         }
                                                         break;
                                                     case 1:
@@ -547,7 +539,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                                             gravity = mergeGravity(gravity, 'bottom');
                                                         }
                                                         else {
-                                                            top = formatPX(node.actualHeight * (convertInt(value) / 100));
+                                                            top = $util.formatPX(node.actualHeight * ($util.convertInt(value) / 100));
                                                         }
                                                         break;
                                                 }
@@ -556,7 +548,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                                 gravity = mergeGravity(gravity, value);
                                             }
                                             else {
-                                                const leftTop = convertPX(value, node.css('fontSize'));
+                                                const leftTop = $util.convertPX(value, node.css('fontSize'));
                                                 if (leftTop !== '0px') {
                                                     if (index === 0) {
                                                         left = leftTop;
@@ -575,7 +567,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                 if (tileModeY === 'repeat') {
                                     let backgroundWidth = node.viewWidth;
                                     if (backgroundWidth > 0) {
-                                        if (this.settings.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+                                        if (this.settings.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                                             backgroundWidth = node.viewWidth + node.paddingLeft + node.paddingRight;
                                         }
                                     }
@@ -583,23 +575,23 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                         backgroundWidth = node.bounds.width - (node.borderLeftWidth + node.borderRightWidth);
                                     }
                                     if (image.width < backgroundWidth) {
-                                        const layoutWidth = convertInt(node.android('layout_width'));
+                                        const layoutWidth = $util.convertInt(node.android('layout_width'));
                                         if (gravity.indexOf('left') !== -1) {
-                                            right = formatPX(backgroundWidth - image.width);
+                                            right = $util.formatPX(backgroundWidth - image.width);
                                             if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
-                                                node.android('layout_width', formatPX(node.bounds.width));
+                                                node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                         else if (gravity.indexOf('right') !== -1) {
-                                            left = formatPX(backgroundWidth - image.width);
+                                            left = $util.formatPX(backgroundWidth - image.width);
                                             if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
-                                                node.android('layout_width', formatPX(node.bounds.width));
+                                                node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                         else if (gravity === 'center' || gravity.indexOf('center_horizontal') !== -1) {
-                                            right = formatPX(Math.floor((backgroundWidth - image.width) / 2));
+                                            right = $util.formatPX(Math.floor((backgroundWidth - image.width) / 2));
                                             if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
-                                                node.android('layout_width', formatPX(node.bounds.width));
+                                                node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                     }
@@ -607,7 +599,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                 if (tileModeX === 'repeat') {
                                     let backgroundHeight = node.viewHeight;
                                     if (backgroundHeight > 0) {
-                                        if (this.settings.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+                                        if (this.settings.autoSizePaddingAndBorderWidth && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                                             backgroundHeight = node.viewHeight + node.paddingTop + node.paddingBottom;
                                         }
                                     }
@@ -615,23 +607,23 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                         backgroundHeight = node.bounds.height - (node.borderTopWidth + node.borderBottomWidth);
                                     }
                                     if (image.height < backgroundHeight) {
-                                        const layoutHeight = convertInt(node.android('layout_height'));
+                                        const layoutHeight = $util.convertInt(node.android('layout_height'));
                                         if (gravity.indexOf('top') !== -1) {
-                                            bottom = formatPX(backgroundHeight - image.height);
+                                            bottom = $util.formatPX(backgroundHeight - image.height);
                                             if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
-                                                node.android('layout_height', formatPX(node.bounds.height));
+                                                node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
                                         else if (gravity.indexOf('bottom') !== -1) {
-                                            top = formatPX(backgroundHeight - image.height);
+                                            top = $util.formatPX(backgroundHeight - image.height);
                                             if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
-                                                node.android('layout_height', formatPX(node.bounds.height));
+                                                node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
                                         else if (gravity === 'center' || gravity.indexOf('center_vertical') !== -1) {
-                                            bottom = formatPX(Math.floor((backgroundHeight - image.height) / 2));
+                                            bottom = $util.formatPX(Math.floor((backgroundHeight - image.height) / 2));
                                             if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
-                                                node.android('layout_height', formatPX(node.bounds.height));
+                                                node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
                                     }
@@ -639,7 +631,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                             }
                         }
                         if (stored.backgroundSize.length > 0) {
-                            if (isPercent(stored.backgroundSize[0]) || isPercent(stored.backgroundSize[1])) {
+                            if ($util.isPercent(stored.backgroundSize[0]) || $util.isPercent(stored.backgroundSize[1])) {
                                 if (stored.backgroundSize[0] === '100%' && stored.backgroundSize[1] === '100%') {
                                     tileMode = '';
                                     tileModeX = '';
@@ -655,13 +647,13 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                 stored.backgroundSize = [];
                             }
                         }
-                        if (node.of(NODE_STANDARD.IMAGE, NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
+                        if (node.of($enum.NODE_STANDARD.IMAGE, $enum.NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
                             node.android('src', `@drawable/${backgroundImage[0]}`);
-                            if (convertInt(left) > 0) {
-                                node.modifyBox(BOX_STANDARD.MARGIN_LEFT, convertInt(left));
+                            if ($util.convertInt(left) > 0) {
+                                node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, $util.convertInt(left));
                             }
-                            if (convertInt(top) > 0) {
-                                node.modifyBox(BOX_STANDARD.MARGIN_TOP, convertInt(top));
+                            if ($util.convertInt(top) > 0) {
+                                node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, $util.convertInt(top));
                             }
                             let scaleType = '';
                             switch (gravity) {
@@ -751,25 +743,25 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         const remainder = width % 3;
                         const leftWidth = baseWidth + (remainder === 2 ? 1 : 0);
                         const rightWidth = baseWidth + (remainder === 2 ? 1 : 0);
-                        let leftTop = `-${formatPX(leftWidth + 1)}`;
-                        let rightBottom = `-${formatPX(leftWidth)}`;
+                        let leftTop = `-${$util.formatPX(leftWidth + 1)}`;
+                        let rightBottom = `-${$util.formatPX(leftWidth)}`;
                         templateData['4'].push({
                             'top': top ? '' :  rightBottom,
                             'right': right ? '' :  leftTop,
                             'bottom': bottom ? '' :  rightBottom,
                             'left': left ? '' :  leftTop,
-                            '5': [{ width: formatPX(leftWidth), borderStyle: this.getBorderStyle(border) }],
+                            '5': [{ width: $util.formatPX(leftWidth), borderStyle: this.getBorderStyle(border) }],
                             '6': radius
                         });
-                        leftTop = `-${formatPX(width + 1)}`;
-                        rightBottom = `-${formatPX(width)}`;
-                        const indentWidth = `${formatPX(width - baseWidth)}`;
+                        leftTop = `-${$util.formatPX(width + 1)}`;
+                        rightBottom = `-${$util.formatPX(width)}`;
+                        const indentWidth = `${$util.formatPX(width - baseWidth)}`;
                         templateData['4'].push({
                             'top': top ? indentWidth : leftTop,
                             'right': right ? indentWidth : rightBottom,
                             'bottom': bottom ? indentWidth : rightBottom,
                             'left': left ? indentWidth : leftTop,
-                            '5': [{ width: formatPX(rightWidth), borderStyle: this.getBorderStyle(border) }],
+                            '5': [{ width: $util.formatPX(rightWidth), borderStyle: this.getBorderStyle(border) }],
                             '6': radius
                         });
                     }
@@ -780,7 +772,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                        ))
                     {
                         if (backgroundImage.length === 0) {
-                            template = parseTemplate(SHAPERECTANGLE_TMPL);
+                            template = $xml.parseTemplate(SHAPERECTANGLE_TMPL);
                             data = {
                                 '0': [{
                                     '1': this.getShapeAttribute(stored, 'stroke'),
@@ -790,7 +782,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                             };
                         }
                         else {
-                            template = parseTemplate(LAYERLIST_TMPL);
+                            template = $xml.parseTemplate(LAYERLIST_TMPL);
                             data = {
                                 '0': [{
                                     '1': backgroundColor,
@@ -806,7 +798,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         }
                     }
                     else {
-                        template = parseTemplate(LAYERLIST_TMPL);
+                        template = $xml.parseTemplate(LAYERLIST_TMPL);
                         data = {
                             '0': [{
                                 '1': backgroundColor,
@@ -816,7 +808,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                 '7': []
                             }]
                         };
-                        const root = getTemplateLevel(data, '0');
+                        const root = $xml.getTemplateLevel(data, '0');
                         const borderVisible = borders.filter(item => this.borderVisible(item));
                         const borderWidth = new Set(borderVisible.map(item => item.width));
                         const borderStyle = new Set(borderVisible.map(item => this.getBorderStyle(item)));
@@ -837,8 +829,8 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                 ]);
                             }
                             else {
-                                const leftTop = `-${formatPX(width + 1)}`;
-                                const rightBottom = `-${formatPX(width)}`;
+                                const leftTop = `-${$util.formatPX(width + 1)}`;
+                                const rightBottom = `-${$util.formatPX(width)}`;
                                 root['4'].push({
                                     'top': this.borderVisible(stored.borderTop) ? '' : leftTop,
                                     'right': this.borderVisible(stored.borderRight) ? '' : rightBottom,
@@ -867,8 +859,8 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                     else {
                                         const hasInset = width > 1 && (border.style === 'groove' || border.style === 'ridge');
                                         const outsetWidth = hasInset ? Math.ceil(width / 2) : width;
-                                        let leftTop = `-${formatPX(outsetWidth + 1)}`;
-                                        let rightBottom = `-${formatPX(outsetWidth)}`;
+                                        let leftTop = `-${$util.formatPX(outsetWidth + 1)}`;
+                                        let rightBottom = `-${$util.formatPX(outsetWidth)}`;
                                         root['4'].push({
                                             'top':  i === 0 ? '' : leftTop,
                                             'right': i === 1 ? '' : rightBottom,
@@ -878,8 +870,8 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                             '6': radius
                                         });
                                         if (hasInset) {
-                                            leftTop = `-${formatPX(width + 1)}`;
-                                            rightBottom = `-${formatPX(width)}`;
+                                            leftTop = `-${$util.formatPX(width + 1)}`;
+                                            rightBottom = `-${$util.formatPX(width)}`;
                                             root['7'].push({
                                                 'top':  i === 0 ? '' : leftTop,
                                                 'right': i === 1 ? '' : rightBottom,
@@ -900,8 +892,8 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         }
                     }
                     if (template) {
-                        const xml = insertTemplateData(template, data);
-                        for (const [name, value] of Resource.STORED.drawables.entries()) {
+                        const xml = $xml.insertTemplateData(template, data);
+                        for (const [name, value] of $resource.STORED.drawables.entries()) {
                             if (value === xml) {
                                 resourceName = name;
                                 break;
@@ -909,17 +901,17 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         }
                         if (resourceName === '') {
                             resourceName = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
-                            Resource.STORED.drawables.set(resourceName, xml);
+                            $resource.STORED.drawables.set(resourceName, xml);
                         }
                     }
-                    node.formatted(formatString(method['background'], resourceName), node.renderExtension.size === 0);
+                    node.formatted($util.formatString(method['background'], resourceName), node.renderExtension.size === 0);
                     if (backgroundImage.length > 0) {
                         node.data('RESOURCE', 'backgroundImage', true);
                         if (this.settings.autoSizeBackgroundImage &&
                             !node.documentRoot &&
                             !node.imageElement &&
                             node.renderParent.tagName !== 'TABLE' &&
-                            !node.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT))
+                            !node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT))
                         {
                             const sizeParent: Image = { width: 0, height: 0 };
                             backgroundDimensions.forEach(item => {
@@ -943,29 +935,29 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                                     current = current.documentParent as T;
                                 }
                             }
-                            if (!node.has('width', CSS_STANDARD.UNIT)) {
-                                const width = node.bounds.width + (!node.is(NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
+                            if (!node.has('width', $enum.CSS_STANDARD.UNIT)) {
+                                const width = node.bounds.width + (!node.is($enum.NODE_STANDARD.LINE) ? node.borderLeftWidth + node.borderRightWidth : 0);
                                 if (sizeParent.width === 0 || (width > 0 && width < sizeParent.width)) {
-                                    node.css('width', formatPX(width));
+                                    node.css('width', $util.formatPX(width));
                                 }
                             }
-                            if (!node.has('height', CSS_STANDARD.UNIT)) {
-                                const height = node.actualHeight + (!node.is(NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
+                            if (!node.has('height', $enum.CSS_STANDARD.UNIT)) {
+                                const height = node.actualHeight + (!node.is($enum.NODE_STANDARD.LINE) ? node.borderTopWidth + node.borderBottomWidth : 0);
                                 if (sizeParent.height === 0 || (height > 0 && height < sizeParent.height)) {
-                                    node.css('height', formatPX(height));
+                                    node.css('height', $util.formatPX(height));
                                     if (node.marginTop < 0) {
-                                        node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
+                                        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, null);
                                     }
                                     if (node.marginBottom < 0) {
-                                        node.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, null);
+                                        node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, null);
                                     }
                                 }
                             }
                         }
                     }
                 }
-                else if (!getElementCache(node.element, 'fontStyle') && isString(stored.backgroundColor)) {
-                    node.formatted(formatString(method['backgroundColor'], stored.backgroundColor), node.renderExtension.size === 0);
+                else if (!$dom.getElementCache(node.element, 'fontStyle') && $util.isString(stored.backgroundColor)) {
+                    node.formatted($util.formatString(method['backgroundColor'], stored.backgroundColor), node.renderExtension.size === 0);
                 }
             }
         });
@@ -977,10 +969,10 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
         this.cache
             .filter(node =>
                 node.visible &&
-                !node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE)
+                !node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)
             )
             .each(node => {
-                if (getElementCache(node.element, 'fontStyle')) {
+                if ($dom.getElementCache(node.element, 'fontStyle')) {
                     if (nodeName[node.nodeName] == null) {
                         nodeName[node.nodeName] = [];
                     }
@@ -988,17 +980,17 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                 }
                 const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
                 if (match) {
-                    const color = parseRGBA(match[1]);
+                    const color = $color.parseRGBA(match[1]);
                     if (color.length > 0) {
                         node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
                     }
-                    node.android('shadowDx', convertInt(match[2]).toString());
-                    node.android('shadowDy', convertInt(match[3]).toString());
-                    node.android('shadowRadius', convertInt(match[4]).toString());
+                    node.android('shadowDx', $util.convertInt(match[2]).toString());
+                    node.android('shadowDy', $util.convertInt(match[3]).toString());
+                    node.android('shadowRadius', $util.convertInt(match[4]).toString());
                 }
             });
         for (const tag in nodeName) {
-            const nodes = new NodeList<T>(nodeName[tag]);
+            const nodes = new lib.base.NodeList(nodeName[tag]);
             const sorted: StyleList = [];
             for (let node of nodes) {
                 let system = false;
@@ -1007,7 +999,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     node = node.companion as T;
                 }
                 const element = node.element;
-                const stored: FontAttribute = Object.assign({}, getElementCache(element, 'fontStyle'));
+                const stored: FontAttribute = Object.assign({}, $dom.getElementCache(element, 'fontStyle'));
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
@@ -1039,7 +1031,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         }
                     }
                     else {
-                        fontFamily = convertWord(fontFamily);
+                        fontFamily = $util.convertWord(fontFamily);
                         stored.fontFamily = `@font/${fontFamily + (stored.fontStyle !== 'normal' ? `_${stored.fontStyle}` : '') + (stored.fontWeight !== '400' ? `_${FONTWEIGHT_ANDROID[stored.fontWeight] || stored.fontWeight}` : '')}`;
                         fontStyle = stored.fontStyle;
                         fontWeight = stored.fontWeight;
@@ -1047,9 +1039,9 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         delete stored.fontWeight;
                     }
                     if (!system) {
-                        const fonts = Resource.STORED.fonts.get(fontFamily) || {};
+                        const fonts = $resource.STORED.fonts.get(fontFamily) || {};
                         fonts[`${fontStyle}-${fontWeight}`] = true;
-                        Resource.STORED.fonts.set(fontFamily, fonts);
+                        $resource.STORED.fonts.set(fontFamily, fonts);
                     }
                 }
                 const method = METHOD_ANDROID['fontStyle'];
@@ -1059,9 +1051,9 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         sorted[i] = {};
                     }
                     const value = stored[keys[i]];
-                    if (hasValue(value)) {
+                    if ($util.hasValue(value)) {
                         if (node.supported('android', keys[i])) {
-                            const attr = formatString(method[keys[i]], value);
+                            const attr = $util.formatString(method[keys[i]], value);
                             if (sorted[i][attr] == null) {
                                 sorted[i][attr] = [];
                             }
@@ -1096,16 +1088,16 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
             .filter(node =>
                 node.visible &&
                 (node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
-                !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)
+                !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)
             ).each(node => {
                 const element = <HTMLImageElement> node.element;
-                if (!getElementCache(element, 'imageSource') || this.settings.alwaysReevaluateResources) {
+                if (!$dom.getElementCache(element, 'imageSource') || this.settings.alwaysReevaluateResources) {
                     const result = node.imageElement ? ResourceHandler.addImageSrcSet(element)
                                                      : ResourceHandler.addImage({ 'mdpi': element.src });
                     if (result !== '') {
                         const method = METHOD_ANDROID['imageSource'];
-                        node.formatted(formatString(method['src'], result), node.renderExtension.size === 0);
-                        setElementCache(element, 'imageSource', result);
+                        node.formatted($util.formatString(method['src'], result), node.renderExtension.size === 0);
+                        $dom.setElementCache(element, 'imageSource', result);
                     }
                 }
             });
@@ -1117,9 +1109,9 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
             .filter(node =>
                 node.visible &&
                 node.tagName === 'SELECT' &&
-                !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
+                !node.hasBit('excludeResource', $enum.NODE_RESOURCE.OPTION_ARRAY)
             ).each(node => {
-                const stored: ObjectMap<string[]> = getElementCache(node.element, 'optionArray');
+                const stored: ObjectMap<string[]> = $dom.getElementCache(node.element, 'optionArray');
                 if (stored) {
                     const method = METHOD_ANDROID['optionArray'];
                     let result: string[] = [];
@@ -1142,7 +1134,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     }
                     let arrayName = '';
                     const arrayValue = result.join('-');
-                    for (const [storedName, storedResult] of Resource.STORED.arrays.entries()) {
+                    for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
                         if (arrayValue === storedResult.join('-')) {
                             arrayName = storedName;
                             break;
@@ -1150,9 +1142,9 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     }
                     if (arrayName === '') {
                         arrayName = `${node.nodeId}_array`;
-                        Resource.STORED.arrays.set(arrayName, result);
+                        $resource.STORED.arrays.set(arrayName, result);
                     }
-                    node.formatted(formatString(method['entries'], arrayName), node.renderExtension.size === 0);
+                    node.formatted($util.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
                 }
             });
     }
@@ -1162,12 +1154,12 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
         this.cache
             .filter(
                 node => node.visible &&
-                !node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING))
+                !node.hasBit('excludeResource', $enum.NODE_RESOURCE.VALUE_STRING))
             .each(node => {
-                const stored: NameValue = getElementCache(node.element, 'valueString');
+                const stored: NameValue = $dom.getElementCache(node.element, 'valueString');
                 if (stored) {
-                    if (node.renderParent.is(NODE_STANDARD.RELATIVE)) {
-                        if (node.alignParent('left', this.settings) && !cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
+                    if (node.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
+                        if (node.alignParent('left', this.settings) && !$dom.cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                             const value = node.textContent;
                             let leadingSpace = 0;
                             for (let i = 0; i < value.length; i++) {
@@ -1185,7 +1177,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                             }
                         }
                     }
-                    if (node.hasElement && node.is(NODE_STANDARD.TEXT)) {
+                    if (node.hasElement && node.is($enum.NODE_STANDARD.TEXT)) {
                         switch (node.css('fontVariant')) {
                             case 'small-caps':
                                 stored.value = stored.value.toUpperCase();
@@ -1207,7 +1199,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     if (name !== '') {
                         const method = METHOD_ANDROID['valueString'];
                         if (node.toInt('textIndent') + node.bounds.width > 0) {
-                            node.formatted(formatString(method['text'], isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name), node.renderExtension.size === 0);
+                            node.formatted($util.formatString(method['text'], isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name), node.renderExtension.size === 0);
                         }
                     }
                 }
@@ -1215,23 +1207,23 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
     }
 
     public addTheme(template: string, templateData: {}, options: ObjectMap<any>) {
-        const map: ObjectMap<string> = parseTemplate(template);
+        const map: ObjectMap<string> = $xml.parseTemplate(template);
         if (options.item) {
-            const root = getTemplateLevel(templateData, '0');
+            const root = $xml.getTemplateLevel(templateData, '0');
             for (const name in options.item) {
                 let value = options.item[name];
-                const hex = parseHex(value);
+                const hex = $color.parseHex(value);
                 if (hex !== '') {
                     value = `@color/${ResourceHandler.addColor(hex)}`;
                 }
                 root['1'].push({ name, value });
             }
         }
-        const xml = insertTemplateData(map, templateData);
+        const xml = $xml.insertTemplateData(map, templateData);
         this.addFile(options.output.path, options.output.file, xml);
     }
 
-    private processFontStyle(viewData: ViewData<NodeList<T>>) {
+    private processFontStyle(viewData: ViewData<lib.base.NodeList<T>>) {
         const style: ObjectMapNested<number[]> = {};
         const layout: ObjectMapNested<number[]> = {};
         const resource: ObjectMap<StyleTag[]> = {};
@@ -1420,7 +1412,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                 }
                 return (c >= d ? -1 : 1);
             });
-            tagData.forEach((item, index) => item.name = capitalize(tagName) + (index > 0 ? `_${index}` : ''));
+            tagData.forEach((item, index) => item.name = $util.capitalize(tagName) + (index > 0 ? `_${index}` : ''));
             resource[tagName] = tagData;
         }
         for (const tagName in resource) {
@@ -1466,7 +1458,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                     if (match) {
                         const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
-                        Resource.STORED.styles.set(value, { parent, attributes: tagData.attributes });
+                        $resource.STORED.styles.set(value, { parent, attributes: tagData.attributes });
                         parent = value;
                     }
                 });
@@ -1509,7 +1501,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                         return [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border, (isInset ? direction : -1)) }];
                     }
                     else if (hasInset) {
-                        return [{ width: formatPX(Math.ceil(parseInt(stored.border.width) / 2)), borderStyle: this.getBorderStyle(stored.border, direction, true) }];
+                        return [{ width: $util.formatPX(Math.ceil(parseInt(stored.border.width) / 2)), borderStyle: this.getBorderStyle(stored.border, direction, true) }];
                     }
                 }
                 return false;
@@ -1555,7 +1547,7 @@ export default class ResourceHandler<T extends View> extends Resource<T> {
                     hexValue = `#${hexValue.substring(3)}`;
                     opacity = `0.${hexValue.substring(1, 3)}`;
                 }
-                const reduced = parseRGBA(reduceHexToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
+                const reduced = $color.parseRGBA($color.reduceHexToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
                 if (reduced.length > 0) {
                     colorName = ResourceHandler.addColor(reduced[0], opacity);
                 }

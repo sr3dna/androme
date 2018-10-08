@@ -1,5 +1,4 @@
-import { Settings } from '../../base/lib/types';
-import { ObjectMapNested } from '../../lib/types';
+import { Settings } from '../../types/application';
 
 export interface SettingsAndroid extends Settings {
     targetAPI: number;

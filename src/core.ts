@@ -1,18 +1,14 @@
-import { AppBase, AppFramework, FunctionMap, Settings } from './base/lib/types';
-import { Image, Null, ObjectMap } from './lib/types';
+import { AppBase, AppFramework, Settings } from './types/application';
 import Node from './base/node';
-import Application from './base/application';
-import Extension from './base/extension';
-import { convertCamelCase, convertInt, convertPX, convertWord, hasValue, isPercent, isString, trimNull } from './lib/util';
-import { getElementCache, getStyle, parseBackgroundUrl, setElementCache } from './lib/dom';
-import { formatRGB, getByColorName } from './lib/color';
+
+const [$util, $dom] = [lib.util, lib.dom];
 
 type T = Node;
 
-let main: Application<T>;
+let main: lib.base.Application<T>;
+let framework: AppFramework<T>;
 let settings: Settings = {} as any;
 let system: FunctionMap = {} as any;
-let framework: AppFramework<T>;
 
 const cacheRoot: Set<HTMLElement> = new Set();
 const cacheImage: Map<string, Image> = new Map();
@@ -27,23 +23,17 @@ function setStyleMap() {
                     const cssRule = <CSSStyleRule> styleSheet.cssRules[j];
                     const attrs: Set<string> = new Set();
                     for (const attr of Array.from(cssRule.style)) {
-                        attrs.add(convertCamelCase(attr));
+                        attrs.add($util.convertCamelCase(attr));
                     }
                     Array
                         .from(document.querySelectorAll(cssRule.selectorText))
                         .forEach((element: HTMLElement) => {
                             for (const attr of Array.from(element.style)) {
-                                attrs.add(convertCamelCase(attr));
+                                attrs.add($util.convertCamelCase(attr));
                             }
-                            const style = getStyle(element);
+                            const style = $dom.getStyle(element);
                             const styleMap = {};
                             for (const attr of attrs) {
-                                if (attr.toLowerCase().indexOf('color') !== -1) {
-                                    const color = getByColorName(cssRule.style[attr]);
-                                    if (color !== '') {
-                                        cssRule.style[attr] = formatRGB(color);
-                                    }
-                                }
                                 const cssStyle = cssRule.style[attr];
                                 if (element.style[attr]) {
                                     styleMap[attr] = element.style[attr];
@@ -73,8 +63,8 @@ function setStyleMap() {
                                         case 'paddingRight':
                                         case 'paddingBottom':
                                         case 'paddingLeft':
-                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(cssStyle as string) || isPercent(cssStyle) ? cssStyle
-                                                                                                                             : convertPX(cssStyle, style.fontSize as string);
+                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(cssStyle as string) || $util.isPercent(cssStyle) ? cssStyle
+                                                                                                                                   : $util.convertPX(cssStyle, style.fontSize as string);
                                             break;
                                         default:
                                             if (styleMap[attr] == null) {
@@ -85,26 +75,26 @@ function setStyleMap() {
                                 }
                             }
                             if (main.settings.preloadImages &&
-                                hasValue(styleMap['backgroundImage']) &&
+                                $util.hasValue(styleMap['backgroundImage']) &&
                                 styleMap['backgroundImage'] !== 'initial')
                             {
                                 styleMap['backgroundImage']
                                     .split(',')
                                     .map(value => value.trim())
                                     .forEach(value => {
-                                        const url = parseBackgroundUrl(value);
+                                        const url = $dom.parseBackgroundUrl(value);
                                         if (url !== '' && !cacheImage.has(url)) {
                                             cacheImage.set(url, { width: 0, height: 0, url });
                                         }
                                     });
                             }
-                            const data = getElementCache(element, 'styleMap');
+                            const data = $dom.getElementCache(element, 'styleMap');
                             if (data) {
                                 Object.assign(data, styleMap);
                             }
                             else {
-                                setElementCache(element, 'style', style);
-                                setElementCache(element, 'styleMap', styleMap);
+                                $dom.setElementCache(element, 'style', style);
+                                $dom.setElementCache(element, 'styleMap', styleMap);
                             }
                         });
                 }
@@ -123,7 +113,7 @@ function setStyleMap() {
 }
 
 function setImageCache(element: HTMLImageElement) {
-    if (element && hasValue(element.src)) {
+    if (element && $util.hasValue(element.src)) {
         cacheImage.set(element.src, {
             width: element.naturalWidth,
             height: element.naturalHeight,
@@ -141,15 +131,15 @@ export function setFramework(module: AppFramework<T>, cached = false) {
         else {
             settings = Object.assign(appBase.settings, settings);
         }
-        main = new Application(appBase.framework);
+        main = appBase.application ? appBase.application : new lib.base.Application(appBase.framework);
         main.settings = settings;
         main.builtInExtensions = appBase.builtInExtensions;
         main.nodeObject = appBase.nodeObject;
         main.registerController(appBase.viewController);
         main.registerResource(appBase.resourceHandler);
         if (Array.isArray(settings.builtInExtensions)) {
-            const register = new Set<Extension<T>>();
-            const extensions = <ObjectMap<Extension<T>>> main.builtInExtensions;
+            const register = new Set<lib.base.Extension<lib.base.Node>>();
+            const extensions = main.builtInExtensions;
             for (let namespace of settings.builtInExtensions) {
                 namespace = namespace.toLowerCase().trim();
                 if (extensions[namespace]) {
@@ -213,10 +203,10 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                     element.id = `content_${main.size}`;
                 }
             }
-            const filename = trimNull(element.dataset.filename).replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '') || element.id;
-            const iteration = convertInt(element.dataset.iteration) + 1;
+            const filename = $util.trimNull(element.dataset.filename).replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '') || element.id;
+            const iteration = $util.convertInt(element.dataset.iteration) + 1;
             element.dataset.iteration = iteration.toString();
-            element.dataset.layoutName = convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);
+            element.dataset.layoutName = $util.convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);
             if (main.initCache(element)) {
                 main.createDocument();
                 main.setConstraints();
@@ -292,7 +282,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
             })
             .catch((error: Event) => {
                 const message = error.srcElement ? (<HTMLImageElement> error.srcElement).src : '';
-                if (!hasValue(message) || confirm(`FAIL: ${message}`)) {
+                if (!$util.hasValue(message) || confirm(`FAIL: ${message}`)) {
                     parseResume();
                 }
             });
@@ -309,8 +299,8 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     };
 }
 
-export function registerExtension(ext: Extension<T>) {
-    if (main && ext instanceof Extension && isString(ext.name) && Array.isArray(ext.tagNames)) {
+export function registerExtension(ext: lib.base.Extension<T>) {
+    if (main && $util.isString(ext.name) && Array.isArray(ext.tagNames)) {
         main.registerExtension(ext);
     }
 }
@@ -332,7 +322,7 @@ export function ext(name: any, options?: {}) {
     if (typeof name === 'object') {
         registerExtension(name);
     }
-    else if (isString(name)) {
+    else if ($util.isString(name)) {
         if (typeof options === 'object') {
             configureExtension(name, options);
         }
@@ -376,4 +366,4 @@ export function toString() {
     return main ? main.toString() : '';
 }
 
-export { settings, system, Extension };
+export { lib, system, settings };

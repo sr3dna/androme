@@ -1,14 +1,11 @@
-import { ExtensionResult } from '../../../extension/lib/types';
-import Extension from '../../../base/extension';
 import View from '../../view';
-import { optional } from '../../../lib/util';
-import { locateExtension, overwriteDefault } from '../lib/util';
-import { NODE_RESOURCE, NODE_STANDARD } from '../../../base/lib/constants';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
+
+const [$enum, $util, $dom] = [lib.enumeration, lib.util, lib.dom];
 
 import EXTENSION_GENERIC_TMPL from '../../template/extension/generic';
 
-export default class BottomNavigation<T extends View> extends Extension<T> {
+export default class BottomNavigation<T extends View> extends lib.base.Extension<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
         this.require(WIDGET_NAME.MENU);
@@ -18,13 +15,13 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
         const node = this.node;
         const parent = this.parent as T;
         const options = Object.assign({}, this.options[node.element.id]);
-        overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
+        $util.overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
         const output =
             this.application.viewController.renderNodeStatic(
                 VIEW_SUPPORT.BOTTOM_NAVIGATION,
                 node.depth,
                 options,
-                parent.is(NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent',
+                parent.is($enum.NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent',
                 'wrap_content',
                 node
             );
@@ -34,18 +31,18 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
         }
         node.cascade().forEach(item => this.subscribersChild.add(item as T));
         node.render(parent);
-        node.nodeType = NODE_STANDARD.BLOCK;
-        node.excludeResource |= NODE_RESOURCE.ASSET;
+        node.nodeType = $enum.NODE_STANDARD.BLOCK;
+        node.excludeResource |= $enum.NODE_RESOURCE.ASSET;
         this.createResourceTheme();
         return { output, complete: true };
     }
 
     public beforeInsert() {
         const node = this.node;
-        const menu: string = optional(locateExtension(node, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const menu: string = $util.optional($dom.locateExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);
-            overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
+            $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
             node.app('menu', options.app.menu);
         }
     }
@@ -62,8 +59,8 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
 
     private createResourceTheme() {
         const options = Object.assign({}, this.options.resource);
-        overwriteDefault(options, '', 'appTheme', 'AppTheme');
-        overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
+        $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
+        $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
             '0': [{
                 'appTheme': options.appTheme,
@@ -71,8 +68,8 @@ export default class BottomNavigation<T extends View> extends Extension<T> {
                 '1': []
             }]
         };
-        overwriteDefault(options, 'output', 'path', 'res/values');
-        overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
+        $util.overwriteDefault(options, 'output', 'path', 'res/values');
+        $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
         this.application.resourceHandler.addTheme(EXTENSION_GENERIC_TMPL, data, options);
     }
 }

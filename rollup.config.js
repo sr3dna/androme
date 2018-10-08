@@ -4,26 +4,22 @@ import minify from 'rollup-plugin-babel-minify';
 
 export default [
     {
-        input: './build/main.js',
-        treeshake: true,
+        input: './build/lib.js',
+        treeshake: false,
         output: {
-            file: './dist/androme.min.js',
-            name: 'androme',
-            format: 'umd',
-            banner: `/* androme ${version} https://github.com/anpham6/androme */`
-        },
-        plugins: [
-            babel(),
-            minify()
-        ]
+            file: './dist/androme.lib.js',
+            name: 'lib',
+            format: 'iife',
+            banner: `/* androme ${version}\n   https://github.com/anpham6/androme */\n`
+        }
     },
     {
-        input: './build/main.js',
+        input: './build/core.js',
         treeshake: true,
         output: {
-            file: './dist/androme.js',
+            file: './dist/androme.core.js',
             name: 'androme',
-            format: 'umd',
+            format: 'iife',
             banner: `/* androme ${version}\n   https://github.com/anpham6/androme */\n`
         }
     },
@@ -31,9 +27,32 @@ export default [
         input: './build/android/main.js',
         treeshake: true,
         output: {
-            file: './dist/android.framework.min.js',
+            file: './dist/android.framework.js',
             name: 'android',
-            format: 'umd'
+            format: 'iife',
+            banner: `/* androme ${version}\n   https://github.com/anpham6/androme */\n`
+        }
+    },
+    {
+        input: './build/lib.js',
+        treeshake: false,
+        output: {
+            file: './dist/androme.lib.min.js',
+            name: 'lib',
+            format: 'iife'
+        },
+        plugins: [
+            babel(),
+            minify()
+        ]
+    },
+    {
+        input: './build/core.js',
+        treeshake: true,
+        output: {
+            file: './dist/androme.core.min.js',
+            name: 'androme',
+            format: 'iife'
         },
         plugins: [
             babel(),
@@ -44,9 +63,13 @@ export default [
         input: './build/android/main.js',
         treeshake: true,
         output: {
-            file: './dist/android.framework.js',
+            file: './dist/android.framework.min.js',
             name: 'android',
-            format: 'umd'
-        }
+            format: 'iife'
+        },
+        plugins: [
+            babel(),
+            minify()
+        ]
     }
 ];

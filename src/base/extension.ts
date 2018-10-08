@@ -1,12 +1,9 @@
-import { LayoutMapX, LayoutMapY } from './lib/types';
-import { ObjectMap, StringMap } from '../lib/types';
-import { ExtensionDependency, ExtensionResult, IExtension } from '../extension/lib/types';
+import { LayoutMapX, LayoutMapY } from '../types/application';
 import Node from './node';
-import Application from './application';
 import { capitalize, convertCamelCase, includes } from '../lib/util';
 
-export default abstract class Extension<T extends Node> implements IExtension {
-    public application: Application<T>;
+export default abstract class Extension<T extends Node> implements lib.base.Extension<T> {
+    public application: lib.base.Application<T>;
     public node: T;
     public parent?: T;
     public element?: Element;
@@ -59,7 +56,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
                 .forEach(item => {
                     const ext = this.application.getExtension(item.name);
                     if (ext) {
-                        ext.setTarget(this.node, this.parent, this.element);
+                        ext.setTarget(this.node, this.parent, <HTMLElement> this.element);
                         ext.beforeInit(true);
                     }
                 });
@@ -77,7 +74,7 @@ export default abstract class Extension<T extends Node> implements IExtension {
                 .forEach(item => {
                     const ext = this.application.getExtension(item.name);
                     if (ext) {
-                        ext.setTarget(this.node, this.parent, this.element);
+                        ext.setTarget(this.node, this.parent, <HTMLElement> this.element);
                         ext.afterInit(true);
                     }
                 });

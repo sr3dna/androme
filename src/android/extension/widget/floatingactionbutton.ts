@@ -1,16 +1,12 @@
-import { ExtensionResult } from '../../../extension/lib/types';
 import { SettingsAndroid } from '../../lib/types';
-import Button from '../../../extension/button';
 import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
-import { formatPX, hasValue } from '../../../lib/util';
 import { parseRTL } from '../../lib/util';
-import { overwriteDefault } from '../lib/util';
-import { parseRGBA } from '../../../lib/color';
-import { NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../../../base/lib/constants';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
-export default class FloatingActionButton<T extends View> extends Button<T> {
+const [$enum, $util, $color] = [lib.enumeration, lib.util, lib.color];
+
+export default class FloatingActionButton<T extends View> extends lib.base.extensions.Button<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }
@@ -18,14 +14,14 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
     public processNode(): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;
-        const target = hasValue(node.dataset.target);
+        const target = $util.hasValue(node.dataset.target);
         const element = node.element;
         const options = Object.assign({}, this.options[element.id]);
-        const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-        overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceHandler.addColor(backgroundColor[0], backgroundColor[2])}`
+        const backgroundColor = $color.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
+        $util.overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceHandler.addColor(backgroundColor[0], backgroundColor[2])}`
                                                                                           : '?attr/colorAccent');
-        if (node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
-            overwriteDefault(options, 'android', 'focusable', 'false');
+        if (node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
+            $util.overwriteDefault(options, 'android', 'focusable', 'false');
         }
         let src = '';
         switch (element.tagName) {
@@ -45,7 +41,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
                 break;
         }
         if (src !== '') {
-            overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
+            $util.overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
         const output =
             this.application.viewController.renderNodeStatic(
@@ -56,8 +52,8 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
                 'wrap_content',
                 node
             );
-        node.nodeType = NODE_STANDARD.BUTTON;
-        node.excludeResource |= NODE_RESOURCE.BOX_STYLE | NODE_RESOURCE.ASSET;
+        node.nodeType = $enum.NODE_STANDARD.BUTTON;
+        node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
         if (!node.pageflow || target) {
             node.auto = false;
             this.setFrameGravity(node);
@@ -72,7 +68,7 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
                 node.app('layout_anchor', anchor);
                 node.app('layout_anchorGravity', node.android('layout_gravity'));
                 node.delete('android', 'layout_gravity');
-                node.excludeProcedure |= NODE_PROCEDURE.ALIGNMENT;
+                node.excludeProcedure |= $enum.NODE_PROCEDURE.ALIGNMENT;
                 node.render(node);
             }
             else {
@@ -119,18 +115,18 @@ export default class FloatingActionButton<T extends View> extends Button<T> {
         node.android('layout_gravity', gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|'));
         if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
             if (horizontalBias < 0.5) {
-                node.css('marginLeft', formatPX(Math.floor(node.bounds.left - parent.box.left)));
+                node.css('marginLeft', $util.formatPX(Math.floor(node.bounds.left - parent.box.left)));
             }
             else {
-                node.css('marginRight', formatPX(Math.floor(parent.box.right - node.bounds.right)));
+                node.css('marginRight', $util.formatPX(Math.floor(parent.box.right - node.bounds.right)));
             }
         }
         if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
             if (verticalBias < 0.5) {
-                node.css('marginTop', formatPX(Math.floor(node.bounds.top - parent.box.top)));
+                node.css('marginTop', $util.formatPX(Math.floor(node.bounds.top - parent.box.top)));
             }
             else {
-                node.css('marginBottom', formatPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
+                node.css('marginBottom', $util.formatPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
             }
         }
     }

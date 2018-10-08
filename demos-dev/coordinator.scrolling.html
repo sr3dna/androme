@@ -67,51 +67,54 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        Promise.all([
-            System.import('/build/main.js'),
-            System.import('/build/android/main.js')
-        ]).then((modules) => {
-            androme = modules[0];
-            androme.setFramework(modules[1]['default']);
-            androme.ext('androme.widget.toolbar', {
-                toolbar_demo: {
-                    appBar: {
-                        android: {
-                            theme: 'ThemeOverlay.AppCompat.Dark.ActionBar'
+        System.import('/build/lib.js').then((result) => {
+            lib = result;
+            Promise.all([
+                System.import('/build/core.js'),
+                System.import('/build/android/main.js')
+            ]).then((modules) => {
+                androme = modules[0];
+                androme.setFramework(modules[1]['default']);
+                androme.ext('androme.widget.toolbar', {
+                    toolbar_demo: {
+                        appBar: {
+                            android: {
+                                theme: 'ThemeOverlay.AppCompat.Dark.ActionBar'
+                            }
+                        },
+                        collapsingToolbar: {},
+                        toolbar: {
+                            app: {
+                                popupTheme: 'ThemeOverlay.AppCompat.Light'
+                            }
+                        },
+                        backgroundImage: {
+                            app: {
+                                layout_collapseMode: 'parallax'
+                            }
                         }
                     },
-                    collapsingToolbar: {},
-                    toolbar: {
-                        app: {
-                            popupTheme: 'ThemeOverlay.AppCompat.Light'
-                        }
-                    },
-                    backgroundImage: {
-                        app: {
-                            layout_collapseMode: 'parallax'
+                    resource: {
+                        output: {
+                            path: 'res/values',
+                            file: 'androme.widget.toolbar.xml'
+                        },
+                        appTheme: 'AppTheme',
+                        parentTheme: 'Theme.AppCompat.Light.DarkActionBar',
+                        item: {
+                            colorPrimary: '#343434'
                         }
                     }
-                },
-                resource: {
-                    output: {
-                        path: 'res/values',
-                        file: 'androme.widget.toolbar.xml'
-                    },
-                    appTheme: 'AppTheme',
-                    parentTheme: 'Theme.AppCompat.Light.DarkActionBar',
-                    item: {
-                        colorPrimary: '#343434'
-                    }
-                }
-            });
-            androme.parseDocument('androme_ui').then(function() {
-                androme.close();
+                });
+                androme.parseDocument('androme_ui').then(function() {
+                    androme.close();
 
-                var views = androme.system.writeLayoutAllXml();
-                document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+                    var views = androme.system.writeLayoutAllXml();
+                    document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
 
-                var resource = androme.system.writeResourceAllXml();
-                document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                    var resource = androme.system.writeResourceAllXml();
+                    document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                });
             });
         });
     </script>

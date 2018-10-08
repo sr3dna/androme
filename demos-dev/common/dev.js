@@ -1,3 +1,4 @@
+var lib = null;
 var androme = null;
 
 System.config({

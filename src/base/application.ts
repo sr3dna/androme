@@ -1,29 +1,24 @@
-import { AppBase, Settings, LayoutMapX, LayoutMapY, ViewData } from './lib/types';
-import { ArrayIndex, Null, ObjectIndex, ObjectMap, PlainFile, StringMap } from '../lib/types';
-import { IExtension } from '../extension/lib/types';
+import { Settings, LayoutMapX, LayoutMapY, ViewData } from '../types/application';
 import Node from './node';
 import NodeList from './nodelist';
-import Controller from './controller';
-import Resource from './resource';
 import { convertInt, hasBit, hasValue, isNumber, isUnit, optional, sortAsc, trimString, trimNull } from '../lib/util';
 import { cssParent, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
-import { APP_SECTION, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from './lib/constants';
-import { BOX_STANDARD, CSS_STANDARD } from '../lib/constants';
+import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/enumeration';
 
-export default class Application<T extends Node> implements AppBase<T> {
-    public viewController: Controller<T>;
-    public resourceHandler: Resource<T>;
+export default class Application<T extends Node> implements lib.base.Application<T> {
+    public viewController: lib.base.Controller<T>;
+    public resourceHandler: lib.base.Resource<T>;
     public nodeObject: { new (id: number, element?: Element): T };
-    public builtInExtensions: ObjectMap<IExtension>;
+    public builtInExtensions: ObjectMap<lib.base.Extension<T>>;
     public settings: Settings;
     public renderQueue: ObjectIndex<string[]> = {};
     public loading = false;
     public closed = false;
-    public readonly cache: NodeList<T> = new NodeList<T>();
-    public readonly cacheSession: NodeList<T> = new NodeList<T>();
-    public readonly elements: Set<HTMLElement> = new Set();
-    public readonly extensions: IExtension[] = [];
+    public readonly cache = new lib.base.NodeList<T>();
+    public readonly cacheSession = new lib.base.NodeList<T>();
+    public readonly elements = new Set<HTMLElement>();
+    public readonly extensions: lib.base.Extension<T>[] = [];
 
     private _sorted: ObjectMap<number[]> = {};
     private _currentIndex = -1;
@@ -33,21 +28,21 @@ export default class Application<T extends Node> implements AppBase<T> {
     constructor(public readonly framework: number) {
     }
 
-    public registerController(controller: Controller<T>) {
+    public registerController(controller: lib.base.Controller<T>) {
         controller.application = this;
         controller.settings = this.settings;
         controller.cache = this.cache;
         this.viewController = controller;
     }
 
-    public registerResource(resource: Resource<T>) {
+    public registerResource(resource: lib.base.Resource<T>) {
         resource.application = this;
         resource.settings = this.settings;
         resource.cache = this.cache;
         this.resourceHandler = resource;
     }
 
-    public registerExtension(ext: IExtension) {
+    public registerExtension(ext: lib.base.Extension<T>) {
         const found = this.getExtension(ext.name);
         if (found) {
             if (Array.isArray(ext.tagNames)) {
@@ -222,7 +217,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                             }
                         }
                         else if (element.tagName !== 'BR') {
-                            const elementNode = getNodeFromElement(element);
+                            const elementNode = getNodeFromElement<T>(element);
                             if (!supportInline.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
                                 valid = true;
                             }
@@ -329,7 +324,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                 Array
                     .from(node.element.childNodes)
                     .forEach((element: Element) => {
-                        const item = getNodeFromElement(element);
+                        const item = getNodeFromElement<T>(element);
                         if (item && !item.excluded && item.pageflow) {
                             item.siblingIndex = i++;
                         }
@@ -735,7 +730,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION) && !nodeY.rendered) {
                         let next = false;
                         forloop2: {
-                            const subscribed: IExtension[] = [];
+                            const subscribed: lib.base.Extension<lib.base.Node>[] = [];
                             for (const ext of this.extensions) {
                                 if (ext.subscribersChild.has(nodeY)) {
                                     subscribed.push(ext);
@@ -760,7 +755,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                             continue;
                         }
                         if (nodeY.element instanceof HTMLElement) {
-                            const processed: IExtension[] = [];
+                            const processed: lib.base.Extension<T>[] = [];
                             this.prioritizeExtensions(this.extensions, nodeY.element).some(item => {
                                 if (item.is(nodeY)) {
                                     item.setTarget(nodeY, parentY);
@@ -1039,7 +1034,7 @@ export default class Application<T extends Node> implements AppBase<T> {
             this.updateLayout(
                 empty ? '' : baseTemplate,
                 pathname,
-                root.renderExtension.size > 0 && Array.from(root.renderExtension).some(item => item.documentRoot)
+                root.renderExtension.size > 0 && Array.from(root.renderExtension).some((item: T) => item.documentRoot)
             );
         }
         else {
@@ -1066,7 +1061,7 @@ export default class Application<T extends Node> implements AppBase<T> {
             }
             else {
                 if (!a.domElement) {
-                    const nodeA = getNodeFromElement(a.baseElement);
+                    const nodeA = getNodeFromElement<T>(a.baseElement);
                     if (nodeA) {
                         a = nodeA as T;
                     }
@@ -1075,7 +1070,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                     }
                 }
                 if (!b.domElement) {
-                    const nodeB = getNodeFromElement(a.baseElement);
+                    const nodeB = getNodeFromElement<T>(a.baseElement);
                     if (nodeB) {
                         b = nodeB as T;
                     }
@@ -1478,7 +1473,7 @@ export default class Application<T extends Node> implements AppBase<T> {
                                         }
                                     });
                                 subgroup.children = sorted.reverse();
-                                this.saveSortOrder(subgroup.id, subgroup.children);
+                                this.saveSortOrder(subgroup.id, subgroup.children as T[]);
                             }
                         }
                         subgroup.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
@@ -1627,7 +1622,7 @@ export default class Application<T extends Node> implements AppBase<T> {
             const [originalId] = id.split(':');
             let replaceId = originalId;
             if (!isNumber(replaceId)) {
-                const target = getNodeFromElement(document.getElementById(replaceId));
+                const target = getNodeFromElement<T>(document.getElementById(replaceId));
                 if (target) {
                     replaceId = target.id.toString();
                 }
@@ -1726,7 +1721,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         this.renderQueue[id].push(...views);
     }
 
-    public sortByAlignment<T extends Node>(children: T[], parent?: T, alignmentType = NODE_ALIGNMENT.NONE, preserve = false) {
+    public sortByAlignment(children: T[], parent?: T, alignmentType = NODE_ALIGNMENT.NONE, preserve = false) {
         let sorted = false;
         if (parent && alignmentType === NODE_ALIGNMENT.NONE) {
             if (parent.linearHorizontal) {
@@ -1778,7 +1773,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         return children;
     }
 
-    public saveSortOrder<T extends Node>(id: string | number, nodes: T[]) {
+    public saveSortOrder(id: string | number, nodes: T[]) {
         this._sorted[id.toString()] = nodes.map(node => node.id);
     }
 
@@ -1839,7 +1834,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         return node;
     }
 
-    private prioritizeExtensions(available: IExtension[], element: HTMLElement) {
+    private prioritizeExtensions(available: lib.base.Extension<T>[], element: HTMLElement) {
         let extensions: string[] = [];
         let current: Null<HTMLElement> = element;
         while (current) {
@@ -1853,8 +1848,8 @@ export default class Application<T extends Node> implements AppBase<T> {
         }
         extensions = extensions.filter(value => value);
         if (extensions.length > 0) {
-            const tagged: IExtension[] = [];
-            const untagged: IExtension[] = [];
+            const tagged: lib.base.Extension<T>[] = [];
+            const untagged: lib.base.Extension<T>[] = [];
             for (const item of available) {
                 const index = extensions.indexOf(item.name);
                 if (index !== -1) {
@@ -1938,7 +1933,7 @@ export default class Application<T extends Node> implements AppBase<T> {
         return [...this._views, ...this._includes];
     }
 
-    get viewData(): ViewData<NodeList<T>> {
+    get viewData(): ViewData<lib.base.NodeList<T>> {
         return { cache: this.cacheSession, views: this._views, includes: this._includes };
     }
 

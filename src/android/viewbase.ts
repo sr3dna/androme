@@ -1,16 +1,11 @@
-import { Constructor, Null, StringMap } from '../lib/types';
 import { Constraint, SettingsAndroid } from './lib/types';
-import Node from '../base/node';
-import NodeList from '../base/nodelist';
-import { capitalize, convertEnum, convertFloat, convertInt, convertWord, formatPX, isString, lastIndexOf, trimNull, withinFraction } from '../lib/util';
-import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
-import { getElementsBetweenSiblings, getNodeFromElement } from '../lib/dom';
 import API_ANDROID from './customizations';
-import { NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../base/lib/constants';
-import { BOX_STANDARD, CSS_STANDARD, MAP_ELEMENT } from '../lib/constants';
-import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './constants';
+import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
+import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
 
-export default (Base: Constructor<Node>) => {
+const [$enum, $const, $util, $dom, $nodelist] = [lib.enumeration, lib.constant, lib.util, lib.dom, lib.base.NodeList];
+
+export default (Base: Constructor<lib.base.Node>) => {
     return class View extends Base {
         public static documentBody() {
             if (View._documentBody == null) {
@@ -24,7 +19,7 @@ export default (Base: Constructor<Node>) => {
 
         public static getCustomizationValue(api: number, tagName: string, obj: string, attr: string) {
             for (const build of [API_ANDROID[api], API_ANDROID[0]]) {
-                if (build && build.customizations && build.customizations[tagName] && build.customizations[tagName][obj] && isString(build.customizations[tagName][obj][attr])) {
+                if (build && build.customizations && build.customizations[tagName] && build.customizations[tagName][obj] && $util.isString(build.customizations[tagName][obj][attr])) {
                     return build.customizations[tagName][obj][attr];
                 }
             }
@@ -32,7 +27,7 @@ export default (Base: Constructor<Node>) => {
         }
 
         public static getControlName(nodeType: number): string {
-            return NODE_ANDROID[NODE_STANDARD[nodeType]];
+            return NODE_ANDROID[$enum.NODE_STANDARD[nodeType]];
         }
 
         private static _documentBody: View;
@@ -43,6 +38,11 @@ export default (Base: Constructor<Node>) => {
         public readonly renderChildren: View[] = [];
 
         protected _namespaces = new Set(['android', 'app']);
+        protected _controlName: string;
+        protected _renderParent: View;
+        protected _documentParent: View;
+        protected readonly _boxAdjustment: BoxModel = $dom.getBoxModel();
+        protected readonly _boxReset: BoxModel = $dom.getBoxModel();
 
         private _android: StringMap = {};
         private _app: StringMap = {};
@@ -105,9 +105,9 @@ export default (Base: Constructor<Node>) => {
         }
 
         public alignParent(position: string, settings: {}) {
-            if (this.renderParent.is(NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE)) {
+            if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE)) {
                 const constraint = this.renderParent.controlName === NODE_ANDROID.CONSTRAINT;
-                const direction = capitalize(parseRTL(position, settings));
+                const direction = $util.capitalize(parseRTL(position, settings));
                 const attr = constraint ? `layout_constraint${direction}_to${direction}Of` : `layout_alignParent${direction}`;
                 return this[constraint ? 'app' : 'android'](attr) === (constraint ? 'parent' : 'true');
             }
@@ -135,9 +135,9 @@ export default (Base: Constructor<Node>) => {
         }
 
         public modifyBox(region: number | string, offset: number | null, negative = false) {
-            const name = typeof region === 'number' ? convertEnum(region, BOX_STANDARD, BOX_ANDROID) : '';
-            if (offset !== 0 && (name !== '' || isString(region))) {
-                const attr = isString(region) ? region : name.replace('layout_', '');
+            const name = typeof region === 'number' ? $util.convertEnum(region, $enum.BOX_STANDARD, BOX_ANDROID) : '';
+            if (offset !== 0 && (name !== '' || $util.isString(region))) {
+                const attr = $util.isString(region) ? region : name.replace('layout_', '');
                 if (this._boxReset[attr] != null) {
                     if (offset == null) {
                         this._boxReset[attr] = 1;
@@ -153,7 +153,7 @@ export default (Base: Constructor<Node>) => {
         }
 
         public valueBox(region: number) {
-            const name = convertEnum(region, BOX_STANDARD, BOX_ANDROID);
+            const name = $util.convertEnum(region, $enum.BOX_STANDARD, BOX_ANDROID);
             if (name !== '') {
                 const attr = name.replace('layout_', '');
                 return [this._boxReset[attr] || 0, this._boxAdjustment[attr] || 0];
@@ -226,8 +226,8 @@ export default (Base: Constructor<Node>) => {
 
         public setNodeType(nodeName: string) {
             for (const type in NODE_ANDROID) {
-                if (NODE_ANDROID[type] === nodeName && NODE_STANDARD[type] != null) {
-                    this.nodeType = NODE_STANDARD[type];
+                if (NODE_ANDROID[type] === nodeName && $enum.NODE_STANDARD[type] != null) {
+                    this.nodeType = $enum.NODE_STANDARD[type];
                     break;
                 }
             }
@@ -237,22 +237,22 @@ export default (Base: Constructor<Node>) => {
             }
             if (!this.nodeId) {
                 const element = <HTMLInputElement> this.element;
-                let name = trimNull(element.id || element.name);
+                let name = $util.trimNull(element.id || element.name);
                 if (RESERVED_JAVA.includes(name)) {
                     name += '_1';
                 }
-                this.nodeId = convertWord(generateId('android', (name || `${lastIndexOf(this.controlName, '.').toLowerCase()}_1`)));
+                this.nodeId = $util.convertWord(generateId('android', (name || `${$util.lastIndexOf(this.controlName, '.').toLowerCase()}_1`)));
                 this.android('id', this.stringId);
             }
         }
 
         public setLayout() {
-            if (this.nodeType >= NODE_STANDARD.SCROLL_HORIZONTAL) {
-                this.android('layout_width', this.nodeType === NODE_STANDARD.SCROLL_HORIZONTAL && this.has('width', CSS_STANDARD.UNIT) ? this.css('width') : 'wrap_content');
-                this.android('layout_height', this.nodeType === NODE_STANDARD.SCROLL_VERTICAL && this.has('height', CSS_STANDARD.UNIT) ? this.css('height') : 'wrap_content');
+            if (this.nodeType >= $enum.NODE_STANDARD.SCROLL_HORIZONTAL) {
+                this.android('layout_width', this.nodeType === $enum.NODE_STANDARD.SCROLL_HORIZONTAL && this.has('width', $enum.CSS_STANDARD.UNIT) ? this.css('width') : 'wrap_content');
+                this.android('layout_height', this.nodeType === $enum.NODE_STANDARD.SCROLL_VERTICAL && this.has('height', $enum.CSS_STANDARD.UNIT) ? this.css('height') : 'wrap_content');
             }
-            else if (this.renderParent.nodeType >= NODE_STANDARD.SCROLL_HORIZONTAL) {
-                if (this.renderParent.is(NODE_STANDARD.SCROLL_HORIZONTAL)) {
+            else if (this.renderParent.nodeType >= $enum.NODE_STANDARD.SCROLL_HORIZONTAL) {
+                if (this.renderParent.is($enum.NODE_STANDARD.SCROLL_HORIZONTAL)) {
                     this.android('layout_width', 'wrap_content', false);
                     this.android('layout_height', 'match_parent', false);
                 }
@@ -276,7 +276,7 @@ export default (Base: Constructor<Node>) => {
                 const styleMap = this.styleMap;
                 const constraint = this.constraint;
                 const tableElement = this.tagName === 'TABLE';
-                if (this.documentBody || (this.documentRoot && !this.flex.enabled && this.is(NODE_STANDARD.FRAME, NODE_STANDARD.CONSTRAINT, NODE_STANDARD.RELATIVE))) {
+                if (this.documentBody || (this.documentRoot && !this.flex.enabled && this.is($enum.NODE_STANDARD.FRAME, $enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE))) {
                     if (!this.hasWidth &&
                         this.block &&
                         !constraint.layoutHorizontal)
@@ -291,32 +291,32 @@ export default (Base: Constructor<Node>) => {
                         this.android('layout_height', 'match_parent', false);
                     }
                 }
-                if (this.of(NODE_STANDARD.GRID, NODE_ALIGNMENT.PERCENT)) {
+                if (this.of($enum.NODE_STANDARD.GRID, $enum.NODE_ALIGNMENT.PERCENT)) {
                     this.android('layout_width', 'match_parent');
                 }
                 else {
                     if (this.android('layout_width') !== '0px') {
                         if (this.toInt('width') > 0 && (
                                 !this.inlineStatic ||
-                                renderParent.is(NODE_STANDARD.GRID) ||
+                                renderParent.is($enum.NODE_STANDARD.GRID) ||
                                 !this.has('width', 0, { map: 'initial' })
                            ))
                         {
-                            if (this.has('width', CSS_STANDARD.PERCENT)) {
+                            if (this.has('width', $enum.CSS_STANDARD.PERCENT)) {
                                 if (styleMap.width === '100%') {
                                     this.android('layout_width', 'match_parent', false);
                                 }
-                                else if (renderParent.of(NODE_STANDARD.GRID, NODE_ALIGNMENT.PERCENT)) {
+                                else if (renderParent.of($enum.NODE_STANDARD.GRID, $enum.NODE_ALIGNMENT.PERCENT)) {
                                     this.android('layout_width', '0px');
                                     this.app('layout_columnWeight', (parseInt(styleMap.width) / 100).toFixed(2));
                                 }
                                 else {
                                     const widthPercent = Math.ceil(this.bounds.width) - (!tableElement ? this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth : 0);
-                                    this.android('layout_width', formatPX(widthPercent), false);
+                                    this.android('layout_width', $util.formatPX(widthPercent), false);
                                 }
                             }
                             else {
-                                this.android('layout_width', convertInt(parent.android('layout_width')) > 0 && parent.viewWidth > 0 && this.viewWidth >= parent.viewWidth ? 'match_parent' : styleMap.width, renderParent.tagName !== 'TABLE');
+                                this.android('layout_width', $util.convertInt(parent.android('layout_width')) > 0 && parent.viewWidth > 0 && this.viewWidth >= parent.viewWidth ? 'match_parent' : styleMap.width, renderParent.tagName !== 'TABLE');
                             }
                         }
                         if (constraint.layoutWidth) {
@@ -324,28 +324,28 @@ export default (Base: Constructor<Node>) => {
                                 this.android('layout_width', parent.hasWidth ? 'match_parent' : 'wrap_content', false);
                             }
                             else {
-                                this.android('layout_width', this.bounds.width >= widthParent ? 'match_parent' : formatPX(this.bounds.width), false);
+                                this.android('layout_width', this.bounds.width >= widthParent ? 'match_parent' : $util.formatPX(this.bounds.width), false);
                             }
                         }
-                        if (this.has('minWidth', CSS_STANDARD.UNIT)) {
+                        if (this.has('minWidth', $enum.CSS_STANDARD.UNIT)) {
                             this.android('layout_width', 'wrap_content', false);
                             this.android('minWidth', styleMap.minWidth, false);
                         }
                         if (!this.documentBody &&
-                            this.has('maxWidth', CSS_STANDARD.UNIT) &&
+                            this.has('maxWidth', $enum.CSS_STANDARD.UNIT) &&
                             this.layoutVertical)
                         {
                             const maxWidth = this.css('maxWidth');
                             for (const node of renderChildren) {
-                                if (node.is(NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
+                                if (node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
                                     node.android('maxWidth', maxWidth);
                                 }
                             }
                         }
                     }
                     if (this.android('layout_width') === '') {
-                        const widthDefined = renderChildren.filter(node => !node.autoMargin && node.has('width', CSS_STANDARD.UNIT, { map: 'initial' }));
-                        if (convertFloat(this.app('layout_columnWeight')) > 0) {
+                        const widthDefined = renderChildren.filter(node => !node.autoMargin && node.has('width', $enum.CSS_STANDARD.UNIT, { map: 'initial' }));
+                        if ($util.convertFloat(this.app('layout_columnWeight')) > 0) {
                             this.android('layout_width', '0px');
                         }
                         else if (
@@ -355,24 +355,24 @@ export default (Base: Constructor<Node>) => {
                             this.android('layout_width', 'wrap_content');
                         }
                         else if (
-                            (this.blockStatic && this.hasAlign(NODE_ALIGNMENT.VERTICAL)) ||
-                            (!this.documentRoot && renderChildren.some(node => node.hasAlign(NODE_ALIGNMENT.VERTICAL) && !node.has('width'))))
+                            (this.blockStatic && this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL)) ||
+                            (!this.documentRoot && renderChildren.some(node => node.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) && !node.has('width'))))
                         {
                             this.android('layout_width', 'match_parent');
                         }
                         else {
                             const inlineRight: number = Math.max.apply(null, renderChildren.filter(node => node.inlineElement && node.float !== 'right').map(node => node.linear.right)) || 0;
                             const wrap = (
-                                this.nodeType < NODE_STANDARD.INLINE ||
+                                this.nodeType < $enum.NODE_STANDARD.INLINE ||
                                 this.inlineElement ||
                                 !this.pageflow ||
                                 !this.siblingflow ||
                                 this.display === 'table' ||
                                 parent.flex.enabled ||
-                                (renderParent.inlineElement && !renderParent.hasWidth && !this.inlineElement && this.nodeType > NODE_STANDARD.BLOCK) ||
-                                renderParent.is(NODE_STANDARD.GRID)
+                                (renderParent.inlineElement && !renderParent.hasWidth && !this.inlineElement && this.nodeType > $enum.NODE_STANDARD.BLOCK) ||
+                                renderParent.is($enum.NODE_STANDARD.GRID)
                             );
-                            if (this.is(NODE_STANDARD.GRID) && withinFraction(inlineRight, this.box.right)) {
+                            if (this.is($enum.NODE_STANDARD.GRID) && $util.withinFraction(inlineRight, this.box.right)) {
                                 this.android('layout_width', 'wrap_content');
                             }
                             else if (!wrap || (this.blockStatic && !this.has('maxWidth'))) {
@@ -383,9 +383,9 @@ export default (Base: Constructor<Node>) => {
                                     (this.hasElement && this.blockStatic && (
                                         this.documentParent.documentBody ||
                                         this.ascend().every(node => node.blockStatic) ||
-                                        (this.documentParent.blockStatic && this.nodeType <= NODE_STANDARD.LINEAR && ((!previousSibling || !previousSibling.floating) && (!nextSibling || !nextSibling.floating)))
+                                        (this.documentParent.blockStatic && this.nodeType <= $enum.NODE_STANDARD.LINEAR && ((!previousSibling || !previousSibling.floating) && (!nextSibling || !nextSibling.floating)))
                                     )) ||
-                                    (this.is(NODE_STANDARD.FRAME) && renderChildren.some(node => node.blockStatic && (node.autoMarginHorizontal || node.autoMarginLeft))) ||
+                                    (this.is($enum.NODE_STANDARD.FRAME) && renderChildren.some(node => node.blockStatic && (node.autoMarginHorizontal || node.autoMarginLeft))) ||
                                     (!this.hasElement && this.length > 0 && renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !renderChildren.some(item => item.plainText && item.multiLine)))
                                 {
                                     this.android('layout_width', 'match_parent');
@@ -397,7 +397,7 @@ export default (Base: Constructor<Node>) => {
                 }
                 if (this.android('layout_height') !== '0px') {
                     if (this.toInt('height') > 0 && (!this.inlineStatic || !this.has('height', 0, { map: 'initial' }))) {
-                        if (this.has('height', CSS_STANDARD.PERCENT)) {
+                        if (this.has('height', $enum.CSS_STANDARD.PERCENT)) {
                             if (styleMap.height === '100%') {
                                 this.android('layout_height', 'match_parent', false);
                             }
@@ -406,7 +406,7 @@ export default (Base: Constructor<Node>) => {
                                 if (!tableElement) {
                                     heightPercent -= this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth;
                                 }
-                                this.android('layout_height', formatPX(heightPercent), false);
+                                this.android('layout_height', $util.formatPX(heightPercent), false);
                             }
                         }
                         else {
@@ -419,23 +419,23 @@ export default (Base: Constructor<Node>) => {
                         }
                         else if (this.documentRoot) {
                             const bottomHeight: number = Math.max.apply(null, renderChildren.filter(node => node.pageflow).map(node => node.linear.bottom)) || 0;
-                            this.android('layout_height', bottomHeight > 0 ? formatPX(bottomHeight + this.paddingBottom + this.borderBottomWidth) : 'match_parent', false);
+                            this.android('layout_height', bottomHeight > 0 ? $util.formatPX(bottomHeight + this.paddingBottom + this.borderBottomWidth) : 'match_parent', false);
                         }
                         else {
-                            this.android('layout_height', this.actualHeight < heightParent ? formatPX(this.actualHeight) : 'match_parent', false);
+                            this.android('layout_height', this.actualHeight < heightParent ? $util.formatPX(this.actualHeight) : 'match_parent', false);
                         }
                     }
-                    if (this.has('minHeight', CSS_STANDARD.UNIT)) {
+                    if (this.has('minHeight', $enum.CSS_STANDARD.UNIT)) {
                         this.android('layout_height', 'wrap_content', false);
                         this.android('minHeight', styleMap.minHeight, false);
                     }
                     if (!this.documentBody &&
-                        this.has('maxHeight', CSS_STANDARD.UNIT) &&
+                        this.has('maxHeight', $enum.CSS_STANDARD.UNIT) &&
                         this.layoutHorizontal)
                     {
                         const maxHeight = this.css('maxHeight');
                         for (const node of renderChildren) {
-                            if (node.is(NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
+                            if (node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
                                 node.android('maxWidth', maxHeight);
                             }
                         }
@@ -444,8 +444,8 @@ export default (Base: Constructor<Node>) => {
                 if (this.android('layout_height') === '') {
                     if (height >= heightParent &&
                         parent.hasHeight &&
-                        !(this.inlineElement && this.nodeType < NODE_STANDARD.INLINE) &&
-                        !(renderParent.is(NODE_STANDARD.RELATIVE) && renderParent.inlineHeight))
+                        !(this.inlineElement && this.nodeType < $enum.NODE_STANDARD.INLINE) &&
+                        !(renderParent.is($enum.NODE_STANDARD.RELATIVE) && renderParent.inlineHeight))
                     {
                         this.android('layout_height', 'match_parent');
                     }
@@ -456,16 +456,16 @@ export default (Base: Constructor<Node>) => {
                         {
                             const boundsHeight = this.actualHeight + renderParent.paddingTop + renderParent.paddingBottom;
                             if (this.inlineElement && boundsHeight > 0 && this.lineHeight >= boundsHeight) {
-                                this.android('layout_height', formatPX(boundsHeight));
-                                this.modifyBox(BOX_STANDARD.PADDING_TOP, null);
-                                this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, null);
+                                this.android('layout_height', $util.formatPX(boundsHeight));
+                                this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, null);
+                                this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, null);
                             }
                             else if (
                                 this.block &&
                                 this.box.height > 0 &&
                                 this.lineHeight === this.box.height)
                             {
-                                this.android('layout_height', formatPX(boundsHeight));
+                                this.android('layout_height', $util.formatPX(boundsHeight));
                             }
                         }
                         this.android('layout_height', 'wrap_content', false);
@@ -480,7 +480,7 @@ export default (Base: Constructor<Node>) => {
         public setAlignment(settings: SettingsAndroid) {
             const renderParent = this.renderParent;
             const textAlignParent = this.cssParent('textAlign');
-            const obj = renderParent.is(NODE_STANDARD.GRID) ? 'app' : 'android';
+            const obj = renderParent.is($enum.NODE_STANDARD.GRID) ? 'app' : 'android';
             const left = parseRTL('left', settings);
             const right = parseRTL('right', settings);
             let textAlign = this.styleMap.textAlign || '';
@@ -488,7 +488,7 @@ export default (Base: Constructor<Node>) => {
             let floating = '';
             function mergeGravity(original?: Null<string>, ...alignment: string[]) {
                 const direction = [
-                        ...trimNull(original).split('|'),
+                        ...$util.trimNull(original).split('|'),
                         ...alignment
                     ]
                     .filter(value => value);
@@ -586,7 +586,7 @@ export default (Base: Constructor<Node>) => {
                 }
                 return textAlign;
             }
-            if (!(this.floating || renderParent.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.MULTILINE))) {
+            if (!(this.floating || renderParent.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.MULTILINE))) {
                 switch (this.styleMap.verticalAlign) {
                     case 'top':
                     case 'text-top':
@@ -623,11 +623,11 @@ export default (Base: Constructor<Node>) => {
                     setAutoMargin(this);
                 }
             }
-            if (this.hasAlign(NODE_ALIGNMENT.FLOAT)) {
-                if (this.hasAlign(NODE_ALIGNMENT.RIGHT) || this.renderChildren.some(node => node.hasAlign(NODE_ALIGNMENT.RIGHT))) {
+            if (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT)) {
+                if (this.hasAlign($enum.NODE_ALIGNMENT.RIGHT) || this.renderChildren.some(node => node.hasAlign($enum.NODE_ALIGNMENT.RIGHT))) {
                     floating = right;
                 }
-                else if (this.hasAlign(NODE_ALIGNMENT.LEFT) || this.renderChildren.some(node => node.hasAlign(NODE_ALIGNMENT.LEFT))) {
+                else if (this.hasAlign($enum.NODE_ALIGNMENT.LEFT) || this.renderChildren.some(node => node.hasAlign($enum.NODE_ALIGNMENT.LEFT))) {
                     floating = left;
                 }
             }
@@ -640,7 +640,7 @@ export default (Base: Constructor<Node>) => {
                     verticalAlign = 'center_vertical';
                 }
             }
-            if (renderParent.is(NODE_STANDARD.FRAME)) {
+            if (renderParent.is($enum.NODE_STANDARD.FRAME)) {
                 if (!setAutoMargin(this)) {
                     floating = floating || this.float;
                     if (floating !== 'none') {
@@ -659,7 +659,7 @@ export default (Base: Constructor<Node>) => {
                 }
             }
             else if (floating !== '') {
-                if (this.is(NODE_STANDARD.LINEAR)) {
+                if (this.is($enum.NODE_STANDARD.LINEAR)) {
                     if (this.blockWidth) {
                         textAlign = setTextAlign(floating);
                     }
@@ -667,12 +667,12 @@ export default (Base: Constructor<Node>) => {
                         this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), floating));
                     }
                 }
-                else if (renderParent.hasAlign(NODE_ALIGNMENT.VERTICAL)) {
+                else if (renderParent.hasAlign($enum.NODE_ALIGNMENT.VERTICAL)) {
                     textAlign = setTextAlign(floating);
                 }
             }
             if (textAlignParent !== '' && parseRTL(textAlignParent, settings) !== left) {
-                if (renderParent.is(NODE_STANDARD.FRAME) &&
+                if (renderParent.is($enum.NODE_STANDARD.FRAME) &&
                     this.singleChild &&
                     !this.floating &&
                     !this.autoMargin)
@@ -687,47 +687,47 @@ export default (Base: Constructor<Node>) => {
                 this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), verticalAlign));
                 verticalAlign = '';
             }
-            if (this.documentRoot && (this.blockWidth || this.is(NODE_STANDARD.FRAME))) {
+            if (this.documentRoot && (this.blockWidth || this.is($enum.NODE_STANDARD.FRAME))) {
                 this.delete(obj, 'layout_gravity');
             }
             this.android('gravity', mergeGravity(this.android('gravity'), convertHorizontal(textAlign), verticalAlign));
         }
 
         public setBoxSpacing(settings: SettingsAndroid) {
-            if (!this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+            if (!this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                 ['padding', 'margin'].forEach(region => {
                     ['Top', 'Left', 'Right', 'Bottom'].forEach(direction => {
                         const dimension = region + direction;
                         const value: number = (this._boxReset[dimension] === 0 ? this[dimension] : 0) + this._boxAdjustment[dimension];
                         if (value !== 0) {
                             const attr = parseRTL(BOX_ANDROID[`${region.toUpperCase()}_${direction.toUpperCase()}`], settings);
-                            this.android(attr, formatPX(value));
+                            this.android(attr, $util.formatPX(value));
                         }
                     });
                 });
                 if (this.api >= BUILD_ANDROID.OREO) {
                     ['layout_margin', 'padding'].forEach((value, index) => {
-                        const top = convertInt(this.android(`${value}Top`));
-                        const right = convertInt(this.android(parseRTL(`${value}Right`, settings)));
-                        const bottom = convertInt(this.android(`${value}Bottom`));
-                        const left = convertInt(this.android(parseRTL(`${value}Left`, settings)));
+                        const top = $util.convertInt(this.android(`${value}Top`));
+                        const right = $util.convertInt(this.android(parseRTL(`${value}Right`, settings)));
+                        const bottom = $util.convertInt(this.android(`${value}Bottom`));
+                        const left = $util.convertInt(this.android(parseRTL(`${value}Left`, settings)));
                         if (top !== 0 &&
                             top === bottom &&
                             bottom === left &&
                             left === right)
                         {
                             this.delete('android', `${value}*`);
-                            this.android(value, formatPX(top));
+                            this.android(value, $util.formatPX(top));
                         }
                         else {
-                            if (!(this.renderParent.is(NODE_STANDARD.GRID) && index === 0)) {
+                            if (!(this.renderParent.is($enum.NODE_STANDARD.GRID) && index === 0)) {
                                 if (top !== 0 && top === bottom) {
                                     this.delete('android', `${value}Top`, `${value}Bottom`);
-                                    this.android(`${value}Vertical`, formatPX(top));
+                                    this.android(`${value}Vertical`, $util.formatPX(top));
                                 }
                                 if (left !== 0 && left === right) {
                                     this.delete('android', parseRTL(`${value}Left`, settings), parseRTL(`${value}Right`, settings));
-                                    this.android(`${value}Horizontal`, formatPX(left));
+                                    this.android(`${value}Horizontal`, $util.formatPX(left));
                                 }
                             }
                         }
@@ -742,11 +742,11 @@ export default (Base: Constructor<Node>) => {
             function getPaddedHeight(node: View) {
                 return node.paddingTop + node.paddingBottom + node.borderTopWidth + node.borderBottomWidth;
             }
-            if (this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP)) {
+            if (this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP)) {
                 const linearHorizontal = this.linearHorizontal;
                 if (this.blockWidth && !this.blockStatic) {
                     [[linearHorizontal, this.inlineElement, 'width'], [!linearHorizontal, true, 'height']].forEach((value: [boolean, boolean, string]) => {
-                        const attr = `inline${capitalize(value[2])}`;
+                        const attr = `inline${$util.capitalize(value[2])}`;
                         if (value[0] &&
                             value[1] &&
                             !this[attr] && renderChildren.every(node => node[attr]))
@@ -757,7 +757,7 @@ export default (Base: Constructor<Node>) => {
                 }
                 if (linearHorizontal) {
                     if (!renderChildren.some(node => node.imageElement && node.baseline) && (
-                            this.hasAlign(NODE_ALIGNMENT.FLOAT) ||
+                            this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) ||
                             renderChildren.some(node => node.floating || !node.siblingflow)
                     ))
                     {
@@ -767,10 +767,10 @@ export default (Base: Constructor<Node>) => {
                         const childIndex = renderParent.android('baselineAlignedChildIndex');
                         if (renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
                             (childIndex !== '' && this.renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
-                            (renderChildren.some(node => node.nodeType < NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
-                            (renderParent.is(NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
+                            (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
+                            (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
                         {
-                            const baseline = NodeList.textBaseline(renderChildren);
+                            const baseline = $nodelist.textBaseline(renderChildren);
                             if (baseline.length > 0) {
                                 this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
                             }
@@ -789,8 +789,8 @@ export default (Base: Constructor<Node>) => {
             }
             if (this.pageflow) {
                 if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
-                    [['firstElementChild', 'Top', BOX_STANDARD.MARGIN_TOP, BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', BOX_STANDARD.MARGIN_BOTTOM, BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, number, number], index: number) => {
-                        const node = getNodeFromElement(renderParent[item[0]]);
+                    [['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, number, number], index: number) => {
+                        const node = $dom.getNodeFromElement<View>(renderParent[item[0]]);
                         if (node &&
                             !node.lineBreak &&
                             (node === this || node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1]))
@@ -808,31 +808,31 @@ export default (Base: Constructor<Node>) => {
                 if (this.hasElement && this.blockStatic) {
                     for (let i = 0; i < this.element.children.length; i++) {
                         const element = this.element.children[i];
-                        const node = getNodeFromElement(element);
+                        const node = $dom.getNodeFromElement<View>(element);
                         if (node && node.pageflow && node.blockStatic && !node.lineBreak) {
                             const previous = node.previousSibling();
                             if (previous && previous.pageflow && !previous.lineBreak) {
-                                const marginTop = convertInt(node.cssInitial('marginTop', true));
-                                const marginBottom = convertInt(previous.cssInitial('marginBottom', true));
+                                const marginTop = $util.convertInt(node.cssInitial('marginTop', true));
+                                const marginBottom = $util.convertInt(previous.cssInitial('marginBottom', true));
                                 if (marginBottom > 0 && marginTop > 0) {
                                     if (marginTop <= marginBottom) {
-                                        node.modifyBox(BOX_STANDARD.MARGIN_TOP, null);
+                                        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, null);
                                     }
                                     else {
-                                        previous.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, null);
+                                        previous.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, null);
                                     }
                                 }
                             }
                             [element.previousElementSibling, element.nextElementSibling].forEach((item, index) => {
-                                const adjacent = getNodeFromElement(item);
+                                const adjacent = $dom.getNodeFromElement<View>(item);
                                 if (adjacent && adjacent.excluded) {
                                     const offset = Math.min(adjacent.marginTop, adjacent.marginBottom);
                                     if (offset < 0) {
                                         if (index === 0) {
-                                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset, true);
+                                            node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset, true);
                                         }
                                         else {
-                                            node.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, offset, true);
+                                            node.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, offset, true);
                                         }
                                     }
                                 }
@@ -842,9 +842,9 @@ export default (Base: Constructor<Node>) => {
                 }
             }
             this.bindWhiteSpace(settings);
-            if (settings.autoSizePaddingAndBorderWidth && !this.hasBit('excludeProcedure', NODE_PROCEDURE.AUTOFIT)) {
-                let layoutWidth = convertInt(this.android('layout_width'));
-                let layoutHeight = convertInt(this.android('layout_height'));
+            if (settings.autoSizePaddingAndBorderWidth && !this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT)) {
+                let layoutWidth = $util.convertInt(this.android('layout_width'));
+                let layoutHeight = $util.convertInt(this.android('layout_height'));
                 let borderWidth = false;
                 if (this.imageElement) {
                     const top = this.borderTopWidth;
@@ -854,64 +854,64 @@ export default (Base: Constructor<Node>) => {
                     let width = 0;
                     let height = 0;
                     if (top > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_TOP, top);
+                        this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, top);
                         height += top;
                     }
                     if (right > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_RIGHT, right);
+                        this.modifyBox($enum.BOX_STANDARD.PADDING_RIGHT, right);
                         width += right;
                     }
                     if (bottom > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, bottom);
+                        this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, bottom);
                         height += bottom;
                     }
                     if (left > 0) {
-                        this.modifyBox(BOX_STANDARD.PADDING_LEFT, left);
+                        this.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, left);
                         width += left;
                     }
                     height += this.paddingTop + this.paddingBottom;
                     width += this.paddingLeft + this.paddingRight;
                     if (width > 0) {
                         if (layoutWidth > 0) {
-                            this.android('layout_width', formatPX(layoutWidth + width));
+                            this.android('layout_width', $util.formatPX(layoutWidth + width));
                         }
                         else {
-                            layoutWidth = convertInt(renderParent.android('layout_width'));
+                            layoutWidth = $util.convertInt(renderParent.android('layout_width'));
                             if (layoutWidth > 0 && this.singleChild) {
-                                renderParent.android('layout_width', formatPX(layoutWidth + this.marginLeft + width));
+                                renderParent.android('layout_width', $util.formatPX(layoutWidth + this.marginLeft + width));
                             }
                         }
                     }
                     if (height > 0) {
                         if (layoutHeight > 0) {
-                            this.android('layout_height', formatPX(layoutHeight + height));
+                            this.android('layout_height', $util.formatPX(layoutHeight + height));
                         }
                         else {
-                            layoutHeight = convertInt(renderParent.android('layout_height'));
+                            layoutHeight = $util.convertInt(renderParent.android('layout_height'));
                             if (layoutHeight > 0 && this.singleChild) {
-                                renderParent.android('layout_height', formatPX(layoutHeight + this.marginTop + height));
+                                renderParent.android('layout_height', $util.formatPX(layoutHeight + this.marginTop + height));
                             }
                         }
                     }
                 }
-                else if (this.is(NODE_STANDARD.BUTTON) && layoutHeight === 0) {
-                    this.android('layout_height', formatPX(this.bounds.height + (this.css('borderStyle') === 'outset' ? convertInt(this.css('borderWidth')) : 0)));
+                else if (this.is($enum.NODE_STANDARD.BUTTON) && layoutHeight === 0) {
+                    this.android('layout_height', $util.formatPX(this.bounds.height + (this.css('borderStyle') === 'outset' ? $util.convertInt(this.css('borderWidth')) : 0)));
                 }
-                else if (this.is(NODE_STANDARD.LINE)) {
+                else if (this.is($enum.NODE_STANDARD.LINE)) {
                     if (layoutHeight > 0 &&
                         this.has('height', 0, { map: 'initial' }) &&
                         this.tagName !== 'HR')
                     {
-                        this.android('layout_height', formatPX(layoutHeight + this.borderTopWidth + this.borderBottomWidth));
+                        this.android('layout_height', $util.formatPX(layoutHeight + this.borderTopWidth + this.borderBottomWidth));
                     }
                 }
                 else if (this.tagName === 'TABLE') {
-                    const width = convertInt(this.android('layout_width'));
+                    const width = $util.convertInt(this.android('layout_width'));
                     if (width > 0) {
                         if (this.bounds.width > width) {
-                            this.android('layout_width', formatPX(this.bounds.width));
+                            this.android('layout_width', $util.formatPX(this.bounds.width));
                         }
-                        if (this.has('width', CSS_STANDARD.AUTO, { map: 'initial' }) && renderChildren.every(node => node.inlineWidth)) {
+                        if (this.has('width', $enum.CSS_STANDARD.AUTO, { map: 'initial' }) && renderChildren.every(node => node.inlineWidth)) {
                             for (const node of renderChildren) {
                                 node.android('layout_width', '0px');
                                 node.app('layout_columnWeight', '1');
@@ -921,17 +921,17 @@ export default (Base: Constructor<Node>) => {
                     borderWidth = this.css('boxSizing') === 'content-box';
                 }
                 else {
-                    if (this.hasElement && !this.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING)) {
+                    if (this.hasElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                         if (!(renderParent.tagName === 'TABLE' || this.css('boxSizing') === 'border-box')) {
-                            const minWidth = convertInt(this.android('minWidth'));
-                            const minHeight = convertInt(this.android('minHeight'));
+                            const minWidth = $util.convertInt(this.android('minWidth'));
+                            const minHeight = $util.convertInt(this.android('minHeight'));
                             const paddedWidth = this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
                             const paddedHeight = getPaddedHeight(this);
                             if (layoutWidth > 0 &&
                                 this.toInt('width', 0, { map: 'initial' }) > 0 &&
                                 paddedWidth > 0)
                             {
-                                this.android('layout_width', formatPX(layoutWidth + paddedWidth));
+                                this.android('layout_width', $util.formatPX(layoutWidth + paddedWidth));
                             }
                             if (layoutHeight > 0 &&
                                 this.toInt('height', 0, { map: 'initial' }) > 0 &&
@@ -941,29 +941,29 @@ export default (Base: Constructor<Node>) => {
                                     this.lineHeight === this.toInt('height')
                             ))
                             {
-                                this.android('layout_height', formatPX(layoutHeight + paddedHeight));
+                                this.android('layout_height', $util.formatPX(layoutHeight + paddedHeight));
                             }
                             if (minWidth > 0 && paddedWidth > 0) {
-                                this.android('minWidth', formatPX(minWidth + paddedWidth));
+                                this.android('minWidth', $util.formatPX(minWidth + paddedWidth));
                             }
                             if (minHeight > 0 && paddedHeight > 0) {
-                                this.android('minHeight', formatPX(minHeight + paddedHeight));
+                                this.android('minHeight', $util.formatPX(minHeight + paddedHeight));
                             }
                         }
                         borderWidth = true;
                     }
                 }
                 if (borderWidth) {
-                    this.modifyBox(BOX_STANDARD.PADDING_TOP, this.borderTopWidth);
-                    this.modifyBox(BOX_STANDARD.PADDING_RIGHT, this.borderRightWidth);
-                    this.modifyBox(BOX_STANDARD.PADDING_BOTTOM, this.borderBottomWidth);
-                    this.modifyBox(BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
+                    this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, this.borderTopWidth);
+                    this.modifyBox($enum.BOX_STANDARD.PADDING_RIGHT, this.borderRightWidth);
+                    this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, this.borderBottomWidth);
+                    this.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
                 }
             }
-            if (this.linearHorizontal || this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL)) {
+            if (this.linearHorizontal || this.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL)) {
                 const pageflow = renderChildren.filter(node => !node.floating && (node.hasElement || node.renderChildren.length === 0));
                 if (pageflow.length > 0 &&
-                    pageflow.every(node => node.baseline || node.has('verticalAlign', CSS_STANDARD.UNIT)) && (
+                    pageflow.every(node => node.baseline || node.has('verticalAlign', $enum.CSS_STANDARD.UNIT)) && (
                         pageflow.some(node => node.imageElement && node.toInt('verticalAlign') !== 0) ||
                         (pageflow.some(node => node.toInt('verticalAlign') < 0) && pageflow.some(node => node.toInt('verticalAlign') > 0))
                    ))
@@ -988,10 +988,10 @@ export default (Base: Constructor<Node>) => {
                             if (!tallest.includes(node)) {
                                 const offset = node.toInt('verticalAlign');
                                 if (marginTop > 0) {
-                                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageElement ? node.bounds.height : 0));
+                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageElement ? node.bounds.height : 0));
                                 }
                                 if (offset !== 0) {
-                                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, offset * -1, true);
+                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
                                     node.css('verticalAlign', '0px');
                                 }
                             }
@@ -1000,31 +1000,31 @@ export default (Base: Constructor<Node>) => {
                     }
                 }
                 if (renderChildren.some(node => node.tagName === 'SUB') && this.inlineHeight) {
-                    const offsetHeight = convertInt(View.getCustomizationValue(this.api, 'SUB', 'android', 'layout_marginTop'));
+                    const offsetHeight = $util.convertInt(View.getCustomizationValue(this.api, 'SUB', 'android', 'layout_marginTop'));
                     if (offsetHeight > 0) {
-                        this.android('layout_height', formatPX(this.bounds.height + offsetHeight + getPaddedHeight(this)));
+                        this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + getPaddedHeight(this)));
                     }
                 }
             }
             if (this.inline && !this.floating) {
                 const offset = this.toInt('verticalAlign');
                 if (offset !== 0) {
-                    this.modifyBox(BOX_STANDARD.MARGIN_TOP, offset * -1, true);
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
                     if (offset < 0 &&
                         renderParent.layoutHorizontal &&
                         renderParent.inlineHeight)
                     {
-                        renderParent.android('layout_height', formatPX(renderParent.bounds.height + getPaddedHeight(renderParent)));
+                        renderParent.android('layout_height', $util.formatPX(renderParent.bounds.height + getPaddedHeight(renderParent)));
                     }
                 }
             }
-            if (this.position === 'relative' || renderParent.is(NODE_STANDARD.FRAME)) {
+            if (this.position === 'relative' || renderParent.is($enum.NODE_STANDARD.FRAME)) {
                 const top = this.toInt('top');
                 const bottom = this.toInt('bottom');
                 const left = this.toInt('left');
                 if (top !== 0) {
                     if (top < 0 &&
-                        renderParent.is(NODE_STANDARD.RELATIVE, NODE_STANDARD.LINEAR) &&
+                        renderParent.is($enum.NODE_STANDARD.RELATIVE, $enum.NODE_STANDARD.LINEAR) &&
                         this.floating &&
                         !!this.data('RESOURCE', 'backgroundImage'))
                     {
@@ -1038,33 +1038,33 @@ export default (Base: Constructor<Node>) => {
                                     return true;
                                 }
                                 else if (found) {
-                                    node.modifyBox(BOX_STANDARD.MARGIN_TOP, Math.abs(top));
+                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.abs(top));
                                 }
                             }
                             return false;
                         });
                     }
                     else {
-                        this.modifyBox(BOX_STANDARD.MARGIN_TOP, top, true);
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, top, true);
                     }
                 }
                 else if (bottom !== 0) {
-                    this.modifyBox(BOX_STANDARD.MARGIN_TOP, bottom * -1, true);
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, bottom * -1, true);
                 }
                 if (left !== 0) {
                     if (this.float === 'right' || (this.position === 'relative' && this.autoMarginLeft)) {
-                        this.modifyBox(BOX_STANDARD.MARGIN_RIGHT, left * -1, true);
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, left * -1, true);
                     }
                     else {
-                        this.modifyBox(BOX_STANDARD.MARGIN_LEFT, left, true);
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, left, true);
                     }
                 }
             }
             if (!this.plainText && !renderParent.linearHorizontal) {
                 const offset = (this.lineHeight + this.toInt('verticalAlign')) - this.actualHeight;
                 if (offset > 0) {
-                    this.modifyBox(BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));
-                    this.modifyBox(BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
                 }
             }
         }
@@ -1087,23 +1087,23 @@ export default (Base: Constructor<Node>) => {
         }
 
         private bindWhiteSpace(settings: SettingsAndroid) {
-            if (!this.hasAlign(NODE_ALIGNMENT.FLOAT) && (
+            if (!this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (
                 this.linearHorizontal ||
-                this.of(NODE_STANDARD.RELATIVE, NODE_ALIGNMENT.HORIZONTAL, NODE_ALIGNMENT.MULTILINE) ||
-                this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.HORIZONTAL)
+                this.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL, $enum.NODE_ALIGNMENT.MULTILINE) ||
+                this.of($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_ALIGNMENT.HORIZONTAL)
             ))
             {
                 const textAlign = this.css('textAlign');
                 const textIndent = this.toInt('textIndent');
-                const valueBox = this.valueBox(BOX_STANDARD.PADDING_LEFT);
-                const relative = this.is(NODE_STANDARD.RELATIVE);
+                const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
+                const relative = this.is($enum.NODE_STANDARD.RELATIVE);
                 let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent')
                                                             : textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0);
                 this.each((node: View, index) => {
                     if (!(node.floating || (relative && node.alignParent('left', settings)) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
                         const width = Math.round(node.actualLeft() - right);
                         if (width >= 1) {
-                            node.modifyBox(BOX_STANDARD.MARGIN_LEFT, width);
+                            node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, width);
                         }
                     }
                     right = node.actualRight();
@@ -1120,12 +1120,12 @@ export default (Base: Constructor<Node>) => {
                         return sibling;
                     })();
                     const elements =
-                        getElementsBetweenSiblings(
+                        $dom.getElementsBetweenSiblings(
                                 previous ? (previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement)
                                          : null,
                                 node.baseElement)
                             .filter(element => {
-                                const item = getNodeFromElement(element);
+                                const item = $dom.getNodeFromElement<View>(element);
                                 if (item && (item.lineBreak || (item.excluded && item.blockStatic))) {
                                     return true;
                                 }
@@ -1158,7 +1158,7 @@ export default (Base: Constructor<Node>) => {
                         }
                         const height = Math.round(node.linear.top - bottom);
                         if (height >= 1) {
-                            node.modifyBox(BOX_STANDARD.MARGIN_TOP, height);
+                            node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, height);
                         }
                     }
                 }, true);
@@ -1177,7 +1177,7 @@ export default (Base: Constructor<Node>) => {
                 return this._controlName;
             }
             else {
-                const value: number = MAP_ELEMENT[this.nodeName];
+                const value = $const.MAP_ELEMENT[this.nodeName];
                 return value != null ? View.getControlName(value) : '';
             }
         }
@@ -1214,25 +1214,25 @@ export default (Base: Constructor<Node>) => {
         get layoutHorizontal() {
             return (
                 this.linearHorizontal ||
-                this.hasAlign(NODE_ALIGNMENT.HORIZONTAL) ||
-                (this.is(NODE_STANDARD.FRAME) && this.nodes.every(node => node.domElement)) ||
-                (this.nodes.filter(node => node.pageflow).length > 1 && NodeList.linearX(this.nodes))
+                this.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL) ||
+                (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.every(node => node.domElement)) ||
+                (this.nodes.filter(node => node.pageflow).length > 1 && $nodelist.linearX(this.nodes))
             );
         }
         get layoutVertical() {
             return (
                 this.linearVertical ||
-                this.hasAlign(NODE_ALIGNMENT.VERTICAL) ||
-                (this.is(NODE_STANDARD.FRAME) && this.nodes.some(node => node.linearVertical)) ||
-                (this.nodes.filter(node => node.pageflow).length > 1 && NodeList.linearY(this.nodes))
+                this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) ||
+                (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.some(node => node.linearVertical)) ||
+                (this.nodes.filter(node => node.pageflow).length > 1 && $nodelist.linearY(this.nodes))
             );
         }
 
         get linearHorizontal() {
-            return this._android.orientation === AXIS_ANDROID.HORIZONTAL && this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP);
+            return this._android.orientation === AXIS_ANDROID.HORIZONTAL && this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP);
         }
         get linearVertical() {
-            return this._android.orientation === AXIS_ANDROID.VERTICAL && this.is(NODE_STANDARD.LINEAR, NODE_STANDARD.RADIO_GROUP);
+            return this._android.orientation === AXIS_ANDROID.VERTICAL && this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP);
         }
 
         get inlineWidth() {

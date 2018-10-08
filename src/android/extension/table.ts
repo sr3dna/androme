@@ -1,12 +1,10 @@
 
-import { ExtensionResult } from '../../extension/lib/types';
-import Table from '../../extension/table';
 import View from '../view';
-import { convertFloat, convertInt, formatPX, trimEnd } from '../../lib/util';
-import { NODE_STANDARD } from '../../base/lib/constants';
-import { EXT_NAME } from '../../extension/lib/constants';
+import { NODE_ANDROID } from '../lib/constant';
 
-export default class TableAndroid<T extends View> extends Table<T> {
+const [$const, $util] = [lib.constant, lib.util];
+
+export default class TableAndroid<T extends View> extends lib.base.extensions.Table<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }
@@ -14,24 +12,24 @@ export default class TableAndroid<T extends View> extends Table<T> {
     public processNode(): ExtensionResult {
         const result = super.processNode();
         const node = this.node;
-        const columnCount = convertInt(node.app('columnCount'));
+        const columnCount = $util.convertInt(node.app('columnCount'));
         if (columnCount > 1) {
-            let requireWidth = !!node.data(EXT_NAME.TABLE, 'expand');
+            let requireWidth = !!node.data($const.EXT_NAME.TABLE, 'expand');
             node.each((item: T) => {
                 if (item.css('width') === '0px') {
                     item.android('layout_width', '0px');
                     item.app('layout_columnWeight', ((<HTMLTableCellElement> item.element).colSpan || 1).toString());
                 }
                 else {
-                    const expand: boolean | null = item.data(EXT_NAME.TABLE, 'expand');
-                    const exceed: boolean = !!item.data(EXT_NAME.TABLE, 'exceed');
-                    const downsized: boolean = !!item.data(EXT_NAME.TABLE, 'downsized');
+                    const expand: boolean | null = item.data($const.EXT_NAME.TABLE, 'expand');
+                    const exceed: boolean = !!item.data($const.EXT_NAME.TABLE, 'exceed');
+                    const downsized: boolean = !!item.data($const.EXT_NAME.TABLE, 'downsized');
                     if (expand != null) {
                         if (expand) {
-                            const percent = convertFloat(item.data(EXT_NAME.TABLE, 'percent')) / 100;
+                            const percent = $util.convertFloat(item.data($const.EXT_NAME.TABLE, 'percent')) / 100;
                             if (percent > 0) {
                                 item.android('layout_width', '0px');
-                                item.app('layout_columnWeight', trimEnd(percent.toFixed(3), '0'));
+                                item.app('layout_columnWeight', $util.trimEnd(percent.toFixed(3), '0'));
                                 requireWidth = true;
                             }
                         }
@@ -48,7 +46,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
                                 item.android('maxLines', '1');
                             }
                             if (item.has('width') && item.toInt('width') < item.bounds.width) {
-                                item.android('layout_width', formatPX(item.bounds.width));
+                                item.android('layout_width', $util.formatPX(item.bounds.width));
                             }
                         }
                     }
@@ -68,7 +66,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
                     node.android('layout_width', 'match_parent');
                 }
                 else {
-                    node.css('width', formatPX(node.bounds.width));
+                    node.css('width', $util.formatPX(node.bounds.width));
                 }
             }
         }
@@ -77,9 +75,9 @@ export default class TableAndroid<T extends View> extends Table<T> {
 
     public processChild(): ExtensionResult {
         const node = this.node;
-        const rowSpan = convertInt(node.data(EXT_NAME.TABLE, 'rowSpan'));
-        const columnSpan = convertInt(node.data(EXT_NAME.TABLE, 'colSpan'));
-        const spaceSpan = convertInt(node.data(EXT_NAME.TABLE, 'spaceSpan'));
+        const rowSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'rowSpan'));
+        const columnSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'colSpan'));
+        const spaceSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'spaceSpan'));
         if (rowSpan > 1) {
             node.app('layout_rowSpan', rowSpan.toString());
         }
@@ -91,7 +89,7 @@ export default class TableAndroid<T extends View> extends Table<T> {
             this.application.viewController.appendAfter(
                 node.id,
                 this.application.viewController.renderNodeStatic(
-                    NODE_STANDARD.SPACE,
+                    NODE_ANDROID.SPACE,
                     parent.renderDepth + 1,
                     {
                         app: { layout_columnSpan: spaceSpan.toString() }

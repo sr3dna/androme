@@ -1,8 +1,7 @@
-import { BoxModel, ClientRect, Null } from './types';
 import Node from '../base/node';
-import { convertInt, hasValue, resolvePath } from './util';
+import { convertInt, hasValue, includes, resolvePath } from './util';
 
-export function getBoxRect() {
+export function getBoxRect(): BoxRect {
     return {
         top: 0,
         left: 0,
@@ -11,7 +10,7 @@ export function getBoxRect() {
     };
 }
 
-export function getClientRect() {
+export function getClientRect(): BoxDimensionsRect {
     return {
         top: 0,
         left: 0,
@@ -22,7 +21,7 @@ export function getClientRect() {
     };
 }
 
-export function getBoxModel() {
+export function getBoxModel(): BoxModel {
     return {
         marginTop: 0,
         marginRight: 0,
@@ -57,12 +56,12 @@ export function getNodeFromElement<T extends Node>(element: Null<Element>): Null
     return getElementCache(element, 'node');
 }
 
-export function getRangeClientRect(element: Element): [Null<ClientRect>, boolean] {
+export function getRangeClientRect(element: Element): [Null<BoxDimensionsRect>, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects());
     let multiLine = false;
-    let result: Null<ClientRect> = null;
+    let result: Null<BoxDimensionsRect> = null;
     if (domRect.length > 0) {
         result = assignBounds(domRect[0]);
         const top = new Set([result.top]);
@@ -86,7 +85,7 @@ export function getRangeClientRect(element: Element): [Null<ClientRect>, boolean
     return [result, multiLine];
 }
 
-export function assignBounds(bounds: ClientRect | DOMRect): ClientRect {
+export function assignBounds(bounds: BoxDimensionsRect | DOMRect): BoxDimensionsRect {
     return {
         top: bounds.top,
         right: bounds.right,
@@ -376,4 +375,15 @@ export function isElementVisible(element: Element) {
         }
     }
     return false;
+}
+
+export function locateExtension(element: Element, extension: string): Null<HTMLElement> {
+    if (element instanceof HTMLElement) {
+        return (
+            Array
+                .from(element.children)
+                .find((item: HTMLElement) => includes(item.dataset.ext, extension)) as HTMLElement
+        );
+    }
+    return null;
 }

@@ -1,13 +1,10 @@
-import { ViewData } from '../base/lib/types';
-import { Null, PlainFile } from '../lib/types';
+import { ViewData } from '../types/application';
 import { SettingsAndroid } from './lib/types';
-import NodeList from '../base/nodelist';
-import File from '../base/file';
 import View from './view';
-import { lastIndexOf } from '../lib/util';
 import { replaceUnit } from './lib/util';
-import { getTemplateLevel, insertTemplateData, parseTemplate, replaceTab } from '../lib/xml';
-import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './constants';
+import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './lib/constant';
+
+const [$util, $xml] = [lib.util, lib.xml];
 
 import STRING_TMPL from './template/resource/string';
 import STRINGARRAY_TMPL from './template/resource/string-array';
@@ -21,12 +18,12 @@ function caseInsensitve(a: string | string[], b: string | string[]) {
     return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
 }
 
-export default class FileHandler<T extends View> extends File<T> {
+export default class FileHandler<T extends View> extends lib.base.File<T> {
     constructor(public readonly settings: SettingsAndroid) {
         super(settings.outputDirectory, settings.outputMaxProcessingTime, settings.outputArchiveFileType);
     }
 
-    public saveAllToDisk(data: ViewData<NodeList<T>>) {
+    public saveAllToDisk(data: ViewData<lib.base.NodeList<T>>) {
         const files: PlainFile[] = [];
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
@@ -44,7 +41,7 @@ export default class FileHandler<T extends View> extends File<T> {
         this.saveToDisk(files);
     }
 
-    public layoutAllToXml(data: ViewData<NodeList<T>>, saveToDisk = false) {
+    public layoutAllToXml(data: ViewData<lib.base.NodeList<T>>, saveToDisk = false) {
         const result = {};
         const files: PlainFile[] = [];
         const views = [...data.views, ...data.includes];
@@ -92,21 +89,21 @@ export default class FileHandler<T extends View> extends File<T> {
     public resourceStringToXml(saveToDisk = false) {
         let xml = '';
         this.stored.strings = new Map([...this.stored.strings.entries()].sort(caseInsensitve));
-        const template = parseTemplate(STRING_TMPL);
+        const template = $xml.parseTemplate(STRING_TMPL);
         const data: {} = {
             '0': [{
                 '1': []
             }]
         };
-        const root = getTemplateLevel(data, '0');
+        const root = $xml.getTemplateLevel(data, '0');
         if (this.appName !== '' && !this.stored.strings.has('app_name')) {
             root['1'].push({ name: 'app_name', value: this.appName });
         }
         for (const [name, value] of this.stored.strings.entries()) {
             root['1'].push({ name, value });
         }
-        xml = insertTemplateData(template, data);
-        xml = replaceTab(xml, this.settings, true);
+        xml = $xml.insertTemplateData(template, data);
+        xml = $xml.replaceTab(xml, this.settings, true);
         if (saveToDisk) {
             this.saveToDisk(this.parseFileDetails(xml));
         }
@@ -117,13 +114,13 @@ export default class FileHandler<T extends View> extends File<T> {
         let xml = '';
         this.stored.arrays = new Map([...this.stored.arrays.entries()].sort());
         if (this.stored.arrays.size > 0) {
-            const template = parseTemplate(STRINGARRAY_TMPL);
+            const template = $xml.parseTemplate(STRINGARRAY_TMPL);
             const data: {} = {
                 '0': [{
                     '1': []
                 }]
             };
-            const root = getTemplateLevel(data, '0');
+            const root = $xml.getTemplateLevel(data, '0');
             for (const [name, values] of this.stored.arrays.entries()) {
                 const arrayItem: {} = {
                     name,
@@ -135,8 +132,8 @@ export default class FileHandler<T extends View> extends File<T> {
                 }
                 root['1'].push(arrayItem);
             }
-            xml = insertTemplateData(template, data);
-            xml = replaceTab(xml, this.settings, true);
+            xml = $xml.insertTemplateData(template, data);
+            xml = $xml.replaceTab(xml, this.settings, true);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -148,7 +145,7 @@ export default class FileHandler<T extends View> extends File<T> {
         let xml = '';
         this.stored.fonts = new Map([...this.stored.fonts.entries()].sort());
         if (this.stored.fonts.size > 0) {
-            const template = parseTemplate(FONT_TMPL);
+            const template = $xml.parseTemplate(FONT_TMPL);
             for (const [name, font] of this.stored.fonts.entries()) {
                 const data = {
                     '#include': {},
@@ -159,7 +156,7 @@ export default class FileHandler<T extends View> extends File<T> {
                     }]
                 };
                 data[(this.settings.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude')]['app'] = true;
-                const root = getTemplateLevel(data, '0');
+                const root = $xml.getTemplateLevel(data, '0');
                 for (const attr in font) {
                     const [style, weight] = attr.split('-');
                     root['1'].push({
@@ -170,9 +167,9 @@ export default class FileHandler<T extends View> extends File<T> {
                                                                                                             : ''))}`
                     });
                 }
-                xml += '\n\n' + insertTemplateData(template, data);
+                xml += '\n\n' + $xml.insertTemplateData(template, data);
             }
-            xml = replaceTab(xml, this.settings);
+            xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -184,18 +181,18 @@ export default class FileHandler<T extends View> extends File<T> {
         let xml = '';
         if (this.stored.colors.size > 0) {
             this.stored.colors = new Map([...this.stored.colors.entries()].sort());
-            const template = parseTemplate(COLOR_TMPL);
+            const template = $xml.parseTemplate(COLOR_TMPL);
             const data: {} = {
                 '0': [{
                     '1': []
                 }]
             };
-            const root = getTemplateLevel(data, '0');
+            const root = $xml.getTemplateLevel(data, '0');
             for (const [name, value] of this.stored.colors.entries()) {
                 root['1'].push({ name, value });
             }
-            xml = insertTemplateData(template, data);
-            xml = replaceTab(xml, this.settings);
+            xml = $xml.insertTemplateData(template, data);
+            xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -207,13 +204,13 @@ export default class FileHandler<T extends View> extends File<T> {
         let xml = '';
         if (this.stored.styles.size > 0) {
             this.stored.styles = new Map([...this.stored.styles.entries()].sort(caseInsensitve));
-            const template = parseTemplate(STYLE_TMPL);
+            const template = $xml.parseTemplate(STYLE_TMPL);
             const data: {} = {
                 '0': [{
                     '1': []
                 }]
             };
-            const root = getTemplateLevel(data, '0');
+            const root = $xml.getTemplateLevel(data, '0');
             for (const [name1, style] of this.stored.styles.entries()) {
                 const styleItem: {} = {
                     name1,
@@ -229,9 +226,9 @@ export default class FileHandler<T extends View> extends File<T> {
                     });
                 root['1'].push(styleItem);
             }
-            xml = insertTemplateData(template, data);
+            xml = $xml.insertTemplateData(template, data);
             xml = replaceUnit(xml, this.settings, true);
-            xml = replaceTab(xml, this.settings);
+            xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -243,19 +240,19 @@ export default class FileHandler<T extends View> extends File<T> {
         let xml = '';
         this.stored.dimens = new Map([...this.stored.dimens.entries()].sort());
         if (this.stored.dimens.size > 0) {
-            const template = parseTemplate(DIMEN_TMPL);
+            const template = $xml.parseTemplate(DIMEN_TMPL);
             const data: {} = {
                 '0': [{
                     '1': []
                 }]
             };
-            const root = getTemplateLevel(data, '0');
+            const root = $xml.getTemplateLevel(data, '0');
             for (const [name, value] of this.stored.dimens.entries()) {
                 root['1'].push({ name, value });
             }
-            xml = insertTemplateData(template, data);
+            xml = $xml.insertTemplateData(template, data);
             xml = replaceUnit(xml, this.settings);
-            xml = replaceTab(xml, this.settings);
+            xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
             }
@@ -266,7 +263,7 @@ export default class FileHandler<T extends View> extends File<T> {
     public resourceDrawableToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.drawables.size > 0 || this.stored.images.size > 0) {
-            const template = parseTemplate(DRAWABLE_TMPL);
+            const template = $xml.parseTemplate(DRAWABLE_TMPL);
             const data: {} = {
                 '0': []
             };
@@ -281,21 +278,21 @@ export default class FileHandler<T extends View> extends File<T> {
                 if (Object.keys(images).length > 1) {
                     for (const dpi in images) {
                         root.push({
-                            name: `res/drawable-${dpi}/${name}.${lastIndexOf(images[dpi], '.')}`,
+                            name: `res/drawable-${dpi}/${name}.${$util.lastIndexOf(images[dpi], '.')}`,
                             value: `<!-- image: ${images[dpi]} -->`
                         });
                     }
                 }
                 else if (images['mdpi']) {
                     root.push({
-                        name: `res/drawable/${name}.${lastIndexOf(images['mdpi'], '.')}`,
+                        name: `res/drawable/${name}.${$util.lastIndexOf(images['mdpi'], '.')}`,
                         value: `<!-- image: ${images['mdpi']} -->`
                     });
                 }
             }
-            xml = insertTemplateData(template, data);
+            xml = $xml.insertTemplateData(template, data);
             xml = replaceUnit(xml, this.settings);
-            xml = replaceTab(xml, this.settings);
+            xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk([...this.parseImageDetails(xml), ...this.parseFileDetails(xml)]);
             }

@@ -1,8 +1,8 @@
-import Extension from '../base/extension';
 import Node from '../base/node';
+import Extension from '../base/extension';
 import { hasValue } from '../lib/util';
 import { getNodeFromElement } from '../lib/dom';
-import { NODE_PROCEDURE } from '../base/lib/constants';
+import { NODE_PROCEDURE } from '../lib/enumeration';
 
 export default abstract class Accessibility<T extends Node> extends Extension<T> {
     constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
@@ -18,8 +18,8 @@ export default abstract class Accessibility<T extends Node> extends Extension<T>
                         case 'radio':
                         case 'checkbox':
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
-                                const label = getNodeFromElement(sibling);
-                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) : null;
+                                const label = getNodeFromElement<T>(sibling);
+                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement<T>(sibling.parentElement) : null;
                                 if (label && label.visible && label.pageflow) {
                                     if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                         node.companion = label;

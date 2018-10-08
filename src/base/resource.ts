@@ -1,16 +1,12 @@
-import { AppCurrent, ResourceMap, Settings, ViewData } from './lib/types';
-import { BorderAttribute, BoxStyle, FontAttribute, Image, Null } from '../lib/types';
+import { ResourceMap, Settings, ViewData } from '../types/application';
 import Node from './node';
-import NodeList from './nodelist';
-import Application from './application';
-import File from './file';
 import { convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
 import { cssFromParent, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
 import { replaceEntity } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
-import { NODE_RESOURCE } from './lib/constants';
+import { NODE_RESOURCE } from '../lib/enumeration';
 
-export default abstract class Resource<T extends Node> implements AppCurrent<T> {
+export default abstract class Resource<T extends Node> implements lib.base.Resource<T> {
     public static STORED: ResourceMap = {
         strings: new Map(),
         arrays: new Map(),
@@ -57,16 +53,16 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
     }
 
     public abstract settings: Settings;
-    public cache: NodeList<T>;
-    public application: Application<T>;
+    public cache: lib.base.NodeList<T>;
+    public application: lib.base.Application<T>;
     public imageDimensions: Map<string, Image>;
 
-    constructor(public file: File<T>) {
+    constructor(public file: lib.base.File<T>) {
     }
 
     public abstract setImageSource(): void;
     public abstract addTheme(template: string, data: {}, options: {}): void;
-    public abstract finalize(viewData: ViewData<NodeList<T>>): void;
+    public abstract finalize(viewData: ViewData<lib.base.NodeList<T>>): void;
 
     public addFile(pathname: string, filename: string, content = '', uri = '') {
         this.file.addFile(pathname, filename, content, uri);
@@ -398,12 +394,12 @@ export default abstract class Resource<T extends Node> implements AppCurrent<T> 
             });
     }
 
-    protected borderVisible(border?: BorderAttribute) {
-        return border && !(border.style === 'none' || border.width === '0px');
+    public borderVisible(border?: BorderAttribute) {
+        return border != null && !(border.style === 'none' || border.width === '0px');
     }
 
-    protected hasDrawableBackground(object?: BoxStyle) {
-        return (object && (
+    public hasDrawableBackground(object?: BoxStyle) {
+        return (object != null && (
                 this.borderVisible(object.borderTop) ||
                 this.borderVisible(object.borderRight) ||
                 this.borderVisible(object.borderBottom) ||

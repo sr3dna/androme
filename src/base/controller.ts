@@ -1,12 +1,10 @@
-import { AppCurrent, SettingsInternal, Settings, ViewData } from './lib/types';
-import { ObjectIndex } from '../lib/types';
-import Application from './application';
+import { AppCurrent, SettingsInternal, Settings, ViewData } from '../types/application';
 import Node from './node';
-import NodeList from './nodelist';
+import Application from './application';
 
 export default abstract class Controller<T extends Node> implements AppCurrent<T> {
     public abstract settings: Settings;
-    public cache: NodeList<T>;
+    public cache: lib.base.NodeList<T>;
     public application: Application<T>;
 
     private _before: ObjectIndex<string[]> = {};
@@ -24,10 +22,10 @@ export default abstract class Controller<T extends Node> implements AppCurrent<T
     public abstract renderMerge(name: string, content: string[]): string;
     public abstract baseRenderDepth(name: string): number;
     public abstract setConstraints(): void;
-    public abstract setBoxSpacing(data: ViewData<NodeList<T>>): void;
-    public abstract setDimensions(data: ViewData<NodeList<T>>): void;
+    public abstract setBoxSpacing(data: ViewData<lib.base.NodeList<T>>): void;
+    public abstract setDimensions(data: ViewData<lib.base.NodeList<T>>): void;
     public abstract getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan?: number): string;
-    public abstract finalize(data: ViewData<NodeList<T>>): void;
+    public abstract finalize(data: ViewData<lib.base.NodeList<T>>): void;
     public abstract get baseTemplate(): string;
     public abstract get supportInline(): string[];
     public abstract get supportInclude(): boolean;

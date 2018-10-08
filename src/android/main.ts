@@ -1,7 +1,5 @@
 
-import { AppFramework } from '../base/lib/types';
-import { ObjectMap } from '../lib/types';
-import { IExtension } from '../extension/lib/types';
+import { AppFramework } from '../types/application';
 import { SettingsAndroid } from './lib/types';
 import View from './view';
 import ViewController from './viewcontroller';
@@ -9,14 +7,11 @@ import ResourceHandler from './resourcehandler';
 import FileHandler from './filehandler';
 import Settings from './settings';
 import API_ANDROID from './customizations';
-import { APP_FRAMEWORK } from '../base/lib/constants';
-import { XMLNS_ANDROID } from './constants';
-
-import { EXT_NAME } from '../extension/lib/constants';
+import { XMLNS_ANDROID } from './lib/constant';
 import { WIDGET_NAME } from './extension/lib/constants';
 
-import External from '../extension/external';
-import Origin from '../extension/origin';
+import External from './extension/external';
+import Origin from './extension/origin';
 import Custom from './extension/custom';
 import Accessibility from './extension/accessibility';
 import List from './extension/list';
@@ -38,20 +33,25 @@ function autoClose() {
     return false;
 }
 
+const APP_FRAMEWORK = lib.enumeration.APP_FRAMEWORK;
+
 type T = View;
 
 let initialized = false;
 
+let application: lib.base.Application<T>;
 let viewController: ViewController<T>;
 let fileHandler: FileHandler<T>;
 let resourceHandler: ResourceHandler<T>;
 
 let settings: SettingsAndroid;
-let builtInExtensions: ObjectMap<IExtension>;
+let builtInExtensions: ObjectMap<lib.base.Extension<lib.base.Node>>;
 
 const appBase: AppFramework<T> = {
     create() {
+        const EXT_NAME = lib.constant.EXT_NAME;
         settings = Object.assign({}, Settings);
+        application = new lib.base.Application(APP_FRAMEWORK.ANDROID);
         viewController = new ViewController<T>();
         fileHandler = new FileHandler<T>(settings);
         resourceHandler = new ResourceHandler<T>(fileHandler);
@@ -73,27 +73,41 @@ const appBase: AppFramework<T> = {
         initialized = true;
         return {
             framework: APP_FRAMEWORK.ANDROID,
-            settings,
-            nodeObject: View,
+            application,
             viewController,
             resourceHandler,
-            builtInExtensions
+            nodeObject: View,
+            builtInExtensions,
+            settings
         };
     },
     cached() {
         if (initialized) {
             return {
                 framework: APP_FRAMEWORK.ANDROID,
-                settings,
-                nodeObject: View,
+                application,
                 viewController,
                 resourceHandler,
-                builtInExtensions
+                nodeObject: View,
+                builtInExtensions,
+                settings
             };
         }
         return appBase.create();
     },
     system: {
+        customize(build: number, widget: string, options: {}) {
+            if (API_ANDROID[build]) {
+                const customizations = API_ANDROID[build].customizations;
+                if (customizations[widget] == null) {
+                    customizations[widget] = {};
+                }
+                Object.assign(customizations[widget], options);
+            }
+        },
+        addXmlNs(name: string, uri: string) {
+            XMLNS_ANDROID[name] = uri;
+        },
         writeLayoutAllXml(saveToDisk = false) {
             if (initialized) {
                 const main = viewController.application;
@@ -174,18 +188,6 @@ const appBase: AppFramework<T> = {
                 }
             }
             return '';
-        },
-        addXmlNs(name: string, uri: string) {
-            XMLNS_ANDROID[name] = uri;
-        },
-        customize(build: number, widget: string, options: {}) {
-            if (API_ANDROID[build]) {
-                const customizations = API_ANDROID[build].customizations;
-                if (customizations[widget] == null) {
-                    customizations[widget] = {};
-                }
-                Object.assign(customizations[widget], options);
-            }
         }
     }
 };

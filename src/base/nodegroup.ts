@@ -1,7 +1,7 @@
 import Node from './node';
 import NodeList from './nodelist';
 import { assignBounds, getNodeFromElement } from '../lib/dom';
-import { NODE_ALIGNMENT, NODE_STANDARD } from './lib/constants';
+import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/enumeration';
 
 export default abstract class NodeGroup<T extends Node> extends Node {
     constructor(
@@ -15,7 +15,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
         super.init();
         this.children.forEach(item => {
             this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
-            item.parent = this;
+            item.parent = this as any;
         });
         this.parent.children.sort(NodeList.siblingIndex);
         this.initial.children.push(...this.children.slice());
@@ -99,8 +99,9 @@ export default abstract class NodeGroup<T extends Node> extends Node {
         }
         else {
             return (
-                this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.PERCENT) || this.children.every(node => node.blockStatic) ? 'block'
-                                                                                                                           : this.children.every(node => node.inline) ? 'inline' : 'inline-block'
+                this.children.every(node => node.blockStatic) ||
+                this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.PERCENT) ? 'block'
+                                                                          : this.children.every(node => node.inline) ? 'inline' : 'inline-block'
             );
         }
     }

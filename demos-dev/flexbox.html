@@ -81,20 +81,23 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        Promise.all([
-            System.import('/build/main.js'),
-            System.import('/build/android/main.js')
-        ]).then((modules) => {
-            androme = modules[0];
-            androme.setFramework(modules[1]['default']);
-            androme.parseDocument('androme_ui');
-            androme.close();
+        System.import('/build/lib.js').then((result) => {
+            lib = result;
+            Promise.all([
+                System.import('/build/core.js'),
+                System.import('/build/android/main.js')
+            ]).then((modules) => {
+                androme = modules[0];
+                androme.setFramework(modules[1]['default']);
+                androme.parseDocument('androme_ui');
+                androme.close();
 
-            var views = androme.system.writeLayoutAllXml();
-            document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+                var views = androme.system.writeLayoutAllXml();
+                document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
 
-            var resource = androme.system.writeResourceAllXml();
-            document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                var resource = androme.system.writeResourceAllXml();
+                document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+            });
         });
     </script>
 </head>

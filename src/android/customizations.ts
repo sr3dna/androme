@@ -1,5 +1,4 @@
-import { ObjectMap, StringMap } from '../lib/types';
-import { BUILD_ANDROID } from './constants';
+import { BUILD_ANDROID } from './lib/constant';
 
 type Customizations = {
     [index: number]: {
