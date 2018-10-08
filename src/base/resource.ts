@@ -1,12 +1,14 @@
-import { ResourceMap, Settings, ViewData } from '../types/application';
 import Node from './node';
+import NodeList from './nodelist';
+import Application from './application';
+import File from './file';
 import { convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
 import { cssFromParent, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
 import { replaceEntity } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE } from '../lib/enumeration';
 
-export default abstract class Resource<T extends Node> implements lib.base.Resource<T> {
+export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
     public static STORED: ResourceMap = {
         strings: new Map(),
         arrays: new Map(),
@@ -53,16 +55,16 @@ export default abstract class Resource<T extends Node> implements lib.base.Resou
     }
 
     public abstract settings: Settings;
-    public cache: lib.base.NodeList<T>;
-    public application: lib.base.Application<T>;
+    public cache: NodeList<T>;
+    public application: Application<T>;
     public imageDimensions: Map<string, Image>;
 
-    constructor(public file: lib.base.File<T>) {
+    constructor(public file: File<T>) {
     }
 
     public abstract setImageSource(): void;
     public abstract addTheme(template: string, data: {}, options: {}): void;
-    public abstract finalize(viewData: ViewData<lib.base.NodeList<T>>): void;
+    public abstract finalize(viewData: ViewData<NodeList<T>>): void;
 
     public addFile(pathname: string, filename: string, content = '', uri = '') {
         this.file.addFile(pathname, filename, content, uri);

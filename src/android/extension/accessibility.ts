@@ -1,9 +1,9 @@
 import View from '../view';
 import { NODE_ANDROID } from '../lib/constant';
 
-const [$enum, $util, $dom] = [lib.enumeration, lib.util, lib.dom];
+const [$enum, $util, $dom] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom];
 
-export default class AccessibilityAndroid<T extends View> extends lib.base.extensions.Accessibility<T> {
+export default class AccessibilityAndroid<T extends View> extends androme.lib.base.extensions.Accessibility<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

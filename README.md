@@ -32,8 +32,7 @@ GitHub
 * Open Browser: http://localhost:3000/demos/index.html
 
 ```javascript
-<script src="/dist/androme.lib.min.js"></script>
-<script src="/dist/androme.core.min.js"></script>
+<script src="/dist/androme.min.js"></script>
 <script src="/dist/android.framework.min.js"></script>
 <script>
     // optional
@@ -56,11 +55,10 @@ GitHub
     });
 </script>
 ```
-Library files are in the /dist folder. A minimum of *three* files are required to run androme.
+Library files are in the /dist folder. A minimum of *two* files required to run androme.
 
-1. androme.lib
-2. androme.core
-3. framework (e.g. android)
+1. androme
+2. framework (e.g. android)
 
 There are babel minified versions for production (ES5) and non-babel versions for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session. The application will continuously and progressively build into a single entity with combined shared resources.
 
@@ -187,7 +185,7 @@ Most of the Android support library extensions can be configured using the same 
 
     // create an extension (third-party)
     // framework: universal = 0; android = 2;
-    class Sample extends lib.base.Extension {
+    class Sample extends androme.lib.base.Extension {
         constructor(name, framework = 0, tagNames = [], options = {}) {
             super(name, framework, tagNames, options);
         }

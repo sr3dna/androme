@@ -1,9 +1,8 @@
-import { ResourceMap, ViewData } from '../types/application';
 import Node from './node';
 import NodeList from './nodelist';
 import { lastIndexOf, trimString } from '../lib/util';
 
-export default abstract class File<T extends Node> implements lib.base.File<T> {
+export default abstract class File<T extends Node> implements androme.lib.base.File<T> {
     public appName = '';
     public stored: ResourceMap;
     public readonly queue: PlainFile[] = [];

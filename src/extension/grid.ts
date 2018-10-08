@@ -1,4 +1,3 @@
-import { LayoutMapX } from '../types/application';
 import { GridCellData, GridData } from './types/data';
 import Node from '../base/node';
 import NodeList from '../base/nodelist';

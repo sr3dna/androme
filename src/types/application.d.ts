@@ -1,4 +1,4 @@
-export interface Settings {
+interface Settings {
     builtInExtensions: string[];
     supportRTL: boolean;
     alwaysReevaluateResources: boolean;
@@ -20,49 +20,62 @@ export interface Settings {
     outputMaxProcessingTime: number;
 }
 
-export type SettingsInternal = {
+type SettingsInternal = {
     layout: {
         directory: string;
         fileExtension: string;
     }
 };
 
-export interface AppFramework<T extends lib.base.Node> {
+interface AppFramework<T extends androme.lib.base.Node> {
     system: FunctionMap;
     create(): AppBase<T>;
     cached(): AppBase<T>;
 }
 
-export interface AppBase<T extends lib.base.Node> {
+interface AppBase<T extends androme.lib.base.Node> {
     framework: number;
-    application?: lib.base.Application<T>;
-    viewController: lib.base.Controller<T>;
-    resourceHandler: lib.base.Resource<T>;
+    application?: androme.lib.base.Application<T>;
+    viewController: androme.lib.base.Controller<T>;
+    resourceHandler: androme.lib.base.Resource<T>;
     nodeObject: Constructor<T>;
-    builtInExtensions: ObjectMap<lib.base.Extension<lib.base.Node>>;
+    builtInExtensions: ObjectMap<androme.lib.base.Extension<androme.lib.base.Node>>;
     settings: Settings;
 }
 
-export interface AppCurrent<T extends lib.base.Node> {
+interface AppCurrent<T extends androme.lib.base.Node> {
     settings: Settings;
-    cache: lib.base.NodeList<T>;
-    application: lib.base.Application<T>;
+    cache: androme.lib.base.NodeList<T>;
+    application: androme.lib.base.Application<T>;
 }
 
-export type ViewData<T> = {
+type ExtensionDependency = {
+    name: string;
+    init: boolean;
+};
+
+type ExtensionResult = {
+    output: string;
+    complete: boolean;
+    next?: boolean;
+    parent?: {};
+    include?: boolean;
+};
+
+type ViewData<T> = {
     cache: T;
     views: PlainFile[];
     includes: PlainFile[];
 };
 
-export type LayoutMapX<T> = {
+type LayoutMapX<T> = {
     [key: number]: ObjectIndex<T[]>;
     length: number;
 };
 
-export type LayoutMapY<T> = Map<number, Map<number, T>>;
+type LayoutMapY<T> = Map<number, Map<number, T>>;
 
-export type ResourceMap = {
+type ResourceMap = {
     strings: Map<string, string>;
     arrays: Map<string, string[]>;
     fonts: Map<string, {}>;

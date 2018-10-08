@@ -1,10 +1,9 @@
-import { ViewData } from '../types/application';
 import { SettingsAndroid } from './lib/types';
 import View from './view';
 import { generateId, replaceUnit } from './lib/util';
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
-const [$enum, $util, $dom, $xml, $color, $resource] = [lib.enumeration, lib.util, lib.dom, lib.xml, lib.color, lib.base.Resource];
+const [$enum, $util, $dom, $xml, $color, $resource] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom, androme.lib.xml, androme.lib.color, androme.lib.base.Resource];
 
 import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
 import LAYERLIST_TMPL from './template/resource/layer-list';
@@ -55,7 +54,7 @@ type BackgroundImage = {
 
 type StyleList = ObjectMap<number[]>[];
 
-export default class ResourceHandler<T extends View> extends lib.base.Resource<T> {
+export default class ResourceHandler<T extends View> extends androme.lib.base.Resource<T> {
     public static getStored(name: string) {
         return $resource.STORED[name];
     }
@@ -262,7 +261,7 @@ export default class ResourceHandler<T extends View> extends lib.base.Resource<T
     private tagStyle: ObjectMap<StyleList> = {};
     private tagCount: ObjectMap<number> = {};
 
-    constructor(file: lib.base.File<T>) {
+    constructor(file: androme.lib.base.File<T>) {
         super(file);
         this.file.stored = $resource.STORED;
     }
@@ -274,7 +273,7 @@ export default class ResourceHandler<T extends View> extends lib.base.Resource<T
         this.tagCount = {};
     }
 
-    public finalize(viewData: ViewData<lib.base.NodeList<T>>) {
+    public finalize(viewData: ViewData<androme.lib.base.NodeList<T>>) {
         this.processFontStyle(viewData);
         const styles: ObjectMap<string[]> = {};
         for (const node of viewData.cache) {
@@ -990,7 +989,7 @@ export default class ResourceHandler<T extends View> extends lib.base.Resource<T
                 }
             });
         for (const tag in nodeName) {
-            const nodes = new lib.base.NodeList(nodeName[tag]);
+            const nodes = new androme.lib.base.NodeList(nodeName[tag]);
             const sorted: StyleList = [];
             for (let node of nodes) {
                 let system = false;
@@ -1223,7 +1222,7 @@ export default class ResourceHandler<T extends View> extends lib.base.Resource<T
         this.addFile(options.output.path, options.output.file, xml);
     }
 
-    private processFontStyle(viewData: ViewData<lib.base.NodeList<T>>) {
+    private processFontStyle(viewData: ViewData<androme.lib.base.NodeList<T>>) {
         const style: ObjectMapNested<number[]> = {};
         const layout: ObjectMapNested<number[]> = {};
         const resource: ObjectMap<StyleTag[]> = {};

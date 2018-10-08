@@ -3,7 +3,7 @@ import ViewBase from './viewbase';
 
 type T = View;
 
-export default class ViewGroup extends ViewBase(lib.base.NodeGroup as Constructor<lib.base.Node>) {
+export default class ViewGroup extends ViewBase(androme.lib.base.NodeGroup as Constructor<androme.lib.base.Node>) {
     constructor(
         id: number,
         node: T,

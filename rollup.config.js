@@ -4,20 +4,10 @@ import minify from 'rollup-plugin-babel-minify';
 
 export default [
     {
-        input: './build/lib.js',
+        input: './build/main.js',
         treeshake: false,
         output: {
-            file: './dist/androme.lib.js',
-            name: 'lib',
-            format: 'iife',
-            banner: `/* androme ${version}\n   https://github.com/anpham6/androme */\n`
-        }
-    },
-    {
-        input: './build/core.js',
-        treeshake: true,
-        output: {
-            file: './dist/androme.core.js',
+            file: './dist/androme.js',
             name: 'androme',
             format: 'iife',
             banner: `/* androme ${version}\n   https://github.com/anpham6/androme */\n`
@@ -34,23 +24,10 @@ export default [
         }
     },
     {
-        input: './build/lib.js',
+        input: './build/main.js',
         treeshake: false,
         output: {
-            file: './dist/androme.lib.min.js',
-            name: 'lib',
-            format: 'iife'
-        },
-        plugins: [
-            babel(),
-            minify()
-        ]
-    },
-    {
-        input: './build/core.js',
-        treeshake: true,
-        output: {
-            file: './dist/androme.core.min.js',
+            file: './dist/androme.min.js',
             name: 'androme',
             format: 'iife'
         },

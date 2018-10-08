@@ -5,11 +5,11 @@ import { delimitDimens, stripId } from '../../lib/util';
 import { NODE_ANDROID } from '../../lib/constant';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
-const [$enum, $const, $util, $dom, $xml] = [lib.enumeration, lib.constant, lib.util, lib.dom, lib.xml];
+const [$enum, $const, $util, $dom, $xml] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom, androme.lib.xml];
 
 import EXTENSION_APPBAR_TMPL from '../../template/extension/appbar';
 
-export default class Toolbar<T extends View> extends lib.base.Extension<T> {
+export default class Toolbar<T extends View> extends androme.lib.base.Extension<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
         this.require(WIDGET_NAME.MENU);

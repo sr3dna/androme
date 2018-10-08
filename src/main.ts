@@ -1,11 +1,32 @@
-import { AppBase, AppFramework, Settings } from './types/application';
 import Node from './base/node';
+import NodeList from './base/nodelist';
+import NodeGroup from './base/nodegroup';
+import Application from './base/application';
+import Controller from './base/controller';
+import Resource from './base/resource';
+import File from './base/file';
+import Extension from './base/extension';
 
-const [$util, $dom] = [lib.util, lib.dom];
+import Accessibility from './extension/accessibility';
+import Button from './extension/button';
+import Custom from './extension/custom';
+import External from './extension/external';
+import Grid from './extension/grid';
+import List from './extension/list';
+import Nav from './extension/nav';
+import Origin from './extension/origin';
+import Table from './extension/table';
+
+import * as enumeration from './lib/enumeration';
+import * as constant from './lib/constant';
+import * as util from './lib/util';
+import * as dom from './lib/dom';
+import * as xml from './lib/xml';
+import * as color from './lib/color';
 
 type T = Node;
 
-let main: lib.base.Application<T>;
+let main: androme.lib.base.Application<T>;
 let framework: AppFramework<T>;
 let settings: Settings = {} as any;
 let system: FunctionMap = {} as any;
@@ -23,15 +44,15 @@ function setStyleMap() {
                     const cssRule = <CSSStyleRule> styleSheet.cssRules[j];
                     const attrs: Set<string> = new Set();
                     for (const attr of Array.from(cssRule.style)) {
-                        attrs.add($util.convertCamelCase(attr));
+                        attrs.add(util.convertCamelCase(attr));
                     }
                     Array
                         .from(document.querySelectorAll(cssRule.selectorText))
                         .forEach((element: HTMLElement) => {
                             for (const attr of Array.from(element.style)) {
-                                attrs.add($util.convertCamelCase(attr));
+                                attrs.add(util.convertCamelCase(attr));
                             }
-                            const style = $dom.getStyle(element);
+                            const style = dom.getStyle(element);
                             const styleMap = {};
                             for (const attr of attrs) {
                                 const cssStyle = cssRule.style[attr];
@@ -63,8 +84,8 @@ function setStyleMap() {
                                         case 'paddingRight':
                                         case 'paddingBottom':
                                         case 'paddingLeft':
-                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(cssStyle as string) || $util.isPercent(cssStyle) ? cssStyle
-                                                                                                                                   : $util.convertPX(cssStyle, style.fontSize as string);
+                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(cssStyle as string) || util.isPercent(cssStyle) ? cssStyle
+                                                                                                                                  : util.convertPX(cssStyle, style.fontSize as string);
                                             break;
                                         default:
                                             if (styleMap[attr] == null) {
@@ -75,26 +96,26 @@ function setStyleMap() {
                                 }
                             }
                             if (main.settings.preloadImages &&
-                                $util.hasValue(styleMap['backgroundImage']) &&
+                                util.hasValue(styleMap['backgroundImage']) &&
                                 styleMap['backgroundImage'] !== 'initial')
                             {
                                 styleMap['backgroundImage']
                                     .split(',')
                                     .map(value => value.trim())
                                     .forEach(value => {
-                                        const url = $dom.parseBackgroundUrl(value);
+                                        const url = dom.parseBackgroundUrl(value);
                                         if (url !== '' && !cacheImage.has(url)) {
                                             cacheImage.set(url, { width: 0, height: 0, url });
                                         }
                                     });
                             }
-                            const data = $dom.getElementCache(element, 'styleMap');
+                            const data = dom.getElementCache(element, 'styleMap');
                             if (data) {
                                 Object.assign(data, styleMap);
                             }
                             else {
-                                $dom.setElementCache(element, 'style', style);
-                                $dom.setElementCache(element, 'styleMap', styleMap);
+                                dom.setElementCache(element, 'style', style);
+                                dom.setElementCache(element, 'styleMap', styleMap);
                             }
                         });
                 }
@@ -113,7 +134,7 @@ function setStyleMap() {
 }
 
 function setImageCache(element: HTMLImageElement) {
-    if (element && $util.hasValue(element.src)) {
+    if (element && util.hasValue(element.src)) {
         cacheImage.set(element.src, {
             width: element.naturalWidth,
             height: element.naturalHeight,
@@ -138,7 +159,7 @@ export function setFramework(module: AppFramework<T>, cached = false) {
         main.registerController(appBase.viewController);
         main.registerResource(appBase.resourceHandler);
         if (Array.isArray(settings.builtInExtensions)) {
-            const register = new Set<lib.base.Extension<lib.base.Node>>();
+            const register = new Set<androme.lib.base.Extension<androme.lib.base.Node>>();
             const extensions = main.builtInExtensions;
             for (let namespace of settings.builtInExtensions) {
                 namespace = namespace.toLowerCase().trim();
@@ -203,10 +224,10 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                     element.id = `content_${main.size}`;
                 }
             }
-            const filename = $util.trimNull(element.dataset.filename).replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '') || element.id;
-            const iteration = $util.convertInt(element.dataset.iteration) + 1;
+            const filename = util.trimNull(element.dataset.filename).replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '') || element.id;
+            const iteration = util.convertInt(element.dataset.iteration) + 1;
             element.dataset.iteration = iteration.toString();
-            element.dataset.layoutName = $util.convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);
+            element.dataset.layoutName = util.convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);
             if (main.initCache(element)) {
                 main.createDocument();
                 main.setConstraints();
@@ -282,7 +303,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
             })
             .catch((error: Event) => {
                 const message = error.srcElement ? (<HTMLImageElement> error.srcElement).src : '';
-                if (!$util.hasValue(message) || confirm(`FAIL: ${message}`)) {
+                if (!util.hasValue(message) || confirm(`FAIL: ${message}`)) {
                     parseResume();
                 }
             });
@@ -299,8 +320,8 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     };
 }
 
-export function registerExtension(ext: lib.base.Extension<T>) {
-    if (main && $util.isString(ext.name) && Array.isArray(ext.tagNames)) {
+export function registerExtension(ext: androme.lib.base.Extension<T>) {
+    if (main && util.isString(ext.name) && Array.isArray(ext.tagNames)) {
         main.registerExtension(ext);
     }
 }
@@ -322,7 +343,7 @@ export function ext(name: any, options?: {}) {
     if (typeof name === 'object') {
         registerExtension(name);
     }
-    else if ($util.isString(name)) {
+    else if (util.isString(name)) {
         if (typeof options === 'object') {
             configureExtension(name, options);
         }
@@ -365,5 +386,29 @@ export function saveAllToDisk() {
 export function toString() {
     return main ? main.toString() : '';
 }
+
+const base = {
+    extensions: {
+        Accessibility,
+        Button,
+        Custom,
+        External,
+        Grid,
+        List,
+        Nav,
+        Origin,
+        Table
+    },
+    Node,
+    NodeList,
+    NodeGroup,
+    Application,
+    Controller,
+    Resource,
+    File,
+    Extension
+};
+
+const lib = { base, enumeration, constant, util, dom, xml, color };
 
 export { lib, system, settings };

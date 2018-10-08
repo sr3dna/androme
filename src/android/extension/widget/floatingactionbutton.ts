@@ -4,9 +4,9 @@ import ResourceHandler from '../../resourcehandler';
 import { parseRTL } from '../../lib/util';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
-const [$enum, $util, $color] = [lib.enumeration, lib.util, lib.color];
+const [$enum, $util, $color] = [androme.lib.enumeration, androme.lib.util, androme.lib.color];
 
-export default class FloatingActionButton<T extends View> extends lib.base.extensions.Button<T> {
+export default class FloatingActionButton<T extends View> extends androme.lib.base.extensions.Button<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

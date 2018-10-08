@@ -379,7 +379,7 @@ var android = (function () {
         return value;
     }
 
-    const [$enum, $const, $util, $dom, $nodelist] = [lib.enumeration, lib.constant, lib.util, lib.dom, lib.base.NodeList];
+    const [$enum, $const, $util, $dom, $nodelist] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom, androme.lib.base.NodeList];
     var ViewBase = (Base) => {
         return class View extends Base {
             constructor(id = 0, element) {
@@ -1519,13 +1519,13 @@ var android = (function () {
         };
     };
 
-    class View extends ViewBase(lib.base.Node) {
+    class View extends ViewBase(androme.lib.base.Node) {
         constructor(id = 0, element) {
             super(id, element);
         }
     }
 
-    class ViewGroup extends ViewBase(lib.base.NodeGroup) {
+    class ViewGroup extends ViewBase(androme.lib.base.NodeGroup) {
         constructor(id, node, parent, children) {
             super(id);
             this.api = node.api;
@@ -1603,7 +1603,7 @@ var android = (function () {
     ];
     var LAYERLIST_TMPL = template$1.join('\n');
 
-    const [$enum$1, $util$1, $dom$1, $xml, $color, $resource] = [lib.enumeration, lib.util, lib.dom, lib.xml, lib.color, lib.base.Resource];
+    const [$enum$1, $util$1, $dom$1, $xml, $color, $resource] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom, androme.lib.xml, androme.lib.color, androme.lib.base.Resource];
     const METHOD_ANDROID = {
         'boxStyle': {
             'background': 'android:background="@drawable/{0}"',
@@ -1627,7 +1627,7 @@ var android = (function () {
             'src': 'android:src="@drawable/{0}"'
         }
     };
-    class ResourceHandler extends lib.base.Resource {
+    class ResourceHandler extends androme.lib.base.Resource {
         constructor(file) {
             super(file);
             this.tagStyle = {};
@@ -2532,7 +2532,7 @@ var android = (function () {
                 }
             });
             for (const tag in nodeName) {
-                const nodes = new lib.base.NodeList(nodeName[tag]);
+                const nodes = new androme.lib.base.NodeList(nodeName[tag]);
                 const sorted = [];
                 for (let node of nodes) {
                     let system = false;
@@ -3150,7 +3150,7 @@ var android = (function () {
 
     var BASE_TMPL = '<?xml version="1.0" encoding="utf-8"?>\n{:0}';
 
-    const [$enum$2, $util$2, $dom$2, $xml$1, $nodelist$1] = [lib.enumeration, lib.util, lib.dom, lib.xml, lib.base.NodeList];
+    const [$enum$2, $util$2, $dom$2, $xml$1, $nodelist$1] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom, androme.lib.xml, androme.lib.base.NodeList];
     const MAP_LAYOUT = {
         relativeParent: {
             top: 'layout_alignParentTop',
@@ -3179,7 +3179,7 @@ var android = (function () {
         widthHeight: ['Width', 'Height'],
         horizontalVertical: ['Horizontal', 'Vertical']
     };
-    class ViewController extends lib.base.Controller {
+    class ViewController extends androme.lib.base.Controller {
         constructor() {
             super();
             this._merge = {};
@@ -3263,7 +3263,7 @@ var android = (function () {
                 constraint = node.is($enum$2.NODE_STANDARD.CONSTRAINT);
                 const flex = node.flex;
                 if (relative || constraint || flex.enabled) {
-                    const nodes = new lib.base.NodeList(node.renderChildren.filter(item => item.auto), node);
+                    const nodes = new androme.lib.base.NodeList(node.renderChildren.filter(item => item.auto), node);
                     const cleared = $nodelist$1.cleared(node.initial.children);
                     if (relative) {
                         mapLayout = MAP_LAYOUT.relative;
@@ -3816,7 +3816,7 @@ var android = (function () {
                                                 break;
                                         }
                                         for (const n of levels) {
-                                            horizontal.push(new lib.base.NodeList(map[n]));
+                                            horizontal.push(new androme.lib.base.NodeList(map[n]));
                                         }
                                     }
                                 }
@@ -3854,9 +3854,9 @@ var android = (function () {
                                                 item.app('layout_constraintWidth_percent', ((1 / columnCount) - marginPercent).toFixed(2));
                                             }
                                         });
-                                        vertical.push(new lib.base.NodeList(column));
+                                        vertical.push(new androme.lib.base.NodeList(column));
                                     }
-                                    horizontal.push(new lib.base.NodeList(row));
+                                    horizontal.push(new androme.lib.base.NodeList(row));
                                 }
                                 else {
                                     const horizontalChain = pageflow.list.filter(current => !current.constraint.horizontal);
@@ -3867,13 +3867,13 @@ var android = (function () {
                                         if (horizontalChain.includes(current)) {
                                             horizontalOutput.push(...this.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, !percentage));
                                             if (horizontalOutput.length > 0) {
-                                                horizontal.push(new lib.base.NodeList($util$2.sortAsc(horizontalOutput, 'linear.left')));
+                                                horizontal.push(new androme.lib.base.NodeList($util$2.sortAsc(horizontalOutput, 'linear.left')));
                                             }
                                         }
                                         if (verticalChain.includes(current) && !percentage) {
                                             verticalOutput.push(...this.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, true));
                                             if (verticalOutput.length > 0) {
-                                                vertical.push(new lib.base.NodeList($util$2.sortAsc(verticalOutput, 'linear.top')));
+                                                vertical.push(new androme.lib.base.NodeList($util$2.sortAsc(verticalOutput, 'linear.top')));
                                             }
                                         }
                                         return horizontalOutput.length === pageflow.length || verticalOutput.length === pageflow.length;
@@ -5566,11 +5566,11 @@ var android = (function () {
     ];
     var DRAWABLE_TMPL = template$8.join('\n');
 
-    const [$util$3, $xml$2] = [lib.util, lib.xml];
+    const [$util$3, $xml$2] = [androme.lib.util, androme.lib.xml];
     function caseInsensitve(a, b) {
         return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
     }
-    class FileHandler extends lib.base.File {
+    class FileHandler extends androme.lib.base.File {
         constructor(settings) {
             super(settings.outputDirectory, settings.outputMaxProcessingTime, settings.outputArchiveFileType);
             this.settings = settings;
@@ -5952,13 +5952,13 @@ var android = (function () {
         DIALOG: 'ic_dialog_'
     };
 
-    class ExternalAndroid extends lib.base.extensions.External {
+    class ExternalAndroid extends androme.lib.base.extensions.External {
     }
 
-    class OriginAndroid extends lib.base.extensions.Origin {
+    class OriginAndroid extends androme.lib.base.extensions.Origin {
     }
 
-    class CustomAndroid extends lib.base.extensions.Custom {
+    class CustomAndroid extends androme.lib.base.extensions.Custom {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -5969,8 +5969,8 @@ var android = (function () {
         }
     }
 
-    const [$enum$3, $util$4, $dom$3] = [lib.enumeration, lib.util, lib.dom];
-    class AccessibilityAndroid extends lib.base.extensions.Accessibility {
+    const [$enum$3, $util$4, $dom$3] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom];
+    class AccessibilityAndroid extends androme.lib.base.extensions.Accessibility {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6011,8 +6011,8 @@ var android = (function () {
         }
     }
 
-    const [$enum$4, $const$1, $util$5] = [lib.enumeration, lib.constant, lib.util];
-    class ListAndroid extends lib.base.extensions.List {
+    const [$enum$4, $const$1, $util$5] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util];
+    class ListAndroid extends androme.lib.base.extensions.List {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6203,8 +6203,8 @@ var android = (function () {
         }
     }
 
-    const [$enum$5, $const$2, $util$6, $dom$4] = [lib.enumeration, lib.constant, lib.util, lib.dom];
-    class GridAndroid extends lib.base.extensions.Grid {
+    const [$enum$5, $const$2, $util$6, $dom$4] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom];
+    class GridAndroid extends androme.lib.base.extensions.Grid {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6271,8 +6271,8 @@ var android = (function () {
         }
     }
 
-    const [$const$3, $util$7] = [lib.constant, lib.util];
-    class TableAndroid extends lib.base.extensions.Table {
+    const [$const$3, $util$7] = [androme.lib.constant, androme.lib.util];
+    class TableAndroid extends androme.lib.base.extensions.Table {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6360,8 +6360,8 @@ var android = (function () {
         }
     }
 
-    const [$enum$6, $util$8, $color$1] = [lib.enumeration, lib.util, lib.color];
-    class FloatingActionButton extends lib.base.extensions.Button {
+    const [$enum$6, $util$8, $color$1] = [androme.lib.enumeration, androme.lib.util, androme.lib.color];
+    class FloatingActionButton extends androme.lib.base.extensions.Button {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6476,7 +6476,7 @@ var android = (function () {
         }
     }
 
-    const $enum$7 = lib.enumeration;
+    const $enum$7 = androme.lib.enumeration;
     const VALIDATE_ITEM = {
         id: /^@\+id\/\w+$/,
         title: /^.+$/,
@@ -6506,7 +6506,7 @@ var android = (function () {
         orderInCategory: /^[0-9]+$/
     };
     const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
-    class Menu extends lib.base.extensions.Nav {
+    class Menu extends androme.lib.base.extensions.Nav {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6656,8 +6656,8 @@ var android = (function () {
         }
     }
 
-    const [$enum$8, $dom$5] = [lib.enumeration, lib.dom];
-    class Coordinator extends lib.base.Extension {
+    const [$enum$8, $dom$5] = [androme.lib.enumeration, androme.lib.dom];
+    class Coordinator extends androme.lib.base.Extension {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6708,8 +6708,8 @@ var android = (function () {
     ];
     var EXTENSION_APPBAR_TMPL = template$9.join('\n');
 
-    const [$enum$9, $const$4, $util$9, $dom$6, $xml$3] = [lib.enumeration, lib.constant, lib.util, lib.dom, lib.xml];
-    class Toolbar extends lib.base.Extension {
+    const [$enum$9, $const$4, $util$9, $dom$6, $xml$3] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom, androme.lib.xml];
+    class Toolbar extends androme.lib.base.Extension {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
             this.require(WIDGET_NAME.MENU);
@@ -6993,8 +6993,8 @@ var android = (function () {
     ];
     var EXTENSION_GENERIC_TMPL = template$a.join('\n');
 
-    const [$enum$a, $util$a, $dom$7] = [lib.enumeration, lib.util, lib.dom];
-    class BottomNavigation extends lib.base.Extension {
+    const [$enum$a, $util$a, $dom$7] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom];
+    class BottomNavigation extends androme.lib.base.Extension {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
             this.require(WIDGET_NAME.MENU);
@@ -7068,8 +7068,8 @@ var android = (function () {
     ];
     var EXTENSION_DRAWER_TMPL = template$b.join('\n');
 
-    const [$enum$b, $const$5, $util$b, $dom$8] = [lib.enumeration, lib.constant, lib.util, lib.dom];
-    class Drawer extends lib.base.Extension {
+    const [$enum$b, $const$5, $util$b, $dom$8] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom];
+    class Drawer extends androme.lib.base.Extension {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
             this.documentRoot = true;
@@ -7174,7 +7174,7 @@ var android = (function () {
         }
         return false;
     }
-    const APP_FRAMEWORK = lib.enumeration.APP_FRAMEWORK;
+    const APP_FRAMEWORK = androme.lib.enumeration.APP_FRAMEWORK;
     let initialized = false;
     let application;
     let viewController;
@@ -7184,9 +7184,9 @@ var android = (function () {
     let builtInExtensions;
     const appBase = {
         create() {
-            const EXT_NAME = lib.constant.EXT_NAME;
+            const EXT_NAME = androme.lib.constant.EXT_NAME;
             settings$1 = Object.assign({}, settings);
-            application = new lib.base.Application(APP_FRAMEWORK.ANDROID);
+            application = new androme.lib.base.Application(APP_FRAMEWORK.ANDROID);
             viewController = new ViewController();
             fileHandler = new FileHandler(settings$1);
             resourceHandler = new ResourceHandler(fileHandler);

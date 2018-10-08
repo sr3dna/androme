@@ -1,9 +1,9 @@
 import View from '../../view';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
-const [$enum, $dom] = [lib.enumeration, lib.dom];
+const [$enum, $dom] = [androme.lib.enumeration, androme.lib.dom];
 
-export default class Coordinator<T extends View> extends lib.base.Extension<T> {
+export default class Coordinator<T extends View> extends androme.lib.base.Extension<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

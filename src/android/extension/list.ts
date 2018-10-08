@@ -5,9 +5,9 @@ import ResourceHandler from '../resourcehandler';
 import { delimitDimens, parseRTL } from '../lib/util';
 import { NODE_ANDROID } from '../lib/constant';
 
-const [$enum, $const, $util] = [lib.enumeration, lib.constant, lib.util];
+const [$enum, $const, $util] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util];
 
-export default class ListAndroid<T extends View> extends lib.base.extensions.List<T> {
+export default class ListAndroid<T extends View> extends androme.lib.base.extensions.List<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

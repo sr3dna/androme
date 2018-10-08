@@ -1,4 +1,3 @@
-import { SettingsInternal, ViewData } from '../types/application';
 import { SettingsAndroid } from './lib/types';
 import View from './view';
 import ViewGroup from './viewgroup';
@@ -6,7 +5,7 @@ import ResourceHandler from './resourcehandler';
 import { delimitDimens, generateId, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
 
-const [$enum, $util, $dom, $xml, $nodelist] = [lib.enumeration, lib.util, lib.dom, lib.xml, lib.base.NodeList];
+const [$enum, $util, $dom, $xml, $nodelist] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom, androme.lib.xml, androme.lib.base.NodeList];
 
 import BASE_TMPL from './template/base';
 
@@ -40,7 +39,7 @@ const MAP_CHAIN = {
     horizontalVertical: ['Horizontal', 'Vertical']
 };
 
-export default class ViewController<T extends View> extends lib.base.Controller<T> {
+export default class ViewController<T extends View> extends androme.lib.base.Controller<T> {
     public settings: SettingsAndroid;
 
     private _merge = {};
@@ -54,7 +53,7 @@ export default class ViewController<T extends View> extends lib.base.Controller<
         node.api = this.settings.targetAPI;
     }
 
-    public finalize(data: ViewData<lib.base.NodeList<T>>) {
+    public finalize(data: ViewData<androme.lib.base.NodeList<T>>) {
         this.setAttributes(data);
         for (const value of [...data.views, ...data.includes]) {
             value.content = $xml.removePlaceholders(value.content).replace(/\n\n/g, '\n');
@@ -107,7 +106,7 @@ export default class ViewController<T extends View> extends lib.base.Controller<
         function mapDelete(node: T, ...direction: string[]) {
             node.delete(constraint ? 'app' : 'android', ...direction.map(value => mapLayout[value]));
         }
-        function anchoredSibling(node: T, nodes: lib.base.NodeList<T>, orientation: string) {
+        function anchoredSibling(node: T, nodes: androme.lib.base.NodeList<T>, orientation: string) {
             if (!node.constraint[orientation]) {
                 let parent: Null<T> = node;
                 while (parent) {
@@ -131,7 +130,7 @@ export default class ViewController<T extends View> extends lib.base.Controller<
             constraint = node.is($enum.NODE_STANDARD.CONSTRAINT);
             const flex = node.flex;
             if (relative || constraint || flex.enabled) {
-                const nodes = new lib.base.NodeList(node.renderChildren.filter(item => item.auto) as T[], node);
+                const nodes = new androme.lib.base.NodeList(node.renderChildren.filter(item => item.auto) as T[], node);
                 const cleared = $nodelist.cleared(node.initial.children);
                 if (relative) {
                     mapLayout = MAP_LAYOUT.relative;
@@ -648,8 +647,8 @@ export default class ViewController<T extends View> extends lib.base.Controller<
                             columnCount > 0 ||
                             (!this.settings.constraintChainDisabled && pageflow.length > 1))
                         {
-                            const horizontal: lib.base.NodeList<T>[] = [];
-                            const vertical: lib.base.NodeList<T>[] = [];
+                            const horizontal: androme.lib.base.NodeList<T>[] = [];
+                            const vertical: androme.lib.base.NodeList<T>[] = [];
                             if (flex.enabled) {
                                 if (flex.wrap === 'nowrap') {
                                     switch (flex.direction) {
@@ -710,7 +709,7 @@ export default class ViewController<T extends View> extends lib.base.Controller<
                                             break;
                                     }
                                     for (const n of levels) {
-                                        horizontal.push(new lib.base.NodeList(map[n]));
+                                        horizontal.push(new androme.lib.base.NodeList(map[n]));
                                     }
                                 }
                             }
@@ -749,9 +748,9 @@ export default class ViewController<T extends View> extends lib.base.Controller<
                                             item.app('layout_constraintWidth_percent', ((1 / columnCount) - marginPercent).toFixed(2));
                                         }
                                     });
-                                    vertical.push(new lib.base.NodeList(column));
+                                    vertical.push(new androme.lib.base.NodeList(column));
                                 }
-                                horizontal.push(new lib.base.NodeList(row));
+                                horizontal.push(new androme.lib.base.NodeList(row));
                             }
                             else {
                                 const horizontalChain = pageflow.list.filter(current => !current.constraint.horizontal);
@@ -762,13 +761,13 @@ export default class ViewController<T extends View> extends lib.base.Controller<
                                     if (horizontalChain.includes(current)) {
                                         horizontalOutput.push(...this.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, !percentage));
                                         if (horizontalOutput.length > 0) {
-                                            horizontal.push(new lib.base.NodeList($util.sortAsc(horizontalOutput, 'linear.left')));
+                                            horizontal.push(new androme.lib.base.NodeList($util.sortAsc(horizontalOutput, 'linear.left')));
                                         }
                                     }
                                     if (verticalChain.includes(current) && !percentage) {
                                         verticalOutput.push(...this.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, true));
                                         if (verticalOutput.length > 0) {
-                                            vertical.push(new lib.base.NodeList($util.sortAsc(verticalOutput, 'linear.top')));
+                                            vertical.push(new androme.lib.base.NodeList($util.sortAsc(verticalOutput, 'linear.top')));
                                         }
                                     }
                                     return horizontalOutput.length === pageflow.length || verticalOutput.length === pageflow.length;
@@ -779,7 +778,7 @@ export default class ViewController<T extends View> extends lib.base.Controller<
                             [horizontal, vertical].forEach((connected, index) => {
                                 if (connected.length > 0) {
                                     const mapId = new Set<string>();
-                                    const connectedRows: lib.base.NodeList<T>[]  = [];
+                                    const connectedRows: androme.lib.base.NodeList<T>[]  = [];
                                     connected
                                         .filter(current => {
                                             const id = current.list.map(item => item.id).sort().join('-');
@@ -1986,13 +1985,13 @@ export default class ViewController<T extends View> extends lib.base.Controller<
         return this._merge[name] ? 0 : -1;
     }
 
-    public setBoxSpacing(data: ViewData<lib.base.NodeList<T>>) {
+    public setBoxSpacing(data: ViewData<androme.lib.base.NodeList<T>>) {
         for (const node of data.cache.visible) {
             node.setBoxSpacing(this.settings);
         }
     }
 
-    public setDimensions(data: ViewData<lib.base.NodeList<T>>) {
+    public setDimensions(data: ViewData<androme.lib.base.NodeList<T>>) {
         function addToGroup(nodeName: string, node: T, dimen: string, attr?: string, value?: string) {
             const group: ObjectMap<T[]> = groups[nodeName];
             let name = dimen;
@@ -2086,7 +2085,7 @@ export default class ViewController<T extends View> extends lib.base.Controller<
         return content;
     }
 
-    private setAttributes(data: ViewData<lib.base.NodeList<T>>) {
+    private setAttributes(data: ViewData<androme.lib.base.NodeList<T>>) {
         if (this.settings.showAttributes) {
             const cache: StringMap[] = data.cache.visible.list.map(node => ({ pattern: $xml.formatPlaceholder(node.id, '@'), attributes: this.parseAttributes(node) }));
             for (const value of [...data.views, ...data.includes]) {
@@ -2157,7 +2156,7 @@ export default class ViewController<T extends View> extends lib.base.Controller<
         });
     }
 
-    private partitionChain(node: T, nodes: lib.base.NodeList<T>, orientation: string, validate: boolean) {
+    private partitionChain(node: T, nodes: androme.lib.base.NodeList<T>, orientation: string, validate: boolean) {
         const map = MAP_LAYOUT.constraint;
         const mapParent: string[] = [];
         const coordinate: string[] = [];

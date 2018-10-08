@@ -3,7 +3,7 @@ import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constants';
 
-const $enum = lib.enumeration;
+const $enum = androme.lib.enumeration;
 
 const VALIDATE_ITEM = {
     id: /^@\+id\/\w+$/,
@@ -37,7 +37,7 @@ const VALIDATE_GROUP = {
 
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
-export default class Menu<T extends View> extends lib.base.extensions.Nav<T> {
+export default class Menu<T extends View> extends androme.lib.base.extensions.Nav<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

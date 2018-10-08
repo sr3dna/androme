@@ -1,6 +1,33 @@
 type Null<T> = T | null | undefined;
+
 type Constructor<T> = new(...args: any[]) => T;
+
+type StringMap = {
+    [key: string]: string;
+};
+
+type ObjectMap<T> = {
+    [key: string]: T;
+};
+
+type ObjectIndex<T> = {
+    [key: number]: T;
+};
+
+type ObjectMapNested<T> = {
+    [key: string]: ObjectMap<T>;
+};
+
+type ArrayIndex<T> = {
+    [key: number]: T;
+    length: number;
+    push(...items: T[]): number;
+    forEach(callbackfn: (value: T, index: number, array: T[]) => void, thisArg?: any): void;
+    filter(callbackfn: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[];
+};
+
 type FunctionMap = ObjectMap<(...args: any[]) => any>;
+
 type FindPredicate<T> = (value: T, index?: number) => boolean;
 
 type BoxRect = {
@@ -17,11 +44,6 @@ type BoxDimensionsRect = {
     left: number;
     width: number;
     height: number;
-};
-
-type Point = {
-    x: number;
-    y: number;
 };
 
 type Flexbox = {
@@ -52,30 +74,6 @@ type PlainFile = {
     filename: string;
     content: string;
     uri?: string;
-};
-
-type StringMap = {
-    [key: string]: string;
-};
-
-type ObjectMap<T> = {
-    [key: string]: T;
-};
-
-type ObjectIndex<T> = {
-    [key: number]: T;
-};
-
-type ObjectMapNested<T> = {
-    [key: string]: ObjectMap<T>;
-};
-
-type ArrayIndex<T> = {
-    [key: number]: T;
-    length: number;
-    push(...items: T[]): number;
-    forEach(callbackfn: (value: T, index: number, array: T[]) => void, thisArg?: any): void;
-    filter(callbackfn: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[];
 };
 
 interface BoxModel {
@@ -137,17 +135,9 @@ type Color = {
     };
 };
 
-type ExtensionDependency = {
-    name: string;
-    init: boolean;
-};
-
-type ExtensionResult = {
-    output: string;
-    complete: boolean;
-    next?: boolean;
-    parent?: {};
-    include?: boolean;
+type Point = {
+    x: number;
+    y: number;
 };
 
 type InitialValues<T> = {

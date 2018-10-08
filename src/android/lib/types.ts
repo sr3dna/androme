@@ -1,5 +1,3 @@
-import { Settings } from '../../types/application';
-
 export interface SettingsAndroid extends Settings {
     targetAPI: number;
     density: number;

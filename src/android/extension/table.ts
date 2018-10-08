@@ -2,9 +2,9 @@
 import View from '../view';
 import { NODE_ANDROID } from '../lib/constant';
 
-const [$const, $util] = [lib.constant, lib.util];
+const [$const, $util] = [androme.lib.constant, androme.lib.util];
 
-export default class TableAndroid<T extends View> extends lib.base.extensions.Table<T> {
+export default class TableAndroid<T extends View> extends androme.lib.base.extensions.Table<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

@@ -30,14 +30,10 @@
     <script src="/node_modules/systemjs/dist/system.js"></script>
     <script src="common/dev.js"></script>
     <script>
-        System.import('/build/lib.js').then((result) => {
-            lib = result;
-            Promise.all([
-                System.import('/build/core.js'),
-                System.import('/build/android/main.js')
-            ]).then((modules) => {
-                androme = modules[0];
-                androme.setFramework(modules[1]['default']);
+        System.import('/build/main.js').then(result => {
+            androme = result;
+            System.import('/build/android/main.js').then(result => {
+                androme.setFramework(result['default']);
                 androme.parseDocument('androme_ui');
                 androme.close();
 

@@ -1,5 +1,4 @@
 
-import { AppFramework } from '../types/application';
 import { SettingsAndroid } from './lib/types';
 import View from './view';
 import ViewController from './viewcontroller';
@@ -33,25 +32,25 @@ function autoClose() {
     return false;
 }
 
-const APP_FRAMEWORK = lib.enumeration.APP_FRAMEWORK;
+const APP_FRAMEWORK = androme.lib.enumeration.APP_FRAMEWORK;
 
 type T = View;
 
 let initialized = false;
 
-let application: lib.base.Application<T>;
+let application: androme.lib.base.Application<T>;
 let viewController: ViewController<T>;
 let fileHandler: FileHandler<T>;
 let resourceHandler: ResourceHandler<T>;
 
 let settings: SettingsAndroid;
-let builtInExtensions: ObjectMap<lib.base.Extension<lib.base.Node>>;
+let builtInExtensions: ObjectMap<androme.lib.base.Extension<androme.lib.base.Node>>;
 
 const appBase: AppFramework<T> = {
     create() {
-        const EXT_NAME = lib.constant.EXT_NAME;
+        const EXT_NAME = androme.lib.constant.EXT_NAME;
         settings = Object.assign({}, Settings);
-        application = new lib.base.Application(APP_FRAMEWORK.ANDROID);
+        application = new androme.lib.base.Application(APP_FRAMEWORK.ANDROID);
         viewController = new ViewController<T>();
         fileHandler = new FileHandler<T>(settings);
         resourceHandler = new ResourceHandler<T>(fileHandler);

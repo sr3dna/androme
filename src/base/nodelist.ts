@@ -3,16 +3,7 @@ import { convertInt, partition, sortAsc, sortDesc } from '../lib/util';
 import { getNodeFromElement } from '../lib/dom';
 import { NODE_STANDARD } from '../lib/enumeration';
 
-function documentParent<T extends Node>(nodes: T[]) {
-    for (const node of nodes) {
-        if (!node.companion && node.domElement) {
-            return node.documentParent;
-        }
-    }
-    return nodes[0].documentParent;
-}
-
-export default class NodeList<T extends Node> implements lib.base.NodeList<T> {
+export default class NodeList<T extends Node> implements androme.lib.base.NodeList<T> {
     public static siblingIndex<T extends Node>(a: T, b: T) {
         return a.siblingIndex <= b.siblingIndex ? -1 : 1;
     }
@@ -200,7 +191,7 @@ export default class NodeList<T extends Node> implements lib.base.NodeList<T> {
             case 1:
                 return true;
             default:
-                const parent = documentParent(nodes);
+                const parent = this.documentParent(nodes);
                 let horizontal = false;
                 if (traverse) {
                     if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
@@ -254,7 +245,7 @@ export default class NodeList<T extends Node> implements lib.base.NodeList<T> {
             case 1:
                 return true;
             default:
-                const parent = documentParent(nodes);
+                const parent = this.documentParent(nodes);
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
                     const result =
                         NodeList.cleared(
@@ -283,6 +274,15 @@ export default class NodeList<T extends Node> implements lib.base.NodeList<T> {
                 }
                 return false;
         }
+    }
+
+    private static documentParent<T extends Node>(nodes: T[]) {
+        for (const node of nodes) {
+            if (!node.companion && node.domElement) {
+                return node.documentParent;
+            }
+        }
+        return nodes[0].documentParent;
     }
 
     public delegateAppend?: (nodes: T[]) => void;
@@ -341,21 +341,21 @@ export default class NodeList<T extends Node> implements lib.base.NodeList<T> {
         return this._list.splice(start, deleteCount);
     }
 
-    public clone(): lib.base.NodeList<T> {
-        return new lib.base.NodeList<T>(this._list.slice());
+    public clone(): NodeList<T> {
+        return new NodeList(this._list.slice());
     }
 
     public filter(predicate: (value: T) => boolean) {
-        return new lib.base.NodeList<T>(this._list.filter(predicate));
+        return new NodeList(this._list.filter(predicate));
     }
 
     public sort(predicate: (a: T, b: T) => number) {
-        return new lib.base.NodeList<T>(this._list.slice().sort(predicate));
+        return new NodeList(this._list.slice().sort(predicate));
     }
 
     public partition(predicate: (value: T) => boolean) {
         const [valid, invalid]: T[][] = partition(this._list, predicate);
-        return [new lib.base.NodeList<T>(valid), new lib.base.NodeList<T>(invalid)];
+        return [new NodeList(valid), new NodeList(invalid)];
     }
 
     public each(predicate: (value: T, index?: number) => void) {
@@ -392,11 +392,11 @@ export default class NodeList<T extends Node> implements lib.base.NodeList<T> {
     }
 
     get visible() {
-        return new lib.base.NodeList<T>(this._list.filter(node => node.visible));
+        return new NodeList(this._list.filter(node => node.visible));
     }
 
     get elements() {
-        return new lib.base.NodeList<T>(this._list.filter(node => node.visible && node.hasElement));
+        return new NodeList(this._list.filter(node => node.visible && node.hasElement));
     }
 
     get nextId() {

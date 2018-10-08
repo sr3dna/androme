@@ -1,10 +1,9 @@
-import { ViewData } from '../types/application';
 import { SettingsAndroid } from './lib/types';
 import View from './view';
 import { replaceUnit } from './lib/util';
 import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './lib/constant';
 
-const [$util, $xml] = [lib.util, lib.xml];
+const [$util, $xml] = [androme.lib.util, androme.lib.xml];
 
 import STRING_TMPL from './template/resource/string';
 import STRINGARRAY_TMPL from './template/resource/string-array';
@@ -18,12 +17,12 @@ function caseInsensitve(a: string | string[], b: string | string[]) {
     return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
 }
 
-export default class FileHandler<T extends View> extends lib.base.File<T> {
+export default class FileHandler<T extends View> extends androme.lib.base.File<T> {
     constructor(public readonly settings: SettingsAndroid) {
         super(settings.outputDirectory, settings.outputMaxProcessingTime, settings.outputArchiveFileType);
     }
 
-    public saveAllToDisk(data: ViewData<lib.base.NodeList<T>>) {
+    public saveAllToDisk(data: ViewData<androme.lib.base.NodeList<T>>) {
         const files: PlainFile[] = [];
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
@@ -41,7 +40,7 @@ export default class FileHandler<T extends View> extends lib.base.File<T> {
         this.saveToDisk(files);
     }
 
-    public layoutAllToXml(data: ViewData<lib.base.NodeList<T>>, saveToDisk = false) {
+    public layoutAllToXml(data: ViewData<androme.lib.base.NodeList<T>>, saveToDisk = false) {
         const result = {};
         const files: PlainFile[] = [];
         const views = [...data.views, ...data.includes];

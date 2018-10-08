@@ -3,9 +3,9 @@ import API_ANDROID from './customizations';
 import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
 import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
 
-const [$enum, $const, $util, $dom, $nodelist] = [lib.enumeration, lib.constant, lib.util, lib.dom, lib.base.NodeList];
+const [$enum, $const, $util, $dom, $nodelist] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom, androme.lib.base.NodeList];
 
-export default (Base: Constructor<lib.base.Node>) => {
+export default (Base: Constructor<androme.lib.base.Node>) => {
     return class View extends Base {
         public static documentBody() {
             if (View._documentBody == null) {

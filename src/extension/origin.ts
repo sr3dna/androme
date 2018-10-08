@@ -56,7 +56,7 @@ export default class Origin<T extends Node> extends Extension<T> {
                     marginLeft.push(leftType);
                 });
                 if (marginRight.length > 0) {
-                    const [sectionLeft, sectionRight] = new lib.base.NodeList(node.children as T[]).partition((item: T) => !marginRight.includes(item));
+                    const [sectionLeft, sectionRight] = new androme.lib.base.NodeList(node.children as T[]).partition((item: T) => !marginRight.includes(item));
                     if (sectionLeft.length > 0 && sectionRight.length > 0) {
                         if (node.autoMarginLeft) {
                             node.css('marginLeft', node.style.marginLeft as string);

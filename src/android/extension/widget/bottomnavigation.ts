@@ -1,11 +1,11 @@
 import View from '../../view';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
-const [$enum, $util, $dom] = [lib.enumeration, lib.util, lib.dom];
+const [$enum, $util, $dom] = [androme.lib.enumeration, androme.lib.util, androme.lib.dom];
 
 import EXTENSION_GENERIC_TMPL from '../../template/extension/generic';
 
-export default class BottomNavigation<T extends View> extends lib.base.Extension<T> {
+export default class BottomNavigation<T extends View> extends androme.lib.base.Extension<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
         this.require(WIDGET_NAME.MENU);

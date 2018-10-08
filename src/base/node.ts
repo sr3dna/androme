@@ -1,4 +1,4 @@
-import { Settings } from '../types/application';
+import Extension from './extension';
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
 import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/enumeration';
@@ -6,7 +6,7 @@ import { INLINE_ELEMENT } from '../lib/constant';
 
 type T = Node;
 
-export default abstract class Node implements lib.base.Node {
+export default abstract class Node implements androme.lib.base.Node {
     public abstract children: T[];
     public abstract constraint: ObjectMap<any>;
     public abstract readonly renderChildren: T[];
@@ -25,7 +25,7 @@ export default abstract class Node implements lib.base.Node {
     public excludeSection = 0;
     public excludeProcedure = 0;
     public excludeResource = 0;
-    public renderExtension = new Set<lib.base.Extension<T>>();
+    public renderExtension = new Set<Extension<T>>();
     public companion: T;
     public documentRoot = false;
     public auto = true;

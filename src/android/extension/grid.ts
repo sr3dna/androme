@@ -2,9 +2,9 @@ import { GridCellData, GridData } from '../../extension/types/data';
 import View from '../view';
 import { NODE_ANDROID } from '../lib/constant';
 
-const [$enum, $const, $util, $dom] = [lib.enumeration, lib.constant, lib.util, lib.dom];
+const [$enum, $const, $util, $dom] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom];
 
-export default class GridAndroid<T extends View> extends lib.base.extensions.Grid<T> {
+export default class GridAndroid<T extends View> extends androme.lib.base.extensions.Grid<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

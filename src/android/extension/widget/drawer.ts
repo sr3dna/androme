@@ -2,11 +2,11 @@ import View from '../../view';
 import { parseRTL } from '../../lib/util';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constants';
 
-const [$enum, $const, $util, $dom] = [lib.enumeration, lib.constant, lib.util, lib.dom];
+const [$enum, $const, $util, $dom] = [androme.lib.enumeration, androme.lib.constant, androme.lib.util, androme.lib.dom];
 
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
-export default class Drawer<T extends View> extends lib.base.Extension<T> {
+export default class Drawer<T extends View> extends androme.lib.base.Extension<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
         this.documentRoot = true;
