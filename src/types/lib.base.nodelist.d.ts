@@ -31,7 +31,7 @@ declare global {
             public sort(predicate: (a: T, b: T) => number): NodeList<T>;
             public partition(predicate: (value: T) => boolean): NodeList<T>[];
             public each(predicate: (value: T, index?: number) => void): void;
-            public locate(attr: string | FindPredicate<T>, value?: any): Null<T>;
+            public find(attr: string | FindPredicate<T>, value?: any): Null<T>;
             public clear(): void;
             public sortAsc(...attrs: string[]): this;
             public sortDesc(...attrs: string[]): this;

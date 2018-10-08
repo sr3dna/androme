@@ -41,7 +41,7 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
 
     public beforeInsert() {
         const node = this.node;
-        const menu: string = $util.optional($dom.locateExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const menu: string = $util.optional($dom.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);
             $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);

@@ -48,7 +48,7 @@ export function convertDP(value: any, dpi = 160, font = false) {
     return '0dp';
 }
 
-export function delimitDimens(nodeName: string, attr: string, size: string, { dimensResourceValue = true }) {
+export function delimitUnit(nodeName: string, attr: string, size: string, { dimensResourceValue = true }) {
     return dimensResourceValue ? `{%${nodeName.toLowerCase()},${attr},${size}}` : size;
 }
 

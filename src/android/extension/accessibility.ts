@@ -5,7 +5,7 @@ import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
-export default class AccessibilityAndroid<T extends View> extends androme.lib.base.extensions.Accessibility<T> {
+export default class <T extends View> extends androme.lib.base.extensions.Accessibility<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

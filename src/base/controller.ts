@@ -10,7 +10,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     private _before: ObjectIndex<string[]> = {};
     private _after: ObjectIndex<string[]> = {};
 
-    constructor() {
+    protected constructor() {
     }
 
     public abstract initNode(node: T): void;

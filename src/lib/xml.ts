@@ -4,13 +4,13 @@ export function formatPlaceholder(id: string | number, symbol = ':') {
     return `{${symbol + id.toString()}}`;
 }
 
+export function removePlaceholderAll(value: string) {
+    return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
+}
+
 export function replacePlaceholder(value: string, id: string | number, content: string, before = false) {
     const placeholder = typeof id === 'number' ? formatPlaceholder(id) : id;
     return value.replace(placeholder, (before ? placeholder : '') + content + (before ? '' : placeholder));
-}
-
-export function removePlaceholders(value: string) {
-    return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
 }
 
 export function replaceIndent(value: string, depth: number) {
@@ -63,15 +63,6 @@ export function replaceEntity(value: string) {
     return replaceWhiteSpace(value);
 }
 
-export function getTemplateLevel(data: {}, ...levels: string[]) {
-    let current = data;
-    for (const level of levels) {
-        const [index, array = '0'] = level.split('-');
-        current = current[index][array];
-    }
-    return current;
-}
-
 export function parseTemplate(template: string) {
     const result: ObjectMap<string> = {};
     let pattern: Null<RegExp> = null;
@@ -109,7 +100,16 @@ export function parseTemplate(template: string) {
     return result;
 }
 
-export function insertTemplateData(template: ObjectMap<string>, data: {}, index?: string, include?: {}, exclude?: {}) {
+export function getTemplateLevel(data: {}, ...levels: string[]) {
+    let current = data;
+    for (const level of levels) {
+        const [index, array = '0'] = level.split('-');
+        current = current[index][array];
+    }
+    return current;
+}
+
+export function createTemplate(template: ObjectMap<string>, data: {}, index?: string, include?: {}, exclude?: {}) {
     let output = index ? template[index] : '';
     if (data['#include']) {
         include = data['#include'];
@@ -127,7 +127,7 @@ export function insertTemplateData(template: ObjectMap<string>, data: {}, index?
         }
         else if (Array.isArray(data[i])) {
             for (const j in data[i]) {
-                value += insertTemplateData(template, data[i][j], i, include, exclude);
+                value += createTemplate(template, data[i][j], i, include, exclude);
             }
         }
         else {
@@ -142,15 +142,17 @@ export function insertTemplateData(template: ObjectMap<string>, data: {}, index?
         else if (new RegExp(`{&${i}}`).test(output)) {
             output = '';
         }
-        const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
-        let match: Null<RegExpExecArray>;
-        while ((match = pattern.exec(output)) != null) {
-            if (include && include[match[1]]) {
-                const attr = `{#${match[1]}=${match[2]}}`;
-                output = output.replace(attr, data[match[2]] || match[2]);
-            }
-            else if (exclude && exclude[match[1]]) {
-                output = output.replace(match[0], '');
+        if (include || exclude) {
+            const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
+            let match: Null<RegExpExecArray>;
+            while ((match = pattern.exec(output)) != null) {
+                if (include && include[match[1]]) {
+                    const attr = `{#${match[1]}=${match[2]}}`;
+                    output = output.replace(attr, data[match[2]] || match[2]);
+                }
+                else if (exclude && exclude[match[1]]) {
+                    output = output.replace(match[0], '');
+                }
             }
         }
     }

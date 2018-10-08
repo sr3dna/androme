@@ -22,6 +22,33 @@ function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
     });
 }
 
+function compareObject(obj1: {}, obj2: {}, attr: string) {
+    const namespaces = attr.split('.');
+    let current1: any = obj1;
+    let current2: any = obj2;
+    for (const name of namespaces) {
+        if (current1[name] != null && current2[name] != null) {
+            current1 = current1[name];
+            current2 = current2[name];
+        }
+        else if (current1[name] == null && current2[name] == null) {
+            return false;
+        }
+        else if (current1[name] != null) {
+            return [1, 0];
+        }
+        else {
+            return [0, 1];
+        }
+    }
+    if (!isNaN(parseInt(current1)) || !isNaN(parseInt(current2))) {
+        return [convertInt(current1), convertInt(current2)];
+    }
+    else {
+        return [current1, current2];
+    }
+}
+
 export function formatString(value: string, ...params: string[]) {
     for (let i = 0; i < params.length; i++) {
         value = value.replace(`{${i}}`, params[i]);
@@ -29,7 +56,7 @@ export function formatString(value: string, ...params: string[]) {
     return value;
 }
 
-export function cameltoLowerCase(value: string) {
+export function camelToLowerCase(value: string) {
     value = value.charAt(0).toLowerCase() + value.substring(1);
     const result = value.match(/([a-z]{1}[A-Z]{1})/g);
     if (result) {
@@ -67,7 +94,7 @@ export function convertFloat(value: any) {
     return (value && parseFloat(value)) || 0;
 }
 
-export function convertPX(value: any, fontSize: string) {
+export function convertPX(value: any, fontSize?: Null<string>) {
     if (hasValue(value)) {
         if (isNumber(value)) {
             return `${Math.round(value)}px`;
@@ -306,33 +333,6 @@ export function searchObject(obj: ObjectMap<string>, value: string | StringMap) 
         }
     }
     return result;
-}
-
-export function compareObject(obj1: {}, obj2: {}, attr: string) {
-    const namespaces = attr.split('.');
-    let current1: any = obj1;
-    let current2: any = obj2;
-    for (const name of namespaces) {
-        if (current1[name] != null && current2[name] != null) {
-            current1 = current1[name];
-            current2 = current2[name];
-        }
-        else if (current1[name] == null && current2[name] == null) {
-            return false;
-        }
-        else if (current1[name] != null) {
-            return [1, 0];
-        }
-        else {
-            return [0, 1];
-        }
-    }
-    if (!isNaN(parseInt(current1)) || !isNaN(parseInt(current2))) {
-        return [convertInt(current1), convertInt(current2)];
-    }
-    else {
-        return [current1, current2];
-    }
 }
 
 export function hasValue(value: any) {

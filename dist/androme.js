@@ -1,8 +1,11 @@
 /* androme 1.10.1
    https://github.com/anpham6/androme */
 
-var androme = (function (exports) {
-    'use strict';
+(function (global, factory) {
+    typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports) :
+    typeof define === 'function' && define.amd ? define(['exports'], factory) :
+    (factory((global.androme = {})));
+}(this, (function (exports) { 'use strict';
 
     const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const NUMERALS = [
@@ -26,13 +29,39 @@ var androme = (function (exports) {
             return 0;
         });
     }
+    function compareObject(obj1, obj2, attr) {
+        const namespaces = attr.split('.');
+        let current1 = obj1;
+        let current2 = obj2;
+        for (const name of namespaces) {
+            if (current1[name] != null && current2[name] != null) {
+                current1 = current1[name];
+                current2 = current2[name];
+            }
+            else if (current1[name] == null && current2[name] == null) {
+                return false;
+            }
+            else if (current1[name] != null) {
+                return [1, 0];
+            }
+            else {
+                return [0, 1];
+            }
+        }
+        if (!isNaN(parseInt(current1)) || !isNaN(parseInt(current2))) {
+            return [convertInt(current1), convertInt(current2)];
+        }
+        else {
+            return [current1, current2];
+        }
+    }
     function formatString(value, ...params) {
         for (let i = 0; i < params.length; i++) {
             value = value.replace(`{${i}}`, params[i]);
         }
         return value;
     }
-    function cameltoLowerCase(value) {
+    function camelToLowerCase(value) {
         value = value.charAt(0).toLowerCase() + value.substring(1);
         const result = value.match(/([a-z]{1}[A-Z]{1})/g);
         if (result) {
@@ -281,32 +310,6 @@ var androme = (function (exports) {
         }
         return result;
     }
-    function compareObject(obj1, obj2, attr) {
-        const namespaces = attr.split('.');
-        let current1 = obj1;
-        let current2 = obj2;
-        for (const name of namespaces) {
-            if (current1[name] != null && current2[name] != null) {
-                current1 = current1[name];
-                current2 = current2[name];
-            }
-            else if (current1[name] == null && current2[name] == null) {
-                return false;
-            }
-            else if (current1[name] != null) {
-                return [1, 0];
-            }
-            else {
-                return [0, 1];
-            }
-        }
-        if (!isNaN(parseInt(current1)) || !isNaN(parseInt(current2))) {
-            return [convertInt(current1), convertInt(current2)];
-        }
-        else {
-            return [current1, current2];
-        }
-    }
     function hasValue(value) {
         return typeof value !== 'undefined' && value !== null && value.toString().trim() !== '';
     }
@@ -353,7 +356,7 @@ var androme = (function (exports) {
 
     var util = /*#__PURE__*/Object.freeze({
         formatString: formatString,
-        cameltoLowerCase: cameltoLowerCase,
+        camelToLowerCase: camelToLowerCase,
         convertCamelCase: convertCamelCase,
         convertWord: convertWord,
         capitalize: capitalize,
@@ -382,7 +385,6 @@ var androme = (function (exports) {
         lastIndexOf: lastIndexOf,
         sameValue: sameValue,
         searchObject: searchObject,
-        compareObject: compareObject,
         hasValue: hasValue,
         withinRange: withinRange,
         withinFraction: withinFraction,
@@ -401,14 +403,7 @@ var androme = (function (exports) {
         };
     }
     function getClientRect() {
-        return {
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            width: 0,
-            height: 0
-        };
+        return Object.assign({ width: 0, height: 0 }, getBoxRect());
     }
     function getBoxModel() {
         return {
@@ -529,7 +524,7 @@ var androme = (function (exports) {
         });
         return result;
     }
-    function parseBackgroundUrl(value) {
+    function cssResolveUrl(value) {
         const match = value.match(/^url\("?(.*?)"?\)$/);
         if (match) {
             return resolvePath(match[1]);
@@ -733,11 +728,11 @@ var androme = (function (exports) {
         }
         return false;
     }
-    function locateExtension(element, extension) {
+    function findNestedExtension(element, name) {
         if (element instanceof HTMLElement) {
             return Array
                 .from(element.children)
-                .find((item) => includes(item.dataset.ext, extension));
+                .find((item) => includes(item.dataset.ext, name));
         }
         return null;
     }
@@ -754,7 +749,7 @@ var androme = (function (exports) {
         assignBounds: assignBounds,
         getStyle: getStyle,
         getBoxSpacing: getBoxSpacing,
-        parseBackgroundUrl: parseBackgroundUrl,
+        cssResolveUrl: cssResolveUrl,
         cssInherit: cssInherit,
         cssParent: cssParent,
         cssFromParent: cssFromParent,
@@ -764,7 +759,7 @@ var androme = (function (exports) {
         isLineBreak: isLineBreak,
         getElementsBetweenSiblings: getElementsBetweenSiblings,
         isElementVisible: isElementVisible,
-        locateExtension: locateExtension
+        findNestedExtension: findNestedExtension
     });
 
     var APP_FRAMEWORK;
@@ -1714,7 +1709,8 @@ var androme = (function (exports) {
             this._nodeName = value;
         }
         get nodeName() {
-            return this._nodeName || (this.hasElement ? (this.tagName === 'INPUT' ? this._element.type.toUpperCase() : this.tagName) : '');
+            return (this._nodeName ||
+                (this.hasElement ? (this.tagName === 'INPUT' ? this._element.type.toUpperCase() : this.tagName) : ''));
         }
         set element(value) {
             this._element = value;
@@ -1935,7 +1931,7 @@ var androme = (function (exports) {
         }
         get block() {
             const value = this.display;
-            return value === 'block' || value === 'list-item';
+            return value === 'block' || value === 'list-item' || (value === 'initial' && BLOCK_ELEMENT.includes(this.tagName));
         }
         get blockStatic() {
             return this.block && this.siblingflow && (!this.floating || this.cssInitial('width') === '100%');
@@ -2304,16 +2300,14 @@ var androme = (function (exports) {
                         }
                     }
                     if (horizontal || !traverse) {
-                        return nodes.every(node => {
-                            return !nodes.some(sibling => {
-                                if (sibling !== node &&
-                                    node.linear.top >= sibling.linear.bottom &&
-                                    node.intersectY(sibling.linear)) {
-                                    return true;
-                                }
-                                return false;
-                            });
-                        });
+                        return (nodes.every(node => !nodes.some(sibling => {
+                            if (sibling !== node &&
+                                node.linear.top >= sibling.linear.bottom &&
+                                node.intersectY(sibling.linear)) {
+                                return true;
+                            }
+                            return false;
+                        })));
                     }
                     return false;
             }
@@ -2411,7 +2405,7 @@ var androme = (function (exports) {
         each(predicate) {
             this._list.forEach(predicate);
         }
-        locate(attr, value) {
+        find(attr, value) {
             if (typeof attr === 'string') {
                 return this._list.find(node => node[attr] === value);
             }
@@ -2580,12 +2574,12 @@ var androme = (function (exports) {
     function formatPlaceholder(id, symbol = ':') {
         return `{${symbol + id.toString()}}`;
     }
+    function removePlaceholderAll(value) {
+        return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
+    }
     function replacePlaceholder(value, id, content, before = false) {
         const placeholder = typeof id === 'number' ? formatPlaceholder(id) : id;
         return value.replace(placeholder, (before ? placeholder : '') + content + (before ? '' : placeholder));
-    }
-    function removePlaceholders(value) {
-        return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
     }
     function replaceIndent(value, depth) {
         if (depth >= 0) {
@@ -2632,14 +2626,6 @@ var androme = (function (exports) {
         value = value.replace(/&nbsp;/g, '&#160;');
         return replaceWhiteSpace(value);
     }
-    function getTemplateLevel(data, ...levels) {
-        let current = data;
-        for (const level of levels) {
-            const [index, array = '0'] = level.split('-');
-            current = current[index][array];
-        }
-        return current;
-    }
     function parseTemplate(template) {
         const result = {};
         let pattern = null;
@@ -2675,7 +2661,15 @@ var androme = (function (exports) {
         } while (true);
         return result;
     }
-    function insertTemplateData(template, data, index, include, exclude) {
+    function getTemplateLevel(data, ...levels) {
+        let current = data;
+        for (const level of levels) {
+            const [index, array = '0'] = level.split('-');
+            current = current[index][array];
+        }
+        return current;
+    }
+    function createTemplate(template, data, index, include, exclude) {
         let output = index ? template[index] : '';
         if (data['#include']) {
             include = data['#include'];
@@ -2693,7 +2687,7 @@ var androme = (function (exports) {
             }
             else if (Array.isArray(data[i])) {
                 for (const j in data[i]) {
-                    value += insertTemplateData(template, data[i][j], i, include, exclude);
+                    value += createTemplate(template, data[i][j], i, include, exclude);
                 }
             }
             else {
@@ -2708,15 +2702,17 @@ var androme = (function (exports) {
             else if (new RegExp(`{&${i}}`).test(output)) {
                 output = '';
             }
-            const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
-            let match;
-            while ((match = pattern.exec(output)) != null) {
-                if (include && include[match[1]]) {
-                    const attr = `{#${match[1]}=${match[2]}}`;
-                    output = output.replace(attr, data[match[2]] || match[2]);
-                }
-                else if (exclude && exclude[match[1]]) {
-                    output = output.replace(match[0], '');
+            if (include || exclude) {
+                const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
+                let match;
+                while ((match = pattern.exec(output)) != null) {
+                    if (include && include[match[1]]) {
+                        const attr = `{#${match[1]}=${match[2]}}`;
+                        output = output.replace(attr, data[match[2]] || match[2]);
+                    }
+                    else if (exclude && exclude[match[1]]) {
+                        output = output.replace(match[0], '');
+                    }
                 }
             }
         }
@@ -2725,14 +2721,14 @@ var androme = (function (exports) {
 
     var xml = /*#__PURE__*/Object.freeze({
         formatPlaceholder: formatPlaceholder,
+        removePlaceholderAll: removePlaceholderAll,
         replacePlaceholder: replacePlaceholder,
-        removePlaceholders: removePlaceholders,
         replaceIndent: replaceIndent,
         replaceTab: replaceTab,
         replaceEntity: replaceEntity,
-        getTemplateLevel: getTemplateLevel,
         parseTemplate: parseTemplate,
-        insertTemplateData: insertTemplateData
+        getTemplateLevel: getTemplateLevel,
+        createTemplate: createTemplate
     });
 
     class Application {
@@ -3195,6 +3191,9 @@ var androme = (function (exports) {
                     axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
                     const cleared = NodeList.cleared(axisY);
                     const includes$$1 = [];
+                    function getCurrent() {
+                        return includes$$1.length > 0 ? includes$$1[includes$$1.length - 1] : '';
+                    }
                     let current = '';
                     let k = -1;
                     while (++k < axisY.length) {
@@ -3206,10 +3205,10 @@ var androme = (function (exports) {
                         if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
                             const filename = trimNull(nodeY.dataset.include);
                             if (filename !== '' && includes$$1.indexOf(filename) === -1) {
-                                renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), includes$$1.length > 0 ? includes$$1[includes$$1.length - 1] : '');
+                                renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), getCurrent());
                                 includes$$1.push(filename);
                             }
-                            current = includes$$1.length > 0 ? includes$$1[includes$$1.length - 1] : '';
+                            current = getCurrent();
                             if (current !== '') {
                                 const cloneParent = parentY.clone();
                                 cloneParent.renderDepth = this.viewController.baseRenderDepth(current);
@@ -3496,7 +3495,7 @@ var androme = (function (exports) {
                                 const groupOutput = this.writeGridLayout(group, parentY, 2, 1);
                                 group.alignmentType |= NODE_ALIGNMENT.PERCENT;
                                 renderNode(group, parentY, groupOutput, current);
-                                this.viewController[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${(100 - nodeY.toInt('width'))}%`));
+                                this.viewController[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${100 - nodeY.toInt('width')}%`));
                                 parentY = group;
                             }
                             if (nodeY.controlName === '') {
@@ -4065,7 +4064,7 @@ var androme = (function (exports) {
                             layers.push(leftSub, rightSub);
                         }
                     }
-                    layers = layers.filter((item) => item && item.length > 0);
+                    layers = layers.filter(item => item && item.length > 0);
                 }
                 group.alignmentType |= NODE_ALIGNMENT.FLOAT;
             }
@@ -4296,7 +4295,7 @@ var androme = (function (exports) {
                 }
                 let output = this.renderQueue[id].join('\n');
                 if (replaceId !== originalId) {
-                    const target = this.cacheSession.locate('id', parseInt(replaceId));
+                    const target = this.cacheSession.find('id', parseInt(replaceId));
                     if (target) {
                         const depth = target.renderDepth + 1;
                         output = replaceIndent(output, depth);
@@ -4304,7 +4303,7 @@ var androme = (function (exports) {
                         let match = null;
                         let i = 0;
                         while ((match = pattern.exec(output)) != null) {
-                            const node = this.cacheSession.locate('id', parseInt(match[1]));
+                            const node = this.cacheSession.find('id', parseInt(match[1]));
                             if (node) {
                                 if (i++ === 0) {
                                     node.renderDepth = depth;
@@ -4771,10 +4770,10 @@ var androme = (function (exports) {
     for (const i in X11_CSS3) {
         const x11 = X11_CSS3[i];
         for (const j in x11) {
-            const rgb = convertHextoRGB(x11[j]);
+            const rgb = convertToRGB(x11[j]);
             if (rgb) {
                 x11.rgb = rgb;
-                x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
+                x11.hsl = convertToHSL(x11.rgb);
             }
             HSL_SORTED.push({
                 name: i,
@@ -4785,14 +4784,14 @@ var androme = (function (exports) {
         }
     }
     HSL_SORTED.sort(sortHSL);
-    function convertHextoHSL(value) {
-        const rgb = convertHextoRGB(value);
+    function convertHexToHSL(value) {
+        const rgb = convertToRGB(value);
         if (rgb) {
-            return convertRGBtoHSL(rgb.r, rgb.g, rgb.b);
+            return convertToHSL(rgb);
         }
         return null;
     }
-    function convertRGBtoHSL(r, g, b) {
+    function convertToHSL({ r = 0, g = 0, b = 0 }) {
         r = r / 255;
         g = g / 255;
         b = b / 255;
@@ -4822,9 +4821,9 @@ var androme = (function (exports) {
             h /= 6;
         }
         return {
-            h: (h * 360),
-            s: (s * 100),
-            l: (l * 100)
+            h: h * 360,
+            s: s * 100,
+            l: l * 100
         };
     }
     function sortHSL(a, b) {
@@ -4840,6 +4839,9 @@ var androme = (function (exports) {
         }
         return 0;
     }
+    function formatRGB({ rgb }) {
+        return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
+    }
     function getColorNearest(value) {
         const result = HSL_SORTED.slice();
         let index = result.findIndex(item => item.hex === value);
@@ -4847,7 +4849,7 @@ var androme = (function (exports) {
             return result[index];
         }
         else {
-            const hsl = convertHextoHSL(value);
+            const hsl = convertHexToHSL(value);
             if (hsl) {
                 result.push({
                     name: '',
@@ -4862,7 +4864,7 @@ var androme = (function (exports) {
             return '';
         }
     }
-    function getByColorName(value) {
+    function getColorByName(value) {
         for (const color in X11_CSS3) {
             if (color.toLowerCase() === value.trim().toLowerCase()) {
                 return X11_CSS3[color];
@@ -4870,12 +4872,9 @@ var androme = (function (exports) {
         }
         return '';
     }
-    function formatRGB({ rgb }) {
-        return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
-    }
     function parseRGBA(value, opacity = '1') {
         if (value !== '') {
-            const color = getByColorName(value);
+            const color = getColorByName(value);
             if (color !== '') {
                 return [color.hex, formatRGB(color), opacity];
             }
@@ -4885,7 +4884,7 @@ var androme = (function (exports) {
                     match[4] = opacity;
                 }
                 return [
-                    `#${convertRGBtoHex(match[1]) + convertRGBtoHex(match[2]) + convertRGBtoHex(match[3])}`,
+                    `#${convertToHex(match[1]) + convertToHex(match[2]) + convertToHex(match[3])}`,
                     match[0],
                     parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1'
                 ];
@@ -4893,7 +4892,7 @@ var androme = (function (exports) {
         }
         return [];
     }
-    function convertRGBtoHex(value) {
+    function convertToHex(value) {
         const hex = '0123456789ABCDEF';
         let rgb = parseInt(value);
         if (isNaN(rgb)) {
@@ -4902,7 +4901,7 @@ var androme = (function (exports) {
         rgb = Math.max(0, Math.min(rgb, 255));
         return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
     }
-    function convertHextoRGB(value) {
+    function convertToRGB(value) {
         value = value.replace('#', '').trim();
         if (value.length === 3) {
             value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
@@ -4924,13 +4923,13 @@ var androme = (function (exports) {
                 value = color[0];
             }
             if (value.charAt(0) === '#' && /^#[a-zA-Z0-9]{3,6}$/.test(value)) {
-                return value.length === 4 ? parseRGBA(formatRGB({ rgb: convertHextoRGB(value) }))[0] : value;
+                return value.length === 4 ? parseRGBA(formatRGB({ rgb: convertToRGB(value) }))[0] : value;
             }
         }
         return '';
     }
-    function reduceHexToRGB(value, percent) {
-        const rgb = convertHextoRGB(value);
+    function reduceToRGB(value, percent) {
+        const rgb = convertToRGB(value);
         if (rgb) {
             const base = percent < 0 ? 0 : 255;
             percent = Math.abs(percent);
@@ -4941,13 +4940,12 @@ var androme = (function (exports) {
 
     var color = /*#__PURE__*/Object.freeze({
         getColorNearest: getColorNearest,
-        getByColorName: getByColorName,
-        formatRGB: formatRGB,
+        getColorByName: getColorByName,
         parseRGBA: parseRGBA,
-        convertRGBtoHex: convertRGBtoHex,
-        convertHextoRGB: convertHextoRGB,
+        convertToHex: convertToHex,
+        convertToRGB: convertToRGB,
         parseHex: parseHex,
-        reduceHexToRGB: reduceHexToRGB
+        reduceToRGB: reduceToRGB
     });
 
     class Resource {
@@ -6674,7 +6672,7 @@ var androme = (function (exports) {
                                     .split(',')
                                     .map(value => value.trim())
                                     .forEach(value => {
-                                    const url = parseBackgroundUrl(value);
+                                    const url = cssResolveUrl(value);
                                     if (url !== '' && !cacheImage.has(url)) {
                                         cacheImage.set(url, { width: 0, height: 0, url });
                                     }
@@ -6705,11 +6703,7 @@ var androme = (function (exports) {
     }
     function setImageCache(element) {
         if (element && hasValue(element.src)) {
-            cacheImage.set(element.src, {
-                width: element.naturalWidth,
-                height: element.naturalHeight,
-                url: element.src
-            });
+            cacheImage.set(element.src, { width: element.naturalWidth, height: element.naturalHeight, url: element.src });
         }
     }
     function setFramework(module, cached = false) {
@@ -6787,12 +6781,13 @@ var androme = (function (exports) {
                     }
                     main.appName = element.id;
                 }
-                else {
+                let filename = trimNull(element.dataset.filename).replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '');
+                if (filename === '') {
                     if (element.id === '') {
-                        element.id = `content_${main.size}`;
+                        element.id = `document_${main.size}`;
                     }
+                    filename = element.id;
                 }
-                const filename = trimNull(element.dataset.filename).replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '') || element.id;
                 const iteration = convertInt(element.dataset.iteration) + 1;
                 element.dataset.iteration = iteration.toString();
                 element.dataset.layoutName = convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);
@@ -6978,6 +6973,6 @@ var androme = (function (exports) {
     exports.toString = toString;
     exports.lib = lib;
 
-    return exports;
+    Object.defineProperty(exports, '__esModule', { value: true });
 
-}({}));
+})));

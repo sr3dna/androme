@@ -2,7 +2,7 @@ import Extension from './extension';
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
 import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/enumeration';
-import { INLINE_ELEMENT } from '../lib/constant';
+import { BLOCK_ELEMENT, INLINE_ELEMENT } from '../lib/constant';
 
 type T = Node;
 
@@ -19,9 +19,9 @@ export default abstract class Node implements androme.lib.base.Node {
     public siblingIndex = Number.MAX_VALUE;
     public renderIndex = Number.MAX_VALUE;
     public renderPosition = -1;
-    public box: BoxDimensionsRect;
-    public bounds: BoxDimensionsRect;
-    public linear: BoxDimensionsRect;
+    public box: BoxDimensions;
+    public bounds: BoxDimensions;
+    public linear: BoxDimensions;
     public excludeSection = 0;
     public excludeProcedure = 0;
     public excludeResource = 0;
@@ -56,7 +56,7 @@ export default abstract class Node implements androme.lib.base.Node {
     private _data: ObjectMap<any> = {};
     private _initialized = false;
 
-    constructor(
+    protected constructor(
         public readonly id: number,
         element?: Element)
     {
@@ -190,7 +190,7 @@ export default abstract class Node implements androme.lib.base.Node {
 
     public render(parent: T) {
         this.renderParent = parent;
-        this.renderDepth = this.documentRoot || <any> this === parent || hasValue(parent.dataset.target) ? 0 : parent.renderDepth + 1;
+        this.renderDepth = this.documentRoot || this === parent || hasValue(parent.dataset.target) ? 0 : parent.renderDepth + 1;
         this.rendered = true;
     }
 
@@ -234,7 +234,7 @@ export default abstract class Node implements androme.lib.base.Node {
             }
             return current;
         }
-        return cascade(this as any);
+        return cascade(this);
     }
 
     public inherit(node: T, ...props: string[]) {
@@ -335,14 +335,14 @@ export default abstract class Node implements androme.lib.base.Node {
                 (!previous.floating && ((!this.inlineElement && !this.floating) || this.blockStatic)) ||
                 (previous.plainText && previous.multiLine && (this.parent && !this.parent.is(NODE_STANDARD.RELATIVE))) ||
                 (this.blockStatic && (!previous.inlineElement || (cleared.has(previous) && previous.floating))) ||
-                (!firstNode && cleared.has(this as any)) ||
+                (!firstNode && cleared.has(this)) ||
                 (!firstNode && this.floating && previous.floating && this.linear.top >= previous.linear.bottom)
             );
         }
         return false;
     }
 
-    public intersect(rect: BoxDimensionsRect, dimension = 'linear') {
+    public intersect(rect: BoxDimensions, dimension = 'linear') {
         const top = rect.top > this[dimension].top && rect.top < this[dimension].bottom;
         const right = Math.floor(rect.right) > Math.ceil(this[dimension].left) && rect.right < this[dimension].right;
         const bottom = Math.floor(rect.bottom) > Math.ceil(this[dimension].top) && rect.bottom < this[dimension].bottom;
@@ -350,7 +350,7 @@ export default abstract class Node implements androme.lib.base.Node {
         return (top && (left || right)) || (bottom && (left || right));
     }
 
-    public intersectX(rect: BoxDimensionsRect, dimension = 'linear') {
+    public intersectX(rect: BoxDimensions, dimension = 'linear') {
         return (
             (rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
             (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) ||
@@ -359,7 +359,7 @@ export default abstract class Node implements androme.lib.base.Node {
         );
     }
 
-    public intersectY(rect: BoxDimensionsRect, dimension = 'linear') {
+    public intersectY(rect: BoxDimensions, dimension = 'linear') {
         return (
             (rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
             (rect.right > this[dimension].left && rect.right <= this[dimension].right) ||
@@ -368,19 +368,19 @@ export default abstract class Node implements androme.lib.base.Node {
         );
     }
 
-    public withinX(rect: BoxDimensionsRect, dimension = 'linear') {
+    public withinX(rect: BoxDimensions, dimension = 'linear') {
         return this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom;
     }
 
-    public withinY(rect: BoxDimensionsRect, dimension = 'linear') {
+    public withinY(rect: BoxDimensions, dimension = 'linear') {
         return this[dimension].left >= rect.left && this[dimension].right <= rect.right;
     }
 
-    public outsideX(rect: BoxDimensionsRect, dimension = 'linear') {
+    public outsideX(rect: BoxDimensions, dimension = 'linear') {
         return this[dimension].right < rect.left || this[dimension].left > rect.right;
     }
 
-    public outsideY(rect: BoxDimensionsRect, dimension = 'linear') {
+    public outsideY(rect: BoxDimensions, dimension = 'linear') {
         return this[dimension].bottom < rect.top || this[dimension].top > rect.bottom;
     }
 
@@ -526,7 +526,7 @@ export default abstract class Node implements androme.lib.base.Node {
                 else {
                     const bounds = getRangeClientRect(this._element);
                     if (bounds[0]) {
-                        this.bounds = <BoxDimensionsRect> bounds[0];
+                        this.bounds = <BoxDimensions> bounds[0];
                     }
                 }
             }
@@ -616,7 +616,7 @@ export default abstract class Node implements androme.lib.base.Node {
 
     public getParentElementAsNode(negative = false, containerDefault?: T) {
         if (this._element) {
-            let parent = getNodeFromElement(this._element.parentElement);
+            let parent = getNodeFromElement(this._element.parentElement) as Null<T>;
             if (!this.pageflow) {
                 let found = false;
                 let previous: Null<T> = null;
@@ -664,7 +664,7 @@ export default abstract class Node implements androme.lib.base.Node {
                         }
                     }
                     previous = parent;
-                    parent = getNodeFromElement(parent.element.parentElement);
+                    parent = getNodeFromElement(parent.element.parentElement) as T;
                 }
                 if (!found) {
                     parent = outside && containerDefault ? containerDefault : relativeParent;
@@ -725,7 +725,7 @@ export default abstract class Node implements androme.lib.base.Node {
             element = list.length > 0 ? <Element> list[0].element.previousSibling : null;
         }
         while (element) {
-            const node = getNodeFromElement(element);
+            const node = getNodeFromElement(element) as T;
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
                 !(node.excluded && !excluded) && (
@@ -750,7 +750,7 @@ export default abstract class Node implements androme.lib.base.Node {
             element = list.length > 0 ? <Element> list[0].element.nextSibling : null;
         }
         while (element) {
-            const node = getNodeFromElement(element);
+            const node = getNodeFromElement(element) as T;
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
                 !(node.excluded && !excluded) && (
@@ -799,7 +799,7 @@ export default abstract class Node implements androme.lib.base.Node {
                         overflow === 'scroll' ||
                         overflowX === 'scroll' ||
                         (overflowX === 'auto' && this._element.clientWidth !== this._element.scrollWidth)
-                ))
+                   ))
                 {
                     this._overflow |= NODE_ALIGNMENT.HORIZONTAL;
                 }
@@ -807,7 +807,7 @@ export default abstract class Node implements androme.lib.base.Node {
                         overflow === 'scroll' ||
                         overflowY === 'scroll' ||
                         (overflowY === 'auto' && this._element.clientHeight !== this._element.scrollHeight)
-                ))
+                   ))
                 {
                     this._overflow |= NODE_ALIGNMENT.VERTICAL;
                 }
@@ -847,7 +847,10 @@ export default abstract class Node implements androme.lib.base.Node {
         this._nodeName = value;
     }
     get nodeName() {
-        return this._nodeName || (this.hasElement ? (this.tagName === 'INPUT' ? (<HTMLInputElement> this._element).type.toUpperCase() : this.tagName) : '');
+        return (
+            this._nodeName ||
+            (this.hasElement ? (this.tagName === 'INPUT' ? (<HTMLInputElement> this._element).type.toUpperCase() : this.tagName) : '')
+        );
     }
 
     set element(value) {
@@ -1101,7 +1104,7 @@ export default abstract class Node implements androme.lib.base.Node {
 
     get block() {
         const value = this.display;
-        return value === 'block' || value === 'list-item';
+        return value === 'block' || value === 'list-item' || (value === 'initial' && BLOCK_ELEMENT.includes(this.tagName));
     }
 
     get blockStatic() {

@@ -7,7 +7,7 @@ import $const = androme.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
-export default class GridAndroid<T extends View> extends androme.lib.base.extensions.Grid<T> {
+export default class <T extends View> extends androme.lib.base.extensions.Grid<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

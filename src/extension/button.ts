@@ -1,8 +1,8 @@
 import Node from '../base/node';
 import Extension from '../base/extension';
 
-export default abstract class Button<T extends Node> extends Extension<T> {
-    constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
+export default abstract class <T extends Node> extends Extension<T> {
+    protected constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }
 

@@ -355,7 +355,7 @@ var android = (function () {
         }
         return '0dp';
     }
-    function delimitDimens(nodeName, attr, size, { dimensResourceValue = true }) {
+    function delimitUnit(nodeName, attr, size, { dimensResourceValue = true }) {
         return dimensResourceValue ? `{%${nodeName.toLowerCase()},${attr},${size}}` : size;
     }
     function replaceUnit(value, { density = 160, convertPixels = 'dp' }, font = false) {
@@ -1493,14 +1493,14 @@ var android = (function () {
             get layoutHorizontal() {
                 return (this.linearHorizontal ||
                     this.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL) ||
-                    (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.every(node => node.domElement)) ||
-                    (this.nodes.filter(node => node.pageflow).length > 1 && $nodelist.linearX(this.nodes)));
+                    (this.nodes.filter(node => node.pageflow).length > 1 && ($nodelist.linearX(this.nodes) ||
+                        (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.every(node => node.domElement)))));
             }
             get layoutVertical() {
                 return (this.linearVertical ||
                     this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) ||
-                    (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.some(node => node.linearVertical)) ||
-                    (this.nodes.filter(node => node.pageflow).length > 1 && $nodelist.linearY(this.nodes)));
+                    (this.nodes.filter(node => node.pageflow).length > 1 && ($nodelist.linearY(this.nodes)) ||
+                        (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.some(node => node.linearVertical))));
             }
             get linearHorizontal() {
                 return this._android.orientation === AXIS_ANDROID.HORIZONTAL && this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP);
@@ -1639,9 +1639,9 @@ var android = (function () {
     class ResourceHandler extends androme.lib.base.Resource {
         constructor(file) {
             super(file);
-            this.tagStyle = {};
-            this.tagCount = {};
-            this.file.stored = $resource.STORED;
+            this._tagStyle = {};
+            this._tagCount = {};
+            file.stored = $resource.STORED;
         }
         static getStored(name) {
             return $resource.STORED[name];
@@ -1788,7 +1788,7 @@ var android = (function () {
             return src;
         }
         static addImageURL(value, prefix = '') {
-            const url = $dom$1.parseBackgroundUrl(value);
+            const url = $dom$1.cssResolveUrl(value);
             if (url !== '') {
                 return ResourceHandler.addImage({ 'mdpi': url }, prefix);
             }
@@ -1803,7 +1803,7 @@ var android = (function () {
                 if (!$resource.STORED.colors.has(opaque)) {
                     const color = $color.getColorNearest(value);
                     if (color !== '') {
-                        color.name = $util$1.cameltoLowerCase(color.name);
+                        color.name = $util$1.camelToLowerCase(color.name);
                         if (value === color.hex && value === opaque) {
                             colorName = color.name;
                         }
@@ -1838,8 +1838,8 @@ var android = (function () {
         reset() {
             super.reset();
             this.file.reset();
-            this.tagStyle = {};
-            this.tagCount = {};
+            this._tagStyle = {};
+            this._tagCount = {};
         }
         finalize(viewData) {
             this.processFontStyle(viewData);
@@ -1957,7 +1957,7 @@ var android = (function () {
                     for (let i = 0; i < backgroundImage.length; i++) {
                         if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
                             backgroundImageUrl.push(backgroundImage[i]);
-                            const image = this.imageDimensions.get($dom$1.parseBackgroundUrl(backgroundImage[i]));
+                            const image = this.imageDimensions.get($dom$1.cssResolveUrl(backgroundImage[i]));
                             backgroundDimensions.push(image);
                             backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
                         }
@@ -2447,7 +2447,7 @@ var android = (function () {
                             }
                         }
                         if (template) {
-                            const xml = $xml.insertTemplateData(template, data);
+                            const xml = $xml.createTemplate(template, data);
                             for (const [name, value] of $resource.STORED.drawables.entries()) {
                                 if (value === xml) {
                                     resourceName = name;
@@ -2611,7 +2611,7 @@ var android = (function () {
                         }
                     }
                 }
-                const tagStyle = this.tagStyle[tag];
+                const tagStyle = this._tagStyle[tag];
                 if (tagStyle) {
                     for (let i = 0; i < tagStyle.length; i++) {
                         for (const attr in tagStyle[i]) {
@@ -2623,12 +2623,12 @@ var android = (function () {
                             }
                         }
                     }
-                    this.tagCount[tag] += nodes.visible.length;
+                    this._tagCount[tag] += nodes.visible.length;
                 }
                 else {
-                    this.tagCount[tag] = nodes.visible.length;
+                    this._tagCount[tag] = nodes.visible.length;
                 }
-                this.tagStyle[tag] = sorted;
+                this._tagStyle[tag] = sorted;
             }
         }
         setImageSource() {
@@ -2718,7 +2718,7 @@ var android = (function () {
                             }
                         }
                     }
-                    if (node.hasElement && node.is($enum$1.NODE_STANDARD.TEXT)) {
+                    if (node.hasElement) {
                         switch (node.css('fontVariant')) {
                             case 'small-caps':
                                 stored.value = stored.value.toUpperCase();
@@ -2746,10 +2746,10 @@ var android = (function () {
                 }
             });
         }
-        addTheme(template, templateData, options) {
+        addTheme(template, data, options) {
             const map = $xml.parseTemplate(template);
             if (options.item) {
-                const root = $xml.getTemplateLevel(templateData, '0');
+                const root = $xml.getTemplateLevel(data, '0');
                 for (const name in options.item) {
                     let value = options.item[name];
                     const hex = $color.parseHex(value);
@@ -2759,7 +2759,7 @@ var android = (function () {
                     root['1'].push({ name, value });
                 }
             }
-            const xml = $xml.insertTemplateData(map, templateData);
+            const xml = $xml.createTemplate(map, data);
             this.addFile(options.output.path, options.output.file, xml);
         }
         processFontStyle(viewData) {
@@ -2768,11 +2768,11 @@ var android = (function () {
             const resource = {};
             const inherit = new Set();
             const mapNode = {};
-            for (const tag in this.tagStyle) {
+            for (const tag in this._tagStyle) {
                 style[tag] = {};
                 layout[tag] = {};
-                const count = this.tagCount[tag];
-                let sorted = this.tagStyle[tag]
+                const count = this._tagCount[tag];
+                let sorted = this._tagStyle[tag]
                     .filter((item) => Object.keys(item).length > 0)
                     .sort((a, b) => {
                     let maxA = 0;
@@ -2972,7 +2972,7 @@ var android = (function () {
                 }
             }
             for (const id in mapNode) {
-                const node = viewData.cache.locate('id', parseInt(id));
+                const node = viewData.cache.find('id', parseInt(id));
                 if (node) {
                     const styles = mapNode[id].styles;
                     const attrs = mapNode[id].attributes;
@@ -2993,7 +2993,11 @@ var android = (function () {
                     const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                     if (match) {
                         const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
-                        $resource.STORED.styles.set(value, { parent, attributes: tagData.attributes });
+                        $resource.STORED.styles
+                            .set(value, {
+                            parent,
+                            attributes: tagData.attributes
+                        });
                         parent = value;
                     }
                 });
@@ -3031,10 +3035,16 @@ var android = (function () {
                 case 'stroke':
                     if (stored.border && stored.border.width !== '0px') {
                         if (!hasInset || isInset) {
-                            return [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border, (isInset ? direction : -1)) }];
+                            return [{
+                                    width: stored.border.width,
+                                    borderStyle: this.getBorderStyle(stored.border, (isInset ? direction : -1))
+                                }];
                         }
                         else if (hasInset) {
-                            return [{ width: $util$1.formatPX(Math.ceil(parseInt(stored.border.width) / 2)), borderStyle: this.getBorderStyle(stored.border, direction, true) }];
+                            return [{
+                                    width: $util$1.formatPX(Math.ceil(parseInt(stored.border.width) / 2)),
+                                    borderStyle: this.getBorderStyle(stored.border, direction, true)
+                                }];
                         }
                     }
                     return false;
@@ -3078,7 +3088,7 @@ var android = (function () {
                         hexValue = `#${hexValue.substring(3)}`;
                         opacity = `0.${hexValue.substring(1, 3)}`;
                     }
-                    const reduced = $color.parseRGBA($color.reduceHexToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
+                    const reduced = $color.parseRGBA($color.reduceToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
                     if (reduced.length > 0) {
                         colorName = ResourceHandler.addColor(reduced[0], opacity);
                     }
@@ -3204,7 +3214,7 @@ var android = (function () {
         finalize(data) {
             this.setAttributes(data);
             for (const value of [...data.views, ...data.includes]) {
-                value.content = $xml$1.removePlaceholders(value.content).replace(/\n\n/g, '\n');
+                value.content = $xml$1.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
                 if (this.settings.dimensResourceValue) {
                     value.content = this.parseDimensions(value.content);
                 }
@@ -3258,7 +3268,7 @@ var android = (function () {
                     while (parent) {
                         const stringId = mapSibling(parent, (orientation === AXIS_ANDROID.HORIZONTAL ? 'leftRight' : 'topBottom'));
                         if (stringId) {
-                            parent = nodes.locate('nodeId', stripId(stringId));
+                            parent = nodes.find('nodeId', stripId(stringId));
                             if (parent && parent.constraint[orientation]) {
                                 return true;
                             }
@@ -3318,7 +3328,7 @@ var android = (function () {
                             let dimension = current.bounds;
                             if (current.inlineText && !current.hasWidth) {
                                 const [bounds, multiLine] = $dom$2.getRangeClientRect(current.element);
-                                if (bounds && (multiLine || bounds.width < dimension.width)) {
+                                if (bounds && (multiLine || bounds.width < current.box.width)) {
                                     dimension = bounds;
                                 }
                             }
@@ -3714,7 +3724,7 @@ var android = (function () {
                                     if (!current.anchored) {
                                         const result = $util$2.searchObject(current.get('app'), '*constraint*');
                                         for (const [key, value] of result) {
-                                            if (value !== 'parent' && pageflow.filter(item => item.anchored).locate('stringId', value)) {
+                                            if (value !== 'parent' && pageflow.filter(item => item.anchored).find('stringId', value)) {
                                                 if ($util$2.indexOf(key, parseRTL('Left', this.settings), parseRTL('Right', this.settings)) !== -1) {
                                                     current.constraint.horizontal = true;
                                                 }
@@ -4229,7 +4239,7 @@ var android = (function () {
                                                         });
                                                         for (const item of chainable) {
                                                             for (const list of connected) {
-                                                                if (list.locate('id', item.id)) {
+                                                                if (list.find('id', item.id)) {
                                                                     list.clear();
                                                                 }
                                                             }
@@ -4266,7 +4276,7 @@ var android = (function () {
                                                 while (adjacent) {
                                                     const topBottom = mapSibling(adjacent, value);
                                                     if (topBottom) {
-                                                        adjacent = nodes.locate('nodeId', stripId(topBottom));
+                                                        adjacent = nodes.find('nodeId', stripId(topBottom));
                                                         if (adjacent && current.withinY(adjacent.linear)) {
                                                             chain.push(adjacent);
                                                             valid = mapParent(adjacent, index === 0 ? 'top' : 'bottom');
@@ -4306,7 +4316,7 @@ var android = (function () {
                                             ['leftRight', 'rightLeft'].forEach(value => {
                                                 const stringId = mapSibling(current, value);
                                                 if (stringId) {
-                                                    const aligned = pageflow.locate('stringId', stringId);
+                                                    const aligned = pageflow.find('stringId', stringId);
                                                     if (aligned && mapSibling(aligned, direction[2])) {
                                                         if ($util$2.withinFraction(current.linear[direction[0]], aligned.linear[direction[0]])) {
                                                             current.anchor(mapLayout[direction[0]], aligned.stringId);
@@ -4384,7 +4394,7 @@ var android = (function () {
                                         }
                                         current.delete('app', 'layout_constraint*');
                                         current.app('layout_constraintCircle', opposite.stringId);
-                                        current.app('layout_constraintCircleRadius', delimitDimens(`${current.nodeName}`, 'constraintcircleradius', $util$2.formatPX(radius), this.settings));
+                                        current.app('layout_constraintCircleRadius', delimitUnit(`${current.nodeName}`, 'constraintcircleradius', $util$2.formatPX(radius), this.settings));
                                         current.app('layout_constraintCircleAngle', degrees.toString());
                                         current.constraint.horizontal = true;
                                         current.constraint.vertical = true;
@@ -4446,7 +4456,7 @@ var android = (function () {
                                                 if (!current.constraint[`chain${value[6]}`]) {
                                                     if (value[0] && value[1]) {
                                                         if (!current.autoMargin && !current.linearVertical) {
-                                                            current.android(`layout_${(index === 0 ? 'width' : 'height')}`, 'match_parent', false);
+                                                            current.android(`layout_${index === 0 ? 'width' : 'height'}`, 'match_parent', false);
                                                         }
                                                     }
                                                     else if (value[1]) {
@@ -4546,22 +4556,24 @@ var android = (function () {
                                         if (left !== right) {
                                             ['leftRight', 'rightLeft', 'bottomTop', 'topBottom'].forEach(value => {
                                                 if (connected[left][value] && connected[left][value] === connected[right][value]) {
-                                                    const conflict = nodes.locate('stringId', connected[left][value]);
+                                                    const conflict = nodes.find('stringId', connected[left][value]);
                                                     if (conflict) {
-                                                        [nodes.locate('stringId', left), nodes.locate('stringId', right)].some((item, index) => {
+                                                        [nodes.find('stringId', left), nodes.find('stringId', right)].some((item, index) => {
                                                             if (item) {
                                                                 const stringId = index === 0 ? left : right;
                                                                 switch (value) {
                                                                     case 'leftRight':
                                                                     case 'rightLeft':
-                                                                        if ((mapSibling(item, 'left') || mapSibling(item, 'right')) && mapSibling(conflict, value === 'rightLeft' ? 'leftRight' : 'rightLeft') !== stringId) {
+                                                                        if ((mapSibling(item, 'left') || mapSibling(item, 'right')) &&
+                                                                            mapSibling(conflict, value === 'rightLeft' ? 'leftRight' : 'rightLeft') !== stringId) {
                                                                             deleteChain(item, value);
                                                                             return true;
                                                                         }
                                                                         break;
                                                                     case 'bottomTop':
                                                                     case 'topBottom':
-                                                                        if ((mapSibling(item, 'top') || mapSibling(item, 'bottom')) && mapSibling(conflict, value === 'topBottom' ? 'bottomTop' : 'topBottom') !== stringId) {
+                                                                        if ((mapSibling(item, 'top') || mapSibling(item, 'bottom')) &&
+                                                                            mapSibling(conflict, value === 'topBottom' ? 'bottomTop' : 'topBottom') !== stringId) {
                                                                             deleteChain(item, value);
                                                                             return true;
                                                                         }
@@ -4978,13 +4990,13 @@ var android = (function () {
             const displayName = node.hasElement ? node.nodeName : viewName;
             if ($util$2.hasValue(width)) {
                 if (!isNaN(parseInt(width))) {
-                    width = delimitDimens(displayName, 'width', width, this.settings);
+                    width = delimitUnit(displayName, 'width', width, this.settings);
                 }
                 node.android('layout_width', width, false);
             }
             if ($util$2.hasValue(height)) {
                 if (!isNaN(parseInt(height))) {
-                    height = delimitDimens(displayName, 'height', height, this.settings);
+                    height = delimitUnit(displayName, 'height', height, this.settings);
                 }
                 node.android('layout_height', height, false);
             }
@@ -5084,12 +5096,12 @@ var android = (function () {
             let output = preXml +
                 `{<${id}}`;
             if (xml !== '') {
-                output += indent + `<${controlName}${(depth === 0 ? '{#0}' : '')}{@${id}}>\n` +
+                output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}}>\n` +
                     xml +
                     indent + `</${controlName}>\n`;
             }
             else {
-                output += indent + `<${controlName}${(depth === 0 ? '{#0}' : '')}{@${id}} />\n`;
+                output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}} />\n`;
             }
             output += `{>${id}}` +
                 postXml;
@@ -5210,13 +5222,13 @@ var android = (function () {
                             Array
                                 .from(chained)
                                 .some(item => {
-                                return sameXY.some(adjacent => {
+                                return (sameXY.some(adjacent => {
                                     if (!chained.has(adjacent) && (adjacent.app(connected[0]) === item.stringId || adjacent.app(connected[1]) === item.stringId)) {
                                         chained.add(adjacent);
                                         valid = true;
                                     }
                                     return valid;
-                                });
+                                }));
                             });
                         } while (valid);
                         return Array.from(chained);
@@ -5244,7 +5256,7 @@ var android = (function () {
                 percent = node.dataset.constraintPercent === 'true';
             }
             const parent = node.documentParent;
-            const beginPercent = `layout_constraintGuide_${(percent ? 'percent' : 'begin')}`;
+            const beginPercent = `layout_constraintGuide_${percent ? 'percent' : 'begin'}`;
             [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
                 if (!node.constraint[value] && (orientation === '' || value === orientation)) {
                     let LT = '';
@@ -5350,7 +5362,7 @@ var android = (function () {
                             }
                             if (!found) {
                                 if (!percent) {
-                                    options.app[beginPercent] = delimitDimens(node.nodeName, 'constraintguide_begin', $util$2.formatPX(location), this.settings);
+                                    options.app[beginPercent] = delimitUnit(node.nodeName, 'constraintguide_begin', $util$2.formatPX(location), this.settings);
                                 }
                                 const xml = this.renderNodeStatic(NODE_ANDROID.GUIDELINE, node.renderDepth, options, 'wrap_content', 'wrap_content');
                                 const stringId = options['stringId'];
@@ -5464,7 +5476,7 @@ var android = (function () {
             }
         }
         findByStringId(id) {
-            return this.cache.locate('stringId', id);
+            return this.cache.find('stringId', id);
         }
         get baseTemplate() {
             return BASE_TMPL;
@@ -5581,7 +5593,7 @@ var android = (function () {
 
     var $util$3 = androme.lib.util;
     var $xml$2 = androme.lib.xml;
-    function caseInsensitve(a, b) {
+    function caseInsensitive(a, b) {
         return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
     }
     class FileHandler extends androme.lib.base.File {
@@ -5651,7 +5663,7 @@ var android = (function () {
         }
         resourceStringToXml(saveToDisk = false) {
             let xml = '';
-            this.stored.strings = new Map([...this.stored.strings.entries()].sort(caseInsensitve));
+            this.stored.strings = new Map([...this.stored.strings.entries()].sort(caseInsensitive));
             const template = $xml$2.parseTemplate(STRING_TMPL);
             const data = {
                 '0': [{
@@ -5665,7 +5677,7 @@ var android = (function () {
             for (const [name, value] of this.stored.strings.entries()) {
                 root['1'].push({ name, value });
             }
-            xml = $xml$2.insertTemplateData(template, data);
+            xml = $xml$2.createTemplate(template, data);
             xml = $xml$2.replaceTab(xml, this.settings, true);
             if (saveToDisk) {
                 this.saveToDisk(this.parseFileDetails(xml));
@@ -5694,7 +5706,7 @@ var android = (function () {
                     }
                     root['1'].push(arrayItem);
                 }
-                xml = $xml$2.insertTemplateData(template, data);
+                xml = $xml$2.createTemplate(template, data);
                 xml = $xml$2.replaceTab(xml, this.settings, true);
                 if (saveToDisk) {
                     this.saveToDisk(this.parseFileDetails(xml));
@@ -5716,7 +5728,7 @@ var android = (function () {
                                 '1': []
                             }]
                     };
-                    data[(this.settings.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude')]['app'] = true;
+                    data[this.settings.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude']['app'] = true;
                     const root = $xml$2.getTemplateLevel(data, '0');
                     for (const attr in font) {
                         const [style, weight] = attr.split('-');
@@ -5724,11 +5736,10 @@ var android = (function () {
                             style,
                             weight,
                             font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}`
-                            : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}`
-                                : ''))}`
+                            : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
                         });
                     }
-                    xml += '\n\n' + $xml$2.insertTemplateData(template, data);
+                    xml += '\n\n' + $xml$2.createTemplate(template, data);
                 }
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
@@ -5751,7 +5762,7 @@ var android = (function () {
                 for (const [name, value] of this.stored.colors.entries()) {
                     root['1'].push({ name, value });
                 }
-                xml = $xml$2.insertTemplateData(template, data);
+                xml = $xml$2.createTemplate(template, data);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
                     this.saveToDisk(this.parseFileDetails(xml));
@@ -5762,7 +5773,7 @@ var android = (function () {
         resourceStyleToXml(saveToDisk = false) {
             let xml = '';
             if (this.stored.styles.size > 0) {
-                this.stored.styles = new Map([...this.stored.styles.entries()].sort(caseInsensitve));
+                this.stored.styles = new Map([...this.stored.styles.entries()].sort(caseInsensitive));
                 const template = $xml$2.parseTemplate(STYLE_TMPL);
                 const data = {
                     '0': [{
@@ -5785,7 +5796,7 @@ var android = (function () {
                     });
                     root['1'].push(styleItem);
                 }
-                xml = $xml$2.insertTemplateData(template, data);
+                xml = $xml$2.createTemplate(template, data);
                 xml = replaceUnit(xml, this.settings, true);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
@@ -5808,7 +5819,7 @@ var android = (function () {
                 for (const [name, value] of this.stored.dimens.entries()) {
                     root['1'].push({ name, value });
                 }
-                xml = $xml$2.insertTemplateData(template, data);
+                xml = $xml$2.createTemplate(template, data);
                 xml = replaceUnit(xml, this.settings);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
@@ -5847,7 +5858,7 @@ var android = (function () {
                         });
                     }
                 }
-                xml = $xml$2.insertTemplateData(template, data);
+                xml = $xml$2.createTemplate(template, data);
                 xml = replaceUnit(xml, this.settings);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
@@ -5966,13 +5977,13 @@ var android = (function () {
         DIALOG: 'ic_dialog_'
     };
 
-    class ExternalAndroid extends androme.lib.base.extensions.External {
+    class External extends androme.lib.base.extensions.External {
     }
 
-    class OriginAndroid extends androme.lib.base.extensions.Origin {
+    class Origin extends androme.lib.base.extensions.Origin {
     }
 
-    class CustomAndroid extends androme.lib.base.extensions.Custom {
+    class Custom extends androme.lib.base.extensions.Custom {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -5986,7 +5997,7 @@ var android = (function () {
     var $enum$3 = androme.lib.enumeration;
     var $util$4 = androme.lib.util;
     var $dom$3 = androme.lib.dom;
-    class AccessibilityAndroid extends androme.lib.base.extensions.Accessibility {
+    class Accessibility extends androme.lib.base.extensions.Accessibility {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6030,7 +6041,7 @@ var android = (function () {
     var $enum$4 = androme.lib.enumeration;
     var $const$1 = androme.lib.constant;
     var $util$5 = androme.lib.util;
-    class ListAndroid extends androme.lib.base.extensions.List {
+    class List extends androme.lib.base.extensions.List {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6096,7 +6107,7 @@ var android = (function () {
                         paddingLeft -= left;
                     }
                     paddingLeft = Math.max(paddingLeft, 20);
-                    const minWidth = paddingLeft > 0 ? delimitDimens(node.nodeName, parseRTL('min_width', settings), $util$5.formatPX(paddingLeft), settings) : '';
+                    const minWidth = paddingLeft > 0 ? delimitUnit(node.nodeName, parseRTL('min_width', settings), $util$5.formatPX(paddingLeft), settings) : '';
                     const paddingRight = (() => {
                         if (paddingLeft <= 24) {
                             return 6;
@@ -6120,7 +6131,7 @@ var android = (function () {
                     };
                     if (positionInside) {
                         if (marginLeftValue !== '') {
-                            marginLeftValue = delimitDimens(node.nodeName, parseRTL('margin_left', settings), marginLeftValue, settings);
+                            marginLeftValue = delimitUnit(node.nodeName, parseRTL('margin_left', settings), marginLeftValue, settings);
                         }
                         controller.prependBefore(node.id, controller.renderNodeStatic($enum$4.NODE_STANDARD.SPACE, parent.renderDepth + 1, {
                             android: {
@@ -6130,7 +6141,7 @@ var android = (function () {
                             app: { layout_columnWeight: columnWeight }
                         }, 'wrap_content', 'wrap_content'));
                         Object.assign(options.android, {
-                            minWidth: delimitDimens(node.nodeName, parseRTL('min_width', settings), $util$5.formatPX(24), settings)
+                            minWidth: delimitUnit(node.nodeName, parseRTL('min_width', settings), $util$5.formatPX(24), settings)
                         });
                     }
                     else {
@@ -6225,7 +6236,7 @@ var android = (function () {
     var $const$2 = androme.lib.constant;
     var $util$6 = androme.lib.util;
     var $dom$4 = androme.lib.dom;
-    class GridAndroid extends androme.lib.base.extensions.Grid {
+    class Grid extends androme.lib.base.extensions.Grid {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6294,7 +6305,7 @@ var android = (function () {
 
     var $const$3 = androme.lib.constant;
     var $util$7 = androme.lib.util;
-    class TableAndroid extends androme.lib.base.extensions.Table {
+    class Table extends androme.lib.base.extensions.Table {
         constructor(name, framework = 0, tagNames, options) {
             super(name, framework, tagNames, options);
         }
@@ -6693,7 +6704,7 @@ var android = (function () {
             node.apply(this.options[node.element.id]);
             node.nodeType = $enum$8.NODE_STANDARD.BLOCK;
             node.excludeResource |= $enum$8.NODE_RESOURCE.ASSET;
-            const toolbar = $dom$5.getNodeFromElement($dom$5.locateExtension(node.element, WIDGET_NAME.TOOLBAR));
+            const toolbar = $dom$5.getNodeFromElement($dom$5.findNestedExtension(node.element, WIDGET_NAME.TOOLBAR));
             if (toolbar) {
                 const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
                 if (ext) {
@@ -6774,7 +6785,7 @@ var android = (function () {
             const optionsToolbar = Object.assign({}, options.toolbar);
             const optionsAppBar = Object.assign({}, options.appBar);
             const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
-            const hasMenu = $dom$6.locateExtension(node.element, WIDGET_NAME.MENU) != null;
+            const hasMenu = $dom$6.findNestedExtension(node.element, WIDGET_NAME.MENU) != null;
             const backgroundImage = node.has('backgroundImage');
             const appBarChildren = [];
             const collapsingToolbarChildren = [];
@@ -6895,7 +6906,7 @@ var android = (function () {
             let collapsingToolbarNode = null;
             if (hasAppBar) {
                 $util$9.overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-                $util$9.overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? delimitDimens('appbar', 'height', $util$9.formatPX(node.viewHeight), this.application.settings) : 'wrap_content');
+                $util$9.overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? delimitUnit('appbar', 'height', $util$9.formatPX(node.viewHeight), this.application.settings) : 'wrap_content');
                 $util$9.overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
                 if (hasMenu) {
                     if (optionsAppBar.android.theme) {
@@ -6969,7 +6980,7 @@ var android = (function () {
         }
         beforeInsert() {
             const node = this.node;
-            const menu = $util$9.optional($dom$6.locateExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+            const menu = $util$9.optional($dom$6.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
             if (menu !== '') {
                 const options = Object.assign({}, this.options[node.element.id]);
                 const optionsToolbar = Object.assign({}, options.toolbar);
@@ -7049,7 +7060,7 @@ var android = (function () {
         }
         beforeInsert() {
             const node = this.node;
-            const menu = $util$a.optional($dom$7.locateExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+            const menu = $util$a.optional($dom$7.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
             if (menu !== '') {
                 const options = Object.assign({}, this.options[node.element.id]);
                 $util$a.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
@@ -7128,7 +7139,7 @@ var android = (function () {
         processNode() {
             const node = this.node;
             const options = Object.assign({}, this.options.self);
-            if ($dom$8.locateExtension(node.element, WIDGET_NAME.MENU)) {
+            if ($dom$8.findNestedExtension(node.element, WIDGET_NAME.MENU)) {
                 $util$b.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
                 this.createResourceTheme();
             }
@@ -7151,14 +7162,14 @@ var android = (function () {
             const application = this.application;
             const node = this.node;
             if (application.renderQueue[node.nodeId]) {
-                const target = application.cacheSession.locate(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
+                const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
                 if (target) {
                     application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
                     delete application.renderQueue[node.nodeId];
                 }
             }
-            const menu = $util$b.optional($dom$8.locateExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
-            const headerLayout = $util$b.optional($dom$8.locateExtension(node.element, $const$5.EXT_NAME.EXTERNAL), 'dataset.layoutName');
+            const menu = $util$b.optional($dom$8.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+            const headerLayout = $util$b.optional($dom$8.findNestedExtension(node.element, $const$5.EXT_NAME.EXTERNAL), 'dataset.layoutName');
             const options = Object.assign({}, this.options.navigation);
             if (menu !== '') {
                 $util$b.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
@@ -7175,7 +7186,7 @@ var android = (function () {
             }
         }
         afterInsert() {
-            const headerLayout = $dom$8.locateExtension(this.node.element, $const$5.EXT_NAME.EXTERNAL);
+            const headerLayout = $dom$8.findNestedExtension(this.node.element, $const$5.EXT_NAME.EXTERNAL);
             if (headerLayout) {
                 const node = $dom$8.getNodeFromElement(headerLayout);
                 if (node && !node.hasHeight) {
@@ -7208,7 +7219,6 @@ var android = (function () {
         }
         return false;
     }
-    const APP_FRAMEWORK = androme.lib.enumeration.APP_FRAMEWORK;
     let initialized = false;
     let application;
     let viewController;
@@ -7216,32 +7226,33 @@ var android = (function () {
     let resourceHandler;
     let settings$1;
     let builtInExtensions;
+    const framework = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
     const appBase = {
         create() {
             const EXT_NAME = androme.lib.constant.EXT_NAME;
             settings$1 = Object.assign({}, settings);
-            application = new androme.lib.base.Application(APP_FRAMEWORK.ANDROID);
+            application = new androme.lib.base.Application(framework);
             viewController = new ViewController();
             fileHandler = new FileHandler(settings$1);
             resourceHandler = new ResourceHandler(fileHandler);
             builtInExtensions = {
-                [EXT_NAME.EXTERNAL]: new ExternalAndroid(EXT_NAME.EXTERNAL, APP_FRAMEWORK.ANDROID),
-                [EXT_NAME.ORIGIN]: new OriginAndroid(EXT_NAME.ORIGIN, APP_FRAMEWORK.ANDROID),
-                [EXT_NAME.CUSTOM]: new CustomAndroid(EXT_NAME.CUSTOM, APP_FRAMEWORK.ANDROID),
-                [EXT_NAME.ACCESSIBILITY]: new AccessibilityAndroid(EXT_NAME.ACCESSIBILITY, APP_FRAMEWORK.ANDROID),
-                [EXT_NAME.LIST]: new ListAndroid(EXT_NAME.LIST, APP_FRAMEWORK.ANDROID, ['UL', 'OL', 'DL', 'DIV']),
-                [EXT_NAME.TABLE]: new TableAndroid(EXT_NAME.TABLE, APP_FRAMEWORK.ANDROID, ['TABLE']),
-                [EXT_NAME.GRID]: new GridAndroid(EXT_NAME.GRID, APP_FRAMEWORK.ANDROID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
-                [WIDGET_NAME.FAB]: new FloatingActionButton(WIDGET_NAME.FAB, APP_FRAMEWORK.ANDROID, ['BUTTON', 'INPUT', 'IMG']),
-                [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, APP_FRAMEWORK.ANDROID, ['NAV']),
-                [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR, APP_FRAMEWORK.ANDROID),
-                [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR, APP_FRAMEWORK.ANDROID),
-                [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, APP_FRAMEWORK.ANDROID),
-                [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER, APP_FRAMEWORK.ANDROID)
+                [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
+                [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
+                [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
+                [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
+                [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
+                [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
+                [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
+                [WIDGET_NAME.FAB]: new FloatingActionButton(WIDGET_NAME.FAB, framework, ['BUTTON', 'INPUT', 'IMG']),
+                [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, framework, ['NAV']),
+                [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR, framework),
+                [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR, framework),
+                [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, framework),
+                [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER, framework)
             };
             initialized = true;
             return {
-                framework: APP_FRAMEWORK.ANDROID,
+                framework,
                 application,
                 viewController,
                 resourceHandler,
@@ -7253,7 +7264,7 @@ var android = (function () {
         cached() {
             if (initialized) {
                 return {
-                    framework: APP_FRAMEWORK.ANDROID,
+                    framework,
                     application,
                     viewController,
                     resourceHandler,

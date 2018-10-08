@@ -1,7 +1,7 @@
 import { SettingsAndroid } from '../../lib/types';
 import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
-import { delimitDimens, stripId } from '../../lib/util';
+import { delimitUnit, stripId } from '../../lib/util';
 import { NODE_ANDROID } from '../../lib/constant';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
 
@@ -52,7 +52,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         const optionsToolbar = Object.assign({}, options.toolbar);
         const optionsAppBar = Object.assign({}, options.appBar);
         const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
-        const hasMenu = $dom.locateExtension(node.element, WIDGET_NAME.MENU) != null;
+        const hasMenu = $dom.findNestedExtension(node.element, WIDGET_NAME.MENU) != null;
         const backgroundImage = node.has('backgroundImage');
         const appBarChildren: T[] = [];
         const collapsingToolbarChildren: T[] = [];
@@ -187,7 +187,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         let collapsingToolbarNode: Null<T> = null;
         if (hasAppBar) {
             $util.overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-            $util.overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? delimitDimens('appbar', 'height', $util.formatPX(node.viewHeight), <SettingsAndroid> this.application.settings) : 'wrap_content');
+            $util.overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? delimitUnit('appbar', 'height', $util.formatPX(node.viewHeight), <SettingsAndroid> this.application.settings) : 'wrap_content');
             $util.overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
             if (hasMenu) {
                 if (optionsAppBar.android.theme) {
@@ -280,7 +280,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
 
     public beforeInsert() {
         const node = this.node;
-        const menu: string = $util.optional($dom.locateExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const menu: string = $util.optional($dom.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);
             const optionsToolbar = Object.assign({}, options.toolbar);

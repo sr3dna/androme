@@ -146,10 +146,10 @@ const HSL_SORTED: Color[] = [];
 for (const i in X11_CSS3) {
     const x11: Color = X11_CSS3[i];
     for (const j in x11) {
-        const rgb = convertHextoRGB(x11[j]);
+        const rgb = convertToRGB(x11[j]);
         if (rgb) {
             x11.rgb = rgb;
-            x11.hsl = convertRGBtoHSL(x11.rgb.r, x11.rgb.g, x11.rgb.b);
+            x11.hsl = convertToHSL(x11.rgb);
         }
         HSL_SORTED.push({
             name: i,
@@ -161,15 +161,15 @@ for (const i in X11_CSS3) {
 }
 HSL_SORTED.sort(sortHSL);
 
-function convertHextoHSL(value: string) {
-    const rgb = convertHextoRGB(value);
+function convertHexToHSL(value: string) {
+    const rgb = convertToRGB(value);
     if (rgb) {
-        return convertRGBtoHSL(rgb.r, rgb.g, rgb.b);
+        return convertToHSL(rgb);
     }
     return null;
 }
 
-function convertRGBtoHSL(r: number, g: number, b: number) {
+function convertToHSL({ r = 0, g = 0, b = 0 }) {
     r = r / 255;
     g = g / 255;
     b = b / 255;
@@ -199,9 +199,9 @@ function convertRGBtoHSL(r: number, g: number, b: number) {
         h /= 6;
     }
     return {
-        h: (h * 360),
-        s: (s * 100),
-        l: (l * 100)
+        h: h * 360,
+        s: s * 100,
+        l: l * 100
     };
 }
 
@@ -219,6 +219,10 @@ function sortHSL(a: Color, b: Color) {
     return 0;
 }
 
+function formatRGB({ rgb }: Color) {
+    return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
+}
+
 export function getColorNearest(value: string) {
     const result = HSL_SORTED.slice();
     let index = result.findIndex(item => item.hex === value);
@@ -226,7 +230,7 @@ export function getColorNearest(value: string) {
         return result[index];
     }
     else {
-        const hsl = convertHextoHSL(value);
+        const hsl = convertHexToHSL(value);
         if (hsl) {
             result.push({
                 name: '',
@@ -242,7 +246,7 @@ export function getColorNearest(value: string) {
     }
 }
 
-export function getByColorName(value: string) {
+export function getColorByName(value: string) {
     for (const color in X11_CSS3) {
         if (color.toLowerCase() === value.trim().toLowerCase()) {
             return <Color> X11_CSS3[color];
@@ -251,13 +255,9 @@ export function getByColorName(value: string) {
     return '';
 }
 
-export function formatRGB({ rgb }: Color) {
-    return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
-}
-
 export function parseRGBA(value: string, opacity = '1'): string[] {
     if (value !== '') {
-        const color = getByColorName(value);
+        const color = getColorByName(value);
         if (color !== '') {
             return [color.hex, formatRGB(color), opacity];
         }
@@ -267,7 +267,7 @@ export function parseRGBA(value: string, opacity = '1'): string[] {
                 match[4] = opacity;
             }
             return [
-                `#${convertRGBtoHex(match[1]) + convertRGBtoHex(match[2]) + convertRGBtoHex(match[3])}`,
+                `#${convertToHex(match[1]) + convertToHex(match[2]) + convertToHex(match[3])}`,
                 match[0],
                 parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1'
             ];
@@ -276,7 +276,7 @@ export function parseRGBA(value: string, opacity = '1'): string[] {
     return [];
 }
 
-export function convertRGBtoHex(value: string) {
+export function convertToHex(value: string) {
     const hex = '0123456789ABCDEF';
     let rgb = parseInt(value);
     if (isNaN(rgb)) {
@@ -286,7 +286,7 @@ export function convertRGBtoHex(value: string) {
     return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
 }
 
-export function convertHextoRGB(value: string) {
+export function convertToRGB(value: string): Null<RGB> {
     value = value.replace('#', '').trim();
     if (value.length === 3) {
         value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
@@ -309,14 +309,14 @@ export function parseHex(value: string) {
             value = color[0];
         }
         if (value.charAt(0) === '#' && /^#[a-zA-Z0-9]{3,6}$/.test(value)) {
-            return value.length === 4 ? parseRGBA(formatRGB(<Color> { rgb: convertHextoRGB(value) }))[0] : value;
+            return value.length === 4 ? parseRGBA(formatRGB(<Color> { rgb: convertToRGB(value) }))[0] : value;
         }
     }
     return '';
 }
 
-export function reduceHexToRGB(value: string, percent: number) {
-    const rgb = convertHextoRGB(value);
+export function reduceToRGB(value: string, percent: number) {
+    const rgb = convertToRGB(value);
     if (rgb) {
         const base = percent < 0 ? 0 : 255;
         percent = Math.abs(percent);

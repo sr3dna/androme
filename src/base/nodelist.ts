@@ -221,17 +221,19 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                     }
                 }
                 if (horizontal || !traverse) {
-                    return nodes.every(node => {
-                        return !nodes.some(sibling => {
-                            if (sibling !== node &&
-                                node.linear.top >= sibling.linear.bottom &&
-                                node.intersectY(sibling.linear))
-                            {
-                                return true;
-                            }
-                            return false;
-                        });
-                    });
+                    return (
+                        nodes.every(node =>
+                            !nodes.some(sibling => {
+                                if (sibling !== node &&
+                                    node.linear.top >= sibling.linear.bottom &&
+                                    node.intersectY(sibling.linear))
+                                {
+                                    return true;
+                                }
+                                return false;
+                            })
+                        )
+                    );
                 }
                 return false;
         }
@@ -362,7 +364,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         this._list.forEach(predicate);
     }
 
-    public locate(attr: string | FindPredicate<T>, value?: any) {
+    public find(attr: string | FindPredicate<T>, value?: any) {
         if (typeof attr === 'string') {
             return this._list.find(node => node[attr] === value);
         }

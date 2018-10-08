@@ -2,7 +2,7 @@ import { SettingsAndroid } from './lib/types';
 import View from './view';
 import ViewGroup from './viewgroup';
 import ResourceHandler from './resourcehandler';
-import { delimitDimens, generateId, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
+import { delimitUnit, generateId, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
 
 import $enum = androme.lib.enumeration;
@@ -60,7 +60,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     public finalize(data: ViewData<androme.lib.base.NodeList<T>>) {
         this.setAttributes(data);
         for (const value of [...data.views, ...data.includes]) {
-            value.content = $xml.removePlaceholders(value.content).replace(/\n\n/g, '\n');
+            value.content = $xml.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
             if (this.settings.dimensResourceValue) {
                 value.content = this.parseDimensions(value.content);
             }
@@ -116,7 +116,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 while (parent) {
                     const stringId = mapSibling(parent, (orientation === AXIS_ANDROID.HORIZONTAL ? 'leftRight' : 'topBottom'));
                     if (stringId) {
-                        parent = nodes.locate('nodeId', stripId(stringId));
+                        parent = nodes.find('nodeId', stripId(stringId));
                         if (parent && parent.constraint[orientation]) {
                             return true;
                         }
@@ -180,7 +180,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         let dimension = current.bounds;
                         if (current.inlineText && !current.hasWidth) {
                             const [bounds, multiLine] = $dom.getRangeClientRect(current.element);
-                            if (bounds && (multiLine || bounds.width < dimension.width)) {
+                            if (bounds && (multiLine || bounds.width < current.box.width)) {
                                 dimension = bounds;
                             }
                         }
@@ -596,7 +596,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 if (!current.anchored) {
                                     const result = $util.searchObject(current.get('app'), '*constraint*');
                                     for (const [key, value] of result) {
-                                        if (value !== 'parent' && pageflow.filter(item => item.anchored).locate('stringId', value)) {
+                                        if (value !== 'parent' && pageflow.filter(item => item.anchored).find('stringId', value)) {
                                             if ($util.indexOf(key, parseRTL('Left', this.settings), parseRTL('Right', this.settings)) !== -1) {
                                                 current.constraint.horizontal = true;
                                             }
@@ -1121,7 +1121,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                         });
                                                         for (const item of chainable) {
                                                             for (const list of connected) {
-                                                                if (list.locate('id', item.id)) {
+                                                                if (list.find('id', item.id)) {
                                                                     list.clear();
                                                                 }
                                                             }
@@ -1158,7 +1158,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                             while (adjacent) {
                                                 const topBottom = mapSibling(adjacent, value);
                                                 if (topBottom) {
-                                                    adjacent = nodes.locate('nodeId', stripId(topBottom));
+                                                    adjacent = nodes.find('nodeId', stripId(topBottom));
                                                     if (adjacent && current.withinY(adjacent.linear)) {
                                                         chain.push(adjacent);
                                                         valid = mapParent(adjacent, index === 0 ? 'top' : 'bottom');
@@ -1199,7 +1199,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         ['leftRight', 'rightLeft'].forEach(value => {
                                             const stringId = mapSibling(current, value);
                                             if (stringId) {
-                                                const aligned = pageflow.locate('stringId', stringId);
+                                                const aligned = pageflow.find('stringId', stringId);
                                                 if (aligned && mapSibling(aligned, direction[2])) {
                                                     if ($util.withinFraction(current.linear[direction[0]], aligned.linear[direction[0]])) {
                                                         current.anchor(mapLayout[direction[0]], aligned.stringId);
@@ -1284,7 +1284,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     }
                                     current.delete('app', 'layout_constraint*');
                                     current.app('layout_constraintCircle', opposite.stringId);
-                                    current.app('layout_constraintCircleRadius', delimitDimens(`${current.nodeName}`, 'constraintcircleradius', $util.formatPX(radius), this.settings));
+                                    current.app('layout_constraintCircleRadius', delimitUnit(`${current.nodeName}`, 'constraintcircleradius', $util.formatPX(radius), this.settings));
                                     current.app('layout_constraintCircleAngle', degrees.toString());
                                     current.constraint.horizontal = true;
                                     current.constraint.vertical = true;
@@ -1353,7 +1353,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                             if (!current.constraint[`chain${value[6]}`]) {
                                                 if (value[0] && value[1]) {
                                                     if (!current.autoMargin && !current.linearVertical) {
-                                                        current.android(`layout_${(index === 0 ? 'width' : 'height')}`, 'match_parent', false);
+                                                        current.android(`layout_${index === 0 ? 'width' : 'height'}`, 'match_parent', false);
                                                     }
                                                 }
                                                 else if (value[1]) {
@@ -1456,22 +1456,26 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     if (left !== right) {
                                         ['leftRight', 'rightLeft', 'bottomTop', 'topBottom'].forEach(value => {
                                             if (connected[left][value] && connected[left][value] === connected[right][value]) {
-                                                const conflict = nodes.locate('stringId', connected[left][value]);
+                                                const conflict = nodes.find('stringId', connected[left][value]);
                                                 if (conflict) {
-                                                    [nodes.locate('stringId', left), nodes.locate('stringId', right)].some((item, index) => {
+                                                    [nodes.find('stringId', left), nodes.find('stringId', right)].some((item, index) => {
                                                         if (item) {
                                                             const stringId = index === 0 ? left : right;
                                                             switch (value) {
                                                                 case 'leftRight':
                                                                 case 'rightLeft':
-                                                                    if ((mapSibling(item, 'left') || mapSibling(item, 'right')) && mapSibling(conflict, value === 'rightLeft' ? 'leftRight' : 'rightLeft') !== stringId) {
+                                                                    if ((mapSibling(item, 'left') || mapSibling(item, 'right')) &&
+                                                                        mapSibling(conflict, value === 'rightLeft' ? 'leftRight' : 'rightLeft') !== stringId)
+                                                                    {
                                                                         deleteChain(item, value);
                                                                         return true;
                                                                     }
                                                                     break;
                                                                 case 'bottomTop':
                                                                 case 'topBottom':
-                                                                    if ((mapSibling(item, 'top') || mapSibling(item, 'bottom')) && mapSibling(conflict, value === 'topBottom' ? 'bottomTop' : 'topBottom') !== stringId) {
+                                                                    if ((mapSibling(item, 'top') || mapSibling(item, 'bottom')) &&
+                                                                        mapSibling(conflict, value === 'topBottom' ? 'bottomTop' : 'topBottom') !== stringId)
+                                                                    {
                                                                         deleteChain(item, value);
                                                                         return true;
                                                                     }
@@ -1923,13 +1927,13 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         const displayName = node.hasElement ? node.nodeName : viewName;
         if ($util.hasValue(width)) {
             if (!isNaN(parseInt(width))) {
-                width = delimitDimens(displayName, 'width', width, this.settings);
+                width = delimitUnit(displayName, 'width', width, this.settings);
             }
             node.android('layout_width', width, false);
         }
         if ($util.hasValue(height)) {
             if (!isNaN(parseInt(height))) {
-                height = delimitDimens(displayName, 'height', height, this.settings);
+                height = delimitUnit(displayName, 'height', height, this.settings);
             }
             node.android('layout_height', height, false);
         }
@@ -2056,12 +2060,12 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         let output = preXml +
                      `{<${id}}`;
         if (xml !== '') {
-            output += indent + `<${controlName}${(depth === 0 ? '{#0}' : '')}{@${id}}>\n` +
+            output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}}>\n` +
                                xml +
                       indent + `</${controlName}>\n`;
         }
         else {
-            output += indent + `<${controlName}${(depth === 0 ? '{#0}' : '')}{@${id}} />\n`;
+            output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}} />\n`;
         }
         output += `{>${id}}` +
                   postXml;
@@ -2193,13 +2197,15 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 Array
                                     .from(chained)
                                     .some(item => {
-                                        return sameXY.some(adjacent => {
-                                            if (!chained.has(adjacent) && (adjacent.app(connected[0]) === item.stringId || adjacent.app(connected[1]) === item.stringId)) {
-                                                chained.add(adjacent);
-                                                valid = true;
-                                            }
-                                            return valid;
-                                        });
+                                        return (
+                                            sameXY.some(adjacent => {
+                                                if (!chained.has(adjacent) && (adjacent.app(connected[0]) === item.stringId || adjacent.app(connected[1]) === item.stringId)) {
+                                                    chained.add(adjacent);
+                                                    valid = true;
+                                                }
+                                                return valid;
+                                            })
+                                        );
                                     });
                             }
                             while (valid);
@@ -2231,7 +2237,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             percent = node.dataset.constraintPercent === 'true';
         }
         const parent = node.documentParent;
-        const beginPercent = `layout_constraintGuide_${(percent ? 'percent' : 'begin')}`;
+        const beginPercent = `layout_constraintGuide_${percent ? 'percent' : 'begin'}`;
         [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
             if (!node.constraint[value] && (orientation === '' || value === orientation)) {
                 let LT = '';
@@ -2338,7 +2344,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         }
                         if (!found) {
                             if (!percent) {
-                                options.app[beginPercent] = delimitDimens(node.nodeName, 'constraintguide_begin', $util.formatPX(location), this.settings);
+                                options.app[beginPercent] = delimitUnit(node.nodeName, 'constraintguide_begin', $util.formatPX(location), this.settings);
                             }
                             const xml =
                                 this.renderNodeStatic(
@@ -2472,7 +2478,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     }
 
     private findByStringId(id: string) {
-        return this.cache.locate('stringId', id);
+        return this.cache.find('stringId', id);
     }
 
     get baseTemplate(): string {

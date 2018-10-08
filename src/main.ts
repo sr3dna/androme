@@ -85,7 +85,7 @@ function setStyleMap() {
                                         case 'paddingBottom':
                                         case 'paddingLeft':
                                             styleMap[attr] = /^[A-Za-z\-]+$/.test(cssStyle as string) || util.isPercent(cssStyle) ? cssStyle
-                                                                                                                                  : util.convertPX(cssStyle, style.fontSize as string);
+                                                                                                                                  : util.convertPX(cssStyle, style.fontSize);
                                             break;
                                         default:
                                             if (styleMap[attr] == null) {
@@ -103,7 +103,7 @@ function setStyleMap() {
                                     .split(',')
                                     .map(value => value.trim())
                                     .forEach(value => {
-                                        const url = dom.parseBackgroundUrl(value);
+                                        const url = dom.cssResolveUrl(value);
                                         if (url !== '' && !cacheImage.has(url)) {
                                             cacheImage.set(url, { width: 0, height: 0, url });
                                         }
@@ -135,11 +135,7 @@ function setStyleMap() {
 
 function setImageCache(element: HTMLImageElement) {
     if (element && util.hasValue(element.src)) {
-        cacheImage.set(element.src, {
-            width: element.naturalWidth,
-            height: element.naturalHeight,
-            url: element.src
-        });
+        cacheImage.set(element.src, { width: element.naturalWidth, height: element.naturalHeight, url: element.src });
     }
 }
 
@@ -159,7 +155,7 @@ export function setFramework(module: AppFramework<T>, cached = false) {
         main.registerController(appBase.viewController);
         main.registerResource(appBase.resourceHandler);
         if (Array.isArray(settings.builtInExtensions)) {
-            const register = new Set<androme.lib.base.Extension<androme.lib.base.Node>>();
+            const register = new Set<androme.lib.base.Extension<T>>();
             const extensions = main.builtInExtensions;
             for (let namespace of settings.builtInExtensions) {
                 namespace = namespace.toLowerCase().trim();
@@ -219,12 +215,13 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 }
                 main.appName = element.id;
             }
-            else {
+            let filename = util.trimNull(element.dataset.filename).replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '');
+            if (filename === '') {
                 if (element.id === '') {
-                    element.id = `content_${main.size}`;
+                    element.id = `document_${main.size}`;
                 }
+                filename = element.id;
             }
-            const filename = util.trimNull(element.dataset.filename).replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '') || element.id;
             const iteration = util.convertInt(element.dataset.iteration) + 1;
             element.dataset.iteration = iteration.toString();
             element.dataset.layoutName = util.convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);

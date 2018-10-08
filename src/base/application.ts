@@ -488,6 +488,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
                 const cleared = NodeList.cleared(axisY);
                 const includes: string[] = [];
+                function getCurrent() {
+                    return includes.length > 0 ? includes[includes.length - 1] : '';
+                }
                 let current = '';
                 let k = -1;
                 while (++k < axisY.length) {
@@ -499,10 +502,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
                         const filename = trimNull(nodeY.dataset.include);
                         if (filename !== '' && includes.indexOf(filename) === -1) {
-                            renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), includes.length > 0 ? includes[includes.length - 1] : '');
+                            renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), getCurrent());
                             includes.push(filename);
                         }
-                        current = includes.length > 0 ? includes[includes.length - 1] : '';
+                        current = getCurrent();
                         if (current !== '') {
                             const cloneParent = parentY.clone() as T;
                             cloneParent.renderDepth = this.viewController.baseRenderDepth(current);
@@ -804,7 +807,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             const groupOutput = this.writeGridLayout(group, parentY, 2, 1);
                             group.alignmentType |= NODE_ALIGNMENT.PERCENT;
                             renderNode(group, parentY, groupOutput, current);
-                            this.viewController[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${(100 - nodeY.toInt('width'))}%`));
+                            this.viewController[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${100 - nodeY.toInt('width')}%`));
                             parentY = group;
                         }
                         if (nodeY.controlName === '') {
@@ -1121,7 +1124,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>) {
-        type LayerIndex = ArrayIndex<T[] | T[][]>;
+        type LayerIndex = ArrayObject<T[] | T[][]>;
         let output = '';
         let layers: LayerIndex = [];
         if (cleared.size === 0 && !nodes.some(node => node.autoMargin)) {
@@ -1398,7 +1401,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         layers.push(leftSub, rightSub);
                     }
                 }
-                layers = layers.filter((item: any[]) => item && item.length > 0);
+                layers = layers.filter(item => item && item.length > 0);
             }
             group.alignmentType |= NODE_ALIGNMENT.FLOAT;
         }
@@ -1631,7 +1634,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             let output = this.renderQueue[id].join('\n');
             if (replaceId !== originalId) {
-                const target = this.cacheSession.locate('id', parseInt(replaceId));
+                const target = this.cacheSession.find('id', parseInt(replaceId));
                 if (target) {
                     const depth = target.renderDepth + 1;
                     output = replaceIndent(output, depth);
@@ -1639,7 +1642,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     let match: Null<RegExpExecArray> = null;
                     let i = 0;
                     while ((match = pattern.exec(output)) != null) {
-                        const node = this.cacheSession.locate('id', parseInt(match[1]));
+                        const node = this.cacheSession.find('id', parseInt(match[1]));
                         if (node) {
                             if (i++ === 0) {
                                 node.renderDepth = depth;

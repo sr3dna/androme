@@ -10,21 +10,17 @@ type ObjectMap<T> = {
     [key: string]: T;
 };
 
-type ObjectIndex<T> = {
-    [key: number]: T;
-};
-
 type ObjectMapNested<T> = {
     [key: string]: ObjectMap<T>;
 };
 
-type ArrayIndex<T> = {
+type ObjectIndex<T> = {
     [key: number]: T;
-    length: number;
-    push(...items: T[]): number;
-    forEach(callbackfn: (value: T, index: number, array: T[]) => void, thisArg?: any): void;
-    filter(callbackfn: (value: T, index: number, array: T[]) => boolean, thisArg?: any): T[];
 };
+
+interface ArrayObject<T> extends Array<T> {
+    [key: number]: T;
+}
 
 type FunctionMap = ObjectMap<(...args: any[]) => any>;
 
@@ -37,7 +33,7 @@ type BoxRect = {
     left: number;
 };
 
-type BoxDimensionsRect = {
+type BoxDimensions = {
     top: number;
     right: number;
     bottom: number;
@@ -123,16 +119,18 @@ type FontAttribute = {
 type Color = {
     name: string;
     hex: string;
-    rgb?: {
-        r: number;
-        g: number;
-        b: number;
-    };
+    rgb?: RGB;
     hsl?: {
         h: number;
         s: number;
         l: number;
     };
+};
+
+type RGB = {
+    r: number,
+    g: number,
+    b: number
 };
 
 type Point = {
@@ -143,8 +141,8 @@ type Point = {
 type Initialization<T> = {
     readonly styleMap: StringMap,
     readonly children: T[],
-    readonly bounds: BoxDimensionsRect,
-    depth: number,
-    linear?: BoxDimensionsRect,
-    box?: BoxDimensionsRect
+    readonly bounds: BoxDimensions,
+    linear?: BoxDimensions,
+    box?: BoxDimensions,
+    depth: number
 };

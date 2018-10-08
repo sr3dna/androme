@@ -58,7 +58,7 @@ app.post('/api/savetodisk', (req, res) => {
                 const filename = `${pathname}/${file.filename}`;
                 try {
                     mkdirp.sync(pathname);
-                    const entrydata = { name: `${(req.query.directory ? `${req.query.directory}/` : '')}${file.pathname}/${file.filename}` };
+                    const entrydata = { name: `${(req.query.directory ? `${req.query.directory}/` : '') + file.pathname}/${file.filename}` };
                     if (file.content && file.content.trim() !== '') {
                         delayed++;
                         fs.writeFile(filename, file.content, (err) => {

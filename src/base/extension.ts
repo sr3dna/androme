@@ -14,7 +14,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     public readonly subscribers = new Set<T>();
     public readonly subscribersChild = new Set<T>();
 
-    constructor(
+    protected constructor(
         public readonly name: string,
         public readonly framework: number,
         tagNames?: string[],

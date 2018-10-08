@@ -36,7 +36,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
     public processNode(): ExtensionResult {
         const node = this.node;
         const options = Object.assign({}, this.options.self);
-        if ($dom.locateExtension(node.element, WIDGET_NAME.MENU)) {
+        if ($dom.findNestedExtension(node.element, WIDGET_NAME.MENU)) {
             $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             this.createResourceTheme();
         }
@@ -69,14 +69,14 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         const application = this.application;
         const node = this.node;
         if (application.renderQueue[node.nodeId]) {
-            const target = application.cacheSession.locate(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
+            const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
             if (target) {
                 application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
                 delete application.renderQueue[node.nodeId];
             }
         }
-        const menu: string = $util.optional($dom.locateExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
-        const headerLayout: string = $util.optional($dom.locateExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
+        const menu: string = $util.optional($dom.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
+        const headerLayout: string = $util.optional($dom.findNestedExtension(node.element, $const.EXT_NAME.EXTERNAL), 'dataset.layoutName');
         const options: {} = Object.assign({}, this.options.navigation);
         if (menu !== '') {
             $util.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
@@ -101,7 +101,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
     }
 
     public afterInsert() {
-        const headerLayout = $dom.locateExtension(this.node.element, $const.EXT_NAME.EXTERNAL);
+        const headerLayout = $dom.findNestedExtension(this.node.element, $const.EXT_NAME.EXTERNAL);
         if (headerLayout) {
             const node = $dom.getNodeFromElement<T>(headerLayout);
             if (node && !node.hasHeight) {

@@ -7,8 +7,8 @@ import { getBoxRect, getNodeFromElement } from '../lib/dom';
 import { BOX_STANDARD, NODE_ALIGNMENT } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
 
-export default abstract class Grid<T extends Node> extends Extension<T> {
-    constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
+export default abstract class <T extends Node> extends Extension<T> {
+    protected constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }
 

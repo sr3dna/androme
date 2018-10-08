@@ -2,14 +2,14 @@ import { ListData } from '../../extension/types/data';
 import { SettingsAndroid } from '../lib/types';
 import View from '../view';
 import ResourceHandler from '../resourcehandler';
-import { delimitDimens, parseRTL } from '../lib/util';
+import { delimitUnit, parseRTL } from '../lib/util';
 import { NODE_ANDROID } from '../lib/constant';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 
-export default class ListAndroid<T extends View> extends androme.lib.base.extensions.List<T> {
+export default class <T extends View> extends androme.lib.base.extensions.List<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }
@@ -79,7 +79,7 @@ export default class ListAndroid<T extends View> extends androme.lib.base.extens
                     paddingLeft -= left;
                 }
                 paddingLeft = Math.max(paddingLeft, 20);
-                const minWidth = paddingLeft > 0 ? delimitDimens(node.nodeName, parseRTL('min_width', settings), $util.formatPX(paddingLeft), settings) : '';
+                const minWidth = paddingLeft > 0 ? delimitUnit(node.nodeName, parseRTL('min_width', settings), $util.formatPX(paddingLeft), settings) : '';
                 const paddingRight = (() => {
                     if (paddingLeft <= 24) {
                         return 6;
@@ -103,7 +103,7 @@ export default class ListAndroid<T extends View> extends androme.lib.base.extens
                 };
                 if (positionInside) {
                     if (marginLeftValue !== '') {
-                        marginLeftValue = delimitDimens(node.nodeName, parseRTL('margin_left', settings), marginLeftValue, settings);
+                        marginLeftValue = delimitUnit(node.nodeName, parseRTL('margin_left', settings), marginLeftValue, settings);
                     }
                     controller.prependBefore(
                         node.id,
@@ -122,7 +122,7 @@ export default class ListAndroid<T extends View> extends androme.lib.base.extens
                         )
                     );
                     Object.assign(options.android, {
-                        minWidth: delimitDimens(node.nodeName, parseRTL('min_width', settings), $util.formatPX(24), settings)
+                        minWidth: delimitUnit(node.nodeName, parseRTL('min_width', settings), $util.formatPX(24), settings)
                     });
                 }
                 else {

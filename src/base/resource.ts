@@ -59,7 +59,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public application: Application<T>;
     public imageDimensions: Map<string, Image>;
 
-    constructor(public file: File<T>) {
+    protected constructor(public file: File<T>) {
     }
 
     public abstract setImageSource(): void;

@@ -5,8 +5,8 @@ import { cssInherit, getStyle } from '../lib/dom';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
 
-export default abstract class Table<T extends Node> extends Extension<T> {
-    constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
+export default abstract class <T extends Node> extends Extension<T> {
+    protected constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }
 

@@ -6,7 +6,7 @@ declare global {
             public viewController: Controller<T>;
             public resourceHandler: Resource<T>;
             public nodeObject: Constructor<T>;
-            public builtInExtensions: ObjectMap<Extension<Node>>;
+            public builtInExtensions: ObjectMap<Extension<T>>;
             public settings: Settings;
             public renderQueue: ObjectIndex<string[]>;
             public loading: boolean;

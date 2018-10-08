@@ -120,13 +120,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 name =
                     name.trim()
-                    .toLowerCase()
-                    .replace(/[^a-z0-9]/g, '_')
-                    .replace(/_+/g, '_')
-                    .split('_')
-                    .slice(0, 4)
-                    .join('_')
-                    .replace(/_+$/g, '');
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]/g, '_')
+                        .replace(/_+/g, '_')
+                        .split('_')
+                        .slice(0, 4)
+                        .join('_')
+                        .replace(/_+$/g, '');
                 if (numeric || /^[0-9]/.test(name) || RESERVED_JAVA.includes(name)) {
                     name = `__${name}`;
                 }
@@ -210,7 +210,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public static addImageURL(value: string, prefix = '') {
-        const url = $dom.parseBackgroundUrl(value);
+        const url = $dom.cssResolveUrl(value);
         if (url !== '') {
             return ResourceHandler.addImage({ 'mdpi': url }, prefix);
         }
@@ -226,7 +226,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             if (!$resource.STORED.colors.has(opaque)) {
                 const color = $color.getColorNearest(value);
                 if (color !== '') {
-                    color.name = $util.cameltoLowerCase(color.name);
+                    color.name = $util.camelToLowerCase(color.name);
                     if (value === color.hex && value === opaque) {
                         colorName = color.name;
                     }
@@ -263,19 +263,19 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
 
     public settings: SettingsAndroid;
 
-    private tagStyle: ObjectMap<StyleList> = {};
-    private tagCount: ObjectMap<number> = {};
+    private _tagStyle: ObjectMap<StyleList> = {};
+    private _tagCount: ObjectMap<number> = {};
 
     constructor(file: androme.lib.base.File<T>) {
         super(file);
-        this.file.stored = $resource.STORED;
+        file.stored = $resource.STORED;
     }
 
     public reset() {
         super.reset();
         this.file.reset();
-        this.tagStyle = {};
-        this.tagCount = {};
+        this._tagStyle = {};
+        this._tagCount = {};
     }
 
     public finalize(viewData: ViewData<androme.lib.base.NodeList<T>>) {
@@ -397,7 +397,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 for (let i = 0; i < backgroundImage.length; i++) {
                     if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
                         backgroundImageUrl.push(backgroundImage[i]);
-                        const image = this.imageDimensions.get($dom.parseBackgroundUrl(backgroundImage[i]));
+                        const image = this.imageDimensions.get($dom.cssResolveUrl(backgroundImage[i]));
                         backgroundDimensions.push(image);
                         backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
                     }
@@ -896,7 +896,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                     }
                     if (template) {
-                        const xml = $xml.insertTemplateData(template, data);
+                        const xml = $xml.createTemplate(template, data);
                         for (const [name, value] of $resource.STORED.drawables.entries()) {
                             if (value === xml) {
                                 resourceName = name;
@@ -1066,7 +1066,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                 }
             }
-            const tagStyle = this.tagStyle[tag];
+            const tagStyle = this._tagStyle[tag];
             if (tagStyle) {
                 for (let i = 0; i < tagStyle.length; i++) {
                     for (const attr in tagStyle[i]) {
@@ -1078,12 +1078,12 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                     }
                 }
-                this.tagCount[tag] += nodes.visible.length;
+                this._tagCount[tag] += nodes.visible.length;
             }
             else {
-                this.tagCount[tag] = nodes.visible.length;
+                this._tagCount[tag] = nodes.visible.length;
             }
-            this.tagStyle[tag] = sorted;
+            this._tagStyle[tag] = sorted;
         }
     }
 
@@ -1181,7 +1181,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             }
                         }
                     }
-                    if (node.hasElement && node.is($enum.NODE_STANDARD.TEXT)) {
+                    if (node.hasElement) {
                         switch (node.css('fontVariant')) {
                             case 'small-caps':
                                 stored.value = stored.value.toUpperCase();
@@ -1210,10 +1210,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             });
     }
 
-    public addTheme(template: string, templateData: {}, options: ObjectMap<any>) {
+    public addTheme(template: string, data: {}, options: ObjectMap<any>) {
         const map: ObjectMap<string> = $xml.parseTemplate(template);
         if (options.item) {
-            const root = $xml.getTemplateLevel(templateData, '0');
+            const root = $xml.getTemplateLevel(data, '0');
             for (const name in options.item) {
                 let value = options.item[name];
                 const hex = $color.parseHex(value);
@@ -1223,7 +1223,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 root['1'].push({ name, value });
             }
         }
-        const xml = $xml.insertTemplateData(map, templateData);
+        const xml = $xml.createTemplate(map, data);
         this.addFile(options.output.path, options.output.file, xml);
     }
 
@@ -1233,12 +1233,12 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         const resource: ObjectMap<StyleTag[]> = {};
         const inherit = new Set<string>();
         const mapNode: ObjectMapNested<string[]> = {};
-        for (const tag in this.tagStyle) {
+        for (const tag in this._tagStyle) {
             style[tag] = {};
             layout[tag] = {};
-            const count = this.tagCount[tag];
+            const count = this._tagCount[tag];
             let sorted: StyleList =
-                this.tagStyle[tag]
+                this._tagStyle[tag]
                     .filter((item: ObjectMap<number[]>) => Object.keys(item).length > 0)
                     .sort((a, b) => {
                         let maxA = 0;
@@ -1441,7 +1441,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             }
         }
         for (const id in mapNode) {
-            const node = viewData.cache.locate('id', parseInt(id));
+            const node = viewData.cache.find('id', parseInt(id));
             if (node) {
                 const styles = mapNode[id].styles;
                 const attrs = mapNode[id].attributes;
@@ -1462,7 +1462,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                     if (match) {
                         const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
-                        $resource.STORED.styles.set(value, { parent, attributes: tagData.attributes });
+                        $resource.STORED.styles
+                            .set(value, {
+                                parent,
+                                attributes: tagData.attributes
+                            });
                         parent = value;
                     }
                 });
@@ -1502,10 +1506,16 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             case 'stroke':
                 if (stored.border && stored.border.width !== '0px') {
                     if (!hasInset || isInset) {
-                        return [{ width: stored.border.width, borderStyle: this.getBorderStyle(stored.border, (isInset ? direction : -1)) }];
+                        return [{
+                            width: stored.border.width,
+                            borderStyle: this.getBorderStyle(stored.border, (isInset ? direction : -1))
+                        }];
                     }
                     else if (hasInset) {
-                        return [{ width: $util.formatPX(Math.ceil(parseInt(stored.border.width) / 2)), borderStyle: this.getBorderStyle(stored.border, direction, true) }];
+                        return [{
+                            width: $util.formatPX(Math.ceil(parseInt(stored.border.width) / 2)),
+                            borderStyle: this.getBorderStyle(stored.border, direction, true)
+                        }];
                     }
                 }
                 return false;
@@ -1551,7 +1561,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     hexValue = `#${hexValue.substring(3)}`;
                     opacity = `0.${hexValue.substring(1, 3)}`;
                 }
-                const reduced = $color.parseRGBA($color.reduceHexToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
+                const reduced = $color.parseRGBA($color.reduceToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
                 if (reduced.length > 0) {
                     colorName = ResourceHandler.addColor(reduced[0], opacity);
                 }

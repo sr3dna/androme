@@ -1,4 +1,3 @@
-import Node from '../base/node';
 import { convertInt, hasValue, includes, resolvePath } from './util';
 
 export function getBoxRect(): BoxRect {
@@ -10,15 +9,8 @@ export function getBoxRect(): BoxRect {
     };
 }
 
-export function getClientRect(): BoxDimensionsRect {
-    return {
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: 0,
-        height: 0
-    };
+export function getClientRect(): BoxDimensions {
+    return Object.assign({ width: 0, height: 0 }, getBoxRect());
 }
 
 export function getBoxModel(): BoxModel {
@@ -52,16 +44,16 @@ export function deleteElementCache(element: Null<Element>, ...attrs: string[]) {
     }
 }
 
-export function getNodeFromElement<T extends Node>(element: Null<Element>): Null<T> {
+export function getNodeFromElement<T extends androme.lib.base.Node>(element: Null<Element>): Null<T> {
     return getElementCache(element, 'node');
 }
 
-export function getRangeClientRect(element: Element): [Null<BoxDimensionsRect>, boolean] {
+export function getRangeClientRect(element: Element): [Null<BoxDimensions>, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
     const domRect = Array.from(range.getClientRects());
     let multiLine = false;
-    let result: Null<BoxDimensionsRect> = null;
+    let result: Null<BoxDimensions> = null;
     if (domRect.length > 0) {
         result = assignBounds(domRect[0]);
         const top = new Set([result.top]);
@@ -85,7 +77,7 @@ export function getRangeClientRect(element: Element): [Null<BoxDimensionsRect>, 
     return [result, multiLine];
 }
 
-export function assignBounds(bounds: BoxDimensionsRect | DOMRect): BoxDimensionsRect {
+export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions {
     return {
         top: bounds.top,
         right: bounds.right,
@@ -149,7 +141,7 @@ export function getBoxSpacing(element: Element, complete = false, merge = false)
     return <BoxModel> result;
 }
 
-export function parseBackgroundUrl(value: string) {
+export function cssResolveUrl(value: string) {
     const match = value.match(/^url\("?(.*?)"?\)$/);
     if (match) {
         return resolvePath(match[1]);
@@ -377,12 +369,12 @@ export function isElementVisible(element: Element) {
     return false;
 }
 
-export function locateExtension(element: Element, extension: string): Null<HTMLElement> {
+export function findNestedExtension(element: Element, name: string): Null<HTMLElement> {
     if (element instanceof HTMLElement) {
         return (
             Array
                 .from(element.children)
-                .find((item: HTMLElement) => includes(item.dataset.ext, extension)) as HTMLElement
+                .find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement
         );
     }
     return null;

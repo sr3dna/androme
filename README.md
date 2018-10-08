@@ -55,7 +55,7 @@ GitHub
     });
 </script>
 ```
-Library files are in the /dist folder. A minimum of *two* files required to run androme.
+Library files are in the /dist folder. A minimum of *two* files are required to run androme.
 
 1. androme
 2. framework (e.g. android)
@@ -130,8 +130,6 @@ Constraint chain is available as a setting since flexbox does not always support
 
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using a table to create your layouts is recommended if you are not experienced with HTML.
 
-Android defaults their controls to vertical align "top" whereas HTML defaults to "baseline" which sometimes causes the vertical alignment to be skewed. If you want them to be look similar vertically then you might have to explicity set the CSS property "vertical-align" to the nearest position "middle" as the "baseline" setting is only partially available in Android.
-
 ### Standard
 
 Flexbox layouts using Constraint chains are mostly supported within the limitations of the Android API. There is also support for most of the common floating techniques.
@@ -200,7 +198,7 @@ Most of the Android support library extensions can be configured using the same 
 ```
 ### API: Public properties and methods (androme)
 
-There is no official documentation for the time being since this project is still in early development. The entire source code is available on GitHub if you need further clarification.
+There is no official documentation as this project is still in early development. The entire source code is available on GitHub if you need further clarification.
 
 ```javascript
 .settings // see user preferences section
@@ -211,16 +209,15 @@ ready() // boolean indicating if parseDocument can be called
 close() // close current session preceding write to disk or local output
 reset() // clear cached layouts and reopen session
 
-saveAllToDisk() // download entire project as zip archive - requires http://localhost through Node and Express
+saveAllToDisk() // download entire project as zip archive - requires Node.js and Express
 
 toString() // main layout file contents
 
 configureExtension(name: string, options: {}) // see extension configuration section | same: ext(name: string, options: {})
-registerExtension(extension: androme.Extension) // see extension configuration section | same: ext(extension: {})
+registerExtension(extension: androme.lib.base.Extension) // see extension configuration section | same: ext(extension: {})
 getExtension(name: string) // retrieve an extension by namespace and control | same: ext(name: string)
 
 // android internal methods
-
 system.writeLayoutAllXml(saveToDisk: boolean) // output generated xml
 system.writeResourceAllXml(saveToDisk: boolean)
 system.writeResourceArrayXml(saveToDisk: boolean)
@@ -230,8 +227,8 @@ system.writeResourceDrawableXml(saveToDisk: boolean)
 system.writeResourceFontXml(saveToDisk: boolean)
 system.writeResourceStringXml(saveToDisk: boolean)
 system.writeResourceStyleXml(saveToDisk: boolean)
-system.addXmlNs(name: string, uri: string) // add global namespaces for android third-party controls
 system.customize(build: number, widget: string, options: { android: {}, app: {} }) // global attributes applied to specific views (widget: 'Button' / 'Spinner' / 'namespace.thirdparty.control')
+system.addXmlNs(name: string, uri: string) // add global namespaces for third-party controls
 ```
 ### Redirecting output location
 

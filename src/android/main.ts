@@ -32,8 +32,6 @@ function autoClose() {
     return false;
 }
 
-const APP_FRAMEWORK = androme.lib.enumeration.APP_FRAMEWORK;
-
 type T = View;
 
 let initialized = false;
@@ -44,34 +42,36 @@ let fileHandler: FileHandler<T>;
 let resourceHandler: ResourceHandler<T>;
 
 let settings: SettingsAndroid;
-let builtInExtensions: ObjectMap<androme.lib.base.Extension<androme.lib.base.Node>>;
+let builtInExtensions: ObjectMap<androme.lib.base.Extension<T>>;
+
+const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
 
 const appBase: AppFramework<T> = {
     create() {
         const EXT_NAME = androme.lib.constant.EXT_NAME;
         settings = Object.assign({}, Settings);
-        application = new androme.lib.base.Application(APP_FRAMEWORK.ANDROID);
+        application = new androme.lib.base.Application(framework);
         viewController = new ViewController<T>();
         fileHandler = new FileHandler<T>(settings);
         resourceHandler = new ResourceHandler<T>(fileHandler);
         builtInExtensions = {
-            [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, APP_FRAMEWORK.ANDROID),
-            [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, APP_FRAMEWORK.ANDROID),
-            [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, APP_FRAMEWORK.ANDROID),
-            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, APP_FRAMEWORK.ANDROID),
-            [EXT_NAME.LIST]: new List(EXT_NAME.LIST, APP_FRAMEWORK.ANDROID, ['UL', 'OL', 'DL', 'DIV']),
-            [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, APP_FRAMEWORK.ANDROID, ['TABLE']),
-            [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, APP_FRAMEWORK.ANDROID, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
-            [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, APP_FRAMEWORK.ANDROID, ['BUTTON', 'INPUT', 'IMG']),
-            [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, APP_FRAMEWORK.ANDROID, ['NAV']),
-            [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR, APP_FRAMEWORK.ANDROID),
-            [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR, APP_FRAMEWORK.ANDROID),
-            [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, APP_FRAMEWORK.ANDROID),
-            [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER, APP_FRAMEWORK.ANDROID)
+            [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
+            [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
+            [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
+            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
+            [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
+            [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
+            [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
+            [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, framework, ['BUTTON', 'INPUT', 'IMG']),
+            [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, framework, ['NAV']),
+            [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR, framework),
+            [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR, framework),
+            [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, framework),
+            [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER, framework)
         };
         initialized = true;
         return {
-            framework: APP_FRAMEWORK.ANDROID,
+            framework,
             application,
             viewController,
             resourceHandler,
@@ -83,7 +83,7 @@ const appBase: AppFramework<T> = {
     cached() {
         if (initialized) {
             return {
-                framework: APP_FRAMEWORK.ANDROID,
+                framework,
                 application,
                 viewController,
                 resourceHandler,

@@ -2,7 +2,7 @@ import { SettingsAndroid } from '../lib/types';
 import View from '../view';
 import ResourceHandler from '../resourcehandler';
 
-export default class CustomAndroid<T extends View> extends androme.lib.base.extensions.Custom<T> {
+export default class <T extends View> extends androme.lib.base.extensions.Custom<T> {
     constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }

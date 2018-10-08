@@ -9,7 +9,7 @@ export default [
         output: {
             file: './dist/androme.js',
             name: 'androme',
-            format: 'iife',
+            format: 'umd',
             banner: `/* androme ${version}\n   https://github.com/anpham6/androme */\n`
         }
     },
@@ -29,7 +29,7 @@ export default [
         output: {
             file: './dist/androme.min.js',
             name: 'androme',
-            format: 'iife'
+            format: 'umd'
         },
         plugins: [
             babel(),

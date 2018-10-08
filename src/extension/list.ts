@@ -6,8 +6,8 @@ import { convertAlpha, convertRoman } from '../lib/util';
 import { BOX_STANDARD, NODE_RESOURCE } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
 
-export default abstract class List<T extends Node> extends Extension<T> {
-    constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
+export default abstract class <T extends Node> extends Extension<T> {
+    protected constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
         super(name, framework, tagNames, options);
     }
 

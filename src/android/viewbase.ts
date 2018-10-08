@@ -1219,16 +1219,20 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             return (
                 this.linearHorizontal ||
                 this.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL) ||
-                (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.every(node => node.domElement)) ||
-                (this.nodes.filter(node => node.pageflow).length > 1 && $nodelist.linearX(this.nodes))
+                (this.nodes.filter(node => node.pageflow).length > 1 && (
+                    $nodelist.linearX(this.nodes) ||
+                    (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.every(node => node.domElement)))
+                )
             );
         }
         get layoutVertical() {
             return (
                 this.linearVertical ||
                 this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) ||
-                (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.some(node => node.linearVertical)) ||
-                (this.nodes.filter(node => node.pageflow).length > 1 && $nodelist.linearY(this.nodes))
+                (this.nodes.filter(node => node.pageflow).length > 1 && (
+                    $nodelist.linearY(this.nodes)) ||
+                    (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.some(node => node.linearVertical))
+                )
             );
         }
 

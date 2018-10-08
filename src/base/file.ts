@@ -9,7 +9,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
 
     private _compression = 'zip';
 
-    constructor(
+    protected constructor(
         private _directory: string,
         private _processingTime: number,
         compression?: string)

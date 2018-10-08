@@ -4,7 +4,7 @@ import { assignBounds, getNodeFromElement } from '../lib/dom';
 import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/enumeration';
 
 export default abstract class NodeGroup<T extends Node> extends Node {
-    constructor(
+    protected constructor(
         id: number,
         element?: Element)
     {
@@ -15,7 +15,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
         super.init();
         this.children.forEach(item => {
             this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
-            item.parent = this as any;
+            item.parent = this;
         });
         this.parent.children.sort(NodeList.siblingIndex);
         this.initial.children.push(...this.children.slice());

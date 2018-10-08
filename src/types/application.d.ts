@@ -39,7 +39,7 @@ interface AppBase<T extends androme.lib.base.Node> {
     viewController: androme.lib.base.Controller<T>;
     resourceHandler: androme.lib.base.Resource<T>;
     nodeObject: Constructor<T>;
-    builtInExtensions: ObjectMap<androme.lib.base.Extension<androme.lib.base.Node>>;
+    builtInExtensions: ObjectMap<androme.lib.base.Extension<T>>;
     settings: Settings;
 }
 
