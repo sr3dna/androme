@@ -3,7 +3,7 @@ import Extension from '../base/extension';
 import { NODE_STANDARD } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
 
-export default abstract class <T extends Node> extends Extension<T> {
+export default abstract class Custom<T extends Node> extends Extension<T> {
     protected constructor(
         name: string,
         framework: number,

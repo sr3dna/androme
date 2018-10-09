@@ -2,7 +2,7 @@ import Node from '../base/node';
 import Extension from '../base/extension';
 import { deleteElementCache, getElementCache, getStyle, setElementCache } from '../lib/dom';
 
-export default class <T extends Node> extends Extension<T> {
+export default class External<T extends Node> extends Extension<T> {
     public beforeInit(init = false) {
         if (this.element && (init || this.included())) {
             if (!getElementCache(this.element, 'andromeExternalDisplay')) {

@@ -79,12 +79,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public setBoxSpacing() {
-        this.cache.elements.each(node => {
+        this.cache.elements.forEach(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (!getElementCache(node.element, 'boxSpacing') || this.settings.alwaysReevaluateResources)) {
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
                 for (const attr in result) {
-                   if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
+                    if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
                         formatted[attr] = '0px';
                     }
                     else {
@@ -97,7 +97,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public setBoxStyle() {
-        this.cache.elements.each(node => {
+        this.cache.elements.forEach(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (!getElementCache(node.element, 'boxStyle') || this.settings.alwaysReevaluateResources)) {
                 const boxModel = {
                     borderTop: this.parseBorderStyle,
@@ -254,7 +254,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
             }
             return [value, true];
         }
-        this.cache.visible.each(node => {
+        this.cache.visible.forEach(node => {
             const element = node.element;
             if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (!getElementCache(element, 'valueString') || this.settings.alwaysReevaluateResources)) {
                 let name = '';
@@ -359,12 +359,13 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public setOptionArray() {
-        this.cache
+        this.cache.list
             .filter(node =>
                 node.visible &&
                 node.tagName === 'SELECT' &&
                 !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
-            ).each(node => {
+            )
+            .forEach(node => {
                 const element = <HTMLSelectElement> node.element;
                 if (!getElementCache(element, 'optionArray') || this.settings.alwaysReevaluateResources) {
                     const stringArray: string[] = [];
@@ -424,7 +425,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         if (style === 'inset' && width === '0px') {
             width = '1px';
         }
-        return { style, width, color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0'] };
+        return {
+            style,
+            width,
+            color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0']
+        };
     }
 
     private parseBorderRadius(value: string, node: T) {

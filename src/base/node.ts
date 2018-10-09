@@ -1199,15 +1199,15 @@ export default abstract class Node implements androme.lib.base.Node {
         return this.rendered ? this.renderParent.length === 1 : this.parent.length === 1;
     }
 
-    get dir() {
+    get dir(): string {
         switch (this.css('direction')) {
             case 'unset':
             case 'inherit':
                 let parent = this.documentParent;
                 do {
-                    const dir = parent.dir;
-                    if (dir !== '') {
-                        return dir;
+                    const value = parent.dir;
+                    if (value !== '') {
+                        return value;
                     }
                     parent = parent.documentParent;
                 }

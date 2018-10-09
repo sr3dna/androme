@@ -12,8 +12,8 @@ declare global {
             public delegateAppend?: (nodes: T[]) => void;
             public readonly length: number;
             public readonly list: T[];
-            public readonly visible: NodeList<T>;
-            public readonly elements: NodeList<T>;
+            public readonly visible: T[];
+            public readonly elements: T[];
             public readonly nextId: number;
             public readonly linearX: boolean;
             public readonly linearY: boolean;
@@ -25,7 +25,6 @@ declare global {
             public prepend(...nodes: T[]): void;
             public remove(start: number, deleteCount?: number): T[];
             public clone(): NodeList<T>;
-            public filter(predicate: (value: T) => boolean): NodeList<T>;
             public sort(predicate: (a: T, b: T) => number): NodeList<T>;
             public partition(predicate: (value: T) => boolean): NodeList<T>[];
             public each(predicate: (value: T, index?: number) => void): void;

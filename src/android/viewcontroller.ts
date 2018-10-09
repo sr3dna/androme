@@ -87,8 +87,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             leftRight: parseRTL('layout_constraintLeft_toRightOf', this.settings),
             rightLeft: parseRTL('layout_constraintRight_toLeftOf', this.settings)
         });
-        const relativeParent = MAP_LAYOUT.relativeParent;
-        let mapLayout;
+        const relativeParent: StringMap = MAP_LAYOUT.relativeParent;
+        let mapLayout: StringMap;
         let constraint = false;
         let relative = false;
         function mapParent(node: T, direction: string) {
@@ -124,7 +124,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             }
             return true;
         }
-        for (const node of this.cache.visible) {
+        this.cache.visible.forEach((node: T) => {
             relative = node.is($enum.NODE_STANDARD.RELATIVE);
             constraint = node.is($enum.NODE_STANDARD.CONSTRAINT);
             const flex = node.flex;
@@ -443,7 +443,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             node.android('layout_width', 'match_parent');
                         }
                         else if (columnCount === 0) {
-                            for (const current of pageflow) {
+                            pageflow.each((current: T) => {
                                 const parent = current.documentParent;
                                 if (current.autoMarginHorizontal) {
                                     this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
@@ -462,7 +462,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 else if (current.linear.bottom >= parent.box.bottom || $util.withinFraction(current.linear.bottom, parent.box.bottom)) {
                                     current.anchor(mapLayout['bottom'], 'parent', parent.hasHeight ? AXIS_ANDROID.VERTICAL : '');
                                 }
-                                for (const adjacent of pageflow) {
+                                pageflow.each((adjacent: T) => {
                                     if (current !== adjacent) {
                                         const stringId = adjacent.stringId;
                                         const horizontal = anchoredSibling(adjacent, nodes, AXIS_ANDROID.HORIZONTAL) ? AXIS_ANDROID.HORIZONTAL : '';
@@ -510,9 +510,9 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                             }
                                         }
                                     }
-                                }
-                            }
-                            for (const current of pageflow) {
+                                });
+                            });
+                            pageflow.each((current: T) => {
                                 const leftRight = mapSibling(current, 'leftRight');
                                 if (leftRight) {
                                     if (!current.constraint.horizontal) {
@@ -585,13 +585,17 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                     }
                                 }
-                            }
+                            });
                             for (let i = 0; i < pageflow.length; i++) {
                                 const current = pageflow.get(i);
                                 if (!current.anchored) {
                                     const result = $util.searchObject(current.get('app'), '*constraint*');
                                     for (const [key, value] of result) {
-                                        if (value !== 'parent' && pageflow.filter(item => item.anchored).find('stringId', value)) {
+                                        if (value !== 'parent' &&
+                                            pageflow.list
+                                                .filter(item => item.anchored)
+                                                .find(item => item.stringId === value))
+                                        {
                                             if ($util.indexOf(key, parseRTL('Left', this.settings), parseRTL('Right', this.settings)) !== -1) {
                                                 current.constraint.horizontal = true;
                                             }
@@ -606,7 +610,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 }
                             }
                             if (absolute.length > 0) {
-                                for (const current of absolute) {
+                                absolute.each((current: T) => {
                                     let alignMarginLeft = false;
                                     if (current.right != null && current.toInt('right') >= 0) {
                                         current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
@@ -639,7 +643,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     if (current.top === 0 && current.bottom === 0) {
                                         current.android('layout_height', 'match_parent');
                                     }
-                                }
+                                });
                             }
                         }
                         if (flex.enabled ||
@@ -684,14 +688,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                             sorted.list.reverse();
                                             break;
                                     }
-                                    for (const item of sorted) {
+                                    sorted.each((item: T) => {
                                         const y = item.linear.top;
                                         if (map[y] == null) {
                                             map[y] = [];
                                             levels.push(y);
                                         }
                                         map[y].push(item);
-                                    }
+                                    });
                                     switch (flex.wrap) {
                                         case 'wrap':
                                             if (flex.direction === 'column-reverse') {
@@ -707,8 +711,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                             }
                                             break;
                                     }
-                                    for (const n of levels) {
-                                        horizontal.push(new androme.lib.base.NodeList(map[n]));
+                                    for (const y of levels) {
+                                        horizontal.push(new androme.lib.base.NodeList(map[y]));
                                     }
                                 }
                             }
@@ -965,14 +969,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                                     });
                                                                 if (valid) {
                                                                     mapDelete(chain, 'top', 'bottom');
-                                                                    for (const item of chainable) {
+                                                                    chainable.each((item: T) => {
                                                                         if (mapSibling(item, 'top') === chain.stringId) {
                                                                             mapDelete(item, 'top');
                                                                         }
                                                                         if (mapSibling(item, 'bottom') === chain.stringId) {
                                                                             mapDelete(item, 'bottom');
                                                                         }
-                                                                    }
+                                                                    });
                                                                     chain.constraint.vertical = true;
                                                                 }
                                                                 break;
@@ -1010,9 +1014,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                             break;
                                                         case 'space-evenly':
                                                             first.app(chainStyle, 'spread');
-                                                            for (const item of chainable) {
-                                                                item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString());
-                                                            }
+                                                            chainable.each((item: T) => item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString()));
                                                             break;
                                                         case 'space-around':
                                                             first.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
@@ -1109,28 +1111,26 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                                     chainable.list.some(lower => !$util.sameValue(first, lower, `linear.${opposing[1]}`))
                                                                ))
                                                             {
-                                                                for (const chain of chainable) {
-                                                                    mapDelete(chain, opposing[1]);
-                                                                }
+                                                                chainable.each((item: T) => mapDelete(item, opposing[1]));
                                                             }
                                                         });
-                                                        for (const item of chainable) {
+                                                        chainable.each((item: T) => {
                                                             for (const list of connected) {
                                                                 if (list.find('id', item.id)) {
                                                                     list.clear();
                                                                 }
                                                             }
-                                                        }
+                                                        });
                                                     }
                                                     else {
                                                         marginDelete = true;
                                                     }
                                                 }
                                                 if (marginDelete) {
-                                                    for (const item of chainable) {
+                                                    chainable.each((item: T) => {
                                                         delete item.constraint.marginHorizontal;
                                                         delete item.constraint.marginVertical;
-                                                    }
+                                                    });
                                                 }
                                                 connectedRows.push(chainable);
                                             }
@@ -1138,14 +1138,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 }
                             });
                         }
-                        for (const current of pageflow) {
+                        pageflow.each((current: T) => {
                             current.constraint.horizontal = anchoredSibling(current, nodes, AXIS_ANDROID.HORIZONTAL);
                             current.constraint.vertical = anchoredSibling(current, nodes, AXIS_ANDROID.VERTICAL);
-                        }
+                        });
                         if (flex.enabled) {
                             if (flex.wrap !== 'nowrap') {
                                 ['topBottom', 'bottomTop'].forEach((value, index) => {
-                                    for (const current of pageflow) {
+                                    pageflow.each((current: T) => {
                                         if (mapParent(current, index === 0 ? 'bottom' : 'top')) {
                                             const chain: T[] = [current];
                                             let valid = false;
@@ -1183,12 +1183,12 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                 }
                                             }
                                         }
-                                    }
+                                    });
                                 });
                             }
                         }
                         else if (columnCount === 0) {
-                            for (const current of pageflow) {
+                            pageflow.each((current: T) => {
                                 [['top', 'bottom', 'topBottom'], ['bottom', 'top', 'bottomTop']].forEach(direction => {
                                     if (mapParent(current, direction[1]) && !mapSibling(current, direction[2])) {
                                         ['leftRight', 'rightLeft'].forEach(value => {
@@ -1207,9 +1207,9 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         });
                                     }
                                 });
-                            }
+                            });
                             const unbound =
-                                pageflow.filter(current =>
+                                pageflow.list.filter(current =>
                                     !current.anchored && (
                                         mapParent(current, 'top') ||
                                         mapParent(current, 'right') ||
@@ -1217,14 +1217,12 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         mapParent(current, 'left')
                                     )
                                 );
-                            if (nodes.filter(item => item.anchored).length === 0 && unbound.length === 0) {
-                                unbound.append(nodes.get(0));
+                            if (nodes.list.filter(item => item.anchored).length === 0 && unbound.length === 0) {
+                                unbound.push(nodes.get(0));
                             }
-                            for (const current of unbound) {
-                                this.addGuideline(current, '', false, false);
-                            }
+                            unbound.forEach((current: T) => this.addGuideline(current, '', false, false));
                             const [adjacent, unanchored] = nodes.partition(item => item.anchored);
-                            for (const current of unanchored) {
+                            unanchored.each((current: T) => {
                                 if ($util.withinRange(current.horizontalBias(this.settings), 0.5, 0.01) && $util.withinRange(current.verticalBias(this.settings), 0.5, 0.01)) {
                                     this.setAlignParent(current);
                                 }
@@ -1287,7 +1285,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 else {
                                     this.addGuideline(current);
                                 }
-                            }
+                            });
                             let bottomParent: Null<boolean> = null;
                             let rightParent: Null<boolean> = null;
                             const maxBottom: number = Math.max.apply(null, nodes.list.map(item => item.linear.bottom));
@@ -1494,7 +1492,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         }
                     }
                 }
-                for (const current of nodes) {
+                nodes.each((current: T) => {
                     if (current.constraint.marginHorizontal) {
                         const item = this.findByStringId(current.constraint.marginHorizontal);
                         if (item) {
@@ -1513,14 +1511,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             }
                         }
                     }
-                }
+                });
             }
             else {
                 if (node.linearHorizontal) {
                     this.adjustLineHeight(node.renderChildren, node);
                 }
             }
-        }
+        });
     }
 
     public getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan = 1) {
@@ -1663,7 +1661,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         );
     }
 
-    public renderNode(node: T, parent: T, nodeName: number | string, recursive = false) {
+    public renderNode(node: T, parent: T, nodeName: number | string, recursive = false): string {
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
         if (typeof nodeName === 'number') {
             nodeName = View.getControlName(nodeName);
@@ -1989,9 +1987,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     }
 
     public setBoxSpacing(data: ViewData<androme.lib.base.NodeList<T>>) {
-        for (const node of data.cache.visible) {
-            node.setBoxSpacing(this.settings);
-        }
+        data.cache.visible.forEach((node: T) => node.setBoxSpacing(this.settings));
     }
 
     public setDimensions(data: ViewData<androme.lib.base.NodeList<T>>) {
@@ -2011,8 +2007,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             }
             group[name].push(node);
         }
-        const groups = {};
-        for (const node of data.cache.visible) {
+        const groups: ObjectMapNested<T[]> = {};
+        data.cache.visible.forEach((node: T) => {
             if (this.settings.dimensResourceValue) {
                 const nodeName = node.nodeName.toLowerCase();
                 if (groups[nodeName] == null) {
@@ -2035,7 +2031,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                     addToGroup(nodeName, node, dimen, attr, node[obj](attr));
                 });
             }
-        }
+        });
         if (this.settings.dimensResourceValue) {
             const resource: Map<string, string> = ResourceHandler.getStored('dimens');
             for (const nodeName in groups) {
@@ -2090,7 +2086,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     private setAttributes(data: ViewData<androme.lib.base.NodeList<T>>) {
         if (this.settings.showAttributes) {
-            const cache: StringMap[] = data.cache.visible.list.map(node => ({ pattern: $xml.formatPlaceholder(node.id, '@'), attributes: this.parseAttributes(node) }));
+            const cache: StringMap[] = data.cache.visible.map(node => ({ pattern: $xml.formatPlaceholder(node.id, '@'), attributes: this.parseAttributes(node) }));
             for (const value of [...data.views, ...data.includes]) {
                 cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
                 value.content = value.content.replace(`{#0}`, this.getRootNamespace(value.content));
@@ -2186,7 +2182,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         }
                         else {
                             const chained = new Set([node]);
-                            let valid;
+                            let valid: boolean;
                             do {
                                 valid = false;
                                 Array

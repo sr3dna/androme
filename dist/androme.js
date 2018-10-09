@@ -1639,10 +1639,10 @@
             return null;
         }
         actualLeft(dimension = 'linear') {
-            return this.companion && this.companion[dimension] ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left;
+            return this.companion && !this.companion.visible && this.companion[dimension] ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left;
         }
         actualRight(dimension = 'linear') {
-            return this.companion && this.companion[dimension] ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right;
+            return this.companion && !this.companion.visible && this.companion[dimension] ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right;
         }
         boxAttribute(region, direction) {
             const attr = region + direction;
@@ -2013,9 +2013,9 @@
                 case 'inherit':
                     let parent = this.documentParent;
                     do {
-                        const dir = parent.dir;
-                        if (dir !== '') {
-                            return dir;
+                        const value = parent.dir;
+                        if (value !== '') {
+                            return value;
                         }
                         parent = parent.documentParent;
                     } while (parent.id !== 0);
@@ -2392,9 +2392,6 @@
         clone() {
             return new NodeList(this._list.slice());
         }
-        filter(predicate) {
-            return new NodeList(this._list.filter(predicate));
-        }
         sort(predicate) {
             return new NodeList(this._list.slice().sort(predicate));
         }
@@ -2429,10 +2426,10 @@
             return this._list;
         }
         get visible() {
-            return new NodeList(this._list.filter(node => node.visible));
+            return this._list.filter(node => node.visible);
         }
         get elements() {
-            return new NodeList(this._list.filter(node => node.visible && node.hasElement));
+            return this._list.filter(node => node.visible && node.hasElement);
         }
         get nextId() {
             return ++this._currentId;
@@ -2448,26 +2445,33 @@
     class NodeGroup extends Node {
         init() {
             super.init();
-            this.children.forEach(item => {
-                this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
-                item.parent = this;
-            });
-            this.parent.children.sort(NodeList.siblingIndex);
-            this.initial.children.push(...this.children.slice());
+            if (this.children.length > 0) {
+                this.children.forEach(item => {
+                    this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
+                    item.parent = this;
+                });
+                this.parent.children.sort(NodeList.siblingIndex);
+                this.initial.children.push(...this.children.slice());
+            }
             this.setBounds();
             this.css('direction', this.documentParent.dir);
         }
         setBounds(calibrate = false) {
             if (!calibrate) {
-                const nodes = NodeList.outerRegion(this.children);
-                this.bounds = {
-                    top: nodes.top[0].linear.top,
-                    right: nodes.right[0].linear.right,
-                    bottom: nodes.bottom[0].linear.bottom,
-                    left: nodes.left[0].linear.left,
-                    width: 0,
-                    height: 0
-                };
+                if (this.children.length > 0) {
+                    const nodes = NodeList.outerRegion(this.children);
+                    this.bounds = {
+                        top: nodes.top[0].linear.top,
+                        right: nodes.right[0].linear.right,
+                        bottom: nodes.bottom[0].linear.bottom,
+                        left: nodes.left[0].linear.left,
+                        width: 0,
+                        height: 0
+                    };
+                }
+                else {
+                    this.bounds = getClientRect();
+                }
                 this.bounds.width = this.bounds.right - this.bounds.left;
                 this.bounds.height = this.bounds.bottom - this.bounds.top;
             }
@@ -2771,7 +2775,7 @@
             }
         }
         finalize() {
-            const visible = this.cacheSession.visible.list.filter(node => !node.hasAlign(NODE_ALIGNMENT.SPACE));
+            const visible = this.cacheSession.visible.filter(node => !node.hasAlign(NODE_ALIGNMENT.SPACE));
             for (const node of visible) {
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                     node.setLayout();
@@ -2851,7 +2855,7 @@
             this.cache.delegateAppend = undefined;
             this.cache.clear();
             for (const ext of this.extensions) {
-                ext.setTarget({}, undefined, rootElement);
+                ext.setTarget(undefined, undefined, rootElement);
                 ext.beforeInit();
             }
             const rootNode = this.insertNode(rootElement);
@@ -3199,18 +3203,25 @@
                             continue;
                         }
                         let parentY = nodeY.parent;
-                        if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
-                            const filename = trimNull(nodeY.dataset.include);
-                            if (filename !== '' && includes$$1.indexOf(filename) === -1) {
-                                renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), getCurrent());
-                                includes$$1.push(filename);
+                        let currentY = '';
+                        if (this.viewController.supportInclude) {
+                            if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
+                                const filename = trimNull(nodeY.dataset.include);
+                                if (filename !== '' && includes$$1.indexOf(filename) === -1) {
+                                    renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), getCurrent());
+                                    includes$$1.push(filename);
+                                }
+                                current = getCurrent();
+                                if (current !== '') {
+                                    const cloneParent = parentY.clone();
+                                    cloneParent.renderDepth = this.viewController.baseRenderDepth(current);
+                                    nodeY.parent = cloneParent;
+                                    parentY = cloneParent;
+                                }
+                                currentY = current;
                             }
-                            current = getCurrent();
-                            if (current !== '') {
-                                const cloneParent = parentY.clone();
-                                cloneParent.renderDepth = this.viewController.baseRenderDepth(current);
-                                nodeY.parent = cloneParent;
-                                parentY = cloneParent;
+                            else {
+                                currentY = '';
                             }
                         }
                         if (nodeY.renderAs) {
@@ -3433,7 +3444,7 @@
                                     ext.setTarget(nodeY, parentY);
                                     const result = ext.processChild();
                                     if (result.output !== '') {
-                                        renderNode(nodeY, parentY, result.output, current);
+                                        renderNode(nodeY, parentY, result.output, currentY);
                                     }
                                     if (result.parent) {
                                         parentY = result.parent;
@@ -3455,7 +3466,7 @@
                                         if (item.condition()) {
                                             const result = item.processNode(mapX, mapY);
                                             if (result.output !== '') {
-                                                renderNode(nodeY, parentY, result.output, current);
+                                                renderNode(nodeY, parentY, result.output, currentY);
                                             }
                                             if (result.parent) {
                                                 parentY = result.parent;
@@ -3491,7 +3502,7 @@
                                 const group = this.viewController.createGroup(parentY, nodeY, [nodeY]);
                                 const groupOutput = this.writeGridLayout(group, parentY, 2, 1);
                                 group.alignmentType |= NODE_ALIGNMENT.PERCENT;
-                                renderNode(group, parentY, groupOutput, current);
+                                renderNode(group, parentY, groupOutput, currentY);
                                 this.viewController[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${100 - nodeY.toInt('width')}%`));
                                 parentY = group;
                             }
@@ -3655,10 +3666,10 @@
                             else {
                                 output = this.writeNode(nodeY, parentY, nodeY.controlName);
                             }
-                            renderNode(nodeY, parentY, output, current);
+                            renderNode(nodeY, parentY, output, currentY);
                         }
-                        if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
-                            if (includes$$1.length > 0 && optional(nodeY, 'dataset.includeEnd') === 'true') {
+                        if (this.viewController.supportInclude && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
+                            if (includes$$1.length > 0 && nodeY.dataset.includeEnd === 'true') {
                                 includes$$1.pop();
                             }
                         }
@@ -3696,11 +3707,11 @@
                     }
                 }
                 if (this.viewController.supportInclude) {
-                    for (const [current, views] of external.entries()) {
-                        const templates = Array.from(views.values());
-                        if (templates.length > 0) {
-                            const output = this.viewController.renderMerge(current, templates);
-                            this.addInclude(current, output);
+                    for (const [filename, templates] of external.entries()) {
+                        const content = Array.from(templates.values());
+                        if (content.length > 0) {
+                            const output = this.viewController.renderMerge(filename, content);
+                            this.addInclude(filename, output);
                         }
                     }
                 }
@@ -4484,24 +4495,24 @@
             }
             return node;
         }
-        prioritizeExtensions(available, element) {
-            let extensions = [];
+        prioritizeExtensions(extensions, element) {
+            let result = [];
             let current = element;
             while (current) {
-                extensions = [
-                    ...extensions,
+                result = [
+                    ...result,
                     ...trimNull(current.dataset.ext)
                         .split(',')
                         .map(value => value.trim())
                 ];
                 current = current.parentElement;
             }
-            extensions = extensions.filter(value => value);
-            if (extensions.length > 0) {
+            result = result.filter(value => value);
+            if (result.length > 0) {
                 const tagged = [];
                 const untagged = [];
-                for (const item of available) {
-                    const index = extensions.indexOf(item.name);
+                for (const item of extensions) {
+                    const index = result.indexOf(item.name);
                     if (index !== -1) {
                         tagged[index] = item;
                     }
@@ -4512,7 +4523,7 @@
                 return [...tagged.filter(item => item), ...untagged];
             }
             else {
-                return available;
+                return extensions;
             }
         }
         isFrameHorizontal(nodes, cleared, lineBreak = false) {
@@ -4568,7 +4579,11 @@
             return [...this._views, ...this._includes];
         }
         get viewData() {
-            return { cache: this.cacheSession, views: this._views, includes: this._includes };
+            return {
+                cache: this.cacheSession,
+                views: this._views,
+                includes: this._includes
+            };
         }
         get size() {
             return this._views.length + this._includes.length;
@@ -4992,7 +5007,7 @@
             this.file.reset();
         }
         setBoxSpacing() {
-            this.cache.elements.each(node => {
+            this.cache.elements.forEach(node => {
                 if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (!getElementCache(node.element, 'boxSpacing') || this.settings.alwaysReevaluateResources)) {
                     const result = getBoxSpacing(node.element);
                     const formatted = {};
@@ -5009,7 +5024,7 @@
             });
         }
         setBoxStyle() {
-            this.cache.elements.each(node => {
+            this.cache.elements.forEach(node => {
                 if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (!getElementCache(node.element, 'boxStyle') || this.settings.alwaysReevaluateResources)) {
                     const boxModel = {
                         borderTop: this.parseBorderStyle,
@@ -5156,7 +5171,7 @@
                 }
                 return [value, true];
             }
-            this.cache.visible.each(node => {
+            this.cache.visible.forEach(node => {
                 const element = node.element;
                 if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (!getElementCache(element, 'valueString') || this.settings.alwaysReevaluateResources)) {
                     let name = '';
@@ -5175,7 +5190,7 @@
                                 value = element.value.trim();
                                 break;
                             default:
-                                if (node.companion) {
+                                if (node.companion && !node.companion.visible) {
                                     value = node.companion.textContent.trim();
                                 }
                                 break;
@@ -5253,10 +5268,11 @@
             });
         }
         setOptionArray() {
-            this.cache
+            this.cache.list
                 .filter(node => node.visible &&
                 node.tagName === 'SELECT' &&
-                !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+                !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY))
+                .forEach(node => {
                 const element = node.element;
                 if (!getElementCache(element, 'optionArray') || this.settings.alwaysReevaluateResources) {
                     const stringArray = [];
@@ -5310,7 +5326,11 @@
             if (style === 'inset' && width === '0px') {
                 width = '1px';
             }
-            return { style, width, color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0'] };
+            return {
+                style,
+                width,
+                color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0']
+            };
         }
         parseBorderRadius(value, node) {
             const [top, right, bottom, left] = [
@@ -5455,9 +5475,9 @@
             }
         }
         setTarget(node, parent, element) {
-            this.node = node;
-            this.parent = parent;
-            this.element = element || this.node.element;
+            this._node = node;
+            this._parent = parent;
+            this._element = element || (node && node.element);
         }
         is(node) {
             return node.hasElement && (this.tagNames.length === 0 || this.tagNames.includes(node.tagName));
@@ -5543,11 +5563,22 @@
             }
             return result;
         }
+        get node() {
+            return this._node;
+        }
+        get parent() {
+            return this._parent;
+        }
+        get element() {
+            return this._element;
+        }
     }
 
     class Accessibility extends Extension {
         afterInit() {
-            for (const node of this.application.cache.elements) {
+            Array
+                .from(this.application.cache.elements)
+                .forEach((node) => {
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
                     const element = node.element;
                     if (element instanceof HTMLInputElement) {
@@ -5566,7 +5597,9 @@
                                             labelParent.renderAs = node;
                                         }
                                         if (node.companion) {
-                                            label.hide();
+                                            if (this.options && !this.options.showLabel) {
+                                                label.hide();
+                                            }
                                             return true;
                                         }
                                     }
@@ -5576,7 +5609,7 @@
                         }
                     }
                 }
-            }
+            });
         }
     }
 
@@ -5994,13 +6027,13 @@
     class List extends Extension {
         condition() {
             const children = this.node.children;
-            const floated = new Set(children.slice(1).map(node => node.float));
+            const floated = new Set(children.slice(1).map(item => item.float));
             return (super.condition() &&
-                children.length > 0 && (children.every(node => node.blockStatic) ||
-                children.every(node => node.inlineElement) ||
-                children.every((node, index) => !node.floating && (index === 0 || index === children.length - 1 || node.blockStatic || (node.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic))) ||
-                (children.every(node => node.float !== 'none' && node.float === children[0].float) && floated.size === 1 && (floated.has('none') || floated.has(children[0].float)))) && (children.some((node) => node.display === 'list-item' && (node.css('listStyleType') !== 'none' || this.hasSingleImage(node))) ||
-                children.every((node) => node.tagName !== 'LI' && node.styleMap.listStyleType === 'none' && this.hasSingleImage(node))));
+                children.length > 0 && (children.every(item => item.blockStatic) ||
+                children.every(item => item.inlineElement) ||
+                children.every((item, index) => !item.floating && (index === 0 || index === children.length - 1 || item.blockStatic || (item.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic))) ||
+                (children.every(item => item.float !== 'none' && item.float === children[0].float) && floated.size === 1 && (floated.has('none') || floated.has(children[0].float)))) && (children.some((item) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || this.hasSingleImage(item))) ||
+                children.every((item) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && this.hasSingleImage(item))));
         }
         processNode() {
             const node = this.node;
@@ -6144,7 +6177,9 @@
 
     class Origin extends Extension {
         afterInit() {
-            for (const node of this.application.cache.elements) {
+            Array
+                .from(this.application.cache.elements)
+                .forEach((node) => {
                 if (node.children.some((current) => {
                     if (current.pageflow) {
                         return (current.float !== 'right' &&
@@ -6224,7 +6259,7 @@
                         this.modifyMarginLeft(node, node.marginLeft, true);
                     }
                 }
-            }
+            });
         }
         modifyMarginLeft(node, offset, parent = false) {
             node.bounds.left -= offset;
@@ -6641,7 +6676,7 @@
                                 styleMap['backgroundImage'] !== 'initial') {
                                 styleMap['backgroundImage']
                                     .split(',')
-                                    .map(value => value.trim())
+                                    .map((value) => value.trim())
                                     .forEach(value => {
                                     const url = cssResolveUrl(value);
                                     if (url !== '' && !cacheImage.has(url)) {
@@ -6674,7 +6709,12 @@
     }
     function setImageCache(element) {
         if (element && hasValue(element.src)) {
-            cacheImage.set(element.src, { width: element.naturalWidth, height: element.naturalHeight, url: element.src });
+            const image = {
+                width: element.naturalWidth,
+                height: element.naturalHeight,
+                url: element.src
+            };
+            cacheImage.set(element.src, image);
         }
     }
     function setFramework(module, cached = false) {
@@ -6908,28 +6948,35 @@
     function toString() {
         return main ? main.toString() : '';
     }
-    const base = {
-        extensions: {
-            Accessibility,
-            Button,
-            Custom,
-            External,
-            Grid,
-            List,
-            Nav,
-            Origin,
-            Table
+    const lib = {
+        base: {
+            Node,
+            NodeList,
+            NodeGroup,
+            Application,
+            Controller,
+            Resource,
+            File,
+            Extension,
+            extensions: {
+                Accessibility,
+                Button,
+                Custom,
+                External,
+                Grid,
+                List,
+                Nav,
+                Origin,
+                Table
+            }
         },
-        Node,
-        NodeList,
-        NodeGroup,
-        Application,
-        Controller,
-        Resource,
-        File,
-        Extension
+        enumeration,
+        constant,
+        util,
+        dom,
+        xml,
+        color
     };
-    const lib = { base, enumeration, constant, util, dom, xml, color };
 
     exports.setFramework = setFramework;
     exports.parseDocument = parseDocument;

@@ -5,7 +5,7 @@ import { cssInherit, getStyle } from '../lib/dom';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
 
-export default abstract class <T extends Node> extends Extension<T> {
+export default abstract class Table<T extends Node> extends Extension<T> {
     public processNode(): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;

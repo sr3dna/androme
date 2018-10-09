@@ -66,11 +66,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
 
     public static formatOptions(options: {}, settings: SettingsAndroid) {
         for (const namespace in options) {
-            const object: StringMap = options[namespace];
-            if (typeof object === 'object') {
-                for (const attr in object) {
-                    if (object[attr] != null) {
-                        let value = object[attr].toString();
+            const obj: StringMap = options[namespace];
+            if (typeof obj === 'object') {
+                for (const attr in obj) {
+                    if (obj[attr] != null) {
+                        let value = obj[attr].toString();
                         switch (namespace) {
                             case 'android':
                                 switch (attr) {
@@ -78,7 +78,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         if (!value.startsWith('@string/')) {
                                             value = ResourceHandler.addString(value, '', settings);
                                             if (value !== '') {
-                                                object[attr] = `@string/${value}`;
+                                                obj[attr] = `@string/${value}`;
                                                 continue;
                                             }
                                         }
@@ -87,7 +87,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         if (/^\w+:\/\//.test(value)) {
                                             value = ResourceHandler.addImage({ 'mdpi': value });
                                             if (value !== '') {
-                                                object[attr] = `@drawable/${value}`;
+                                                obj[attr] = `@drawable/${value}`;
                                                 continue;
                                             }
                                         }
@@ -97,7 +97,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                         const hex = $color.parseHex(value);
                         if (hex !== '') {
-                            object[attr] = `@color/${ResourceHandler.addColor(hex)}`;
+                            obj[attr] = `@color/${ResourceHandler.addColor(hex)}`;
                         }
                     }
                 }
@@ -274,10 +274,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public finalize(viewData: ViewData<androme.lib.base.NodeList<T>>) {
-        this.processFontStyle(viewData);
         const styles: ObjectMap<string[]> = {};
-        for (const node of viewData.cache) {
-            const children = node.renderChildren.filter(item => item.auto && item.visible);
+        this.processFontStyle(viewData);
+        viewData.cache.each((node: T) => {
+            const children = node.renderChildren.filter(item => item.visible && item.auto);
             if (children.length > 1) {
                 const map = new Map<string, number>();
                 let style = '';
@@ -313,8 +313,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                 }
                 if (valid) {
-                    for (const attr of map.keys()) {
-                        if (map.get(attr) !== children.length) {
+                    for (const [attr, value] of map.entries()) {
+                        if (value !== children.length) {
                             map.delete(attr);
                         }
                     }
@@ -326,7 +326,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         for (const attr of map.keys()) {
                             const match = attr.match(/(\w+):(\w+)="(.*?)"/);
                             if (match) {
-                                children.forEach(child => child.delete(match[1], match[2]));
+                                children.forEach(item => item.delete(match[1], match[2]));
                                 common.push(match[0]);
                             }
                         }
@@ -342,11 +342,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             name = (style !== '' ? `${style}.` : '') + $util.capitalize(node.nodeId);
                             styles[name] = common;
                         }
-                        children.forEach(child => child.attr('_', 'style', `@style/${name}`));
+                        children.forEach(item => item.attr('_', 'style', `@style/${name}`));
                     }
                 }
             }
-        }
+        });
         for (const name in styles) {
             $resource.STORED.styles.set(name, { attributes: styles[name].join(';') });
         }
@@ -354,9 +354,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
 
     public setBoxSpacing() {
         super.setBoxSpacing();
-        this.cache.elements.filter(node => !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)).each(node => {
+        this.cache.elements.forEach(node => {
             const stored: StringMap = $dom.getElementCache(node.element, 'boxSpacing');
-            if (stored) {
+            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                 if (stored.marginLeft === stored.marginRight &&
                     node.alignParent('left', this.settings) &&
                     node.alignParent('right', this.settings) &&
@@ -378,9 +378,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
 
     public setBoxStyle() {
         super.setBoxStyle();
-        this.cache.elements.filter(node => !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)).each(node => {
+        this.cache.elements.forEach(node => {
             const stored: BoxStyle = $dom.getElementCache(node.element, 'boxStyle');
-            if (stored) {
+            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {
                 if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
@@ -966,12 +966,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     public setFontStyle() {
         super.setFontStyle();
         const nodeName: ObjectMap<T[]> = {};
-        this.cache
-            .filter(node =>
-                node.visible &&
-                !node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)
-            )
-            .each(node => {
+        this.cache.visible.forEach(node => {
+            if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.FONT_STYLE)) {
                 if ($dom.getElementCache(node.element, 'fontStyle')) {
                     if (nodeName[node.nodeName] == null) {
                         nodeName[node.nodeName] = [];
@@ -988,7 +984,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     node.android('shadowDy', $util.convertInt(match[3]).toString());
                     node.android('shadowRadius', $util.convertInt(match[4]).toString());
                 }
-            });
+            }
+        });
         for (const tag in nodeName) {
             const nodes = new androme.lib.base.NodeList(nodeName[tag]);
             const sorted: StyleList = [];
@@ -1051,7 +1048,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     if (sorted[i] == null) {
                         sorted[i] = {};
                     }
-                    const value = stored[keys[i]];
+                    const value: string = stored[keys[i]];
                     if ($util.hasValue(value)) {
                         if (node.supported('android', keys[i])) {
                             const attr = $util.formatString(method[keys[i]], value);
@@ -1085,12 +1082,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public setImageSource() {
-        this.cache
+        this.cache.list
             .filter(node =>
                 node.visible &&
                 (node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
                 !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)
-            ).each(node => {
+            )
+            .forEach(node => {
                 const element = <HTMLImageElement> node.element;
                 if (!$dom.getElementCache(element, 'imageSource') || this.settings.alwaysReevaluateResources) {
                     const result = node.imageElement ? ResourceHandler.addImageSrcSet(element)
@@ -1106,105 +1104,96 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
 
     public setOptionArray() {
         super.setOptionArray();
-        this.cache
-            .filter(node =>
-                node.visible &&
-                node.tagName === 'SELECT' &&
-                !node.hasBit('excludeResource', $enum.NODE_RESOURCE.OPTION_ARRAY)
-            ).each(node => {
-                const stored: ObjectMap<string[]> = $dom.getElementCache(node.element, 'optionArray');
-                if (stored) {
-                    const method = METHOD_ANDROID['optionArray'];
-                    let result: string[] = [];
-                    if (stored.numberArray) {
-                        if (!this.settings.numberResourceValue) {
-                            result = stored.numberArray;
-                        }
-                        else {
-                            stored.stringArray = stored.numberArray;
-                        }
+        this.cache.visible.forEach(node => {
+            const stored: ObjectMap<string[]> = $dom.getElementCache(node.element, 'optionArray');
+            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.OPTION_ARRAY)) {
+                const method = METHOD_ANDROID['optionArray'];
+                let result: string[] = [];
+                if (stored.numberArray) {
+                    if (!this.settings.numberResourceValue) {
+                        result = stored.numberArray;
                     }
-                    if (stored.stringArray) {
-                        result =
-                            stored.stringArray
-                                .map(value => {
-                                    const name = ResourceHandler.addString(value, '', this.settings);
-                                    return name !== '' ? `@string/${name}` : '';
-                                })
-                                .filter(name => name);
+                    else {
+                        stored.stringArray = stored.numberArray;
                     }
-                    let arrayName = '';
-                    const arrayValue = result.join('-');
-                    for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
-                        if (arrayValue === storedResult.join('-')) {
-                            arrayName = storedName;
-                            break;
-                        }
-                    }
-                    if (arrayName === '') {
-                        arrayName = `${node.nodeId}_array`;
-                        $resource.STORED.arrays.set(arrayName, result);
-                    }
-                    node.formatted($util.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
                 }
-            });
+                if (stored.stringArray) {
+                    result =
+                        stored.stringArray
+                            .map(value => {
+                                const name = ResourceHandler.addString(value, '', this.settings);
+                                return name !== '' ? `@string/${name}` : '';
+                            })
+                            .filter(name => name);
+                }
+                const arrayValue = result.join('-');
+                let arrayName = '';
+                for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
+                    if (arrayValue === storedResult.join('-')) {
+                        arrayName = storedName;
+                        break;
+                    }
+                }
+                if (arrayName === '') {
+                    arrayName = `${node.nodeId}_array`;
+                    $resource.STORED.arrays.set(arrayName, result);
+                }
+                node.formatted($util.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
+            }
+        });
     }
 
     public setValueString() {
         super.setValueString();
-        this.cache
-            .filter(
-                node => node.visible &&
-                !node.hasBit('excludeResource', $enum.NODE_RESOURCE.VALUE_STRING))
-            .each(node => {
-                const stored: NameValue = $dom.getElementCache(node.element, 'valueString');
-                if (stored) {
-                    if (node.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
-                        if (node.alignParent('left', this.settings) && !$dom.cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                            const value = node.textContent;
-                            let leadingSpace = 0;
-                            for (let i = 0; i < value.length; i++) {
-                                switch (value.charCodeAt(i)) {
-                                    case 32:
-                                        continue;
-                                    case 160:
-                                        leadingSpace++;
-                                        continue;
-                                }
-                                break;
+        this.cache.visible.forEach(node => {
+            const stored: NameValue = $dom.getElementCache(node.element, 'valueString');
+            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.VALUE_STRING)) {
+                if (node.renderParent.is($enum.NODE_STANDARD.RELATIVE)) {
+                    if (node.alignParent('left', this.settings) && !$dom.cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
+                        const value = node.textContent;
+                        let leadingSpace = 0;
+                        for (let i = 0; i < value.length; i++) {
+                            switch (value.charCodeAt(i)) {
+                                case 32:
+                                    continue;
+                                case 160:
+                                    leadingSpace++;
+                                    continue;
                             }
-                            if (leadingSpace === 0) {
-                                stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
-                            }
+                            break;
                         }
-                    }
-                    if (node.hasElement) {
-                        switch (node.css('fontVariant')) {
-                            case 'small-caps':
-                                stored.value = stored.value.toUpperCase();
-                                break;
-                        }
-                        const match = node.css('textDecoration').match(/(underline|line-through)/);
-                        if (match) {
-                            switch (match[0]) {
-                                case 'underline':
-                                    stored.value = `<u>${stored.value}</u>`;
-                                    break;
-                                case 'line-through':
-                                    stored.value = `<strike>${stored.value}</strike>`;
-                                    break;
-                            }
-                        }
-                    }
-                    const name = ResourceHandler.addString(stored.value, stored.name, this.settings);
-                    if (name !== '') {
-                        const method = METHOD_ANDROID['valueString'];
-                        if (node.toInt('textIndent') + node.bounds.width > 0) {
-                            node.formatted($util.formatString(method['text'], isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name), node.renderExtension.size === 0);
+                        if (leadingSpace === 0) {
+                            stored.value = stored.value.replace(/^(\s|&#160;)+/, '');
                         }
                     }
                 }
-            });
+                if (node.hasElement) {
+                    switch (node.css('fontVariant')) {
+                        case 'small-caps':
+                            stored.value = stored.value.toUpperCase();
+                            break;
+                    }
+                    const match = node.css('textDecoration').match(/(underline|line-through)/);
+                    if (match) {
+                        switch (match[0]) {
+                            case 'underline':
+                                stored.value = `<u>${stored.value}</u>`;
+                                break;
+                            case 'line-through':
+                                stored.value = `<strike>${stored.value}</strike>`;
+                                break;
+                        }
+                    }
+                }
+                const name = ResourceHandler.addString(stored.value, stored.name, this.settings);
+                if (name !== '') {
+                    const method = METHOD_ANDROID['valueString'];
+                    if (node.toInt('textIndent') + node.bounds.width > 0) {
+                        node.formatted($util.formatString(method['text'], isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name), node.renderExtension.size === 0);
+                    }
+                }
+            }
+        });
     }
 
     public addTheme(template: string, data: {}, options: ObjectMap<any>) {

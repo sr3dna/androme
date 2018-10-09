@@ -4,7 +4,7 @@ import { hasValue } from '../lib/util';
 import { getNodeFromElement } from '../lib/dom';
 import { NODE_PROCEDURE } from '../lib/enumeration';
 
-export default abstract class <T extends Node> extends Extension<T> {
+export default abstract class Accessibility<T extends Node> extends Extension<T> {
     public afterInit() {
         Array
             .from(this.application.cache.elements)

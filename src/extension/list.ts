@@ -6,7 +6,7 @@ import { convertAlpha, convertRoman } from '../lib/util';
 import { BOX_STANDARD, NODE_RESOURCE } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
 
-export default abstract class <T extends Node> extends Extension<T> {
+export default abstract class List<T extends Node> extends Extension<T> {
     public condition() {
         const children = this.node.children;
         const floated = new Set(children.slice(1).map(item => item.float));

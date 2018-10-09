@@ -1,7 +1,7 @@
 import Node from '../base/node';
 import Extension from '../base/extension';
 
-export default abstract class <T extends Node> extends Extension<T> {
+export default abstract class Button<T extends Node> extends Extension<T> {
     public is(node: T) {
         return (
             super.is(node) && (

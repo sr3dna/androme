@@ -249,7 +249,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
             default:
                 const parent = this.documentParent(nodes);
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
-                    const result =
+                    const result: Map<T, string> =
                         NodeList.cleared(
                             Array
                                 .from(parent.baseElement.children)
@@ -347,10 +347,6 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         return new NodeList(this._list.slice());
     }
 
-    public filter(predicate: (value: T) => boolean) {
-        return new NodeList(this._list.filter(predicate));
-    }
-
     public sort(predicate: (a: T, b: T) => number) {
         return new NodeList(this._list.slice().sort(predicate));
     }
@@ -394,11 +390,11 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
     }
 
     get visible() {
-        return new NodeList(this._list.filter(node => node.visible));
+        return this._list.filter(node => node.visible);
     }
 
     get elements() {
-        return new NodeList(this._list.filter(node => node.visible && node.hasElement));
+        return this._list.filter(node => node.visible && node.hasElement);
     }
 
     get nextId() {

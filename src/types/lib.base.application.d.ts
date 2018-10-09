@@ -6,7 +6,7 @@ declare global {
             public resourceHandler: Resource<T>;
             public nodeObject: Constructor<T>;
             public builtInExtensions: ObjectMap<Extension<T>>;
-            public renderQueue: ObjectIndex<string[]>;
+            public renderQueue: ObjectMap<string[]>;
             public loading: boolean;
             public closed: boolean;
             public readonly framework: number;

@@ -53,7 +53,7 @@ function setStyleMap() {
                                 attrs.add(util.convertCamelCase(attr));
                             }
                             const style = dom.getStyle(element);
-                            const styleMap = {};
+                            const styleMap: StringMap = {};
                             for (const attr of attrs) {
                                 const value: string = rule.style[attr];
                                 if (element.style[attr]) {
@@ -65,7 +65,7 @@ function setStyleMap() {
                                 else if (value) {
                                     switch (attr) {
                                         case 'fontSize':
-                                            styleMap[attr] = style[attr];
+                                            styleMap[attr] = style[attr] as string;
                                             break;
                                         case 'width':
                                         case 'height':
@@ -101,7 +101,7 @@ function setStyleMap() {
                             {
                                 styleMap['backgroundImage']
                                     .split(',')
-                                    .map(value => value.trim())
+                                    .map((value: string) => value.trim())
                                     .forEach(value => {
                                         const url = dom.cssResolveUrl(value);
                                         if (url !== '' && !cacheImage.has(url)) {
@@ -135,7 +135,12 @@ function setStyleMap() {
 
 function setImageCache(element: HTMLImageElement) {
     if (element && util.hasValue(element.src)) {
-        cacheImage.set(element.src, { width: element.naturalWidth, height: element.naturalHeight, url: element.src });
+        const image: Image = {
+            width: element.naturalWidth,
+            height: element.naturalHeight,
+            url: element.src
+        };
+        cacheImage.set(element.src, image);
     }
 }
 
@@ -384,28 +389,34 @@ export function toString() {
     return main ? main.toString() : '';
 }
 
-const base = {
-    extensions: {
-        Accessibility,
-        Button,
-        Custom,
-        External,
-        Grid,
-        List,
-        Nav,
-        Origin,
-        Table
+const lib = {
+    base: {
+        Node,
+        NodeList,
+        NodeGroup,
+        Application,
+        Controller,
+        Resource,
+        File,
+        Extension,
+        extensions: {
+            Accessibility,
+            Button,
+            Custom,
+            External,
+            Grid,
+            List,
+            Nav,
+            Origin,
+            Table
+        }
     },
-    Node,
-    NodeList,
-    NodeGroup,
-    Application,
-    Controller,
-    Resource,
-    File,
-    Extension
+    enumeration,
+    constant,
+    util,
+    dom,
+    xml,
+    color
 };
-
-const lib = { base, enumeration, constant, util, dom, xml, color };
 
 export { lib, system, settings };

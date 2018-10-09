@@ -106,8 +106,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
     }
 
     public afterInsert() {
-        const node = this.node;
-        const element = $dom.findNestedExtension(node.element, $const.EXT_NAME.EXTERNAL);
+        const element = $dom.findNestedExtension(this.node.element, $const.EXT_NAME.EXTERNAL);
         if (element) {
             const header = $dom.getNodeFromElement<T>(element);
             if (header && !header.hasHeight) {

@@ -14,7 +14,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public nodeObject: { new (id: number, element?: Element): T };
     public builtInExtensions: ObjectMap<Extension<T>>;
     public settings: Settings;
-    public renderQueue: ObjectIndex<string[]> = {};
+    public renderQueue: ObjectMap<string[]> = {};
     public loading = false;
     public closed = false;
     public readonly cache = new NodeList<T>();
@@ -61,7 +61,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public finalize() {
-        const visible = this.cacheSession.visible.list.filter(node => !node.hasAlign(NODE_ALIGNMENT.SPACE));
+        const visible = this.cacheSession.visible.filter(node => !node.hasAlign(NODE_ALIGNMENT.SPACE));
         for (const node of visible) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.LAYOUT)) {
                 node.setLayout();
@@ -1847,24 +1847,24 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return node;
     }
 
-    private prioritizeExtensions(available: Extension<T>[], element: HTMLElement) {
-        let extensions: string[] = [];
+    private prioritizeExtensions(extensions: Extension<T>[], element: HTMLElement) {
+        let result: string[] = [];
         let current: Null<HTMLElement> = element;
         while (current) {
-            extensions = [
-                ...extensions,
+            result = [
+                ...result,
                 ...trimNull(current.dataset.ext)
                     .split(',')
                     .map(value => value.trim())
             ];
             current = current.parentElement;
         }
-        extensions = extensions.filter(value => value);
-        if (extensions.length > 0) {
+        result = result.filter(value => value);
+        if (result.length > 0) {
             const tagged: Extension<T>[] = [];
             const untagged: Extension<T>[] = [];
-            for (const item of available) {
-                const index = extensions.indexOf(item.name);
+            for (const item of extensions) {
+                const index = result.indexOf(item.name);
                 if (index !== -1) {
                     tagged[index] = item;
                 }
@@ -1875,7 +1875,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             return [...tagged.filter(item => item), ...untagged];
         }
         else {
-            return available;
+            return extensions;
         }
     }
 
@@ -1947,7 +1947,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     get viewData(): ViewData<NodeList<T>> {
-        return { cache: this.cacheSession, views: this._views, includes: this._includes };
+        return {
+            cache: this.cacheSession,
+            views: this._views,
+            includes: this._includes
+        };
     }
 
     get size() {

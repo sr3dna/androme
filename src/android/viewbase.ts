@@ -110,10 +110,13 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         public alignParent(position: string, settings: {}) {
             if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE)) {
-                const constraint = this.renderParent.controlName === NODE_ANDROID.CONSTRAINT;
                 const direction = $util.capitalize(parseRTL(position, settings));
-                const attr = constraint ? `layout_constraint${direction}_to${direction}Of` : `layout_alignParent${direction}`;
-                return this[constraint ? 'app' : 'android'](attr) === (constraint ? 'parent' : 'true');
+                if (this.renderParent.controlName === NODE_ANDROID.CONSTRAINT) {
+                    return this.app(`layout_constraint${direction}_to${direction}Of`) === 'parent';
+                }
+                else {
+                    return this.android(`layout_alignParent${direction}`) === 'true';
+                }
             }
             return false;
         }
@@ -532,8 +535,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         const gravity = [x, y].filter(value => value);
                         const merged = gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|');
                         return (
-                            merged !== '' ? z !== '' ? `${merged}|${z}` : merged
-                                        : z
+                            merged !== '' ? (z !== '' ? `${merged}|${z}` : merged)
+                                          : z
                         );
                 }
             }
@@ -1102,7 +1105,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
                 const relative = this.is($enum.NODE_STANDARD.RELATIVE);
                 let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent')
-                                                            : textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0);
+                                                            : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
                 this.each((node: View, index) => {
                     if (!(node.floating || (relative && node.alignParent('left', settings)) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
                         const width = Math.round(node.actualLeft() - right);
@@ -1125,8 +1128,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     })();
                     const elements =
                         $dom.getElementsBetweenSiblings(
-                                previous ? (previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement)
-                                         : null,
+                                previous ? (previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement) : null,
                                 node.baseElement)
                             .filter(element => {
                                 const item = $dom.getNodeFromElement<View>(element);

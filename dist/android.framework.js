@@ -465,10 +465,13 @@ var android = (function () {
             }
             alignParent(position, settings) {
                 if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE)) {
-                    const constraint = this.renderParent.controlName === NODE_ANDROID.CONSTRAINT;
                     const direction = $util.capitalize(parseRTL(position, settings));
-                    const attr = constraint ? `layout_constraint${direction}_to${direction}Of` : `layout_alignParent${direction}`;
-                    return this[constraint ? 'app' : 'android'](attr) === (constraint ? 'parent' : 'true');
+                    if (this.renderParent.controlName === NODE_ANDROID.CONSTRAINT) {
+                        return this.app(`layout_constraint${direction}_to${direction}Of`) === 'parent';
+                    }
+                    else {
+                        return this.android(`layout_alignParent${direction}`) === 'true';
+                    }
                 }
                 return false;
             }
@@ -854,7 +857,7 @@ var android = (function () {
                             }
                             const gravity = [x, y].filter(value => value);
                             const merged = gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|');
-                            return (merged !== '' ? z !== '' ? `${merged}|${z}` : merged
+                            return (merged !== '' ? (z !== '' ? `${merged}|${z}` : merged)
                                 : z);
                     }
                 }
@@ -1394,7 +1397,7 @@ var android = (function () {
                     const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
                     const relative = this.is($enum.NODE_STANDARD.RELATIVE);
                     let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent')
-                        : textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0);
+                        : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
                     this.each((node, index) => {
                         if (!(node.floating || (relative && node.alignParent('left', settings)) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
                             const width = Math.round(node.actualLeft() - right);
@@ -1414,8 +1417,7 @@ var android = (function () {
                             } while (sibling && !this.initial.children.includes(sibling));
                             return sibling;
                         })();
-                        const elements = $dom.getElementsBetweenSiblings(previous ? (previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement)
-                            : null, node.baseElement)
+                        const elements = $dom.getElementsBetweenSiblings(previous ? (previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement) : null, node.baseElement)
                             .filter(element => {
                             const item = $dom.getNodeFromElement(element);
                             if (item && (item.lineBreak || (item.excluded && item.blockStatic))) {
@@ -1534,11 +1536,11 @@ var android = (function () {
             super(id);
             this.api = node.api;
             this.parent = parent;
-            this.children = children;
             this.depth = node.depth;
             this.nodeName = `${node.nodeName}_GROUP`;
             this.documentParent = node.documentParent;
-            if (children.length > 0) {
+            if (Array.isArray(children) && children.length > 0) {
+                this.children = children;
                 this.init();
             }
         }
@@ -1647,11 +1649,11 @@ var android = (function () {
         }
         static formatOptions(options, settings) {
             for (const namespace in options) {
-                const object = options[namespace];
-                if (typeof object === 'object') {
-                    for (const attr in object) {
-                        if (object[attr] != null) {
-                            let value = object[attr].toString();
+                const obj = options[namespace];
+                if (typeof obj === 'object') {
+                    for (const attr in obj) {
+                        if (obj[attr] != null) {
+                            let value = obj[attr].toString();
                             switch (namespace) {
                                 case 'android':
                                     switch (attr) {
@@ -1659,7 +1661,7 @@ var android = (function () {
                                             if (!value.startsWith('@string/')) {
                                                 value = ResourceHandler.addString(value, '', settings);
                                                 if (value !== '') {
-                                                    object[attr] = `@string/${value}`;
+                                                    obj[attr] = `@string/${value}`;
                                                     continue;
                                                 }
                                             }
@@ -1668,7 +1670,7 @@ var android = (function () {
                                             if (/^\w+:\/\//.test(value)) {
                                                 value = ResourceHandler.addImage({ 'mdpi': value });
                                                 if (value !== '') {
-                                                    object[attr] = `@drawable/${value}`;
+                                                    obj[attr] = `@drawable/${value}`;
                                                     continue;
                                                 }
                                             }
@@ -1678,7 +1680,7 @@ var android = (function () {
                             }
                             const hex = $color.parseHex(value);
                             if (hex !== '') {
-                                object[attr] = `@color/${ResourceHandler.addColor(hex)}`;
+                                obj[attr] = `@color/${ResourceHandler.addColor(hex)}`;
                             }
                         }
                     }
@@ -1841,10 +1843,10 @@ var android = (function () {
             this._tagCount = {};
         }
         finalize(viewData) {
-            this.processFontStyle(viewData);
             const styles = {};
-            for (const node of viewData.cache) {
-                const children = node.renderChildren.filter(item => item.auto && item.visible);
+            this.processFontStyle(viewData);
+            viewData.cache.each((node) => {
+                const children = node.renderChildren.filter(item => item.visible && item.auto);
                 if (children.length > 1) {
                     const map = new Map();
                     let style = '';
@@ -1880,8 +1882,8 @@ var android = (function () {
                         }
                     }
                     if (valid) {
-                        for (const attr of map.keys()) {
-                            if (map.get(attr) !== children.length) {
+                        for (const [attr, value] of map.entries()) {
+                            if (value !== children.length) {
                                 map.delete(attr);
                             }
                         }
@@ -1893,7 +1895,7 @@ var android = (function () {
                             for (const attr of map.keys()) {
                                 const match = attr.match(/(\w+):(\w+)="(.*?)"/);
                                 if (match) {
-                                    children.forEach(child => child.delete(match[1], match[2]));
+                                    children.forEach(item => item.delete(match[1], match[2]));
                                     common.push(match[0]);
                                 }
                             }
@@ -1909,20 +1911,20 @@ var android = (function () {
                                 name = (style !== '' ? `${style}.` : '') + $util$1.capitalize(node.nodeId);
                                 styles[name] = common;
                             }
-                            children.forEach(child => child.attr('_', 'style', `@style/${name}`));
+                            children.forEach(item => item.attr('_', 'style', `@style/${name}`));
                         }
                     }
                 }
-            }
+            });
             for (const name in styles) {
                 $resource.STORED.styles.set(name, { attributes: styles[name].join(';') });
             }
         }
         setBoxSpacing() {
             super.setBoxSpacing();
-            this.cache.elements.filter(node => !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.BOX_SPACING)).each(node => {
+            this.cache.elements.forEach(node => {
                 const stored = $dom$1.getElementCache(node.element, 'boxSpacing');
-                if (stored) {
+                if (stored && !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.BOX_SPACING)) {
                     if (stored.marginLeft === stored.marginRight &&
                         node.alignParent('left', this.settings) &&
                         node.alignParent('right', this.settings) &&
@@ -1942,9 +1944,9 @@ var android = (function () {
         }
         setBoxStyle() {
             super.setBoxStyle();
-            this.cache.elements.filter(node => !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.BOX_STYLE)).each(node => {
+            this.cache.elements.forEach(node => {
                 const stored = $dom$1.getElementCache(node.element, 'boxStyle');
-                if (stored) {
+                if (stored && !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.BOX_STYLE)) {
                     if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
                         stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                     }
@@ -1972,6 +1974,7 @@ var android = (function () {
                     const method = METHOD_ANDROID['boxStyle'];
                     const companion = node.companion;
                     if (companion &&
+                        !companion.visible &&
                         companion.hasElement &&
                         !$dom$1.cssFromParent(companion.element, 'backgroundColor')) {
                         const boxStyle = $dom$1.getElementCache(companion.element, 'boxStyle');
@@ -2518,35 +2521,35 @@ var android = (function () {
         setFontStyle() {
             super.setFontStyle();
             const nodeName = {};
-            this.cache
-                .filter(node => node.visible &&
-                !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.FONT_STYLE))
-                .each(node => {
-                if ($dom$1.getElementCache(node.element, 'fontStyle')) {
-                    if (nodeName[node.nodeName] == null) {
-                        nodeName[node.nodeName] = [];
+            this.cache.visible.forEach(node => {
+                if (!node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.FONT_STYLE)) {
+                    if ($dom$1.getElementCache(node.element, 'fontStyle')) {
+                        if (nodeName[node.nodeName] == null) {
+                            nodeName[node.nodeName] = [];
+                        }
+                        nodeName[node.nodeName].push(node);
                     }
-                    nodeName[node.nodeName].push(node);
-                }
-                const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
-                if (match) {
-                    const color = $color.parseRGBA(match[1]);
-                    if (color.length > 0) {
-                        node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
+                    const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
+                    if (match) {
+                        const color = $color.parseRGBA(match[1]);
+                        if (color.length > 0) {
+                            node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
+                        }
+                        node.android('shadowDx', $util$1.convertInt(match[2]).toString());
+                        node.android('shadowDy', $util$1.convertInt(match[3]).toString());
+                        node.android('shadowRadius', $util$1.convertInt(match[4]).toString());
                     }
-                    node.android('shadowDx', $util$1.convertInt(match[2]).toString());
-                    node.android('shadowDy', $util$1.convertInt(match[3]).toString());
-                    node.android('shadowRadius', $util$1.convertInt(match[4]).toString());
                 }
             });
             for (const tag in nodeName) {
                 const nodes = new androme.lib.base.NodeList(nodeName[tag]);
                 const sorted = [];
-                for (let node of nodes) {
+                nodes.each((node) => {
                     let system = false;
                     const nodeId = node.id;
-                    if (node.companion && (node.companion.textElement || node.companion.tagName === 'LABEL')) {
-                        node = node.companion;
+                    const companion = node.companion;
+                    if (companion && !companion.visible && (companion.textElement || companion.tagName === 'LABEL')) {
+                        node = companion;
                     }
                     const element = node.element;
                     const stored = Object.assign({}, $dom$1.getElementCache(element, 'fontStyle'));
@@ -2609,7 +2612,7 @@ var android = (function () {
                             }
                         }
                     }
-                }
+                });
                 const tagStyle = this._tagStyle[tag];
                 if (tagStyle) {
                     for (let i = 0; i < tagStyle.length; i++) {
@@ -2631,10 +2634,11 @@ var android = (function () {
             }
         }
         setImageSource() {
-            this.cache
+            this.cache.list
                 .filter(node => node.visible &&
                 (node.imageElement || (node.tagName === 'INPUT' && node.element.type === 'image')) &&
-                !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.IMAGE_SOURCE)).each(node => {
+                !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.IMAGE_SOURCE))
+                .forEach(node => {
                 const element = node.element;
                 if (!$dom$1.getElementCache(element, 'imageSource') || this.settings.alwaysReevaluateResources) {
                     const result = node.imageElement ? ResourceHandler.addImageSrcSet(element)
@@ -2649,12 +2653,9 @@ var android = (function () {
         }
         setOptionArray() {
             super.setOptionArray();
-            this.cache
-                .filter(node => node.visible &&
-                node.tagName === 'SELECT' &&
-                !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.OPTION_ARRAY)).each(node => {
+            this.cache.visible.forEach(node => {
                 const stored = $dom$1.getElementCache(node.element, 'optionArray');
-                if (stored) {
+                if (stored && !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.OPTION_ARRAY)) {
                     const method = METHOD_ANDROID['optionArray'];
                     let result = [];
                     if (stored.numberArray) {
@@ -2674,8 +2675,8 @@ var android = (function () {
                             })
                                 .filter(name => name);
                     }
-                    let arrayName = '';
                     const arrayValue = result.join('-');
+                    let arrayName = '';
                     for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
                         if (arrayValue === storedResult.join('-')) {
                             arrayName = storedName;
@@ -2692,12 +2693,9 @@ var android = (function () {
         }
         setValueString() {
             super.setValueString();
-            this.cache
-                .filter(node => node.visible &&
-                !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.VALUE_STRING))
-                .each(node => {
+            this.cache.visible.forEach(node => {
                 const stored = $dom$1.getElementCache(node.element, 'valueString');
-                if (stored) {
+                if (stored && !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.VALUE_STRING)) {
                     if (node.renderParent.is($enum$1.NODE_STANDARD.RELATIVE)) {
                         if (node.alignParent('left', this.settings) && !$dom$1.cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                             const value = node.textContent;
@@ -3279,7 +3277,7 @@ var android = (function () {
                 }
                 return true;
             }
-            for (const node of this.cache.visible) {
+            this.cache.visible.forEach((node) => {
                 relative = node.is($enum$2.NODE_STANDARD.RELATIVE);
                 constraint = node.is($enum$2.NODE_STANDARD.CONSTRAINT);
                 const flex = node.flex;
@@ -3575,7 +3573,7 @@ var android = (function () {
                                 node.android('layout_width', 'match_parent');
                             }
                             else if (columnCount === 0) {
-                                for (const current of pageflow) {
+                                pageflow.each((current) => {
                                     const parent = current.documentParent;
                                     if (current.autoMarginHorizontal) {
                                         this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
@@ -3594,7 +3592,7 @@ var android = (function () {
                                     else if (current.linear.bottom >= parent.box.bottom || $util$2.withinFraction(current.linear.bottom, parent.box.bottom)) {
                                         current.anchor(mapLayout['bottom'], 'parent', parent.hasHeight ? AXIS_ANDROID.VERTICAL : '');
                                     }
-                                    for (const adjacent of pageflow) {
+                                    pageflow.each((adjacent) => {
                                         if (current !== adjacent) {
                                             const stringId = adjacent.stringId;
                                             const horizontal = anchoredSibling(adjacent, nodes, AXIS_ANDROID.HORIZONTAL) ? AXIS_ANDROID.HORIZONTAL : '';
@@ -3641,9 +3639,9 @@ var android = (function () {
                                                 }
                                             }
                                         }
-                                    }
-                                }
-                                for (const current of pageflow) {
+                                    });
+                                });
+                                pageflow.each((current) => {
                                     const leftRight = mapSibling(current, 'leftRight');
                                     if (leftRight) {
                                         if (!current.constraint.horizontal) {
@@ -3716,13 +3714,16 @@ var android = (function () {
                                             this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                         }
                                     }
-                                }
+                                });
                                 for (let i = 0; i < pageflow.length; i++) {
                                     const current = pageflow.get(i);
                                     if (!current.anchored) {
                                         const result = $util$2.searchObject(current.get('app'), '*constraint*');
                                         for (const [key, value] of result) {
-                                            if (value !== 'parent' && pageflow.filter(item => item.anchored).find('stringId', value)) {
+                                            if (value !== 'parent' &&
+                                                pageflow.list
+                                                    .filter(item => item.anchored)
+                                                    .find(item => item.stringId === value)) {
                                                 if ($util$2.indexOf(key, parseRTL('Left', this.settings), parseRTL('Right', this.settings)) !== -1) {
                                                     current.constraint.horizontal = true;
                                                 }
@@ -3737,7 +3738,7 @@ var android = (function () {
                                     }
                                 }
                                 if (absolute.length > 0) {
-                                    for (const current of absolute) {
+                                    absolute.each((current) => {
                                         let alignMarginLeft = false;
                                         if (current.right != null && current.toInt('right') >= 0) {
                                             current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
@@ -3769,7 +3770,7 @@ var android = (function () {
                                         if (current.top === 0 && current.bottom === 0) {
                                             current.android('layout_height', 'match_parent');
                                         }
-                                    }
+                                    });
                                 }
                             }
                             if (flex.enabled ||
@@ -3813,14 +3814,14 @@ var android = (function () {
                                                 sorted.list.reverse();
                                                 break;
                                         }
-                                        for (const item of sorted) {
+                                        sorted.each((item) => {
                                             const y = item.linear.top;
                                             if (map[y] == null) {
                                                 map[y] = [];
                                                 levels.push(y);
                                             }
                                             map[y].push(item);
-                                        }
+                                        });
                                         switch (flex.wrap) {
                                             case 'wrap':
                                                 if (flex.direction === 'column-reverse') {
@@ -3836,8 +3837,8 @@ var android = (function () {
                                                 }
                                                 break;
                                         }
-                                        for (const n of levels) {
-                                            horizontal.push(new androme.lib.base.NodeList(map[n]));
+                                        for (const y of levels) {
+                                            horizontal.push(new androme.lib.base.NodeList(map[y]));
                                         }
                                     }
                                 }
@@ -4092,14 +4093,14 @@ var android = (function () {
                                                                 });
                                                                 if (valid) {
                                                                     mapDelete(chain, 'top', 'bottom');
-                                                                    for (const item of chainable) {
+                                                                    chainable.each((item) => {
                                                                         if (mapSibling(item, 'top') === chain.stringId) {
                                                                             mapDelete(item, 'top');
                                                                         }
                                                                         if (mapSibling(item, 'bottom') === chain.stringId) {
                                                                             mapDelete(item, 'bottom');
                                                                         }
-                                                                    }
+                                                                    });
                                                                     chain.constraint.vertical = true;
                                                                 }
                                                                 break;
@@ -4136,9 +4137,7 @@ var android = (function () {
                                                             break;
                                                         case 'space-evenly':
                                                             first.app(chainStyle, 'spread');
-                                                            for (const item of chainable) {
-                                                                item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString());
-                                                            }
+                                                            chainable.each((item) => item.app(`layout_constraint${HV}_weight`, (item.flex.grow || 1).toString()));
                                                             break;
                                                         case 'space-around':
                                                             first.app(`layout_constraint${HV}_chainStyle`, 'spread_inside');
@@ -4230,28 +4229,26 @@ var android = (function () {
                                                         (index === 0 ? [[TL, BR], [BR, TL]] : [[LT, RB], [RB, LT]]).forEach(opposing => {
                                                             if (chainable.list.every(upper => $util$2.sameValue(first, upper, `linear.${opposing[0]}`) &&
                                                                 chainable.list.some(lower => !$util$2.sameValue(first, lower, `linear.${opposing[1]}`)))) {
-                                                                for (const chain of chainable) {
-                                                                    mapDelete(chain, opposing[1]);
-                                                                }
+                                                                chainable.each((item) => mapDelete(item, opposing[1]));
                                                             }
                                                         });
-                                                        for (const item of chainable) {
+                                                        chainable.each((item) => {
                                                             for (const list of connected) {
                                                                 if (list.find('id', item.id)) {
                                                                     list.clear();
                                                                 }
                                                             }
-                                                        }
+                                                        });
                                                     }
                                                     else {
                                                         marginDelete = true;
                                                     }
                                                 }
                                                 if (marginDelete) {
-                                                    for (const item of chainable) {
+                                                    chainable.each((item) => {
                                                         delete item.constraint.marginHorizontal;
                                                         delete item.constraint.marginVertical;
-                                                    }
+                                                    });
                                                 }
                                                 connectedRows.push(chainable);
                                             }
@@ -4259,14 +4256,14 @@ var android = (function () {
                                     }
                                 });
                             }
-                            for (const current of pageflow) {
+                            pageflow.each((current) => {
                                 current.constraint.horizontal = anchoredSibling(current, nodes, AXIS_ANDROID.HORIZONTAL);
                                 current.constraint.vertical = anchoredSibling(current, nodes, AXIS_ANDROID.VERTICAL);
-                            }
+                            });
                             if (flex.enabled) {
                                 if (flex.wrap !== 'nowrap') {
                                     ['topBottom', 'bottomTop'].forEach((value, index) => {
-                                        for (const current of pageflow) {
+                                        pageflow.each((current) => {
                                             if (mapParent(current, index === 0 ? 'bottom' : 'top')) {
                                                 const chain = [current];
                                                 let valid = false;
@@ -4303,12 +4300,12 @@ var android = (function () {
                                                     }
                                                 }
                                             }
-                                        }
+                                        });
                                     });
                                 }
                             }
                             else if (columnCount === 0) {
-                                for (const current of pageflow) {
+                                pageflow.each((current) => {
                                     [['top', 'bottom', 'topBottom'], ['bottom', 'top', 'bottomTop']].forEach(direction => {
                                         if (mapParent(current, direction[1]) && !mapSibling(current, direction[2])) {
                                             ['leftRight', 'rightLeft'].forEach(value => {
@@ -4327,19 +4324,17 @@ var android = (function () {
                                             });
                                         }
                                     });
-                                }
-                                const unbound = pageflow.filter(current => !current.anchored && (mapParent(current, 'top') ||
+                                });
+                                const unbound = pageflow.list.filter(current => !current.anchored && (mapParent(current, 'top') ||
                                     mapParent(current, 'right') ||
                                     mapParent(current, 'bottom') ||
                                     mapParent(current, 'left')));
-                                if (nodes.filter(item => item.anchored).length === 0 && unbound.length === 0) {
-                                    unbound.append(nodes.get(0));
+                                if (nodes.list.filter(item => item.anchored).length === 0 && unbound.length === 0) {
+                                    unbound.push(nodes.get(0));
                                 }
-                                for (const current of unbound) {
-                                    this.addGuideline(current, '', false, false);
-                                }
+                                unbound.forEach((current) => this.addGuideline(current, '', false, false));
                                 const [adjacent, unanchored] = nodes.partition(item => item.anchored);
-                                for (const current of unanchored) {
+                                unanchored.each((current) => {
                                     if ($util$2.withinRange(current.horizontalBias(this.settings), 0.5, 0.01) && $util$2.withinRange(current.verticalBias(this.settings), 0.5, 0.01)) {
                                         this.setAlignParent(current);
                                     }
@@ -4400,7 +4395,7 @@ var android = (function () {
                                     else {
                                         this.addGuideline(current);
                                     }
-                                }
+                                });
                                 let bottomParent = null;
                                 let rightParent = null;
                                 const maxBottom = Math.max.apply(null, nodes.list.map(item => item.linear.bottom));
@@ -4595,7 +4590,7 @@ var android = (function () {
                             }
                         }
                     }
-                    for (const current of nodes) {
+                    nodes.each((current) => {
                         if (current.constraint.marginHorizontal) {
                             const item = this.findByStringId(current.constraint.marginHorizontal);
                             if (item) {
@@ -4614,14 +4609,14 @@ var android = (function () {
                                 }
                             }
                         }
-                    }
+                    });
                 }
                 else {
                     if (node.linearHorizontal) {
                         this.adjustLineHeight(node.renderChildren, node);
                     }
                 }
-            }
+            });
         }
         getEmptySpacer(nodeType, depth, width, height, columnSpan = 1) {
             let xml = '';
@@ -5030,9 +5025,7 @@ var android = (function () {
             return this._merge[name] ? 0 : -1;
         }
         setBoxSpacing(data) {
-            for (const node of data.cache.visible) {
-                node.setBoxSpacing(this.settings);
-            }
+            data.cache.visible.forEach((node) => node.setBoxSpacing(this.settings));
         }
         setDimensions(data) {
             function addToGroup(nodeName, node, dimen, attr, value) {
@@ -5052,7 +5045,7 @@ var android = (function () {
                 group[name].push(node);
             }
             const groups = {};
-            for (const node of data.cache.visible) {
+            data.cache.visible.forEach((node) => {
                 if (this.settings.dimensResourceValue) {
                     const nodeName = node.nodeName.toLowerCase();
                     if (groups[nodeName] == null) {
@@ -5075,7 +5068,7 @@ var android = (function () {
                         addToGroup(nodeName, node, dimen, attr, node[obj](attr));
                     });
                 }
-            }
+            });
             if (this.settings.dimensResourceValue) {
                 const resource = ResourceHandler.getStored('dimens');
                 for (const nodeName in groups) {
@@ -5126,7 +5119,7 @@ var android = (function () {
         }
         setAttributes(data) {
             if (this.settings.showAttributes) {
-                const cache = data.cache.visible.list.map(node => ({ pattern: $xml$1.formatPlaceholder(node.id, '@'), attributes: this.parseAttributes(node) }));
+                const cache = data.cache.visible.map(node => ({ pattern: $xml$1.formatPlaceholder(node.id, '@'), attributes: this.parseAttributes(node) }));
                 for (const value of [...data.views, ...data.includes]) {
                     cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
                     value.content = value.content.replace(`{#0}`, this.getRootNamespace(value.content));
@@ -5994,7 +5987,9 @@ var android = (function () {
     var $dom$3 = androme.lib.dom;
     class Accessibility extends androme.lib.base.extensions.Accessibility {
         afterRender() {
-            for (const node of this.application.cache.elements) {
+            Array
+                .from(this.application.cache.elements)
+                .forEach((node) => {
                 if (!node.hasBit('excludeProcedure', $enum$3.NODE_PROCEDURE.ACCESSIBILITY)) {
                     const element = node.element;
                     switch (node.controlName) {
@@ -6026,7 +6021,7 @@ var android = (function () {
                             break;
                     }
                 }
-            }
+            });
         }
     }
 
@@ -7160,11 +7155,11 @@ var android = (function () {
             }
         }
         afterInsert() {
-            const headerLayout = $dom$8.findNestedExtension(this.node.element, $const$5.EXT_NAME.EXTERNAL);
-            if (headerLayout) {
-                const node = $dom$8.getNodeFromElement(headerLayout);
-                if (node && !node.hasHeight) {
-                    node.android('layout_height', 'wrap_content');
+            const element = $dom$8.findNestedExtension(this.node.element, $const$5.EXT_NAME.EXTERNAL);
+            if (element) {
+                const header = $dom$8.getNodeFromElement(element);
+                if (header && !header.hasHeight) {
+                    header.android('layout_height', 'wrap_content');
                 }
             }
         }

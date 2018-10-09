@@ -3,7 +3,7 @@ import Extension from '../base/extension';
 import { convertInt, formatPX } from '../lib/util';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 
-export default class <T extends Node> extends Extension<T> {
+export default class Origin<T extends Node> extends Extension<T> {
     public afterInit() {
         Array
             .from(this.application.cache.elements)
