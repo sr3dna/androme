@@ -408,6 +408,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 const method = METHOD_ANDROID['boxStyle'];
                 const companion = node.companion;
                 if (companion &&
+                    !companion.visible &&
                     companion.hasElement &&
                     !$dom.cssFromParent(companion.element, 'backgroundColor'))
                 {
@@ -991,11 +992,12 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         for (const tag in nodeName) {
             const nodes = new androme.lib.base.NodeList(nodeName[tag]);
             const sorted: StyleList = [];
-            for (let node of nodes) {
+            nodes.each((node: T) => {
                 let system = false;
                 const nodeId = node.id;
-                if (node.companion && (node.companion.textElement || node.companion.tagName === 'LABEL')) {
-                    node = node.companion as T;
+                const companion = node.companion;
+                if (companion && !companion.visible && (companion.textElement || companion.tagName === 'LABEL')) {
+                    node = companion as T;
                 }
                 const element = node.element;
                 const stored: FontAttribute = Object.assign({}, $dom.getElementCache(element, 'fontStyle'));
@@ -1060,7 +1062,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                     }
                 }
-            }
+            });
             const tagStyle = this._tagStyle[tag];
             if (tagStyle) {
                 for (let i = 0; i < tagStyle.length; i++) {

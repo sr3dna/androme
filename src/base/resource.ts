@@ -273,7 +273,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             value = element.value.trim();
                             break;
                         default:
-                            if (node.companion) {
+                            if (node.companion && !node.companion.visible) {
                                 value = node.companion.textContent.trim();
                             }
                             break;

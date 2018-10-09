@@ -9,16 +9,16 @@ import { EXT_NAME } from '../lib/constant';
 export default abstract class <T extends Node> extends Extension<T> {
     public condition() {
         const children = this.node.children;
-        const floated = new Set(children.slice(1).map(node => node.float));
+        const floated = new Set(children.slice(1).map(item => item.float));
         return (
             super.condition() &&
             children.length > 0 && (
-                children.every(node => node.blockStatic) ||
-                children.every(node => node.inlineElement) ||
-                children.every((node, index) => !node.floating && (index === 0 || index === children.length - 1 || node.blockStatic || (node.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic))) ||
-                (children.every(node => node.float !== 'none' && node.float === children[0].float) && floated.size === 1 && (floated.has('none') || floated.has(children[0].float)))) && (
-                    children.some((node: T) => node.display === 'list-item' && (node.css('listStyleType') !== 'none' || this.hasSingleImage(node))) ||
-                    children.every((node: T) => node.tagName !== 'LI' && node.styleMap.listStyleType === 'none' && this.hasSingleImage(node))
+                children.every(item => item.blockStatic) ||
+                children.every(item => item.inlineElement) ||
+                children.every((item, index) => !item.floating && (index === 0 || index === children.length - 1 || item.blockStatic || (item.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic))) ||
+                (children.every(item => item.float !== 'none' && item.float === children[0].float) && floated.size === 1 && (floated.has('none') || floated.has(children[0].float)))) && (
+                    children.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || this.hasSingleImage(item))) ||
+                    children.every((item: T) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && this.hasSingleImage(item))
                 )
             );
     }

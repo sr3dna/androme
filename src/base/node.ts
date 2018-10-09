@@ -22,11 +22,11 @@ export default abstract class Node implements androme.lib.base.Node {
     public box: BoxDimensions;
     public bounds: BoxDimensions;
     public linear: BoxDimensions;
+    public companion: T;
     public excludeSection = 0;
     public excludeProcedure = 0;
     public excludeResource = 0;
     public renderExtension = new Set<Extension<T>>();
-    public companion: T;
     public documentRoot = false;
     public auto = true;
     public visible = true;
@@ -766,11 +766,11 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     public actualLeft(dimension = 'linear') {
-        return this.companion && this.companion[dimension] ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left;
+        return this.companion && !this.companion.visible && this.companion[dimension] ? Math.min(this[dimension].left, this.companion[dimension].left) : this[dimension].left;
     }
 
     public actualRight(dimension = 'linear') {
-        return this.companion && this.companion[dimension] ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right;
+        return this.companion && !this.companion.visible && this.companion[dimension] ? Math.max(this[dimension].right, this.companion[dimension].right) : this[dimension].right;
     }
 
     private boxAttribute(region: string, direction: string) {

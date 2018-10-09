@@ -147,7 +147,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.cache.delegateAppend = undefined;
         this.cache.clear();
         for (const ext of this.extensions) {
-            ext.setTarget({} as T, undefined, rootElement);
+            ext.setTarget(undefined, undefined, rootElement);
             ext.beforeInit();
         }
         const rootNode = this.insertNode(rootElement);

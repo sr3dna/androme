@@ -4,15 +4,15 @@ import { capitalize, convertCamelCase, includes } from '../lib/util';
 
 export default abstract class Extension<T extends Node> implements androme.lib.base.Extension<T> {
     public application: Application<T>;
-    public node: T;
-    public parent?: T;
-    public element?: Element;
     public options: ObjectMap<any> = {};
     public tagNames: string[] = [];
     public documentRoot = false;
     public readonly dependencies: ExtensionDependency[] = [];
     public readonly subscribers = new Set<T>();
     public readonly subscribersChild = new Set<T>();
+    private _node?: T;
+    private _parent?: T;
+    private _element?: Element;
 
     protected constructor(
         public readonly name: string,
@@ -28,10 +28,10 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         }
     }
 
-    public setTarget(node: T, parent?: T, element?: HTMLElement) {
-        this.node = node;
-        this.parent = parent;
-        this.element = element || this.node.element;
+    public setTarget(node?: T, parent?: T, element?: HTMLElement) {
+        this._node = node;
+        this._parent = parent;
+        this._element = element || (node && node.element);
     }
 
     public is(node: T) {
@@ -130,5 +130,17 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
             }
         }
         return result;
+    }
+
+    public get node() {
+        return this._node as T;
+    }
+
+    public get parent() {
+        return this._parent;
+    }
+
+    public get element() {
+        return this._element;
     }
 }
