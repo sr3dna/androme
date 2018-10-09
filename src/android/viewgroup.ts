@@ -13,11 +13,11 @@ export default class ViewGroup extends ViewBase(androme.lib.base.NodeGroup) {
         super(id);
         this.api = node.api;
         this.parent = parent;
-        this.children = children;
         this.depth = node.depth;
         this.nodeName = `${node.nodeName}_GROUP`;
         this.documentParent = node.documentParent;
-        if (children.length > 0) {
+        if (Array.isArray(children) && children.length > 0) {
+            this.children = children;
             this.init();
         }
     }

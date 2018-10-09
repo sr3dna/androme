@@ -1,32 +1,39 @@
 import Node from './node';
 import NodeList from './nodelist';
-import { assignBounds, getNodeFromElement } from '../lib/dom';
+import { assignBounds, getClientRect, getNodeFromElement } from '../lib/dom';
 import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/enumeration';
 
 export default abstract class NodeGroup<T extends Node> extends Node {
     public init() {
         super.init();
-        this.children.forEach(item => {
-            this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
-            item.parent = this;
-        });
-        this.parent.children.sort(NodeList.siblingIndex);
-        this.initial.children.push(...this.children.slice());
+        if (this.children.length > 0) {
+            this.children.forEach(item => {
+                this.siblingIndex = Math.min(this.siblingIndex, item.siblingIndex);
+                item.parent = this;
+            });
+            this.parent.children.sort(NodeList.siblingIndex);
+            this.initial.children.push(...this.children.slice());
+        }
         this.setBounds();
         this.css('direction', this.documentParent.dir);
     }
 
     public setBounds(calibrate = false) {
         if (!calibrate) {
-            const nodes = NodeList.outerRegion(this.children);
-            this.bounds = {
-                top: nodes.top[0].linear.top,
-                right: nodes.right[0].linear.right,
-                bottom: nodes.bottom[0].linear.bottom,
-                left: nodes.left[0].linear.left,
-                width: 0,
-                height: 0
-            };
+            if (this.children.length > 0) {
+                const nodes = NodeList.outerRegion(this.children);
+                this.bounds = {
+                    top: nodes.top[0].linear.top,
+                    right: nodes.right[0].linear.right,
+                    bottom: nodes.bottom[0].linear.bottom,
+                    left: nodes.left[0].linear.left,
+                    width: 0,
+                    height: 0
+                };
+            }
+            else {
+                this.bounds = getClientRect();
+            }
             this.bounds.width = this.bounds.right - this.bounds.left;
             this.bounds.height = this.bounds.bottom - this.bounds.top;
         }

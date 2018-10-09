@@ -3,7 +3,7 @@ import NodeList from './nodelist';
 import Controller from './controller';
 import Resource from './resource';
 import Extension from './extension';
-import { convertInt, hasBit, hasValue, isNumber, isUnit, optional, sortAsc, trimString, trimNull } from '../lib/util';
+import { convertInt, hasBit, hasValue, isNumber, isUnit, sortAsc, trimString, trimNull } from '../lib/util';
 import { cssParent, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/enumeration';
@@ -499,18 +499,25 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         continue;
                     }
                     let parentY = nodeY.parent as T;
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
-                        const filename = trimNull(nodeY.dataset.include);
-                        if (filename !== '' && includes.indexOf(filename) === -1) {
-                            renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), getCurrent());
-                            includes.push(filename);
+                    let currentY = '';
+                    if (this.viewController.supportInclude) {
+                        if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
+                            const filename = trimNull(nodeY.dataset.include);
+                            if (filename !== '' && includes.indexOf(filename) === -1) {
+                                renderNode(nodeY, parentY, this.viewController.renderInclude(nodeY, parentY, filename), getCurrent());
+                                includes.push(filename);
+                            }
+                            current = getCurrent();
+                            if (current !== '') {
+                                const cloneParent = parentY.clone() as T;
+                                cloneParent.renderDepth = this.viewController.baseRenderDepth(current);
+                                nodeY.parent = cloneParent;
+                                parentY = cloneParent;
+                            }
+                            currentY = current;
                         }
-                        current = getCurrent();
-                        if (current !== '') {
-                            const cloneParent = parentY.clone() as T;
-                            cloneParent.renderDepth = this.viewController.baseRenderDepth(current);
-                            nodeY.parent = cloneParent;
-                            parentY = cloneParent;
+                        else {
+                            currentY = '';
                         }
                     }
                     if (nodeY.renderAs) {
@@ -745,7 +752,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 ext.setTarget(nodeY, parentY);
                                 const result = ext.processChild();
                                 if (result.output !== '') {
-                                    renderNode(nodeY, parentY, result.output, current);
+                                    renderNode(nodeY, parentY, result.output, currentY);
                                 }
                                 if (result.parent) {
                                     parentY = result.parent as T;
@@ -767,7 +774,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     if (item.condition()) {
                                         const result =  item.processNode(mapX, mapY);
                                         if (result.output !== '') {
-                                            renderNode(nodeY, parentY, result.output, current);
+                                            renderNode(nodeY, parentY, result.output, currentY);
                                         }
                                         if (result.parent) {
                                             parentY = result.parent as T;
@@ -806,7 +813,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             const group = this.viewController.createGroup(parentY, nodeY, [nodeY]);
                             const groupOutput = this.writeGridLayout(group, parentY, 2, 1);
                             group.alignmentType |= NODE_ALIGNMENT.PERCENT;
-                            renderNode(group, parentY, groupOutput, current);
+                            renderNode(group, parentY, groupOutput, currentY);
                             this.viewController[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.getEmptySpacer(NODE_STANDARD.GRID, group.renderDepth + 1, `${100 - nodeY.toInt('width')}%`));
                             parentY = group;
                         }
@@ -963,7 +970,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                     output = this.writeRelativeLayout(nodeY, parentY);
                                                     if (getElementsBetweenSiblings(
                                                                 children[0].baseElement,
-                                                                children[children.length - 1].baseElement)
+                                                                children[children.length - 1].baseElement
+                                                            )
                                                             .filter(element => isLineBreak(element))
                                                             .length === 0
                                                         )
@@ -983,10 +991,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         else {
                             output = this.writeNode(nodeY, parentY, nodeY.controlName);
                         }
-                        renderNode(nodeY, parentY, output, current);
+                        renderNode(nodeY, parentY, output, currentY);
                     }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && this.viewController.supportInclude) {
-                        if (includes.length > 0 && optional(nodeY, 'dataset.includeEnd') === 'true') {
+                    if (this.viewController.supportInclude && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
+                        if (includes.length > 0 && nodeY.dataset.includeEnd === 'true') {
                             includes.pop();
                         }
                     }
@@ -1024,11 +1032,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
             if (this.viewController.supportInclude) {
-                for (const [current, views] of external.entries()) {
-                    const templates = Array.from(views.values());
-                    if (templates.length > 0) {
-                        const output = this.viewController.renderMerge(current, templates);
-                        this.addInclude(current, output);
+                for (const [filename, templates] of external.entries()) {
+                    const content = Array.from(templates.values());
+                    if (content.length > 0) {
+                        const output = this.viewController.renderMerge(filename, content);
+                        this.addInclude(filename, output);
                     }
                 }
             }

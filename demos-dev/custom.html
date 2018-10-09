@@ -80,7 +80,7 @@
     <div id="androme_ui">
         <div id="recyclerview_demo" data-ext="androme.custom" data-androme-custom-tag="android.support.v7.widget.RecyclerView" data-exclude-resource="BOX_STYLE | FONT_STYLE">
             <div id="cardview_demo" data-ext="androme.custom, androme.external" data-androme-custom-tag="android.support.v7.widget.CardView" data-folder="res/layout" data-filename="cardview.xml">
-                <table>
+                <table data-include="cardview_content" data-include-merge="true">
                     <tr>
                         <td>Chrome</td>
                         <td><img src="../demos/images/icons8-chrome.png" /></td>
@@ -90,7 +90,7 @@
                     </tr>
                 </table>
                 <br />
-                <table data-include="cardview_content" data-include-merge="true">
+                <table data-exclude-section="INCLUDE">
                     <tr>
                         <td>Docs</td>
                         <td><img src="../demos/images/icons8-google-docs.png" /></td>
