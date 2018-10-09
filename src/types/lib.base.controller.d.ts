@@ -1,5 +1,3 @@
-export {};
-
 declare global {
     namespace androme.lib.base {
         export class Controller<T extends Node> implements AppCurrent<T> {
@@ -31,3 +29,5 @@ declare global {
         }
     }
 }
+
+export {};

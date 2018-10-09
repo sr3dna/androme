@@ -1,5 +1,3 @@
-export {};
-
 declare global {
     namespace androme.lib.base {
         export class NodeList<T extends Node> implements Iterable<T> {
@@ -38,3 +36,5 @@ declare global {
         }
     }
 }
+
+export {};

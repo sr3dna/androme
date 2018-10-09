@@ -1181,7 +1181,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 return this._controlName;
             }
             else {
-                const value = $const.MAP_ELEMENT[this.nodeName];
+                const value: number = $const.MAP_ELEMENT[this.nodeName];
                 return value != null ? View.getControlName(value) : '';
             }
         }

@@ -1,9 +1,6 @@
-export {};
-
-type T = androme.lib.base.Node;
-
 declare global {
     namespace androme.lib.base {
+        type T = androme.lib.base.Node;
         export class Node implements BoxModel {
             public id: number;
             public style: CSSStyleDeclaration;
@@ -171,7 +168,8 @@ declare global {
             public actualLeft(dimension?: string): number;
             public actualRight(dimension?: string): number;
         }
-        export class NodeGroup <T extends Node> extends Node {
-        }
+        export class NodeGroup<T extends Node> extends Node {}
     }
 }
+
+export {};

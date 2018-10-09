@@ -1,5 +1,3 @@
-export {};
-
 declare global {
     namespace androme.lib.base {
         export class File<T extends Node> {
@@ -23,3 +21,5 @@ declare global {
         }
     }
 }
+
+export {};

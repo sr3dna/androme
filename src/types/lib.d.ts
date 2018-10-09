@@ -1,13 +1,5 @@
-export {};
-
 declare global {
     namespace androme.lib {
-        namespace constant {
-            export const MAP_ELEMENT: ObjectMap<number>;
-            export const BLOCK_ELEMENT: string[];
-            export const INLINE_ELEMENT: string[];
-            export const EXT_NAME: StringMap;
-        }
         namespace util {
             export function formatString(value: string, ...params: string[]): string;
             export function camelToLowerCase(value: string): string;
@@ -93,3 +85,5 @@ declare global {
         }
     }
 }
+
+export {};
