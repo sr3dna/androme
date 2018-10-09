@@ -31,8 +31,8 @@ let framework: AppFramework<T>;
 let settings: Settings = {} as any;
 let system: FunctionMap = {} as any;
 
-const cacheRoot: Set<HTMLElement> = new Set();
-const cacheImage: Map<string, Image> = new Map();
+const cacheRoot = new Set<HTMLElement>();
+const cacheImage = new Map<string, Image>();
 
 function setStyleMap() {
     let warning = false;
@@ -41,13 +41,13 @@ function setStyleMap() {
         if (styleSheet.cssRules) {
             for (let j = 0; j < styleSheet.cssRules.length; j++) {
                 try {
-                    const cssRule = <CSSStyleRule> styleSheet.cssRules[j];
-                    const attrs: Set<string> = new Set();
-                    for (const attr of Array.from(cssRule.style)) {
+                    const rule = <CSSStyleRule> styleSheet.cssRules[j];
+                    const attrs = new Set<string>();
+                    for (const attr of Array.from(rule.style)) {
                         attrs.add(util.convertCamelCase(attr));
                     }
                     Array
-                        .from(document.querySelectorAll(cssRule.selectorText))
+                        .from(document.querySelectorAll(rule.selectorText))
                         .forEach((element: HTMLElement) => {
                             for (const attr of Array.from(element.style)) {
                                 attrs.add(util.convertCamelCase(attr));
@@ -55,14 +55,14 @@ function setStyleMap() {
                             const style = dom.getStyle(element);
                             const styleMap = {};
                             for (const attr of attrs) {
-                                const cssStyle = cssRule.style[attr];
+                                const value: string = rule.style[attr];
                                 if (element.style[attr]) {
                                     styleMap[attr] = element.style[attr];
                                 }
-                                else if (style[attr] === cssStyle) {
+                                else if (style[attr] === value) {
                                     styleMap[attr] = style[attr];
                                 }
-                                else if (cssStyle) {
+                                else if (value) {
                                     switch (attr) {
                                         case 'fontSize':
                                             styleMap[attr] = style[attr];
@@ -84,12 +84,12 @@ function setStyleMap() {
                                         case 'paddingRight':
                                         case 'paddingBottom':
                                         case 'paddingLeft':
-                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(cssStyle as string) || util.isPercent(cssStyle) ? cssStyle
-                                                                                                                                  : util.convertPX(cssStyle, style.fontSize);
+                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(value) || util.isPercent(value) ? value
+                                                                                                                  : util.convertPX(value, style.fontSize);
                                             break;
                                         default:
                                             if (styleMap[attr] == null) {
-                                                styleMap[attr] = cssStyle;
+                                                styleMap[attr] = value;
                                             }
                                             break;
                                     }

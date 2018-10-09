@@ -1,14 +1,17 @@
 import { BUILD_ANDROID } from './constant';
 
-let ID: ObjectMap<string[]>;
+let MAP_ID: ObjectMap<string[]>;
 
 export function resetId() {
-    ID = {
+    MAP_ID = {
         android: ['parent']
     };
 }
 
 export function generateId(section: string, name: string) {
+    if (MAP_ID == null) {
+        resetId();
+    }
     let prefix = name;
     let i = 1;
     const match = name.match(/^(\w+)_([0-9]+)$/);
@@ -16,12 +19,12 @@ export function generateId(section: string, name: string) {
         prefix = match[1];
         i = parseInt(match[2]);
     }
-    if (ID[section] == null) {
-        ID[section] = [];
+    if (MAP_ID[section] == null) {
+        MAP_ID[section] = [];
     }
     do {
-        if (!ID[section].includes(name)) {
-            ID[section].push(name);
+        if (!MAP_ID[section].includes(name)) {
+            MAP_ID[section].push(name);
             break;
         }
         else {

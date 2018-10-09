@@ -19,8 +19,8 @@ function caseInsensitive(a: string | string[], b: string | string[]) {
 }
 
 export default class FileHandler<T extends View> extends androme.lib.base.File<T> {
-    constructor(public readonly settings: SettingsAndroid) {
-        super(settings.outputDirectory, settings.outputMaxProcessingTime, settings.outputArchiveFileType);
+    constructor(public settings: SettingsAndroid) {
+        super();
     }
 
     public saveAllToDisk(data: ViewData<androme.lib.base.NodeList<T>>) {

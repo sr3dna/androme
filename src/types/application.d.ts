@@ -36,11 +36,11 @@ interface AppFramework<T extends androme.lib.base.Node> {
 interface AppBase<T extends androme.lib.base.Node> {
     framework: number;
     application?: androme.lib.base.Application<T>;
+    settings: Settings;
     viewController: androme.lib.base.Controller<T>;
     resourceHandler: androme.lib.base.Resource<T>;
     nodeObject: Constructor<T>;
     builtInExtensions: ObjectMap<androme.lib.base.Extension<T>>;
-    settings: Settings;
 }
 
 interface AppCurrent<T extends androme.lib.base.Node> {

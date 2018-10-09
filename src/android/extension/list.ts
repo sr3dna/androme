@@ -10,10 +10,6 @@ import $const = androme.lib.constant;
 import $util = androme.lib.util;
 
 export default class <T extends View> extends androme.lib.base.extensions.List<T> {
-    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
-        super(name, framework, tagNames, options);
-    }
-
     public processChild(): ExtensionResult {
         const node = this.node;
         const mainData: ListData = node.data($const.EXT_NAME.LIST, 'mainData');

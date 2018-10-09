@@ -5,10 +5,6 @@ import { getNodeFromElement } from '../lib/dom';
 import { NODE_PROCEDURE } from '../lib/enumeration';
 
 export default abstract class <T extends Node> extends Extension<T> {
-    protected constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
-        super(name, framework, tagNames, options);
-    }
-
     public afterInit() {
         for (const node of this.application.cache.elements) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {

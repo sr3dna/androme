@@ -8,10 +8,6 @@ import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
 export default class <T extends View> extends androme.lib.base.extensions.Grid<T> {
-    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
-        super(name, framework, tagNames, options);
-    }
-
     public processChild(): ExtensionResult {
         const node = this.node;
         const data: GridCellData = node.data($const.EXT_NAME.GRID, 'cellData');

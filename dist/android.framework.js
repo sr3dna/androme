@@ -313,13 +313,16 @@ var android = (function () {
         }
     };
 
-    let ID;
+    let MAP_ID;
     function resetId() {
-        ID = {
+        MAP_ID = {
             android: ['parent']
         };
     }
     function generateId(section, name) {
+        if (MAP_ID == null) {
+            resetId();
+        }
         let prefix = name;
         let i = 1;
         const match = name.match(/^(\w+)_([0-9]+)$/);
@@ -327,12 +330,12 @@ var android = (function () {
             prefix = match[1];
             i = parseInt(match[2]);
         }
-        if (ID[section] == null) {
-            ID[section] = [];
+        if (MAP_ID[section] == null) {
+            MAP_ID[section] = [];
         }
         do {
-            if (!ID[section].includes(name)) {
-                ID[section].push(name);
+            if (!MAP_ID[section].includes(name)) {
+                MAP_ID[section].push(name);
                 break;
             }
             else {
@@ -1524,9 +1527,6 @@ var android = (function () {
     };
 
     class View extends ViewBase(androme.lib.base.Node) {
-        constructor(id = 0, element) {
-            super(id, element);
-        }
     }
 
     class ViewGroup extends ViewBase(androme.lib.base.NodeGroup) {
@@ -1637,11 +1637,10 @@ var android = (function () {
         }
     };
     class ResourceHandler extends androme.lib.base.Resource {
-        constructor(file) {
-            super(file);
+        constructor() {
+            super(...arguments);
             this._tagStyle = {};
             this._tagCount = {};
-            file.stored = $resource.STORED;
         }
         static getStored(name) {
             return $resource.STORED[name];
@@ -3204,9 +3203,8 @@ var android = (function () {
     };
     class ViewController extends androme.lib.base.Controller {
         constructor() {
-            super();
+            super(...arguments);
             this._merge = {};
-            resetId();
         }
         initNode(node) {
             node.api = this.settings.targetAPI;
@@ -5598,7 +5596,7 @@ var android = (function () {
     }
     class FileHandler extends androme.lib.base.File {
         constructor(settings) {
-            super(settings.outputDirectory, settings.outputMaxProcessingTime, settings.outputArchiveFileType);
+            super();
             this.settings = settings;
         }
         saveAllToDisk(data) {
@@ -5984,9 +5982,6 @@ var android = (function () {
     }
 
     class Custom extends androme.lib.base.extensions.Custom {
-        constructor(name, framework = 0, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         afterInsert() {
             const node = this.node;
             const options = Object.assign({}, this.options[node.element.id]);
@@ -5998,9 +5993,6 @@ var android = (function () {
     var $util$4 = androme.lib.util;
     var $dom$3 = androme.lib.dom;
     class Accessibility extends androme.lib.base.extensions.Accessibility {
-        constructor(name, framework = 0, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         afterRender() {
             for (const node of this.application.cache.elements) {
                 if (!node.hasBit('excludeProcedure', $enum$3.NODE_PROCEDURE.ACCESSIBILITY)) {
@@ -6042,9 +6034,6 @@ var android = (function () {
     var $const$1 = androme.lib.constant;
     var $util$5 = androme.lib.util;
     class List extends androme.lib.base.extensions.List {
-        constructor(name, framework = 0, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         processChild() {
             const node = this.node;
             const mainData = node.data($const$1.EXT_NAME.LIST, 'mainData');
@@ -6237,9 +6226,6 @@ var android = (function () {
     var $util$6 = androme.lib.util;
     var $dom$4 = androme.lib.dom;
     class Grid extends androme.lib.base.extensions.Grid {
-        constructor(name, framework = 0, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         processChild() {
             const node = this.node;
             const data = node.data($const$2.EXT_NAME.GRID, 'cellData');
@@ -6306,9 +6292,6 @@ var android = (function () {
     var $const$3 = androme.lib.constant;
     var $util$7 = androme.lib.util;
     class Table extends androme.lib.base.extensions.Table {
-        constructor(name, framework = 0, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         processNode() {
             const result = super.processNode();
             const node = this.node;
@@ -6397,9 +6380,6 @@ var android = (function () {
     var $util$8 = androme.lib.util;
     var $color$1 = androme.lib.color;
     class FloatingActionButton extends androme.lib.base.extensions.Button {
-        constructor(name, framework = 0, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         processNode() {
             const node = this.node;
             const parent = this.parent;
@@ -6542,9 +6522,6 @@ var android = (function () {
     };
     const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
     class Menu extends androme.lib.base.extensions.Nav {
-        constructor(name, framework = 0, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         condition() {
             return this.included();
         }
@@ -6694,9 +6671,6 @@ var android = (function () {
     var $enum$8 = androme.lib.enumeration;
     var $dom$5 = androme.lib.dom;
     class Coordinator extends androme.lib.base.Extension {
-        constructor(name, framework = 0, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         processNode() {
             const node = this.node;
             const parent = this.parent;
@@ -6750,7 +6724,7 @@ var android = (function () {
     var $dom$6 = androme.lib.dom;
     var $xml$3 = androme.lib.xml;
     class Toolbar extends androme.lib.base.Extension {
-        constructor(name, framework = 0, tagNames, options) {
+        constructor(name, framework, tagNames, options) {
             super(name, framework, tagNames, options);
             this.require(WIDGET_NAME.MENU);
         }
@@ -7037,7 +7011,7 @@ var android = (function () {
     var $util$a = androme.lib.util;
     var $dom$7 = androme.lib.dom;
     class BottomNavigation extends androme.lib.base.Extension {
-        constructor(name, framework = 0, tagNames, options) {
+        constructor(name, framework, tagNames, options) {
             super(name, framework, tagNames, options);
             this.require(WIDGET_NAME.MENU);
         }
@@ -7115,7 +7089,7 @@ var android = (function () {
     var $util$b = androme.lib.util;
     var $dom$8 = androme.lib.dom;
     class Drawer extends androme.lib.base.Extension {
-        constructor(name, framework = 0, tagNames, options) {
+        constructor(name, framework, tagNames, options) {
             super(name, framework, tagNames, options);
             this.documentRoot = true;
             this.require($const$5.EXT_NAME.EXTERNAL, true);

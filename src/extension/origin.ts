@@ -4,10 +4,6 @@ import { convertInt, formatPX } from '../lib/util';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 
 export default class <T extends Node> extends Extension<T> {
-    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
-        super(name, framework, tagNames, options);
-    }
-
     public afterInit() {
         for (const node of this.application.cache.elements) {
             if (node.children.some((current: T) => {

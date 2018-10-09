@@ -48,11 +48,6 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     private _merge = {};
 
-    constructor() {
-        super();
-        resetId();
-    }
-
     public initNode(node: T) {
         node.api = this.settings.targetAPI;
     }
@@ -2190,7 +2185,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             return sameXY;
                         }
                         else {
-                            const chained: Set<T> = new Set([node]);
+                            const chained = new Set([node]);
                             let valid;
                             do {
                                 valid = false;

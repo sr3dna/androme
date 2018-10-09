@@ -10,7 +10,12 @@ import $dom = androme.lib.dom;
 import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
 export default class Drawer<T extends View> extends androme.lib.base.Extension<T> {
-    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+    constructor(
+        name: string,
+        framework: number,
+        tagNames?: string[],
+        options?: {})
+    {
         super(name, framework, tagNames, options);
         this.documentRoot = true;
         this.require($const.EXT_NAME.EXTERNAL, true);

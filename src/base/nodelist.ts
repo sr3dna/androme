@@ -63,7 +63,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
 
     public static cleared<T extends Node>(list: T[]) {
         const nodes = new Map<T, string>();
-        const floated = new Set();
+        const floated = new Set<string>();
         list.forEach(node => {
             if (node.siblingflow) {
                 const clear = node.css('clear');

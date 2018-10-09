@@ -10,9 +10,6 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     private _before: ObjectIndex<string[]> = {};
     private _after: ObjectIndex<string[]> = {};
 
-    protected constructor() {
-    }
-
     public abstract initNode(node: T): void;
     public abstract createGroup(parent: T, node: T, children: T[]): T;
     public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;

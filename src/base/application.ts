@@ -534,7 +534,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         {
                             const horizontal: T[] = [];
                             const vertical: T[] = [];
-                            const floatedOpen = new Set<string>(['left', 'right']);
+                            const floatedOpen = new Set(['left', 'right']);
                             let verticalExtended = false;
                             let l = k;
                             let m = 0;
@@ -584,7 +584,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             {
                                                 if (horizontal.length > 0) {
                                                     if (!this.settings.floatOverlapDisabled && !previousSibling.lineBreak) {
-                                                        const clearedDirection = new Set<string>(pending.map(node => clearedPartial.get(node) || '').filter(value => value !== ''));
+                                                        const clearedDirection = new Set(pending.map(node => clearedPartial.get(node) || '').filter(value => value !== ''));
                                                         let maxBottom: Null<number> = null;
                                                         if (floated.size > 0) {
                                                             maxBottom = Math.max.apply(null, horizontal.filter(node => node.floating).map(node => node.bounds.bottom));

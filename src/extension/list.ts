@@ -7,10 +7,6 @@ import { BOX_STANDARD, NODE_RESOURCE } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
 
 export default abstract class <T extends Node> extends Extension<T> {
-    protected constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
-        super(name, framework, tagNames, options);
-    }
-
     public condition() {
         const children = this.node.children;
         const floated = new Set(children.slice(1).map(node => node.float));

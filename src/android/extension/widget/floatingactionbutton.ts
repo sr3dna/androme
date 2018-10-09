@@ -9,10 +9,6 @@ import $util = androme.lib.util;
 import $color = androme.lib.color;
 
 export default class FloatingActionButton<T extends View> extends androme.lib.base.extensions.Button<T> {
-    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
-        super(name, framework, tagNames, options);
-    }
-
     public processNode(): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;

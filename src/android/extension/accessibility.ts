@@ -6,10 +6,6 @@ import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
 export default class <T extends View> extends androme.lib.base.extensions.Accessibility<T> {
-    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
-        super(name, framework, tagNames, options);
-    }
-
     public afterRender() {
         for (const node of this.application.cache.elements) {
             if (!node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {

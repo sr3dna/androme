@@ -6,10 +6,6 @@ import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
 
 export default abstract class <T extends Node> extends Extension<T> {
-    protected constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
-        super(name, framework, tagNames, options);
-    }
-
     public processNode(): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;

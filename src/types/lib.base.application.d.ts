@@ -3,11 +3,11 @@ export {};
 declare global {
     namespace androme.lib.base {
         export class Application<T extends Node> implements AppBase<T> {
+            public settings: Settings;
             public viewController: Controller<T>;
             public resourceHandler: Resource<T>;
             public nodeObject: Constructor<T>;
             public builtInExtensions: ObjectMap<Extension<T>>;
-            public settings: Settings;
             public renderQueue: ObjectIndex<string[]>;
             public loading: boolean;
             public closed: boolean;

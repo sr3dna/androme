@@ -38,10 +38,6 @@ const VALIDATE_GROUP = {
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
 export default class Menu<T extends View> extends androme.lib.base.extensions.Nav<T> {
-    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
-        super(name, framework, tagNames, options);
-    }
-
     public condition() {
         return this.included();
     }

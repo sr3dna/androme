@@ -3,10 +3,10 @@ export {};
 declare global {
     namespace androme.lib.base {
         export class File<T extends Node> {
+            public settings: Settings;
             public appName: string;
             public stored: ResourceMap;
             public readonly queue: PlainFile[];
-            constructor(directory: string, processingTime: number, compression?: string);
             public saveAllToDisk(data: ViewData<NodeList<T>>): void;
             public layoutAllToXml(data: ViewData<NodeList<T>>, saveToDisk?: boolean): StringMap;
             public resourceAllToXml(saveToDisk?: boolean): StringMap;

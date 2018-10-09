@@ -4,13 +4,6 @@ import { assignBounds, getNodeFromElement } from '../lib/dom';
 import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/enumeration';
 
 export default abstract class NodeGroup<T extends Node> extends Node {
-    protected constructor(
-        id: number,
-        element?: Element)
-    {
-        super(id, element);
-    }
-
     public init() {
         super.init();
         this.children.forEach(item => {

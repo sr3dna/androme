@@ -266,11 +266,6 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     private _tagStyle: ObjectMap<StyleList> = {};
     private _tagCount: ObjectMap<number> = {};
 
-    constructor(file: androme.lib.base.File<T>) {
-        super(file);
-        file.stored = $resource.STORED;
-    }
-
     public reset() {
         super.reset();
         this.file.reset();
@@ -1538,7 +1533,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         return false;
     }
 
-    private getBorderStyle(border: BorderAttribute, direction = -1, halfSize = false) {
+    private getBorderStyle(border: BorderAttribute, direction = -1, halfSize = false): StringMap {
         const result = {
             solid: `android:color="@color/${border.color}"`,
             groove: '',

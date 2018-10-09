@@ -2446,9 +2446,6 @@
     }
 
     class NodeGroup extends Node {
-        constructor(id, element) {
-            super(id, element);
-        }
         init() {
             super.init();
             this.children.forEach(item => {
@@ -4951,6 +4948,7 @@
     class Resource {
         constructor(file) {
             this.file = file;
+            this.file.stored = Resource.STORED;
         }
         static insertStoredAsset(asset, name, value) {
             const stored = Resource.STORED[asset];
@@ -5371,15 +5369,9 @@
     };
 
     class File {
-        constructor(_directory, _processingTime, compression) {
-            this._directory = _directory;
-            this._processingTime = _processingTime;
+        constructor() {
             this.appName = '';
             this.queue = [];
-            this._compression = 'zip';
-            if (compression) {
-                this._compression = compression;
-            }
         }
         addFile(pathname, filename, content, uri) {
             if (content !== '' || uri !== '') {
@@ -5403,7 +5395,7 @@
             }
             if (Array.isArray(files) && files.length > 0) {
                 files.push(...this.queue);
-                fetch(`/api/savetodisk?directory=${encodeURIComponent(trimString(this._directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this._compression.toLocaleLowerCase()}&processingtime=${this._processingTime.toString().trim()}`, {
+                fetch(`/api/savetodisk?directory=${encodeURIComponent(trimString(this.settings.outputDirectory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.settings.outputArchiveFileType.toLocaleLowerCase()}&processingtime=${this.settings.outputMaxProcessingTime.toString().trim()}`, {
                     method: 'POST',
                     body: JSON.stringify(files),
                     headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })
@@ -5554,9 +5546,6 @@
     }
 
     class Accessibility extends Extension {
-        constructor(name, framework, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         afterInit() {
             for (const node of this.application.cache.elements) {
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
@@ -5592,9 +5581,6 @@
     }
 
     class Button extends Extension {
-        constructor(name, framework, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         is(node) {
             return (super.is(node) && (node.tagName !== 'INPUT' ||
                 ['button', 'file', 'image', 'reset', 'search', 'submit'].includes(node.element.type)));
@@ -5636,9 +5622,6 @@
     }
 
     class External extends Extension {
-        constructor(name, framework = 0, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         beforeInit(init = false) {
             if (this.element && (init || this.included())) {
                 if (!getElementCache(this.element, 'andromeExternalDisplay')) {
@@ -5684,9 +5667,6 @@
     }
 
     class Grid extends Extension {
-        constructor(name, framework, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         condition() {
             const node = this.node;
             return (this.included() ||
@@ -6012,9 +5992,6 @@
     }
 
     class List extends Extension {
-        constructor(name, framework, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         condition() {
             const children = this.node.children;
             const floated = new Set(children.slice(1).map(node => node.float));
@@ -6166,9 +6143,6 @@
     }
 
     class Origin extends Extension {
-        constructor(name, framework = 0, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         afterInit() {
             for (const node of this.application.cache.elements) {
                 if (node.children.some((current) => {
@@ -6261,9 +6235,6 @@
     }
 
     class Table extends Extension {
-        constructor(name, framework, tagNames, options) {
-            super(name, framework, tagNames, options);
-        }
         processNode() {
             const node = this.node;
             const parent = this.parent;
@@ -6611,13 +6582,13 @@
             if (styleSheet.cssRules) {
                 for (let j = 0; j < styleSheet.cssRules.length; j++) {
                     try {
-                        const cssRule = styleSheet.cssRules[j];
+                        const rule = styleSheet.cssRules[j];
                         const attrs = new Set();
-                        for (const attr of Array.from(cssRule.style)) {
+                        for (const attr of Array.from(rule.style)) {
                             attrs.add(convertCamelCase(attr));
                         }
                         Array
-                            .from(document.querySelectorAll(cssRule.selectorText))
+                            .from(document.querySelectorAll(rule.selectorText))
                             .forEach((element) => {
                             for (const attr of Array.from(element.style)) {
                                 attrs.add(convertCamelCase(attr));
@@ -6625,14 +6596,14 @@
                             const style = getStyle(element);
                             const styleMap = {};
                             for (const attr of attrs) {
-                                const cssStyle = cssRule.style[attr];
+                                const value = rule.style[attr];
                                 if (element.style[attr]) {
                                     styleMap[attr] = element.style[attr];
                                 }
-                                else if (style[attr] === cssStyle) {
+                                else if (style[attr] === value) {
                                     styleMap[attr] = style[attr];
                                 }
-                                else if (cssStyle) {
+                                else if (value) {
                                     switch (attr) {
                                         case 'fontSize':
                                             styleMap[attr] = style[attr];
@@ -6654,12 +6625,12 @@
                                         case 'paddingRight':
                                         case 'paddingBottom':
                                         case 'paddingLeft':
-                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(cssStyle) || isPercent(cssStyle) ? cssStyle
-                                                : convertPX(cssStyle, style.fontSize);
+                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(value) || isPercent(value) ? value
+                                                : convertPX(value, style.fontSize);
                                             break;
                                         default:
                                             if (styleMap[attr] == null) {
-                                                styleMap[attr] = cssStyle;
+                                                styleMap[attr] = value;
                                             }
                                             break;
                                     }

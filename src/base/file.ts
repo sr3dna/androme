@@ -3,21 +3,10 @@ import NodeList from './nodelist';
 import { lastIndexOf, trimString } from '../lib/util';
 
 export default abstract class File<T extends Node> implements androme.lib.base.File<T> {
+    public abstract settings: Settings;
     public appName = '';
     public stored: ResourceMap;
     public readonly queue: PlainFile[] = [];
-
-    private _compression = 'zip';
-
-    protected constructor(
-        private _directory: string,
-        private _processingTime: number,
-        compression?: string)
-    {
-        if (compression) {
-            this._compression = compression;
-        }
-    }
 
     public abstract saveAllToDisk(data: ViewData<NodeList<T>>): void;
     public abstract layoutAllToXml(data: ViewData<NodeList<T>>, saveToDisk?: boolean): StringMap;
@@ -54,7 +43,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
         }
         if (Array.isArray(files) && files.length > 0) {
             files.push(...this.queue);
-            fetch(`/api/savetodisk?directory=${encodeURIComponent(trimString(this._directory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this._compression.toLocaleLowerCase()}&processingtime=${this._processingTime.toString().trim()}`, {
+            fetch(`/api/savetodisk?directory=${encodeURIComponent(trimString(this.settings.outputDirectory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.settings.outputArchiveFileType.toLocaleLowerCase()}&processingtime=${this.settings.outputMaxProcessingTime.toString().trim()}`, {
                     method: 'POST',
                     body: JSON.stringify(files),
                     headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })

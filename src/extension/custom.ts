@@ -4,7 +4,12 @@ import { NODE_STANDARD } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
 
 export default abstract class <T extends Node> extends Extension<T> {
-    protected constructor(name: string, framework: number, tagNames?: string[], options?: {}) {
+    protected constructor(
+        name: string,
+        framework: number,
+        tagNames?: string[],
+        options?: {})
+    {
         super(name, framework, tagNames, options);
         this.require(EXT_NAME.EXTERNAL, true);
     }

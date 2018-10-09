@@ -14,7 +14,12 @@ import $xml = androme.lib.xml;
 import EXTENSION_APPBAR_TMPL from '../../template/extension/appbar';
 
 export default class Toolbar<T extends View> extends androme.lib.base.Extension<T> {
-    constructor(name: string, framework = 0, tagNames?: string[], options?: {}) {
+    constructor(
+        name: string,
+        framework: number,
+        tagNames?: string[],
+        options?: {})
+    {
         super(name, framework, tagNames, options);
         this.require(WIDGET_NAME.MENU);
     }
