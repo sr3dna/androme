@@ -1015,6 +1015,9 @@ var android = (function () {
                 if (this.documentRoot && (this.blockWidth || this.is($enum.NODE_STANDARD.FRAME))) {
                     this.delete(obj, 'layout_gravity');
                 }
+                if (textAlign === '' && this.inlineText && this.textContent.length === 1 && this.paddingLeft > 0 && this.paddingLeft === this.paddingRight) {
+                    textAlign = 'center';
+                }
                 this.android('gravity', mergeGravity(this.android('gravity'), convertHorizontal(textAlign), verticalAlign));
             }
             setBoxSpacing(settings) {
@@ -1058,7 +1061,7 @@ var android = (function () {
                     }
                 }
             }
-            applyOptimizations(settings) {
+            applyOptimizations(settings, userAgent) {
                 const renderParent = this.renderParent;
                 const renderChildren = this.renderChildren;
                 function getPaddedHeight(node) {
@@ -1087,7 +1090,7 @@ var android = (function () {
                                 (childIndex !== '' && this.renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
                                 (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
                                 (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline))) {
-                                const baseline = $nodelist.textBaseline(renderChildren);
+                                const baseline = $nodelist.textBaseline(renderChildren, userAgent);
                                 if (baseline.length > 0) {
                                     this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
                                 }
@@ -1952,7 +1955,9 @@ var android = (function () {
                     }
                     let backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
                     let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
-                    let backgroundPosition = stored.backgroundPosition.split(',').map(value => value.trim());
+                    let backgroundPosition = [];
+                    const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
+                    const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
                     const backgroundImageUrl = [];
                     const backgroundDimensions = [];
                     for (let i = 0; i < backgroundImage.length; i++) {
@@ -1961,6 +1966,7 @@ var android = (function () {
                             const image = this.imageDimensions.get($dom$1.cssResolveUrl(backgroundImage[i]));
                             backgroundDimensions.push(image);
                             backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
+                            backgroundPosition[i] = `${backgroundPositionX[i] === 'initial' ? '0%' : backgroundPositionX[i]} ${backgroundPositionY[i] === 'initial' ? '0%' : backgroundPositionY[i]}`;
                         }
                         else {
                             backgroundImage[i] = '';
@@ -2074,7 +2080,7 @@ var android = (function () {
                                         gravity = 'center';
                                         break;
                                     default:
-                                        const position = backgroundPosition[i].split(' ');
+                                        const position = backgroundPosition[i].trim().split(' ');
                                         if (position.length === 2) {
                                             function mergeGravity(original, alignment) {
                                                 return original + (original !== '' ? '|' : '') + alignment;
@@ -2529,15 +2535,24 @@ var android = (function () {
                         }
                         nodeName[node.nodeName].push(node);
                     }
-                    const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
-                    if (match) {
-                        const color = $color.parseRGBA(match[1]);
-                        if (color.length > 0) {
-                            node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
-                        }
-                        node.android('shadowDx', $util$1.convertInt(match[2]).toString());
-                        node.android('shadowDy', $util$1.convertInt(match[3]).toString());
-                        node.android('shadowRadius', $util$1.convertInt(match[4]).toString());
+                    const textShadow = node.css('textShadow');
+                    if (textShadow !== 'none') {
+                        [/^(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})$/,
+                            /^([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) (.+)$/]
+                            .some((value, index) => {
+                            const match = textShadow.match(value);
+                            if (match) {
+                                const color = $color.parseRGBA(match[(index === 0 ? 1 : 4)]);
+                                if (color.length > 0) {
+                                    node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
+                                }
+                                node.android('shadowDx', $util$1.convertInt(match[(index === 0 ? 2 : 1)]).toString());
+                                node.android('shadowDy', $util$1.convertInt(match[(index === 0 ? 3 : 2)]).toString());
+                                node.android('shadowRadius', $util$1.convertInt(match[(index === 0 ? 4 : 3)]).toString());
+                                return true;
+                            }
+                            return false;
+                        });
                     }
                 }
             });
@@ -3318,6 +3333,8 @@ var android = (function () {
                             node.modifyBox($enum$2.BOX_STANDARD.PADDING_LEFT, node.paddingLeft + textIndent);
                             node.modifyBox($enum$2.BOX_STANDARD.PADDING_LEFT, null);
                         }
+                        const rangeMultiLine = [];
+                        const clientEdge = $util$2.hasBit(this.application.userAgent, $enum$2.USER_AGENT.EDGE);
                         for (let i = 0; i < nodes.length; i++) {
                             const current = nodes.get(i);
                             const previous = nodes.get(i - 1);
@@ -3326,6 +3343,9 @@ var android = (function () {
                                 const [bounds, multiLine] = $dom$2.getRangeClientRect(current.element);
                                 if (bounds && (multiLine || bounds.width < current.box.width)) {
                                     dimension = bounds;
+                                    if (clientEdge && multiLine && !/^\s*\n+/.test(current.textContent)) {
+                                        rangeMultiLine.push(current);
+                                    }
                                 }
                             }
                             const sideParent = relativeParent[(current.float === 'right' ? 'right' : 'left')];
@@ -3347,7 +3367,7 @@ var android = (function () {
                                 const siblings = $dom$2.getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
                                 const viewGroup = current instanceof ViewGroup && !current.hasAlign($enum$2.NODE_ALIGNMENT.SEGMENTED);
                                 const previousSibling = current.previousSibling();
-                                const baseWidth = rowWidth + current.marginLeft + dimension.width;
+                                const baseWidth = rowWidth + current.marginLeft + dimension.width - (clientEdge ? current.borderRightWidth : 0);
                                 let connected = false;
                                 if (i === 1 && previous.textElement && current.textElement) {
                                     connected = siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(current.textContent);
@@ -3355,12 +3375,14 @@ var android = (function () {
                                 if (!noWrap &&
                                     !connected &&
                                     !['SUP', 'SUB'].includes(current.tagName) &&
-                                    (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && ((current.float !== 'right' && baseWidth - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
+                                    (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && ((current.float !== 'right' && Math.floor(baseWidth) - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
                                     (current.multiLine && $dom$2.hasLineBreak(current.element)) ||
                                     (previous.multiLine && previous.textContent.trim() !== '' && !/^\s*\n+/.test(previous.textContent) && !/\n+\s*$/.test(previous.textContent) && $dom$2.hasLineBreak(previous.element)) ||
                                     (previousSibling && previousSibling.lineBreak) ||
+                                    (current.preserveWhiteSpace && /^\n+/.test(current.textContent)) ||
                                     current.blockStatic ||
                                     cleared.has(current) ||
+                                    rangeMultiLine.includes(previous) ||
                                     viewGroup ||
                                     (current.floating && ((current.float === 'left' && $util$2.withinFraction(current.linear.left, node.box.left)) ||
                                         (current.float === 'right' && $util$2.withinFraction(current.linear.right, node.box.right)) ||
@@ -3436,7 +3458,7 @@ var android = (function () {
                         if (node.marginTop < 0 && nodes.get(0).position === 'relative') {
                             rows[0].forEach((item, index) => item.modifyBox($enum$2.BOX_STANDARD.MARGIN_TOP, node.marginTop * (index === 0 ? 1 : -1), true));
                         }
-                        if (rows.length === 1 && node.baseline) {
+                        if (node.baseline && rows.length === 1) {
                             rows[0].forEach(item => {
                                 switch (item.css('verticalAlign')) {
                                     case 'top':
@@ -3445,7 +3467,7 @@ var android = (function () {
                                     case 'middle':
                                         item.anchor('layout_centerVertical', 'true');
                                         rows[0].forEach(subitem => {
-                                            if (subitem !== item && subitem.bounds.height < item.bounds.height) {
+                                            if (subitem !== item && subitem.bounds.height <= item.bounds.height) {
                                                 subitem.anchor('layout_centerVertical', 'true');
                                             }
                                         });
@@ -3478,7 +3500,7 @@ var android = (function () {
                     else {
                         mapLayout = MAP_LAYOUT.constraint;
                         if (node.hasAlign($enum$2.NODE_ALIGNMENT.HORIZONTAL)) {
-                            const optimal = $nodelist$1.textBaseline(nodes.list)[0];
+                            const optimal = $nodelist$1.textBaseline(nodes.list, this.application.userAgent)[0];
                             const baseline = nodes.list
                                 .filter(item => item.textElement && item.baseline)
                                 .sort((a, b) => a.bounds.height >= b.bounds.height ? -1 : 1);
@@ -4592,18 +4614,18 @@ var android = (function () {
                     }
                     nodes.each((current) => {
                         if (current.constraint.marginHorizontal) {
-                            const item = this.findByStringId(current.constraint.marginHorizontal);
-                            if (item) {
-                                const offset = current.linear.left - item.actualRight();
+                            const previous = this.findByStringId(current.constraint.marginHorizontal);
+                            if (previous) {
+                                const offset = current.linear.left - previous.actualRight();
                                 if (offset >= 1) {
                                     current.modifyBox($enum$2.BOX_STANDARD.MARGIN_LEFT, offset);
                                 }
                             }
                         }
                         if (current.constraint.marginVertical) {
-                            const item = this.findByStringId(current.constraint.marginVertical);
-                            if (item) {
-                                const offset = current.linear.top - item.linear.bottom;
+                            const previous = this.findByStringId(current.constraint.marginVertical);
+                            if (previous) {
+                                const offset = current.linear.top - previous.linear.bottom;
                                 if (offset >= 1) {
                                     current.modifyBox($enum$2.BOX_STANDARD.MARGIN_TOP, offset);
                                 }
@@ -5380,7 +5402,7 @@ var android = (function () {
         }
         adjustBaseline(nodes) {
             if (nodes.length > 1) {
-                const baseline = $nodelist$1.textBaseline(nodes.filter(node => node.baseline && node.toInt('top') === 0 && node.toInt('bottom') === 0));
+                const baseline = $nodelist$1.textBaseline(nodes.filter(node => node.baseline && node.toInt('top') === 0 && node.toInt('bottom') === 0), this.application.userAgent);
                 if (baseline.length > 0) {
                     const mapLayout = MAP_LAYOUT.relative;
                     const alignWith = baseline[0];

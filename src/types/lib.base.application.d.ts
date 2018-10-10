@@ -19,6 +19,7 @@ declare global {
             public readonly layouts: PlainFile[];
             public readonly viewData: ViewData<NodeList<T>>;
             public readonly size: number;
+            public readonly userAgent: number;
             constructor(framework: number);
             public registerController(controller: Controller<T>): void;
             public registerResource(resource: Resource<T>): void;

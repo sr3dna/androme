@@ -6,7 +6,7 @@ import Extension from './extension';
 import { convertInt, hasBit, hasValue, isNumber, isUnit, sortAsc, trimString, trimNull } from '../lib/util';
 import { cssParent, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
-import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/enumeration';
+import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
 export default class Application<T extends Node> implements androme.lib.base.Application<T> {
     public viewController: Controller<T>;
@@ -72,7 +72,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         for (const node of visible) {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.OPTIMIZATION)) {
-                node.applyOptimizations(this.settings);
+                node.applyOptimizations(this.settings, this.userAgent);
             }
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.CUSTOMIZATION)) {
                 node.applyCustomizations(this.settings);
@@ -1956,5 +1956,15 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     get size() {
         return this._views.length + this._includes.length;
+    }
+
+    get userAgent() {
+        if (navigator.appVersion.indexOf('Edge') !== -1) {
+            return USER_AGENT.EDGE;
+        }
+        if (navigator.appVersion.indexOf('Chrome') === -1 && navigator.appVersion.indexOf('Safari') !== -1) {
+            return USER_AGENT.SAFARI;
+        }
+        return USER_AGENT.CHROME;
     }
 }

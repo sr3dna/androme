@@ -1,3 +1,10 @@
+export enum USER_AGENT {
+    NONE = 0,
+    CHROME = 2,
+    SAFARI = 4,
+    EDGE = 8
+}
+
 export enum APP_FRAMEWORK {
     UNIVERSAL = 0,
     ANDROID = 2

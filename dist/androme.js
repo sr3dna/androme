@@ -438,9 +438,11 @@
     function getRangeClientRect(element) {
         const range = document.createRange();
         range.selectNodeContents(element);
-        const domRect = Array.from(range.getClientRects());
+        const domRect = Array
+            .from(range.getClientRects())
+            .filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
+        let result = getClientRect();
         let multiLine = false;
-        let result = null;
         if (domRect.length > 0) {
             result = assignBounds(domRect[0]);
             const top = new Set([result.top]);
@@ -762,6 +764,13 @@
         findNestedExtension: findNestedExtension
     });
 
+    var USER_AGENT;
+    (function (USER_AGENT) {
+        USER_AGENT[USER_AGENT["NONE"] = 0] = "NONE";
+        USER_AGENT[USER_AGENT["CHROME"] = 2] = "CHROME";
+        USER_AGENT[USER_AGENT["SAFARI"] = 4] = "SAFARI";
+        USER_AGENT[USER_AGENT["EDGE"] = 8] = "EDGE";
+    })(USER_AGENT || (USER_AGENT = {}));
     var APP_FRAMEWORK;
     (function (APP_FRAMEWORK) {
         APP_FRAMEWORK[APP_FRAMEWORK["UNIVERSAL"] = 0] = "UNIVERSAL";
@@ -871,6 +880,7 @@
     })(CSS_STANDARD || (CSS_STANDARD = {}));
 
     var enumeration = /*#__PURE__*/Object.freeze({
+        get USER_AGENT () { return USER_AGENT; },
         get APP_FRAMEWORK () { return APP_FRAMEWORK; },
         get APP_SECTION () { return APP_SECTION; },
         get NODE_ALIGNMENT () { return NODE_ALIGNMENT; },
@@ -1305,7 +1315,7 @@
         cssParent(attr, startChild = false, ignoreHidden = false) {
             let result = '';
             if (this.baseElement) {
-                let current = startChild ? this : getNodeFromElement(this.baseElement.parentElement);
+                let current = (startChild ? this : getNodeFromElement(this.baseElement.parentElement));
                 while (current) {
                     result = current.initial.styleMap[attr] || '';
                     if (result || current.documentBody) {
@@ -2176,7 +2186,7 @@
             });
             return nodes;
         }
-        static textBaseline(list) {
+        static textBaseline(list, userAgent) {
             let baseline = [];
             if (!list.some(node => (node.textElement || node.imageElement) && node.baseline)) {
                 baseline =
@@ -2203,44 +2213,59 @@
                 baseline =
                     list.filter(node => node.baselineInside)
                         .sort((a, b) => {
-                        const fontSizeA = convertInt(a.css('fontSize'));
-                        const fontSizeB = convertInt(b.css('fontSize'));
-                        const heightA = a.bounds.height;
-                        const heightB = b.bounds.height;
-                        if (a.imageElement && b.imageElement) {
-                            return heightA >= heightB ? -1 : 1;
-                        }
-                        else if (a.nodeType !== b.nodeType && (a.nodeType < NODE_STANDARD.TEXT || b.nodeType < NODE_STANDARD.TEXT)) {
-                            if (a.textElement || a.imageElement) {
-                                return -1;
+                        let heightA = a.bounds.height;
+                        let heightB = b.bounds.height;
+                        if (hasBit(userAgent, USER_AGENT.EDGE)) {
+                            if (a.textElement) {
+                                heightA = Math.max(Math.floor(heightA), a.lineHeight);
                             }
-                            else if (b.textElement || b.imageElement) {
-                                return 1;
+                            if (b.textElement) {
+                                heightB = Math.max(Math.floor(heightB), b.lineHeight);
                             }
-                            return a.nodeType < b.nodeType ? -1 : 1;
                         }
-                        else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
-                            return -1;
-                        }
-                        else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
-                            return 1;
-                        }
-                        else {
-                            if (fontSizeA === fontSizeB && heightA === heightB) {
-                                if (a.hasElement && !b.hasElement) {
+                        if (!a.imageElement || !b.imageElement) {
+                            const fontSizeA = convertInt(a.css('fontSize'));
+                            const fontSizeB = convertInt(b.css('fontSize'));
+                            if (a.multiLine || b.multiLine) {
+                                if (a.lineHeight > 0 && b.lineHeight > 0) {
+                                    return a.lineHeight >= b.lineHeight ? -1 : 1;
+                                }
+                                else if (fontSizeA === fontSizeB) {
+                                    return a.hasElement || !b.hasElement ? -1 : 1;
+                                }
+                            }
+                            if (a.nodeType !== b.nodeType && (a.nodeType < NODE_STANDARD.TEXT || b.nodeType < NODE_STANDARD.TEXT)) {
+                                if (a.textElement || a.imageElement) {
                                     return -1;
                                 }
-                                else if (!a.hasElement && b.hasElement) {
+                                else if (b.textElement || b.imageElement) {
                                     return 1;
                                 }
-                                else {
-                                    return a.siblingIndex <= b.siblingIndex ? -1 : 1;
-                                }
+                                return a.nodeType < b.nodeType ? -1 : 1;
                             }
-                            else if (fontSizeA !== fontSizeB &&
-                                fontSizeA !== 0 &&
-                                fontSizeB !== 0) {
-                                return fontSizeA > fontSizeB ? -1 : 1;
+                            else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
+                                return -1;
+                            }
+                            else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
+                                return 1;
+                            }
+                            else {
+                                if (fontSizeA === fontSizeB && heightA === heightB) {
+                                    if (a.hasElement && !b.hasElement) {
+                                        return -1;
+                                    }
+                                    else if (!a.hasElement && b.hasElement) {
+                                        return 1;
+                                    }
+                                    else {
+                                        return a.siblingIndex <= b.siblingIndex ? -1 : 1;
+                                    }
+                                }
+                                else if (fontSizeA !== fontSizeB &&
+                                    fontSizeA !== 0 &&
+                                    fontSizeB !== 0) {
+                                    return fontSizeA > fontSizeB ? -1 : 1;
+                                }
                             }
                         }
                         return heightA >= heightB ? -1 : 1;
@@ -2786,7 +2811,7 @@
             }
             for (const node of visible) {
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.OPTIMIZATION)) {
-                    node.applyOptimizations(this.settings);
+                    node.applyOptimizations(this.settings, this.userAgent);
                 }
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.CUSTOMIZATION)) {
                     node.applyCustomizations(this.settings);
@@ -4588,6 +4613,15 @@
         get size() {
             return this._views.length + this._includes.length;
         }
+        get userAgent() {
+            if (navigator.appVersion.indexOf('Edge') !== -1) {
+                return USER_AGENT.EDGE;
+            }
+            if (navigator.appVersion.indexOf('Chrome') === -1 && navigator.appVersion.indexOf('Safari') !== -1) {
+                return USER_AGENT.SAFARI;
+            }
+            return USER_AGENT.CHROME;
+        }
     }
 
     class Controller {
@@ -4851,7 +4885,7 @@
         }
         return 0;
     }
-    function formatRGB({ rgb }) {
+    function formatRGB(rgb) {
         return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
     }
     function getColorNearest(value) {
@@ -4888,7 +4922,11 @@
         if (value !== '') {
             const color = getColorByName(value);
             if (color !== '') {
-                return [color.hex, formatRGB(color), opacity];
+                return [color.hex, formatRGB(color.rgb), opacity];
+            }
+            const rgb = convertToRGB(value);
+            if (rgb) {
+                value = formatRGB(rgb);
             }
             const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9\.]{1,3}))?\)/);
             if (match && match.length >= 4 && match[4] !== '0') {
@@ -4935,7 +4973,8 @@
                 value = color[0];
             }
             if (value.charAt(0) === '#' && /^#[a-zA-Z0-9]{3,6}$/.test(value)) {
-                return value.length === 4 ? parseRGBA(formatRGB({ rgb: convertToRGB(value) }))[0] : value;
+                const rgb = convertToRGB(value);
+                return value.length === 4 && rgb ? parseRGBA(formatRGB(rgb))[0] : value;
             }
         }
         return '';
@@ -5036,7 +5075,8 @@
                         backgroundImage: !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE),
                         backgroundSize: this.parseBoxDimensions,
                         backgroundRepeat: true,
-                        backgroundPosition: true
+                        backgroundPositionX: true,
+                        backgroundPositionY: true
                     };
                     const result = {};
                     for (const attr in boxModel) {
@@ -5086,8 +5126,19 @@
                             (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor')))) {
                             backgroundColor.length = 0;
                         }
-                        let fontWeight = node.css('fontWeight');
+                        let fontFamily = node.css('fontFamily');
                         let fontSize = node.css('fontSize');
+                        let fontWeight = node.css('fontWeight');
+                        if (hasBit(this.application.userAgent, USER_AGENT.EDGE) && !node.has('fontFamily')) {
+                            switch (node.tagName) {
+                                case 'TT':
+                                case 'CODE':
+                                case 'KBD':
+                                case 'SAMP':
+                                    fontFamily = 'monospace';
+                                    break;
+                            }
+                        }
                         if (convertInt(fontSize) === 0) {
                             switch (fontSize) {
                                 case 'xx-small':
@@ -5130,7 +5181,7 @@
                             }
                         }
                         const result = {
-                            fontFamily: node.css('fontFamily'),
+                            fontFamily,
                             fontStyle: node.css('fontStyle'),
                             fontSize,
                             fontWeight,
@@ -5144,7 +5195,7 @@
         }
         setValueString() {
             function parseWhiteSpace(node, value) {
-                if (node.multiLine) {
+                if (node.multiLine && !node.renderParent.linearVertical) {
                     value = value.replace(/^\s*\n/, '');
                 }
                 switch (node.css('whiteSpace')) {
@@ -5153,6 +5204,9 @@
                         break;
                     case 'pre':
                     case 'pre-wrap':
+                        if (!node.renderParent.linearVertical) {
+                            value = value.replace(/^\n/, '');
+                        }
                         value = value.replace(/\n/g, '\\n');
                         value = value.replace(/\s/g, '&#160;');
                         break;
@@ -5316,13 +5370,19 @@
                 object.borderRadius.length > 0));
         }
         parseBorderStyle(value, node, attr) {
-            let colorMap = node.css(`${attr}Color`);
-            if (colorMap === 'initial') {
-                colorMap = value;
+            let cssColor = node.css(`${attr}Color`);
+            switch (cssColor) {
+                case 'initial':
+                    cssColor = value;
+                    break;
+                case 'inherit':
+                case 'currentColor':
+                    cssColor = node.documentParent.css(`${attr}Color`);
+                    break;
             }
             const style = node.css(`${attr}Style`) || 'none';
             let width = node.css(`${attr}Width`) || '1px';
-            const color = style !== 'none' ? parseRGBA(colorMap, node.css('opacity')) : [];
+            const color = style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : [];
             if (style === 'inset' && width === '0px') {
                 width = '1px';
             }
@@ -6354,12 +6414,12 @@
                             }
                         }
                         else {
-                            let value = cssInherit(item, 'background', 'TABLE', ['rgba(0, 0, 0, 0)']);
+                            let value = cssInherit(item, 'background', 'TABLE', ['rgba(0, 0, 0, 0)', 'transparent']);
                             if (value !== '') {
                                 item.style.background = value;
                             }
                             else {
-                                value = cssInherit(item, 'backgroundColor', 'TABLE', ['rgba(0, 0, 0, 0)']);
+                                value = cssInherit(item, 'backgroundColor', 'TABLE', ['rgba(0, 0, 0, 0)', 'transparent']);
                                 if (value !== '') {
                                     item.style.backgroundColor = value;
                                 }

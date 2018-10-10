@@ -386,7 +386,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 let backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
                 let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
-                let backgroundPosition = stored.backgroundPosition.split(',').map(value => value.trim());
+                let backgroundPosition: string[] = [];
+                const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
+                const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
                 const backgroundImageUrl: string[] = [];
                 const backgroundDimensions: Null<Image>[] = [];
                 for (let i = 0; i < backgroundImage.length; i++) {
@@ -395,6 +397,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         const image = this.imageDimensions.get($dom.cssResolveUrl(backgroundImage[i]));
                         backgroundDimensions.push(image);
                         backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
+                        backgroundPosition[i] = `${backgroundPositionX[i] === 'initial' ? '0%' : backgroundPositionX[i]} ${backgroundPositionY[i] === 'initial' ? '0%' : backgroundPositionY[i]}`;
                     }
                     else {
                         backgroundImage[i] = '';
@@ -512,7 +515,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     gravity = 'center';
                                     break;
                                 default:
-                                    const position = backgroundPosition[i].split(' ');
+                                    const position = backgroundPosition[i].trim().split(' ');
                                     if (position.length === 2) {
                                         function mergeGravity(original: string, alignment: string) {
                                             return original + (original !== '' ? '|' : '') + alignment;
@@ -974,15 +977,24 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     nodeName[node.nodeName].push(node);
                 }
-                const match = node.css('textShadow').match(/(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})/);
-                if (match) {
-                    const color = $color.parseRGBA(match[1]);
-                    if (color.length > 0) {
-                        node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
-                    }
-                    node.android('shadowDx', $util.convertInt(match[2]).toString());
-                    node.android('shadowDy', $util.convertInt(match[3]).toString());
-                    node.android('shadowRadius', $util.convertInt(match[4]).toString());
+                const textShadow = node.css('textShadow');
+                if (textShadow !== 'none') {
+                    [/^(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})$/,
+                     /^([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) (.+)$/]
+                        .some((value, index) => {
+                            const match = textShadow.match(value);
+                            if (match) {
+                                const color = $color.parseRGBA(match[(index === 0 ? 1 : 4)]);
+                                if (color.length > 0) {
+                                    node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
+                                }
+                                node.android('shadowDx', $util.convertInt(match[(index === 0 ? 2 : 1)]).toString());
+                                node.android('shadowDy', $util.convertInt(match[(index === 0 ? 3 : 2)]).toString());
+                                node.android('shadowRadius', $util.convertInt(match[(index === 0 ? 4 : 3)]).toString());
+                                return true;
+                            }
+                            return false;
+                        });
                 }
             }
         });

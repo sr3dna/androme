@@ -1,7 +1,7 @@
 import Node from './node';
-import { convertInt, partition, sortAsc, sortDesc } from '../lib/util';
+import { convertInt, hasBit, partition, sortAsc, sortDesc } from '../lib/util';
 import { getNodeFromElement } from '../lib/dom';
-import { NODE_STANDARD } from '../lib/enumeration';
+import { NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
 export default class NodeList<T extends Node> implements androme.lib.base.NodeList<T> {
     public static siblingIndex<T extends Node>(a: T, b: T) {
@@ -85,7 +85,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         return nodes;
     }
 
-    public static textBaseline<T extends Node>(list: T[]) {
+    public static textBaseline<T extends Node>(list: T[], userAgent: number) {
         let baseline: T[] = [];
         if (!list.some(node => (node.textElement || node.imageElement) && node.baseline)) {
             baseline =
@@ -112,46 +112,61 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
             baseline =
                 list.filter(node => node.baselineInside)
                     .sort((a, b) => {
-                        const fontSizeA = convertInt(a.css('fontSize'));
-                        const fontSizeB = convertInt(b.css('fontSize'));
-                        const heightA = a.bounds.height;
-                        const heightB = b.bounds.height;
-                        if (a.imageElement && b.imageElement) {
-                            return heightA >= heightB ? -1 : 1;
-                        }
-                        else if (a.nodeType !== b.nodeType && (a.nodeType < NODE_STANDARD.TEXT || b.nodeType < NODE_STANDARD.TEXT)) {
-                            if (a.textElement || a.imageElement) {
-                                return -1;
+                        let heightA = a.bounds.height;
+                        let heightB = b.bounds.height;
+                        if (hasBit(userAgent, USER_AGENT.EDGE)) {
+                            if (a.textElement) {
+                                heightA = Math.max(Math.floor(heightA), a.lineHeight);
                             }
-                            else if (b.textElement || b.imageElement) {
-                                return 1;
+                            if (b.textElement) {
+                                heightB = Math.max(Math.floor(heightB), b.lineHeight);
                             }
-                            return a.nodeType < b.nodeType ? -1 : 1;
                         }
-                        else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
-                            return -1;
-                        }
-                        else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
-                            return 1;
-                        }
-                        else {
-                            if (fontSizeA === fontSizeB && heightA === heightB) {
-                                if (a.hasElement && !b.hasElement) {
+                        if (!a.imageElement || !b.imageElement) {
+                            const fontSizeA = convertInt(a.css('fontSize'));
+                            const fontSizeB = convertInt(b.css('fontSize'));
+                            if (a.multiLine || b.multiLine) {
+                                if (a.lineHeight > 0 && b.lineHeight > 0) {
+                                    return a.lineHeight >= b.lineHeight ? -1 : 1;
+                                }
+                                else if (fontSizeA === fontSizeB) {
+                                    return a.hasElement || !b.hasElement ? -1 : 1;
+                                }
+                            }
+                            if (a.nodeType !== b.nodeType && (a.nodeType < NODE_STANDARD.TEXT || b.nodeType < NODE_STANDARD.TEXT)) {
+                                if (a.textElement || a.imageElement) {
                                     return -1;
                                 }
-                                else if (!a.hasElement && b.hasElement) {
+                                else if (b.textElement || b.imageElement) {
                                     return 1;
                                 }
-                                else {
-                                    return a.siblingIndex <= b.siblingIndex ? -1 : 1;
-                                }
+                                return a.nodeType < b.nodeType ? -1 : 1;
                             }
-                            else if (
-                                fontSizeA !== fontSizeB &&
-                                fontSizeA !== 0 &&
-                                fontSizeB !== 0)
-                            {
-                                return fontSizeA > fontSizeB ? -1 : 1;
+                            else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
+                                return -1;
+                            }
+                            else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
+                                return 1;
+                            }
+                            else {
+                                if (fontSizeA === fontSizeB && heightA === heightB) {
+                                    if (a.hasElement && !b.hasElement) {
+                                        return -1;
+                                    }
+                                    else if (!a.hasElement && b.hasElement) {
+                                        return 1;
+                                    }
+                                    else {
+                                        return a.siblingIndex <= b.siblingIndex ? -1 : 1;
+                                    }
+                                }
+                                else if (
+                                    fontSizeA !== fontSizeB &&
+                                    fontSizeA !== 0 &&
+                                    fontSizeB !== 0)
+                                {
+                                    return fontSizeA > fontSizeB ? -1 : 1;
+                                }
                             }
                         }
                         return heightA >= heightB ? -1 : 1;

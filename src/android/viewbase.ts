@@ -697,6 +697,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if (this.documentRoot && (this.blockWidth || this.is($enum.NODE_STANDARD.FRAME))) {
                 this.delete(obj, 'layout_gravity');
             }
+            if (textAlign === '' && this.inlineText && this.textContent.length === 1 && this.paddingLeft > 0 && this.paddingLeft === this.paddingRight) {
+                textAlign = 'center';
+            }
             this.android('gravity', mergeGravity(this.android('gravity'), convertHorizontal(textAlign), verticalAlign));
         }
 
@@ -743,7 +746,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        public applyOptimizations(settings: SettingsAndroid) {
+        public applyOptimizations(settings: SettingsAndroid, userAgent: number) {
             const renderParent = this.renderParent;
             const renderChildren = this.renderChildren;
             function getPaddedHeight(node: View) {
@@ -766,7 +769,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     if (!renderChildren.some(node => node.imageElement && node.baseline) && (
                             this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) ||
                             renderChildren.some(node => node.floating || !node.siblingflow)
-                    ))
+                       ))
                     {
                         this.android('baselineAligned', 'false');
                     }
@@ -777,7 +780,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
                             (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
                         {
-                            const baseline = $nodelist.textBaseline(renderChildren);
+                            const baseline = $nodelist.textBaseline(renderChildren, userAgent);
                             if (baseline.length > 0) {
                                 this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
                             }
@@ -1098,7 +1101,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 this.linearHorizontal ||
                 this.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL, $enum.NODE_ALIGNMENT.MULTILINE) ||
                 this.of($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_ALIGNMENT.HORIZONTAL)
-            ))
+               ))
             {
                 const textAlign = this.css('textAlign');
                 const textIndent = this.toInt('textIndent');

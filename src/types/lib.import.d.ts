@@ -4,6 +4,7 @@ import * as $const from '../lib/constant';
 declare global {
     namespace androme.lib {
         namespace enumeration {
+            export import USER_AGENT = $enum.USER_AGENT;
             export import APP_FRAMEWORK = $enum.APP_FRAMEWORK;
             export import APP_SECTION = $enum.APP_SECTION;
             export import NODE_ALIGNMENT = $enum.NODE_ALIGNMENT;

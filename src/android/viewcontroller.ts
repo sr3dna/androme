@@ -169,6 +169,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, node.paddingLeft + textIndent);
                         node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, null);
                     }
+                    const rangeMultiLine: T[] = [];
+                    const clientEdge = $util.hasBit(this.application.userAgent, $enum.USER_AGENT.EDGE);
                     for (let i = 0; i < nodes.length; i++) {
                         const current = nodes.get(i);
                         const previous = nodes.get(i - 1);
@@ -177,6 +179,9 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             const [bounds, multiLine] = $dom.getRangeClientRect(current.element);
                             if (bounds && (multiLine || bounds.width < current.box.width)) {
                                 dimension = bounds;
+                                if (clientEdge && multiLine && !/^\s*\n+/.test(current.textContent)) {
+                                    rangeMultiLine.push(current);
+                                }
                             }
                         }
                         const sideParent = relativeParent[(current.float === 'right' ? 'right' : 'left')];
@@ -199,7 +204,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             const siblings = $dom.getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
                             const viewGroup = current instanceof ViewGroup && !current.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
                             const previousSibling = current.previousSibling();
-                            const baseWidth = rowWidth + current.marginLeft + dimension.width;
+                            const baseWidth = rowWidth + current.marginLeft + dimension.width - (clientEdge ? current.borderRightWidth : 0);
                             let connected = false;
                             if (i === 1 && previous.textElement && current.textElement) {
                                 connected = siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(current.textContent);
@@ -208,12 +213,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 !connected &&
                                 !['SUP', 'SUB'].includes(current.tagName) &&
                                 (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && (
-                                    (current.float !== 'right' && baseWidth - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
+                                    (current.float !== 'right' && Math.floor(baseWidth) - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
                                     (current.multiLine && $dom.hasLineBreak(current.element)) ||
                                     (previous.multiLine && previous.textContent.trim() !== '' && !/^\s*\n+/.test(previous.textContent) && !/\n+\s*$/.test(previous.textContent) && $dom.hasLineBreak(previous.element)) ||
                                     (previousSibling && previousSibling.lineBreak) ||
+                                    (current.preserveWhiteSpace && /^\n+/.test(current.textContent)) ||
                                     current.blockStatic ||
                                     cleared.has(current) ||
+                                    rangeMultiLine.includes(previous) ||
                                     viewGroup ||
                                     (current.floating && (
                                         (current.float === 'left' && $util.withinFraction(current.linear.left, node.box.left)) ||
@@ -300,7 +307,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                     if (node.marginTop < 0 && nodes.get(0).position === 'relative') {
                         rows[0].forEach((item, index) => item.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, node.marginTop * (index === 0 ? 1 : -1), true));
                     }
-                    if (rows.length === 1 && node.baseline) {
+                    if (node.baseline && rows.length === 1) {
                         rows[0].forEach(item => {
                             switch (item.css('verticalAlign')) {
                                 case 'top':
@@ -309,7 +316,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 case 'middle':
                                     item.anchor('layout_centerVertical', 'true');
                                     rows[0].forEach(subitem => {
-                                        if (subitem !== item && subitem.bounds.height < item.bounds.height) {
+                                        if (subitem !== item && subitem.bounds.height <= item.bounds.height) {
                                             subitem.anchor('layout_centerVertical', 'true');
                                         }
                                     });
@@ -342,7 +349,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 else {
                     mapLayout = MAP_LAYOUT.constraint;
                     if (node.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL)) {
-                        const optimal = $nodelist.textBaseline(nodes.list)[0];
+                        const optimal = $nodelist.textBaseline(nodes.list, this.application.userAgent)[0];
                         const baseline =
                             nodes.list
                                 .filter(item => item.textElement && item.baseline)
@@ -1494,18 +1501,18 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 }
                 nodes.each((current: T) => {
                     if (current.constraint.marginHorizontal) {
-                        const item = this.findByStringId(current.constraint.marginHorizontal);
-                        if (item) {
-                            const offset = current.linear.left - item.actualRight();
+                        const previous = this.findByStringId(current.constraint.marginHorizontal);
+                        if (previous) {
+                            const offset = current.linear.left - previous.actualRight();
                             if (offset >= 1) {
                                 current.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, offset);
                             }
                         }
                     }
                     if (current.constraint.marginVertical) {
-                        const item = this.findByStringId(current.constraint.marginVertical);
-                        if (item) {
-                            const offset = current.linear.top - item.linear.bottom;
+                        const previous = this.findByStringId(current.constraint.marginVertical);
+                        if (previous) {
+                            const offset = current.linear.top - previous.linear.bottom;
                             if (offset >= 1) {
                                 current.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset);
                             }
@@ -2370,7 +2377,11 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     private adjustBaseline(nodes: T[]) {
         if (nodes.length > 1) {
-            const baseline = $nodelist.textBaseline(nodes.filter(node => node.baseline && node.toInt('top') === 0 && node.toInt('bottom') === 0));
+            const baseline =
+                $nodelist.textBaseline(
+                    nodes.filter(node => node.baseline && node.toInt('top') === 0 && node.toInt('bottom') === 0),
+                    this.application.userAgent
+                );
             if (baseline.length > 0) {
                 const mapLayout = MAP_LAYOUT.relative;
                 const alignWith = baseline[0];

@@ -219,7 +219,7 @@ function sortHSL(a: Color, b: Color) {
     return 0;
 }
 
-function formatRGB({ rgb }: Color) {
+function formatRGB(rgb: RGB) {
     return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
 }
 
@@ -259,7 +259,11 @@ export function parseRGBA(value: string, opacity = '1'): string[] {
     if (value !== '') {
         const color = getColorByName(value);
         if (color !== '') {
-            return [color.hex, formatRGB(color), opacity];
+            return [color.hex, formatRGB(<RGB> color.rgb), opacity];
+        }
+        const rgb = convertToRGB(value);
+        if (rgb) {
+            value = formatRGB(rgb);
         }
         const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9\.]{1,3}))?\)/);
         if (match && match.length >= 4 && match[4] !== '0') {
@@ -309,7 +313,8 @@ export function parseHex(value: string) {
             value = color[0];
         }
         if (value.charAt(0) === '#' && /^#[a-zA-Z0-9]{3,6}$/.test(value)) {
-            return value.length === 4 ? parseRGBA(formatRGB(<Color> { rgb: convertToRGB(value) }))[0] : value;
+            const rgb = convertToRGB(value);
+            return value.length === 4 && rgb ? parseRGBA(formatRGB(rgb))[0] : value;
         }
     }
     return '';

@@ -98,7 +98,8 @@ type BoxStyle = {
     backgroundImage: string;
     backgroundSize: string[];
     backgroundRepeat: string;
-    backgroundPosition: string;
+    backgroundPositionX: string;
+    backgroundPositionY: string;
 };
 
 type BorderAttribute = {

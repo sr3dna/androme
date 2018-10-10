@@ -2,11 +2,11 @@ import Node from './node';
 import NodeList from './nodelist';
 import Application from './application';
 import File from './file';
-import { convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
+import { convertInt, convertPX, hasValue, isNumber, isPercent, hasBit } from '../lib/util';
 import { cssFromParent, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
 import { replaceEntity } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
-import { NODE_RESOURCE } from '../lib/enumeration';
+import { NODE_RESOURCE, USER_AGENT } from '../lib/enumeration';
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
     public static STORED: ResourceMap = {
@@ -109,7 +109,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     backgroundImage: !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE),
                     backgroundSize: this.parseBoxDimensions,
                     backgroundRepeat: true,
-                    backgroundPosition: true
+                    backgroundPositionX: true,
+                    backgroundPositionY: true
                 };
                 const result: BoxStyle = {} as any;
                 for (const attr in boxModel) {
@@ -168,8 +169,19 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     {
                         backgroundColor.length = 0;
                     }
-                    let fontWeight = node.css('fontWeight');
+                    let fontFamily = node.css('fontFamily');
                     let fontSize = node.css('fontSize');
+                    let fontWeight = node.css('fontWeight');
+                    if (hasBit(this.application.userAgent, USER_AGENT.EDGE) && !node.has('fontFamily')) {
+                        switch (node.tagName) {
+                            case 'TT':
+                            case 'CODE':
+                            case 'KBD':
+                            case 'SAMP':
+                                fontFamily = 'monospace';
+                                break;
+                        }
+                    }
                     if (convertInt(fontSize) === 0) {
                         switch (fontSize) {
                             case 'xx-small':
@@ -212,7 +224,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         }
                     }
                     const result: FontAttribute = {
-                        fontFamily: node.css('fontFamily'),
+                        fontFamily,
                         fontStyle: node.css('fontStyle'),
                         fontSize,
                         fontWeight,
@@ -227,7 +239,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setValueString() {
         function parseWhiteSpace(node: T, value: string): [string, boolean] {
-            if (node.multiLine) {
+            if (node.multiLine && !node.renderParent.linearVertical) {
                 value = value.replace(/^\s*\n/, '');
             }
             switch (node.css('whiteSpace')) {
@@ -236,6 +248,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     break;
                 case 'pre':
                 case 'pre-wrap':
+                    if (!node.renderParent.linearVertical) {
+                        value = value.replace(/^\n/, '');
+                    }
                     value = value.replace(/\n/g, '\\n');
                     value = value.replace(/\s/g, '&#160;');
                     break;
@@ -415,13 +430,19 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     private parseBorderStyle(value: string, node: T, attr: string): BorderAttribute {
-        let colorMap = node.css(`${attr}Color`);
-        if (colorMap === 'initial') {
-            colorMap = value;
+        let cssColor = node.css(`${attr}Color`);
+        switch (cssColor) {
+            case 'initial':
+                cssColor = value;
+                break;
+            case 'inherit':
+            case 'currentColor':
+                cssColor = node.documentParent.css(`${attr}Color`);
+                break;
         }
         const style = node.css(`${attr}Style`) || 'none';
         let width = node.css(`${attr}Width`) || '1px';
-        const color = style !== 'none' ? parseRGBA(colorMap, node.css('opacity')) : [];
+        const color = style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : [];
         if (style === 'inset' && width === '0px') {
             width = '1px';
         }

@@ -76,7 +76,7 @@ export default abstract class Node implements androme.lib.base.Node {
     public abstract setLayout(width?: number, height?: number): void;
     public abstract setAlignment(settings: Settings): void;
     public abstract setBoxSpacing(settings: Settings): void;
-    public abstract applyOptimizations(settings: Settings): void;
+    public abstract applyOptimizations(settings: Settings, userAgent: number): void;
     public abstract applyCustomizations(settings: Settings): void;
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     public abstract valueBox(region: number): string[];
@@ -404,7 +404,7 @@ export default abstract class Node implements androme.lib.base.Node {
     public cssParent(attr: string, startChild = false, ignoreHidden = false) {
         let result = '';
         if (this.baseElement) {
-            let current = startChild ? this : getNodeFromElement(this.baseElement.parentElement);
+            let current = (startChild ? this : getNodeFromElement(this.baseElement.parentElement)) as T;
             while (current) {
                 result = current.initial.styleMap[attr] || '';
                 if (result || current.documentBody) {
@@ -413,7 +413,7 @@ export default abstract class Node implements androme.lib.base.Node {
                     }
                     break;
                 }
-                current = getNodeFromElement(current.baseElement.parentElement);
+                current = getNodeFromElement(current.baseElement.parentElement) as T;
             }
         }
         return result;

@@ -1,4 +1,4 @@
-import { convertInt, hasValue, includes, resolvePath } from './util';
+import { convertInt, hasValue, includes, resolvePath, withinFraction } from './util';
 
 export function getBoxRect(): BoxRect {
     return {
@@ -51,9 +51,12 @@ export function getNodeFromElement<T extends androme.lib.base.Node>(element: Nul
 export function getRangeClientRect(element: Element): [Null<BoxDimensions>, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
-    const domRect = Array.from(range.getClientRects());
+    const domRect =
+        Array
+            .from(range.getClientRects())
+            .filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
+    let result: BoxDimensions = getClientRect();
     let multiLine = false;
-    let result: Null<BoxDimensions> = null;
     if (domRect.length > 0) {
         result = assignBounds(domRect[0]);
         const top = new Set([result.top]);
