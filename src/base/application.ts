@@ -11,7 +11,7 @@ import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE
 export default class Application<T extends Node> implements androme.lib.base.Application<T> {
     public viewController: Controller<T>;
     public resourceHandler: Resource<T>;
-    public nodeObject: { new (id: number, element?: Element): T };
+    public nodeObject: NodeConstructor<T>;
     public builtInExtensions: ObjectMap<Extension<T>>;
     public settings: Settings;
     public renderQueue: ObjectMap<string[]> = {};
@@ -391,10 +391,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
             nodes.forEach(node => {
                 deleteMapY(node.id);
                 setMapY((node.initial.depth * -1) - 2, node.id, node);
-                node.cascade().forEach((child: T) => {
-                    deleteMapY(child.id);
-                    setMapY((child.initial.depth * -1) - 2, child.id, child);
-                });
+                node.cascade()
+                    .forEach((item: T) => {
+                        deleteMapY(item.id);
+                        setMapY((item.initial.depth * -1) - 2, item.id, item);
+                    });
             });
         };
         for (const depth of mapY.values()) {
@@ -535,8 +536,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             !parentY.flex.enabled &&
                             !parentY.has('columnCount') &&
                             !parentY.is(NODE_STANDARD.GRID) && (
-                                (nodeY.alignmentType === NODE_ALIGNMENT.NONE && parentY.alignmentType === NODE_ALIGNMENT.NONE) ||
-                                nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE)
+                              (nodeY.alignmentType === NODE_ALIGNMENT.NONE && parentY.alignmentType === NODE_ALIGNMENT.NONE) ||
+                              nodeY.hasAlign(NODE_ALIGNMENT.EXTENDABLE)
                            ))
                         {
                             const horizontal: T[] = [];
@@ -596,7 +597,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                         if (floated.size > 0) {
                                                             maxBottom = Math.max.apply(null, horizontal.filter(node => node.floating).map(node => node.bounds.bottom));
                                                         }
-                                                        if (floatedOpen.size > 0 && !clearedDirection.has('both') && (maxBottom == null || adjacent.bounds.top < maxBottom)) {
+                                                        if (floatedOpen.size > 0 &&
+                                                            !clearedDirection.has('both') && (
+                                                              maxBottom == null ||
+                                                              adjacent.bounds.top < maxBottom
+                                                           ))
+                                                        {
                                                             if (clearedPartial.has(adjacent)) {
                                                                 const clear = clearedPartial.has(adjacent) ? clearedPartial.get(adjacent) as string : 'none';
                                                                 if (clear !== 'none') {
@@ -612,10 +618,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                                 }
                                                                 else if (
                                                                     floated.size < 2 && (
-                                                                        !adjacent.floating ||
-                                                                        !floated.has(adjacent.float) ||
-                                                                        adjacent.float === horizontal[horizontal.length - 1].float
-                                                                    ))
+                                                                      !adjacent.floating ||
+                                                                      !floated.has(adjacent.float) ||
+                                                                      adjacent.float === horizontal[horizontal.length - 1].float
+                                                                   ))
                                                                 {
                                                                     horizontal.push(adjacent);
                                                                     continue;
@@ -626,7 +632,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                                 horizontal.push(adjacent);
                                                                 continue;
                                                             }
-                                                            if (floated.size === 1 && (!adjacent.floating || floatedOpen.has(adjacent.float))) {
+                                                            if (floated.size === 1 && (
+                                                                  !adjacent.floating ||
+                                                                  floatedOpen.has(adjacent.float)
+                                                               ))
+                                                            {
                                                                 horizontal.push(adjacent);
                                                                 continue;
                                                             }
@@ -806,8 +816,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         if (nodeY.alignmentType === NODE_ALIGNMENT.NONE &&
                             nodeY.has('width', CSS_STANDARD.PERCENT, { not: '100%' }) &&
                             !nodeY.imageElement && (
-                                parentY.linearVertical ||
-                                (parentY.is(NODE_STANDARD.FRAME) && nodeY.singleChild)
+                              parentY.linearVertical ||
+                              (parentY.is(NODE_STANDARD.FRAME) && nodeY.singleChild)
                            ))
                         {
                             const group = this.viewController.createGroup(parentY, nodeY, [nodeY]);
@@ -1885,10 +1895,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
         const br = lineBreak ? getElementsBetweenSiblings(nodes[0].baseElement, nodes[nodes.length - 1].baseElement).filter(element => element.tagName === 'BR').length : 0;
         return (
             br === 0 && (
-                floated.has('right') ||
-                cleared.size > 0 ||
-                margin.length > 0 ||
-                !NodeList.linearX(nodes)
+              floated.has('right') ||
+              cleared.size > 0 ||
+              margin.length > 0 ||
+              !NodeList.linearX(nodes)
             )
         );
     }
@@ -1920,8 +1930,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     (['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(verticalAlign) || (isUnit(verticalAlign) && parseInt(verticalAlign) >= 0))
                 );
             }) && (
-                visible.some(node => ((node.textElement || node.imageElement) && node.baseline) || (node.plainText && node.multiLine)) ||
-                (!linearX && nodes.every(node => node.pageflow && node.inlineElement))
+              visible.some(node => ((node.textElement || node.imageElement) && node.baseline) || (node.plainText && node.multiLine)) ||
+              (!linearX && nodes.every(node => node.pageflow && node.inlineElement))
             )
         );
     }

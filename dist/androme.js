@@ -1,4 +1,4 @@
-/* androme 1.10.1
+/* androme 2.0.0
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -257,8 +257,8 @@
     function trimEnd(value, char) {
         return value.replace(new RegExp(`${char}+$`, 'g'), '');
     }
-    function repeat(n, value = '\t') {
-        return value.repeat(n);
+    function repeat(many, value = '\t') {
+        return value.repeat(many);
     }
     function indexOf(value, ...terms) {
         for (const term of terms) {
@@ -313,8 +313,8 @@
     function hasValue(value) {
         return typeof value !== 'undefined' && value !== null && value.toString().trim() !== '';
     }
-    function withinRange(a, b, n = 0) {
-        return b >= (a - n) && b <= (a + n);
+    function withinRange(a, b, offset = 0) {
+        return b >= (a - offset) && b <= (a + offset);
     }
     function withinFraction(lower, upper) {
         return lower === upper || Math.floor(lower) === Math.floor(upper) || Math.ceil(lower) === Math.ceil(upper) || Math.ceil(lower) === Math.floor(upper) || Math.floor(lower) === Math.ceil(upper);
@@ -458,7 +458,9 @@
             if (top.size > 1 && bottom.size > 1) {
                 result.top = Math.min.apply(null, Array.from(top));
                 result.bottom = Math.max.apply(null, Array.from(bottom));
-                if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
+                if (domRect[domRect.length - 1].top >= domRect[0].bottom &&
+                    element.textContent && (element.textContent.trim() !== '' ||
+                    /^\s*\n/.test(element.textContent))) {
                     multiLine = true;
                 }
             }
@@ -563,7 +565,9 @@
         if (element instanceof HTMLElement && element.parentElement) {
             const node = getNodeFromElement(element);
             const style = getStyle(element);
-            return (style && style[attr] === getStyle(element.parentElement)[attr] && (!node || !node.styleMap[attr]));
+            return (style &&
+                style[attr] === getStyle(element.parentElement)[attr] && (!node ||
+                !node.styleMap[attr]));
         }
         return false;
     }
@@ -1503,7 +1507,9 @@
                                 this.multiLine = multiLine;
                             }
                             else {
-                                if (!this.hasWidth && (this.blockStatic || this.display === 'table-cell' || hasLineBreak(this._element))) {
+                                if (!this.hasWidth && (this.blockStatic ||
+                                    this.display === 'table-cell' ||
+                                    hasLineBreak(this._element))) {
                                     this.multiLine = multiLine;
                                 }
                             }
@@ -1550,11 +1556,11 @@
                             }
                         }
                         else {
-                            if ((previous && ((this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) ||
-                                (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) ||
-                                (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) ||
-                                (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left))) ||
-                                (this.withinX(parent.box) && this.withinY(parent.box))) {
+                            if ((this.withinX(parent.box) && this.withinY(parent.box)) ||
+                                (previous && ((this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) ||
+                                    (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) ||
+                                    (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) ||
+                                    (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)))) {
                                 found = true;
                                 break;
                             }
@@ -3120,9 +3126,10 @@
                 nodes.forEach(node => {
                     deleteMapY(node.id);
                     setMapY((node.initial.depth * -1) - 2, node.id, node);
-                    node.cascade().forEach((child) => {
-                        deleteMapY(child.id);
-                        setMapY((child.initial.depth * -1) - 2, child.id, child);
+                    node.cascade()
+                        .forEach((item) => {
+                        deleteMapY(item.id);
+                        setMapY((item.initial.depth * -1) - 2, item.id, item);
                     });
                 });
             };
@@ -3320,7 +3327,9 @@
                                                             if (floated.size > 0) {
                                                                 maxBottom = Math.max.apply(null, horizontal.filter(node => node.floating).map(node => node.bounds.bottom));
                                                             }
-                                                            if (floatedOpen.size > 0 && !clearedDirection.has('both') && (maxBottom == null || adjacent.bounds.top < maxBottom)) {
+                                                            if (floatedOpen.size > 0 &&
+                                                                !clearedDirection.has('both') && (maxBottom == null ||
+                                                                adjacent.bounds.top < maxBottom)) {
                                                                 if (clearedPartial.has(adjacent)) {
                                                                     const clear = clearedPartial.has(adjacent) ? clearedPartial.get(adjacent) : 'none';
                                                                     if (clear !== 'none') {
@@ -3345,7 +3354,8 @@
                                                                     horizontal.push(adjacent);
                                                                     continue;
                                                                 }
-                                                                if (floated.size === 1 && (!adjacent.floating || floatedOpen.has(adjacent.float))) {
+                                                                if (floated.size === 1 && (!adjacent.floating ||
+                                                                    floatedOpen.has(adjacent.float))) {
                                                                     horizontal.push(adjacent);
                                                                     continue;
                                                                 }
@@ -5047,11 +5057,13 @@
         }
         setBoxSpacing() {
             this.cache.elements.forEach(node => {
-                if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (!getElementCache(node.element, 'boxSpacing') || this.settings.alwaysReevaluateResources)) {
+                if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (!getElementCache(node.element, 'boxSpacing') ||
+                    this.settings.alwaysReevaluateResources)) {
                     const result = getBoxSpacing(node.element);
                     const formatted = {};
                     for (const attr in result) {
-                        if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
+                        if (node.inlineStatic && (attr === 'marginTop' ||
+                            attr === 'marginBottom')) {
                             formatted[attr] = '0px';
                         }
                         else {
@@ -5064,7 +5076,8 @@
         }
         setBoxStyle() {
             this.cache.elements.forEach(node => {
-                if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (!getElementCache(node.element, 'boxStyle') || this.settings.alwaysReevaluateResources)) {
+                if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (!getElementCache(node.element, 'boxStyle') ||
+                    this.settings.alwaysReevaluateResources)) {
                     const boxModel = {
                         borderTop: this.parseBorderStyle,
                         borderRight: this.parseBorderStyle,
@@ -5110,7 +5123,8 @@
         }
         setFontStyle() {
             this.cache.each(node => {
-                if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (!getElementCache(node.element, 'fontStyle') || this.settings.alwaysReevaluateResources)) {
+                if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (!getElementCache(node.element, 'fontStyle') ||
+                    this.settings.alwaysReevaluateResources)) {
                     const backgroundImage = this.hasDrawableBackground(getElementCache(node.element, 'boxStyle'));
                     if (node.length > 0 ||
                         node.imageElement ||
@@ -5227,7 +5241,8 @@
             }
             this.cache.visible.forEach(node => {
                 const element = node.element;
-                if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (!getElementCache(element, 'valueString') || this.settings.alwaysReevaluateResources)) {
+                if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (!getElementCache(element, 'valueString') ||
+                    this.settings.alwaysReevaluateResources)) {
                     let name = '';
                     let value = '';
                     let inlineTrim = false;
@@ -5366,8 +5381,8 @@
                 this.borderVisible(object.borderRight) ||
                 this.borderVisible(object.borderBottom) ||
                 this.borderVisible(object.borderLeft) ||
-                (object.backgroundImage !== '' && object.backgroundImage !== 'none') ||
-                object.borderRadius.length > 0));
+                object.borderRadius.length > 0 ||
+                (object.backgroundImage !== '' && object.backgroundImage !== 'none')));
         }
         parseBorderStyle(value, node, attr) {
             let cssColor = node.css(`${attr}Color`);
@@ -5716,7 +5731,8 @@
 
     class External extends Extension {
         beforeInit(init = false) {
-            if (this.element && (init || this.included())) {
+            if (this.element && (init ||
+                this.included())) {
                 if (!getElementCache(this.element, 'andromeExternalDisplay')) {
                     const display = [];
                     let current = this.element;
@@ -5736,7 +5752,8 @@
             return false;
         }
         afterInit(internal = false) {
-            if (this.element && (internal || this.included())) {
+            if (this.element && (internal ||
+                this.included())) {
                 const data = getElementCache(this.element, 'andromeExternalDisplay');
                 if (data) {
                     const display = data;
@@ -6087,12 +6104,11 @@
     class List extends Extension {
         condition() {
             const children = this.node.children;
-            const floated = new Set(children.slice(1).map(item => item.float));
             return (super.condition() &&
                 children.length > 0 && (children.every(item => item.blockStatic) ||
                 children.every(item => item.inlineElement) ||
-                children.every((item, index) => !item.floating && (index === 0 || index === children.length - 1 || item.blockStatic || (item.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic))) ||
-                (children.every(item => item.float !== 'none' && item.float === children[0].float) && floated.size === 1 && (floated.has('none') || floated.has(children[0].float)))) && (children.some((item) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || this.hasSingleImage(item))) ||
+                (children.every(item => item.floating) && NodeList.floated(children).size === 1) ||
+                children.every((item, index) => !item.floating && (index === 0 || index === children.length - 1 || item.blockStatic || (item.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic)))) && (children.some((item) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || this.hasSingleImage(item))) ||
                 children.every((item) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && this.hasSingleImage(item))));
         }
         processNode() {

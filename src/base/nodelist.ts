@@ -189,8 +189,8 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                         node.css('fontSize') === fontSize &&
                         node.css('fontWeight') === fontWeight &&
                         node.nodeName === baseline[0].nodeName && (
-                            (node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) ||
-                            node.bounds.height === baseline[0].bounds.height
+                          (node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) ||
+                          node.bounds.height === baseline[0].bounds.height
                         )
                     );
                 }

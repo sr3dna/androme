@@ -118,10 +118,10 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                         if (mapWidth[m] == null ||
                             td.bounds.width < mapBounds[m] ||
                             (td.bounds.width === mapBounds[m] && (
-                                (mapWidth[m] === 'auto' && (percentColumnWidth || unitMapWidth)) ||
-                                (percentColumnWidth && unitMapWidth) ||
-                                (percentColumnWidth && isPercent(mapWidth[m]) && convertFloat(columnWidth) > convertFloat(mapWidth[m])) ||
-                                (unitMapWidth && isUnit(columnWidth) && convertInt(columnWidth) > convertInt(mapWidth[m]))
+                              (mapWidth[m] === 'auto' && (percentColumnWidth || unitMapWidth)) ||
+                              (percentColumnWidth && unitMapWidth) ||
+                              (percentColumnWidth && isPercent(mapWidth[m]) && convertFloat(columnWidth) > convertFloat(mapWidth[m])) ||
+                              (unitMapWidth && isUnit(columnWidth) && convertInt(columnWidth) > convertInt(mapWidth[m]))
                            )))
                         {
                             mapWidth[m] = columnWidth;

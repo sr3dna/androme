@@ -277,8 +277,8 @@ export function trimEnd(value: string, char: string) {
     return value.replace(new RegExp(`${char}+$`, 'g'), '');
 }
 
-export function repeat(n: number, value = '\t') {
-    return value.repeat(n);
+export function repeat(many: number, value = '\t') {
+    return value.repeat(many);
 }
 
 export function indexOf(value: string, ...terms: string[]) {
@@ -339,8 +339,8 @@ export function hasValue(value: any) {
     return typeof value !== 'undefined' && value !== null && value.toString().trim() !== '';
 }
 
-export function withinRange(a: number, b: number, n = 0) {
-    return b >= (a - n) && b <= (a + n);
+export function withinRange(a: number, b: number, offset = 0) {
+    return b >= (a - offset) && b <= (a + offset);
 }
 
 export function withinFraction(lower: number, upper: number) {

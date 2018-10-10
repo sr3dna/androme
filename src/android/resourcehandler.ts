@@ -770,8 +770,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     if (stored.border &&
                         this.borderVisible(stored.border) && !(
-                            (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
-                            (parseInt(stored.border.width) > 2 && stored.border.style === 'double')
+                          (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
+                          (parseInt(stored.border.width) > 2 && stored.border.style === 'double')
                        ))
                     {
                         if (backgroundImage.length === 0) {
@@ -1005,7 +1005,12 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 let system = false;
                 const nodeId = node.id;
                 const companion = node.companion;
-                if (companion && !companion.visible && (companion.textElement || companion.tagName === 'LABEL')) {
+                if (companion &&
+                    !companion.visible && (
+                      companion.textElement ||
+                      companion.tagName === 'LABEL'
+                   ))
+                {
                     node = companion as T;
                 }
                 const element = node.element;
@@ -1550,7 +1555,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
         });
         const groove = border.style === 'groove';
-        if (parseInt(border.width) > 1 && (groove || border.style === 'ridge')) {
+        if (parseInt(border.width) > 1 && (
+              groove ||
+              border.style === 'ridge'
+           ))
+        {
             let colorName = border.color;
             let hexValue = ResourceHandler.getColor(colorName as string);
             if (hexValue !== '') {

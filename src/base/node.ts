@@ -601,7 +601,12 @@ export default abstract class Node implements androme.lib.base.Node {
                             this.multiLine = multiLine;
                         }
                         else {
-                            if (!this.hasWidth && (this.blockStatic || this.display === 'table-cell' || hasLineBreak(this._element))) {
+                            if (!this.hasWidth && (
+                                  this.blockStatic ||
+                                  this.display === 'table-cell' ||
+                                  hasLineBreak(this._element)
+                               ))
+                            {
                                 this.multiLine = multiLine;
                             }
                         }
@@ -651,13 +656,13 @@ export default abstract class Node implements androme.lib.base.Node {
                         }
                     }
                     else {
-                        if ((previous && (
-                                (this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) ||
-                                (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) ||
-                                (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) ||
-                                (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left))
-                            ) ||
-                            (this.withinX(parent.box) && this.withinY(parent.box)))
+                        if ((this.withinX(parent.box) && this.withinY(parent.box)) ||
+                            (previous && (
+                              (this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) ||
+                              (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) ||
+                              (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) ||
+                              (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)
+                           )))
                         {
                             found = true;
                             break;
@@ -729,8 +734,8 @@ export default abstract class Node implements androme.lib.base.Node {
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
                 !(node.excluded && !excluded) && (
-                    (pageflow && node.pageflow) ||
-                    (!pageflow && node.siblingflow)
+                  (pageflow && node.pageflow) ||
+                  (!pageflow && node.siblingflow)
                ))
             {
                 return node;
@@ -754,8 +759,8 @@ export default abstract class Node implements androme.lib.base.Node {
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
                 !(node.excluded && !excluded) && (
-                    (pageflow && node.pageflow) ||
-                    (!pageflow && node.siblingflow)
+                  (pageflow && node.pageflow) ||
+                  (!pageflow && node.siblingflow)
                ))
             {
                 return node;
@@ -796,17 +801,17 @@ export default abstract class Node implements androme.lib.base.Node {
             if (this.hasElement) {
                 const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
                 if (this.toInt('width') > 0 && (
-                        overflow === 'scroll' ||
-                        overflowX === 'scroll' ||
-                        (overflowX === 'auto' && this._element.clientWidth !== this._element.scrollWidth)
+                      overflow === 'scroll' ||
+                      overflowX === 'scroll' ||
+                      (overflowX === 'auto' && this._element.clientWidth !== this._element.scrollWidth)
                    ))
                 {
                     this._overflow |= NODE_ALIGNMENT.HORIZONTAL;
                 }
                 if (this.toInt('height') > 0 && (
-                        overflow === 'scroll' ||
-                        overflowY === 'scroll' ||
-                        (overflowY === 'auto' && this._element.clientHeight !== this._element.scrollHeight)
+                      overflow === 'scroll' ||
+                      overflowY === 'scroll' ||
+                      (overflowY === 'auto' && this._element.clientHeight !== this._element.scrollHeight)
                    ))
                 {
                     this._overflow |= NODE_ALIGNMENT.VERTICAL;

@@ -10,7 +10,7 @@ The ratio is about 1 line of HTML to every 10 lines of Android XML when using an
 
 ## Installation (global js variable: androme)
 
-*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML page from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also use your preferred browser Safari/Edge/FireFox. The latest version of Chrome is ideally what you should use to generate the production version of your program. ***
+*** External CSS files cannot be parsed when loading HTML pages using the file:// protocol (hard drive) with Chrome 64 or higher. Loading the HTML page from a web server (http://localhost) or embedding the CSS files into a &lt;style&gt; tag can get you past this security restriction. You can also use your preferred browser Safari/Edge/Firefox. The latest version of Chrome is ideally what you should use to generate the production version of your program. ***
 
 Express server through Node.js is available with a provided default configuration. It is sufficient to load this program locally and can also be used for development. Using Express is highly recommended as you can create a ZIP archive of the generated resources from inside your browser which can be conveniently extracted into your project folder. Installing these dependencies are only required if you plan on using Express as your local web server. 
 
@@ -36,7 +36,7 @@ GitHub
 <script src="/dist/android.framework.min.js"></script>
 <script>
     // optional
-    androme.settings.targetAPI = 19;
+    androme.settings.targetAPI = 26;
     androme.settings.density = 160;
 
     // without Express: use either console.log() or element.innerHTML to display using "write" commands
@@ -124,8 +124,6 @@ androme.settings = {
     outputMaxProcessingTime: 30
 };
 ```
-You can preview the library with the provided /demos/*.html which for the the time being is the only form of documentation.
-
 Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for removing the built-in extension "androme.grid" when the generated UI is not accurate which it will instead use LinearLayout for placement.
 
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using a table to create your layouts is recommended if you are not experienced with HTML.
@@ -1492,6 +1490,6 @@ The attributes "include" and "include-end" can only be applied to elements which
 ```
 ### User Written HTML
 
-Using excessive DIV and FORM tags are not required for mobile devices which can cause additional FrameLayouts or LinearLayouts to be generated. Block level elements are almost always rendered to preserve any CSS styles which are applied to the tag.
+Using excessive DIV tags are not required for mobile devices which can cause additional FrameLayouts or LinearLayouts to be generated. Block level elements are almost always rendered to preserve any CSS styles which are applied to the tag.
 
-If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. Any HTML elements with free-form text might be collapsed into a TextView. You can basically code the HTML any way you want although using reasonable techniques for mobile devices will lead you to a more accurate layout.
+If you plan on using this library it adheres to strict HTML validation rules regarding "block-level" and "inline" elements. You can basically code the HTML any way you want although using reasonable techniques for mobile devices will lead you to a more accurate layout.

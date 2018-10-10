@@ -48,7 +48,11 @@ app.post('/api/savetodisk', (req, res) => {
             });
             archive.pipe(output);
             function finalize() {
-                if (delayed != -1 && (delayed == 0 || Date.now() >= finalizeTime)) {
+                if (delayed != -1 && (
+                      delayed == 0 ||
+                      Date.now() >= finalizeTime
+                   ))
+                {
                     delayed = -1;
                     archive.finalize();
                 }

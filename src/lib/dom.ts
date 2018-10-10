@@ -72,7 +72,12 @@ export function getRangeClientRect(element: Element): [Null<BoxDimensions>, bool
         if (top.size > 1 && bottom.size > 1) {
             result.top = Math.min.apply(null, Array.from(top));
             result.bottom = Math.max.apply(null, Array.from(bottom));
-            if (domRect[domRect.length - 1].top >= domRect[0].bottom && element.textContent && (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent))) {
+            if (domRect[domRect.length - 1].top >= domRect[0].bottom &&
+                element.textContent && (
+                  element.textContent.trim() !== '' ||
+                  /^\s*\n/.test(element.textContent)
+               ))
+            {
                 multiLine = true;
             }
         }
@@ -184,7 +189,13 @@ export function cssFromParent(element: Element, attr: string) {
     if (element instanceof HTMLElement && element.parentElement) {
         const node = getNodeFromElement(element);
         const style = getStyle(element);
-        return (style && style[attr] === getStyle(element.parentElement)[attr] && (!node || !node.styleMap[attr]));
+        return (
+            style &&
+            style[attr] === getStyle(element.parentElement)[attr] && (
+              !node ||
+              !node.styleMap[attr]
+            )
+        );
     }
     return false;
 }
@@ -262,8 +273,8 @@ export function hasLineBreak(element: Null<Element>) {
         return (
             (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) ||
             (/\n/.test(element.textContent || '') && (
-                ['pre', 'pre-wrap'].includes(whiteSpace) ||
-                (fromParent && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
+              ['pre', 'pre-wrap'].includes(whiteSpace) ||
+              (fromParent && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
             ))
         );
     }
@@ -276,8 +287,8 @@ export function isLineBreak(element: Null<Element>, excluded = true) {
         return (
             node.tagName === 'BR' ||
             (excluded && node.block && (
-                node.excluded ||
-                node.textContent.trim() === '')
+              node.excluded ||
+              node.textContent.trim() === '')
             )
         );
     }

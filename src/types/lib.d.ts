@@ -26,13 +26,13 @@ declare global {
             export function trimString(value: string, char: string): string;
             export function trimStart(value: string, char: string): string;
             export function trimEnd(value: string, char: string): string;
-            export function repeat(n: number, value?: string): string;
+            export function repeat(many: number, value?: string): string;
             export function indexOf(value: string, ...terms: string[]): number;
             export function lastIndexOf(value: string, char?: string): string;
             export function sameValue(obj1: {}, obj2: {}, ...attrs: string[]): boolean;
             export function searchObject(obj: ObjectMap<string>, value: string | StringMap): any[][];
             export function hasValue(value: any): boolean;
-            export function withinRange(a: number, b: number, n?: number): boolean;
+            export function withinRange(a: number, b: number, offset?: number): boolean;
             export function withinFraction(lower: number, upper: number): boolean;
             export function overwriteDefault(options: {}, namespace: string, attr: string, value: string): void;
             export function partition<T>(list: T[], predicate: (value: T) => boolean): [T[], T[]];

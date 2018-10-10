@@ -80,11 +80,19 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setBoxSpacing() {
         this.cache.elements.forEach(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (!getElementCache(node.element, 'boxSpacing') || this.settings.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (
+                  !getElementCache(node.element, 'boxSpacing') ||
+                  this.settings.alwaysReevaluateResources
+               ))
+            {
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
                 for (const attr in result) {
-                    if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
+                    if (node.inlineStatic && (
+                          attr === 'marginTop' ||
+                          attr === 'marginBottom'
+                       ))
+                    {
                         formatted[attr] = '0px';
                     }
                     else {
@@ -98,7 +106,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setBoxStyle() {
         this.cache.elements.forEach(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (!getElementCache(node.element, 'boxStyle') || this.settings.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (
+                  !getElementCache(node.element, 'boxStyle') ||
+                  this.settings.alwaysReevaluateResources
+               ))
+            {
                 const boxModel = {
                     borderTop: this.parseBorderStyle,
                     borderRight: this.parseBorderStyle,
@@ -127,8 +139,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 }
                 if (Array.isArray(result.backgroundColor) &&
                     !node.has('backgroundColor') && (
-                        node.cssParent('backgroundColor', false, true) === result.backgroundColor[1] ||
-                        (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))
+                      node.cssParent('backgroundColor', false, true) === result.backgroundColor[1] ||
+                      (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))
                    ))
                 {
                     result.backgroundColor.length = 0;
@@ -149,7 +161,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setFontStyle() {
         this.cache.each(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (!getElementCache(node.element, 'fontStyle') || this.settings.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (
+                  !getElementCache(node.element, 'fontStyle') ||
+                  this.settings.alwaysReevaluateResources
+               ))
+            {
                 const backgroundImage = this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
                 if (node.length > 0 ||
                     node.imageElement ||
@@ -162,9 +178,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     const color = parseRGBA(node.css('color'), node.css('opacity'));
                     const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
                     if (backgroundColor.length > 0 && (
-                            backgroundImage ||
-                            (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) ||
-                            (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor'))
+                          backgroundImage ||
+                          (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) ||
+                          (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor'))
                        ))
                     {
                         backgroundColor.length = 0;
@@ -271,7 +287,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         }
         this.cache.visible.forEach(node => {
             const element = node.element;
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (!getElementCache(element, 'valueString') || this.settings.alwaysReevaluateResources)) {
+            if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (
+                  !getElementCache(element, 'valueString') ||
+                  this.settings.alwaysReevaluateResources
+               ))
+            {
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
@@ -351,10 +371,10 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             if (!/^\s+$/.test(value)) {
                                 value = value.replace(/^\s+/, (
                                     previousSibling && (
-                                        previousSibling.block ||
-                                        previousSibling.lineBreak ||
-                                        (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) ||
-                                        (node.multiLine && hasLineBreak(element))
+                                      previousSibling.block ||
+                                      previousSibling.lineBreak ||
+                                      (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) ||
+                                      (node.multiLine && hasLineBreak(element))
                                     ) ? ''
                                       : '&#160;')
                                 );
@@ -418,13 +438,14 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public hasDrawableBackground(object?: BoxStyle) {
-        return (object != null && (
-                this.borderVisible(object.borderTop) ||
-                this.borderVisible(object.borderRight) ||
-                this.borderVisible(object.borderBottom) ||
-                this.borderVisible(object.borderLeft) ||
-                (object.backgroundImage !== '' && object.backgroundImage !== 'none') ||
-                object.borderRadius.length > 0
+        return (
+            object != null && (
+              this.borderVisible(object.borderTop) ||
+              this.borderVisible(object.borderRight) ||
+              this.borderVisible(object.borderBottom) ||
+              this.borderVisible(object.borderLeft) ||
+              object.borderRadius.length > 0 ||
+              (object.backgroundImage !== '' && object.backgroundImage !== 'none')
             )
         );
     }

@@ -39,7 +39,7 @@ interface AppBase<T extends androme.lib.base.Node> {
     settings: Settings;
     viewController: androme.lib.base.Controller<T>;
     resourceHandler: androme.lib.base.Resource<T>;
-    nodeObject: Constructor<T>;
+    nodeObject: NodeConstructor<T>;
     builtInExtensions: ObjectMap<androme.lib.base.Extension<T>>;
 }
 
@@ -84,4 +84,8 @@ type ResourceMap = {
     dimens: Map<string, string>;
     drawables: Map<string, string>;
     images: Map<string, {}>;
+};
+
+type NodeConstructor<T> = {
+    new (id: number, element?: Element): T;
 };
