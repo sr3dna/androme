@@ -84,6 +84,7 @@ export enum NODE_STANDARD {
     SCROLL_HORIZONTAL,
     SCROLL_VERTICAL
 }
+
 export enum BOX_STANDARD {
     MARGIN_TOP = 2,
     MARGIN_RIGHT = 4,

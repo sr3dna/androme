@@ -5,8 +5,8 @@ import { deleteElementCache, getElementCache, getStyle, setElementCache } from '
 export default class External<T extends Node> extends Extension<T> {
     public beforeInit(init = false) {
         if (this.element && (
-              init ||
-              this.included()
+                init ||
+                this.included()
            ))
         {
             if (!getElementCache(this.element, 'andromeExternalDisplay')) {
@@ -31,8 +31,8 @@ export default class External<T extends Node> extends Extension<T> {
 
     public afterInit(internal = false) {
         if (this.element && (
-              internal ||
-              this.included()
+                internal ||
+                this.included()
            ))
         {
             const data = getElementCache(this.element, 'andromeExternalDisplay');

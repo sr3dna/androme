@@ -81,8 +81,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public setBoxSpacing() {
         this.cache.elements.forEach(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (
-                  !getElementCache(node.element, 'boxSpacing') ||
-                  this.settings.alwaysReevaluateResources
+                    !getElementCache(node.element, 'boxSpacing') ||
+                    this.settings.alwaysReevaluateResources
                ))
             {
                 const result = getBoxSpacing(node.element);
@@ -107,8 +107,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public setBoxStyle() {
         this.cache.elements.forEach(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (
-                  !getElementCache(node.element, 'boxStyle') ||
-                  this.settings.alwaysReevaluateResources
+                    !getElementCache(node.element, 'boxStyle') ||
+                    this.settings.alwaysReevaluateResources
                ))
             {
                 const boxModel = {
@@ -139,8 +139,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 }
                 if (Array.isArray(result.backgroundColor) &&
                     !node.has('backgroundColor') && (
-                      node.cssParent('backgroundColor', false, true) === result.backgroundColor[1] ||
-                      (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))
+                        node.cssParent('backgroundColor', false, true) === result.backgroundColor[1] ||
+                        (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))
                    ))
                 {
                     result.backgroundColor.length = 0;
@@ -162,8 +162,8 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public setFontStyle() {
         this.cache.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (
-                  !getElementCache(node.element, 'fontStyle') ||
-                  this.settings.alwaysReevaluateResources
+                    !getElementCache(node.element, 'fontStyle') ||
+                    this.settings.alwaysReevaluateResources
                ))
             {
                 const backgroundImage = this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
@@ -178,9 +178,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     const color = parseRGBA(node.css('color'), node.css('opacity'));
                     const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
                     if (backgroundColor.length > 0 && (
-                          backgroundImage ||
-                          (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) ||
-                          (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor'))
+                            backgroundImage ||
+                            (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) ||
+                            (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor'))
                        ))
                     {
                         backgroundColor.length = 0;
@@ -371,12 +371,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             if (!/^\s+$/.test(value)) {
                                 value = value.replace(/^\s+/, (
                                     previousSibling && (
-                                      previousSibling.block ||
-                                      previousSibling.lineBreak ||
-                                      (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) ||
-                                      (node.multiLine && hasLineBreak(element))
-                                    ) ? ''
-                                      : '&#160;')
+                                        previousSibling.block ||
+                                        previousSibling.lineBreak ||
+                                        (previousSibling.element instanceof HTMLElement && previousSibling.element.innerText.length > 1 && previousSpaceEnd) ||
+                                        (node.multiLine && hasLineBreak(element))
+                                    ) ? '' : '&#160;')
                                 );
                                 value = value.replace(/\s+$/, nextSibling && nextSibling.lineBreak ? '' : '&#160;');
                             }
@@ -394,43 +393,42 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public setOptionArray() {
-        this.cache.list
-            .filter(node =>
-                node.visible &&
-                node.tagName === 'SELECT' &&
-                !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
-            )
-            .forEach(node => {
-                const element = <HTMLSelectElement> node.element;
-                if (!getElementCache(element, 'optionArray') || this.settings.alwaysReevaluateResources) {
-                    const stringArray: string[] = [];
-                    let numberArray: Null<string[]> = [];
-                    let i = -1;
-                    while (++i < element.children.length) {
-                        const item = <HTMLOptionElement> element.children[i];
-                        const value = item.text.trim();
-                        if (value !== '') {
-                            if (numberArray && stringArray.length === 0 && isNumber(value)) {
-                                numberArray.push(value);
+        this.cache.list.filter(node =>
+            node.visible &&
+            node.tagName === 'SELECT' &&
+            !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
+        )
+        .forEach(node => {
+            const element = <HTMLSelectElement> node.element;
+            if (!getElementCache(element, 'optionArray') || this.settings.alwaysReevaluateResources) {
+                const stringArray: string[] = [];
+                let numberArray: Null<string[]> = [];
+                let i = -1;
+                while (++i < element.children.length) {
+                    const item = <HTMLOptionElement> element.children[i];
+                    const value = item.text.trim();
+                    if (value !== '') {
+                        if (numberArray && stringArray.length === 0 && isNumber(value)) {
+                            numberArray.push(value);
+                        }
+                        else {
+                            if (numberArray && numberArray.length > 0) {
+                                i = -1;
+                                numberArray = null;
+                                continue;
                             }
-                            else {
-                                if (numberArray && numberArray.length > 0) {
-                                    i = -1;
-                                    numberArray = null;
-                                    continue;
-                                }
-                                if (value !== '') {
-                                    stringArray.push(value);
-                                }
+                            if (value !== '') {
+                                stringArray.push(value);
                             }
                         }
                     }
-                    setElementCache(element, 'optionArray', {
-                        stringArray: stringArray.length > 0 ? stringArray : null,
-                        numberArray: numberArray && numberArray.length > 0 ? numberArray : null
-                    });
                 }
-            });
+                setElementCache(element, 'optionArray', {
+                    stringArray: stringArray.length > 0 ? stringArray : null,
+                    numberArray: numberArray && numberArray.length > 0 ? numberArray : null
+                });
+            }
+        });
     }
 
     public borderVisible(border?: BorderAttribute) {

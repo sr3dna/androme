@@ -219,10 +219,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         value = value.toUpperCase().trim();
         const opaque = parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}` : value;
         if (value !== '') {
-            let colorName = '';
-            if (!$resource.STORED.colors.has(opaque)) {
+            let colorName = $resource.STORED.colors.get(opaque) || '';
+            if (colorName === '') {
                 const color = $color.getColorNearest(value);
-                if (color !== '') {
+                if (color) {
                     color.name = $util.camelToLowerCase(color.name);
                     if (value === color.hex && value === opaque) {
                         colorName = color.name;
@@ -232,9 +232,6 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     $resource.STORED.colors.set(opaque, colorName);
                 }
-            }
-            else {
-                colorName = $resource.STORED.colors.get(opaque) as string;
             }
             return colorName;
         }
@@ -765,8 +762,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     if (stored.border &&
                         this.borderVisible(stored.border) && !(
-                          (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
-                          (parseInt(stored.border.width) > 2 && stored.border.style === 'double')
+                            (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
+                            (parseInt(stored.border.width) > 2 && stored.border.style === 'double')
                        ))
                     {
                         if (backgroundImage.length === 0) {
@@ -1000,8 +997,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 const companion = node.companion;
                 if (companion &&
                     !companion.visible && (
-                      companion.textElement ||
-                      companion.tagName === 'LABEL'
+                        companion.textElement ||
+                        companion.tagName === 'LABEL'
                    ))
                 {
                     node = companion as T;
@@ -1098,8 +1095,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         .forEach(node => {
             const element = <HTMLImageElement> node.element;
             if (!$dom.getElementCache(element, 'imageSource') || this.settings.alwaysReevaluateResources) {
-                const result = node.imageElement ? ResourceHandler.addImageSrcSet(element)
-                                                    : ResourceHandler.addImage({ 'mdpi': element.src });
+                const result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
                 if (result !== '') {
                     const method = METHOD_ANDROID['imageSource'];
                     node.formatted($util.formatString(method['src'], result), node.renderExtension.size === 0);
@@ -1478,7 +1474,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     if (!hasInset || isInset) {
                         return [{
                             width: stored.border.width,
-                            borderStyle: this.getBorderStyle(stored.border, (isInset ? direction : -1))
+                            borderStyle: this.getBorderStyle(stored.border, isInset ? direction : -1)
                         }];
                     }
                     else if (hasInset) {
@@ -1523,11 +1519,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         });
         const groove = border.style === 'groove';
         if (parseInt(border.width) > 1 && (
-              groove ||
-              border.style === 'ridge'
+                groove ||
+                border.style === 'ridge'
            ))
         {
-            let colorName = border.color as string;
+            let colorName = $util.isString(border.color) ? border.color : '';
             let hexValue = ResourceHandler.getColor(colorName);
             if (hexValue !== '') {
                 let opacity = '1';

@@ -1,4 +1,3 @@
-
 import { SettingsAndroid } from './lib/types';
 import View from './view';
 import ViewController from './viewcontroller';
@@ -38,23 +37,23 @@ let initialized = false;
 
 let application: androme.lib.base.Application<T>;
 let viewController: ViewController<T>;
-let fileHandler: FileHandler<T>;
 let resourceHandler: ResourceHandler<T>;
 
 let settings: SettingsAndroid;
-let builtInExtensions: ObjectMap<androme.lib.base.Extension<T>>;
-
 const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
 
 const appBase: AppFramework<T> = {
     create() {
         const EXT_NAME = androme.lib.constant.EXT_NAME;
         settings = Object.assign({}, Settings);
+        const fileHandler = new FileHandler<T>(settings);
         application = new androme.lib.base.Application(framework);
         viewController = new ViewController<T>();
-        fileHandler = new FileHandler<T>(settings);
         resourceHandler = new ResourceHandler<T>(fileHandler);
-        builtInExtensions = {
+        application.registerController(viewController);
+        application.registerResource(resourceHandler);
+        application.nodeObject = View;
+        application.builtInExtensions = {
             [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
             [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
             [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
@@ -71,24 +70,16 @@ const appBase: AppFramework<T> = {
         };
         initialized = true;
         return {
-            framework,
             application,
-            viewController,
-            resourceHandler,
-            nodeObject: View,
-            builtInExtensions,
+            framework,
             settings
         };
     },
     cached() {
         if (initialized) {
             return {
-                framework,
                 application,
-                viewController,
-                resourceHandler,
-                nodeObject: View,
-                builtInExtensions,
+                framework,
                 settings
             };
         }

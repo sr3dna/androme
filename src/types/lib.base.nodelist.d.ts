@@ -25,10 +25,11 @@ declare global {
             public prepend(...nodes: T[]): void;
             public remove(start: number, deleteCount?: number): T[];
             public clone(): NodeList<T>;
-            public sort(predicate: (a: T, b: T) => number): NodeList<T>;
+            public sort(predicate: (a: T, b: T) => number): this;
+            public sliceSort(predicate: (a: T, b: T) => number): NodeList<T>;
             public partition(predicate: (value: T) => boolean): NodeList<T>[];
             public each(predicate: (value: T, index?: number) => void): void;
-            public find(attr: string | FindPredicate<T>, value?: any): Null<T>;
+            public find(attr: string | FindPredicate<T>, value?: any): T | undefined;
             public clear(): void;
             public sortAsc(...attrs: string[]): this;
             public sortDesc(...attrs: string[]): this;

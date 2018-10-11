@@ -94,12 +94,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
     }
 
     get display() {
-        if (this.has('display')) {
-            return this.css('display');
-        }
-        else {
-            return this.children.every(node => node.blockStatic) || this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.PERCENT) ? 'block' : this.children.every(node => node.inline) ? 'inline' : 'inline-block';
-        }
+        return this.css('display') || (this.children.every(node => node.blockStatic) || this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.PERCENT) ? 'block' : this.children.every(node => node.inline) ? 'inline' : 'inline-block');
     }
 
     get baseElement() {

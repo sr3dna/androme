@@ -18,10 +18,7 @@ export default class Origin<T extends Node> extends Extension<T> {
                     else {
                         const left = current.toInt('left');
                         const right = current.toInt('right');
-                        return (
-                            (left < 0 && node.marginLeft >= Math.abs(left)) ||
-                            (right < 0 && Math.abs(right) >= current.bounds.width)
-                        );
+                        return (left < 0 && node.marginLeft >= Math.abs(left)) || (right < 0 && Math.abs(right) >= current.bounds.width);
                     }
                 }))
             {
@@ -54,12 +51,11 @@ export default class Origin<T extends Node> extends Extension<T> {
                 if (marginRight.length > 0) {
                     const [sectionLeft, sectionRight] = new androme.lib.base.NodeList(node.children).partition((item: T) => !marginRight.includes(item));
                     if (sectionLeft.length > 0 && sectionRight.length > 0) {
-                        if (node.autoMarginLeft) {
-                            node.css('marginLeft', node.style.marginLeft as string);
+                        if (node.style.marginLeft && node.autoMarginLeft) {
+                            node.css('marginLeft', node.style.marginLeft);
                         }
                         node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
-                        const widthLeft: number = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width')
-                                                                                       : Math.max.apply(null, sectionRight.list.map(item => item.bounds.width));
+                        const widthLeft: number = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : Math.max.apply(null, sectionRight.list.map(item => item.bounds.width));
                         const widthRight: number = Math.max.apply(null, sectionRight.list.map(item => Math.abs(item.toInt('right'))));
                         sectionLeft.each(item => {
                             if (item.pageflow && !item.hasWidth) {

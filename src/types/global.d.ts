@@ -22,7 +22,7 @@ interface ArrayObject<T> extends Array<T> {
     [key: number]: T;
 }
 
-type FunctionMap = ObjectMap<(...args: any[]) => any>;
+type FunctionMap<T> = ObjectMap<(...args: any[]) => T>;
 
 type FindPredicate<T> = (value: T, index?: number) => boolean;
 

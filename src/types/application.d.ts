@@ -22,25 +22,21 @@ interface Settings {
 
 type SettingsInternal = {
     layout: {
-        directory: string;
+        pathname: string;
         fileExtension: string;
     }
 };
 
 interface AppFramework<T extends androme.lib.base.Node> {
-    system: FunctionMap;
+    system: FunctionMap<any>;
     create(): AppBase<T>;
     cached(): AppBase<T>;
 }
 
 interface AppBase<T extends androme.lib.base.Node> {
+    application: androme.lib.base.Application<T>;
     framework: number;
-    application?: androme.lib.base.Application<T>;
     settings: Settings;
-    viewController: androme.lib.base.Controller<T>;
-    resourceHandler: androme.lib.base.Resource<T>;
-    nodeObject: NodeConstructor<T>;
-    builtInExtensions: ObjectMap<androme.lib.base.Extension<T>>;
 }
 
 interface AppCurrent<T extends androme.lib.base.Node> {

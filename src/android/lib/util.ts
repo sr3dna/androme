@@ -64,13 +64,16 @@ export function replaceUnit(value: string, { density = 160, convertPixels = 'dp'
     }
 }
 
-export function calculateBias(start: number, end: number, accurracy: number) {
-    return (
-        parseFloat(
-            Math.max(start !== 0 ? (end === 0 ? 1 : (start / (start + end))) : 0, 0)
-                .toFixed(accurracy)
-        )
-    );
+export function calculateBias(start: number, end: number, accuracy: number) {
+    if (start === 0) {
+        return 0;
+    }
+    else if (end === 0) {
+        return 1;
+    }
+    else {
+        return parseFloat(Math.max(start / (start + end), 0).toFixed(accuracy));
+    }
 }
 
 export function parseRTL(value: string, { supportRTL = true, targetAPI = BUILD_ANDROID.JELLYBEAN_1 }) {

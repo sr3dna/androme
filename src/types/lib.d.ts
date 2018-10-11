@@ -75,11 +75,11 @@ declare global {
             export function createTemplate(template: ObjectMap<string>, data: {}, index?: string, include?: {}, exclude?: {}): string;
         }
         namespace color {
-            export function getColorNearest(value: string): '' | Color;
-            export function getColorByName(value: string): '' | Color;
+            export function getColorNearest(value: string): Color | null;
+            export function getColorByName(value: string): Color | null;
             export function parseRGBA(value: string, opacity?: string): string[];
             export function convertToHex(value: string): string;
-            export function convertToRGB(value: string): Null<RGB>;
+            export function convertToRGB(value: string): RGB | null;
             export function parseHex(value: string): string;
             export function reduceToRGB(value: string, percent: number): string;
         }

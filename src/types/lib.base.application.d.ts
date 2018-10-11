@@ -1,6 +1,6 @@
 declare global {
     namespace androme.lib.base {
-        export class Application<T extends Node> implements AppBase<T> {
+        export class Application<T extends Node> {
             public settings: Settings;
             public viewController: Controller<T>;
             public resourceHandler: Resource<T>;
@@ -26,7 +26,7 @@ declare global {
             public registerExtension(ext: Extension<Node>): void;
             public finalize(): void;
             public reset(): void;
-            public setStyleMap(cacheImage: Map<string, Image>);
+            public parseDocument(...elements: Null<string | HTMLElement>[]): FunctionMap<void>;
             public setConstraints(): void;
             public resetController(): void;
             public setResources(): void;
@@ -35,19 +35,20 @@ declare global {
             public createDocument(): void;
             public writeFrameLayout(node: T, parent: T, children?: boolean): string;
             public writeLinearLayout(node: T, parent: T, horizontal: boolean): string;
-            public writeGridLayout(node: T, parent: T, columns: number, rows?: number): string;
+            public writeGridLayout(node: T, parent: T, columnCount: number, rowCount?: number): string;
             public writeRelativeLayout(node: T, parent: T): string;
             public writeConstraintLayout(node: T, parent: T): string;
             public writeNode(node: T, parent: T, nodeName: number | string): string;
             public writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>): string;
             public writeFrameLayoutVertical(group: Null<T>, parent: T, nodes: T[], cleared: Map<T, string>): string;
-            public getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan?: number): string;
-            public updateLayout(content: string, pathname?: string, documentRoot?: boolean): void;
-            public addInclude(filename: string, content: string): void;
+            public renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
+            public createLayoutFile(pathname: string, filename: string, content: string, documentRoot?: boolean): void;
+            public createIncludeFile(filename: string, content: string): void;
             public addRenderQueue(id: string, views: string[]): void;
             public sortByAlignment(children: T[], parent?: T, alignmentType?: number, preserve?: boolean): T[];
             public saveSortOrder(id: string | number, nodes: T[]): void;
-            public getExtension(name: string): Extension<T> | undefined;
+            public getExtension(name: string): Null<Extension<T>>;
+            public saveAllToDisk(): void;
             public toString(): string;
         }
     }

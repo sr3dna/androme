@@ -171,27 +171,25 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         let fontFamily: string;
         let fontSize: string;
         let fontWeight: string;
-        return (
-            baseline.filter((node, index) => {
-                if (index === 0) {
-                    fontFamily = node.css('fontFamily');
-                    fontSize = node.css('fontSize');
-                    fontWeight = node.css('fontWeight');
-                    return true;
-                }
-                else {
-                    return (
-                        node.css('fontFamily') === fontFamily &&
-                        node.css('fontSize') === fontSize &&
-                        node.css('fontWeight') === fontWeight &&
-                        node.nodeName === baseline[0].nodeName && (
-                          (node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) ||
-                          node.bounds.height === baseline[0].bounds.height
-                        )
-                    );
-                }
-            })
-        );
+        return baseline.filter((node, index) => {
+            if (index === 0) {
+                fontFamily = node.css('fontFamily');
+                fontSize = node.css('fontSize');
+                fontWeight = node.css('fontWeight');
+                return true;
+            }
+            else {
+                return (
+                    node.css('fontFamily') === fontFamily &&
+                    node.css('fontSize') === fontSize &&
+                    node.css('fontWeight') === fontWeight &&
+                    node.nodeName === baseline[0].nodeName && (
+                        (node.lineHeight > 0 && node.lineHeight === baseline[0].lineHeight) ||
+                        node.bounds.height === baseline[0].bounds.height
+                    )
+                );
+            }
+        });
     }
 
     public static linearX<T extends Node>(list: T[], traverse = true) {
@@ -222,18 +220,16 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                     }
                 }
                 if (horizontal || !traverse) {
-                    return (
-                        nodes.every(node =>
-                            !nodes.some(sibling => {
-                                if (sibling !== node &&
-                                    node.linear.top >= sibling.linear.bottom &&
-                                    node.intersectY(sibling.linear))
-                                {
-                                    return true;
-                                }
-                                return false;
-                            })
-                        )
+                    return nodes.every(node =>
+                        !nodes.some(sibling => {
+                            if (sibling !== node &&
+                                node.linear.top >= sibling.linear.bottom &&
+                                node.intersectY(sibling.linear))
+                            {
+                                return true;
+                            }
+                            return false;
+                        })
                     );
                 }
                 return false;
@@ -251,20 +247,18 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                 const parent = this.documentParent(nodes);
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
                     const result = NodeList.clearedSiblings(parent);
-                    return (
-                        nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
-                            if (index > 0 && !node.lineBreak) {
-                                if (node.companion && node.companion.documentParent === parent) {
-                                    node = node.companion as T;
-                                }
-                                const previous = node.previousSibling() as T;
-                                if (previous) {
-                                    return node.alignedVertically(previous, result);
-                                }
+                    return nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
+                        if (index > 0 && !node.lineBreak) {
+                            if (node.companion && node.companion.documentParent === parent) {
+                                node = node.companion as T;
                             }
-                            return true;
-                        })
-                    );
+                            const previous = node.previousSibling() as T;
+                            if (previous) {
+                                return node.alignedVertically(previous, result);
+                            }
+                        }
+                        return true;
+                    });
                 }
                 return false;
         }
@@ -343,10 +337,6 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         return new NodeList(this._list.slice());
     }
 
-    public sort(predicate: (a: T, b: T) => number) {
-        return new NodeList(this._list.slice().sort(predicate));
-    }
-
     public partition(predicate: (value: T) => boolean) {
         const [valid, invalid]: T[][] = partition(this._list, predicate);
         return [new NodeList(valid), new NodeList(invalid)];
@@ -365,6 +355,15 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
 
     public clear() {
         this._list.length = 0;
+    }
+
+    public sort(predicate: (a: T, b: T) => number) {
+        this._list.sort(predicate);
+        return this;
+    }
+
+    public sliceSort(predicate: (a: T, b: T) => number) {
+        return new NodeList(this._list.slice().sort(predicate));
     }
 
     public sortAsc(...attrs: string[]) {

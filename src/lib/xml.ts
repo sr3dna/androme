@@ -16,20 +16,17 @@ export function replacePlaceholder(value: string, id: string | number, content: 
 export function replaceIndent(value: string, depth: number) {
     if (depth >= 0) {
         let indent = -1;
-        return (
-            value.split('\n')
-                .map(line => {
-                    const match = /^({.*?})(\t*)(<.*)/.exec(line);
-                    if (match) {
-                        if (indent === -1) {
-                            indent = match[2].length;
-                        }
-                        return match[1] + repeat(depth + (match[2].length - indent)) + match[3];
-                    }
-                    return line;
-                })
-                .join('\n')
-        );
+        return value.split('\n').map(line => {
+            const match = /^({.*?})(\t*)(<.*)/.exec(line);
+            if (match) {
+                if (indent === -1) {
+                    indent = match[2].length;
+                }
+                return match[1] + repeat(depth + (match[2].length - indent)) + match[3];
+            }
+            return line;
+        })
+        .join('\n');
     }
     return value;
 }
@@ -37,15 +34,14 @@ export function replaceIndent(value: string, depth: number) {
 export function replaceTab(value: string, { insertSpaces = 4 }, preserve = false) {
     if (insertSpaces > 0) {
         if (preserve) {
-            value = value.split('\n')
-                .map(line => {
-                    const match = line.match(/^(\t+)(.*)$/);
-                    if (match) {
-                        return ' '.repeat(insertSpaces * match[1].length) + match[2];
-                    }
-                    return line;
-                })
-                .join('\n');
+            value = value.split('\n').map(line => {
+                const match = line.match(/^(\t+)(.*)$/);
+                if (match) {
+                    return ' '.repeat(insertSpaces * match[1].length) + match[2];
+                }
+                return line;
+            })
+            .join('\n');
         }
         else {
             value = value.replace(/\t/g, ' '.repeat(insertSpaces));

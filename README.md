@@ -201,11 +201,13 @@ There is no official documentation as this project is still in early development
 ```javascript
 .settings // see user preferences section
 
+setFramework(module: {}, cached: boolean); // install html converter
+
 parseDocument() // see installation section
 
 ready() // boolean indicating if parseDocument can be called
 close() // close current session preceding write to disk or local output
-reset() // clear cached layouts and reopen session
+reset() // clear cached layouts and reopen new session
 
 saveAllToDisk() // download entire project as zip archive - requires Node.js and Express
 

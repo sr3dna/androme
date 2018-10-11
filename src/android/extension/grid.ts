@@ -1,6 +1,5 @@
 import { GridCellData, GridData } from '../../extension/types/data';
 import View from '../view';
-import { NODE_ANDROID } from '../lib/constant';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
@@ -50,15 +49,7 @@ export default class <T extends View> extends androme.lib.base.extensions.Grid<T
                                     else {
                                         this.application.viewController.appendAfter(
                                             item.id,
-                                            this.application.viewController.renderNodeStatic(
-                                                NODE_ANDROID.SPACE,
-                                                item.renderDepth,
-                                                {
-                                                    app: { layout_columnSpan: mainData.columnCount.toString() }
-                                                },
-                                                'match_parent',
-                                                $util.formatPX(heightBottom)
-                                            )
+                                            this.application.viewController.renderColumnSpace(item.renderDepth, 'match_parent', $util.formatPX(heightBottom), mainData.columnCount)
                                         );
                                     }
                                 }

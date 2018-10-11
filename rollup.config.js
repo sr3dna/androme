@@ -33,7 +33,12 @@ export default [
         },
         plugins: [
             babel(),
-            terser()
+            terser({
+                compress: {
+                    pure_getters: true,
+                    unsafe: true
+                }
+            })
         ]
     },
     {
@@ -46,7 +51,13 @@ export default [
         },
         plugins: [
             babel(),
-            terser()
+            babel(),
+            terser({
+                compress: {
+                    pure_getters: true,
+                    unsafe: true
+                }
+            })
         ]
     }
 ];

@@ -89,9 +89,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                 let layoutMarginLeft = left > 0 ? $util.formatPX(left) : '';
                 const options: ViewAttribute = {
                     android: {},
-                    app: {
-                        layout_columnWeight: columnWeight
-                    }
+                    app: { layout_columnWeight: columnWeight }
                 };
                 if (positionInside) {
                     if (layoutMarginLeft !== '') {

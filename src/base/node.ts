@@ -505,13 +505,11 @@ export default abstract class Node implements androme.lib.base.Node {
                 if (this._element.parentElement) {
                     exclude += '|' + trimNull(this._element.parentElement.dataset[`${item[0]}Child`]);
                 }
-                exclude.split('|')
-                    .map(value => value.toUpperCase().trim())
-                    .forEach(value => {
-                        if (item[1][value] != null) {
-                            this[item[0]] |= item[1][value];
-                        }
-                    });
+                exclude.split('|').map(value => value.toUpperCase().trim()).forEach(value => {
+                    if (item[1][value] != null) {
+                        this[item[0]] |= item[1][value];
+                    }
+                });
             });
         }
     }
@@ -657,10 +655,10 @@ export default abstract class Node implements androme.lib.base.Node {
                     else {
                         if ((this.withinX(parent.box) && this.withinY(parent.box)) ||
                             (previous && (
-                              (this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) ||
-                              (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) ||
-                              (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) ||
-                              (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)
+                                (this.linear.top >= parent.linear.top && this.linear.top < previous.linear.top) ||
+                                (this.linear.right <= parent.linear.right && this.linear.right > previous.linear.right) ||
+                                (this.linear.bottom <= parent.linear.bottom && this.linear.bottom > previous.linear.bottom) ||
+                                (this.linear.left >= parent.linear.left && this.linear.left < previous.linear.left)
                            )))
                         {
                             found = true;
@@ -683,7 +681,7 @@ export default abstract class Node implements androme.lib.base.Node {
         this.children = this.children.filter(child => child !== node);
     }
 
-    public renderAppend(node: T) {
+    public appendRendered(node: T) {
         if (this.renderChildren.indexOf(node) === -1) {
             node.renderIndex = this.renderChildren.length;
             this.renderChildren.push(node);
@@ -733,8 +731,8 @@ export default abstract class Node implements androme.lib.base.Node {
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
                 !(node.excluded && !excluded) && (
-                  (pageflow && node.pageflow) ||
-                  (!pageflow && node.siblingflow)
+                    (pageflow && node.pageflow) ||
+                    (!pageflow && node.siblingflow)
                ))
             {
                 return node;
@@ -758,8 +756,8 @@ export default abstract class Node implements androme.lib.base.Node {
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
                 !(node.excluded && !excluded) && (
-                  (pageflow && node.pageflow) ||
-                  (!pageflow && node.siblingflow)
+                    (pageflow && node.pageflow) ||
+                    (!pageflow && node.siblingflow)
                ))
             {
                 return node;
@@ -782,8 +780,7 @@ export default abstract class Node implements androme.lib.base.Node {
         if (this.hasElement) {
             const value = this.css(attr);
             if (isPercent(value)) {
-                return this.style[attr] && this.style[attr] !== value ? convertInt(this.style[attr])
-                                                                      : this.documentParent.box[(direction === 'Left' || direction === 'Right' ? 'width' : 'height')] * (convertInt(value) / 100);
+                return this.style[attr] && this.style[attr] !== value ? convertInt(this.style[attr]) : this.documentParent.box[(direction === 'Left' || direction === 'Right' ? 'width' : 'height')] * (convertInt(value) / 100);
             }
             else {
                 return convertInt(value);
@@ -800,17 +797,17 @@ export default abstract class Node implements androme.lib.base.Node {
             if (this.hasElement) {
                 const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
                 if (this.toInt('width') > 0 && (
-                      overflow === 'scroll' ||
-                      overflowX === 'scroll' ||
-                      (overflowX === 'auto' && this._element.clientWidth !== this._element.scrollWidth)
+                        overflow === 'scroll' ||
+                        overflowX === 'scroll' ||
+                        (overflowX === 'auto' && this._element.clientWidth !== this._element.scrollWidth)
                    ))
                 {
                     this._overflow |= NODE_ALIGNMENT.HORIZONTAL;
                 }
                 if (this.toInt('height') > 0 && (
-                      overflow === 'scroll' ||
-                      overflowY === 'scroll' ||
-                      (overflowY === 'auto' && this._element.clientHeight !== this._element.scrollHeight)
+                        overflow === 'scroll' ||
+                        overflowY === 'scroll' ||
+                        (overflowY === 'auto' && this._element.clientHeight !== this._element.scrollHeight)
                    ))
                 {
                     this._overflow |= NODE_ALIGNMENT.VERTICAL;
@@ -915,7 +912,7 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     get extension() {
-        return hasValue(this.dataset.ext) ? (this.dataset.ext as string).split(',')[0].trim() : '';
+        return this.dataset.ext ? this.dataset.ext.split(',')[0].trim() : '';
     }
 
     get flex(): Flexbox {

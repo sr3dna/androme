@@ -15,11 +15,11 @@ declare global {
             public renderNodeStatic(nodeName: number | string, depth: number, options?: {}, width?: string, height?: string, node?: T, children?: boolean): string;
             public renderInclude(node: T, parent: T, name: string): string;
             public renderMerge(name: string, content: string[]): string;
+            public renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
             public baseRenderDepth(name: string): number;
             public setConstraints(): void;
             public setBoxSpacing(data: ViewData<NodeList<T>>): void;
             public setDimensions(data: ViewData<NodeList<T>>): void;
-            public getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan?: number): string;
             public finalize(data: ViewData<NodeList<T>>): void;
             public reset(): void;
             public appendRenderQueue(output: string): string;

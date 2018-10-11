@@ -71,8 +71,8 @@ export function getRangeClientRect(element: Element): [Null<BoxDimensions>, bool
             result.bottom = Math.max.apply(null, Array.from(bottom));
             if (domRect[domRect.length - 1].top >= domRect[0].bottom &&
                 element.textContent && (
-                  element.textContent.trim() !== '' ||
-                  /^\s*\n/.test(element.textContent)
+                    element.textContent.trim() !== '' ||
+                    /^\s*\n/.test(element.textContent)
                ))
             {
                 multiLine = true;
@@ -106,7 +106,7 @@ export function getStyle(element: Null<Element>, cache = true): CSSStyleDeclarat
                     return node.style;
                 }
                 else if (node.plainText) {
-                    return <any> node.styleMap;
+                    return node.styleMap as any;
                 }
             }
         }
@@ -189,8 +189,8 @@ export function cssFromParent(element: Element, attr: string) {
         return (
             style &&
             style[attr] === getStyle(element.parentElement)[attr] && (
-              !node ||
-              !node.styleMap[attr]
+                !node ||
+                !node.styleMap[attr]
             )
         );
     }
@@ -204,20 +204,18 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
         if (depth++ === maxDepth) {
             return true;
         }
-        return (
-            elements.some((item: Element) => {
-                if (item.nodeName === '#text') {
-                    if (isPlainText(item, whiteSpace) || (cssParent(item, 'whiteSpace', 'pre', 'pre-wrap') && item.textContent && item.textContent !== '')) {
-                        valid = true;
-                        return true;
-                    }
+        return elements.some((item: Element) => {
+            if (item.nodeName === '#text') {
+                if (isPlainText(item, whiteSpace) || (cssParent(item, 'whiteSpace', 'pre', 'pre-wrap') && item.textContent && item.textContent !== '')) {
+                    valid = true;
+                    return true;
                 }
-                else if (item instanceof HTMLElement && item.childNodes.length > 0) {
-                    return findFreeForm(Array.from(item.childNodes));
-                }
-                return false;
-            })
-        );
+            }
+            else if (item instanceof HTMLElement && item.childNodes.length > 0) {
+                return findFreeForm(Array.from(item.childNodes));
+            }
+            return false;
+        });
     }
     if (element.nodeName === '#text') {
         maxDepth = 0;
@@ -348,18 +346,16 @@ export function isElementVisible(element: Element) {
                     }
                     if (valid) {
                         if (element.children.length > 0) {
-                            return (
-                                Array.from(element.children).some((item: Element) => {
-                                    const style = getStyle(item);
-                                    const float = style.cssFloat;
-                                    const position = style.position;
-                                    return (
-                                        (position !== 'static' && position !== 'initial') ||
-                                        float === 'left' ||
-                                        float === 'right'
-                                    );
-                                })
-                            );
+                            return Array.from(element.children).some((item: Element) => {
+                                const style = getStyle(item);
+                                const float = style.cssFloat;
+                                const position = style.position;
+                                return (
+                                    (position !== 'static' && position !== 'initial') ||
+                                    float === 'left' ||
+                                    float === 'right'
+                                );
+                            });
                         }
                     }
                 }

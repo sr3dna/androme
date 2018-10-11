@@ -26,7 +26,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     public processNode(mapX: LayoutMapX<T>): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;
-        const columnBalance = this.options.columnBalance;
+        const columnBalance = this.options.columnBalance === true || false;
         let output = '';
         let columns: T[][] = [];
         const mainData: GridData = {
@@ -45,7 +45,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 columns.push(children);
             });
             const base = columns[
-                dimensions.findIndex((item: number[]) => {
+                dimensions.findIndex(item => {
                     const column = dimensions.reduce((a, b) => {
                         if (a.length === b.length) {
                             const sumA = a.reduce((c, d) => c + d, 0);
@@ -56,7 +56,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                             return a.length < b.length ? a : b;
                         }
                     });
-                    return (item === column);
+                    return item === column;
                 })
             ];
             if (base && base.length > 1) {

@@ -31,8 +31,7 @@ export default abstract class Nav<T extends Node> extends Extension<T> {
             }
             if (valid) {
                 Array.from(element.querySelectorAll('NAV')).forEach((item: HTMLElement) => {
-                    const style = getStyle(element);
-                    if (style.display === 'none') {
+                    if (getStyle(element).display === 'none') {
                         setElementCache(item, 'andromeExternalDisplay', 'none');
                         item.style.display = 'block';
                     }

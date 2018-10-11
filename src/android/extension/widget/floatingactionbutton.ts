@@ -56,7 +56,7 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
             if (target) {
                 let anchor = parent.stringId;
                 if (parent.controlName === VIEW_SUPPORT.TOOLBAR) {
-                    const outerParent = parent.data(WIDGET_NAME.TOOLBAR, 'outerParent') as string;
+                    const outerParent: string = parent.data(WIDGET_NAME.TOOLBAR, 'outerParent');
                     if (outerParent) {
                         anchor = outerParent;
                     }

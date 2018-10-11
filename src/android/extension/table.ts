@@ -1,5 +1,4 @@
 import View from '../view';
-import { NODE_ANDROID } from '../lib/constant';
 
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
@@ -83,15 +82,7 @@ export default class <T extends View> extends androme.lib.base.extensions.Table<
             const parent = this.parent as T;
             this.application.viewController.appendAfter(
                 node.id,
-                this.application.viewController.renderNodeStatic(
-                    NODE_ANDROID.SPACE,
-                    parent.renderDepth + 1,
-                    {
-                        app: { layout_columnSpan: spaceSpan.toString() }
-                    },
-                    'wrap_content',
-                    'wrap_content'
-                )
+                this.application.viewController.renderColumnSpace(parent.renderDepth + 1, 'wrap_content', 'wrap_content', spaceSpan)
             );
         }
         return { output: '', complete: true };

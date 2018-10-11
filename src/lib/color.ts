@@ -143,22 +143,18 @@ const X11_CSS3 = {
 };
 
 const HSL_SORTED: Color[] = [];
-for (const i in X11_CSS3) {
-    const x11: Color = X11_CSS3[i];
-    for (const j in x11) {
-        const rgb = convertToRGB(x11[j]);
-        if (rgb) {
-            x11.rgb = rgb;
-            x11.hsl = convertToHSL(x11.rgb);
-        }
-        HSL_SORTED.push({
-            name: i,
-            rgb: x11.rgb,
-            hex: x11.hex,
-            hsl: x11.hsl
-        });
+
+for (const name in X11_CSS3) {
+    const x11: Color = X11_CSS3[name];
+    x11.name = name;
+    const rgb = convertToRGB(x11['hex']);
+    if (rgb) {
+        x11.rgb = rgb;
+        x11.hsl = convertToHSL(x11.rgb);
+        HSL_SORTED.push(x11);
     }
 }
+
 HSL_SORTED.sort(sortHSL);
 
 function convertToHSL({ r = 0, g = 0, b = 0 }) {
@@ -237,7 +233,7 @@ export function getColorNearest(value: string) {
                 return result[Math.min(index + 1, result.length - 1)];
             }
         }
-        return '';
+        return null;
     }
 }
 
@@ -247,13 +243,13 @@ export function getColorByName(value: string) {
             return <Color> X11_CSS3[color];
         }
     }
-    return '';
+    return null;
 }
 
 export function parseRGBA(value: string, opacity = '1'): string[] {
     if (value !== '') {
         const color = getColorByName(value);
-        if (color !== '') {
+        if (color) {
             return [color.hex, formatRGB(<RGB> color.rgb), opacity];
         }
         const rgb = convertToRGB(value);

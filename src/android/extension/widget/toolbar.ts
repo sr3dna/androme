@@ -267,8 +267,8 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
     public processChild(): ExtensionResult {
         const node = this.node;
         if (node.imageElement && (
-              $util.hasValue(node.dataset.navigationIcon) ||
-              $util.hasValue(node.dataset.collapseIcon)
+                $util.hasValue(node.dataset.navigationIcon) ||
+                $util.hasValue(node.dataset.collapseIcon)
            ))
         {
             node.hide();

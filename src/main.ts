@@ -29,21 +29,7 @@ type T = Node;
 let main: androme.lib.base.Application<T>;
 let framework: AppFramework<T>;
 let settings: Settings = {} as any;
-let system: FunctionMap = {} as any;
-
-const cacheRoot = new Set<HTMLElement>();
-const cacheImage = new Map<string, Image>();
-
-function setImageCache(element: HTMLImageElement) {
-    if (element && util.hasValue(element.src)) {
-        const image: Image = {
-            width: element.naturalWidth,
-            height: element.naturalHeight,
-            url: element.src
-        };
-        cacheImage.set(element.src, image);
-    }
-}
+let system: FunctionMap<any> = {} as any;
 
 export function setFramework(module: AppFramework<T>, cached = false) {
     if (framework !== module) {
@@ -54,17 +40,13 @@ export function setFramework(module: AppFramework<T>, cached = false) {
         else {
             settings = Object.assign(appBase.settings, settings);
         }
-        main = appBase.application ? appBase.application : new androme.lib.base.Application(appBase.framework);
+        main = appBase.application;
         main.settings = settings;
-        main.builtInExtensions = appBase.builtInExtensions;
-        main.nodeObject = appBase.nodeObject;
-        main.registerController(appBase.viewController);
-        main.registerResource(appBase.resourceHandler);
         if (Array.isArray(settings.builtInExtensions)) {
             const register = new Set<androme.lib.base.Extension<T>>();
             const extensions = main.builtInExtensions;
             for (let namespace of settings.builtInExtensions) {
-                namespace = namespace.toLowerCase().trim();
+                namespace = namespace.trim();
                 if (extensions[namespace]) {
                     register.add(extensions[namespace]);
                 }
@@ -86,133 +68,11 @@ export function setFramework(module: AppFramework<T>, cached = false) {
     reset();
 }
 
-export function parseDocument(...elements: Null<string | HTMLElement>[]) {
-    if (!main || main.closed) {
-        return;
+export function parseDocument(...elements: Null<string | HTMLElement>[]): FunctionMap<void> {
+    if (main && !main.closed) {
+        return main.parseDocument(...elements);
     }
-    let __THEN: () => void;
-    main.elements.clear();
-    main.loading = false;
-    main.setStyleMap(cacheImage);
-    if (main.appName === '' && elements.length === 0) {
-        elements.push(document.body);
-    }
-    for (let element of elements) {
-        if (typeof element === 'string') {
-            element = document.getElementById(element);
-        }
-        if (element instanceof HTMLElement) {
-            main.elements.add(element);
-        }
-    }
-    const rootElement = main.elements.values().next().value;
-    function parseResume() {
-        main.loading = false;
-        if (main.settings.preloadImages && rootElement) {
-            Array.from(rootElement.getElementsByClassName('androme.preload')).forEach(element => rootElement.removeChild(element));
-        }
-        main.resourceHandler.imageDimensions = cacheImage;
-        for (const element of main.elements) {
-            if (main.appName === '') {
-                if (element.id === '') {
-                    element.id = 'untitled';
-                }
-                main.appName = element.id;
-            }
-            let filename = util.trimNull(element.dataset.filename).replace(new RegExp(`\.${main.viewController.settingsInternal.layout.fileExtension}$`), '');
-            if (filename === '') {
-                if (element.id === '') {
-                    element.id = `document_${main.size}`;
-                }
-                filename = element.id;
-            }
-            const iteration = util.convertInt(element.dataset.iteration) + 1;
-            element.dataset.iteration = iteration.toString();
-            element.dataset.layoutName = util.convertWord(iteration > 1 ? `${filename}_${iteration}` : filename);
-            if (main.initCache(element)) {
-                main.createDocument();
-                main.setConstraints();
-                main.setResources();
-                cacheRoot.add(element);
-            }
-        }
-        if (typeof __THEN === 'function') {
-            __THEN.call(main);
-        }
-    }
-    if (main.settings.preloadImages && rootElement) {
-        for (const image of cacheImage.values()) {
-            if (image.width === 0 && image.height === 0 && image.url) {
-                const imageElement = <HTMLImageElement> document.createElement('IMG');
-                imageElement.src = image.url;
-                if (imageElement.complete && imageElement.naturalWidth > 0 && imageElement.naturalHeight > 0) {
-                    image.width = imageElement.naturalWidth;
-                    image.height = imageElement.naturalHeight;
-                }
-                else {
-                    imageElement.className = 'androme.preload';
-                    imageElement.style.display = 'none';
-                    rootElement.appendChild(imageElement);
-                }
-            }
-        }
-    }
-    const images: HTMLImageElement[] = Array.from(main.elements).map(element => {
-        const queue: HTMLImageElement[] = [];
-        Array.from(element.querySelectorAll('IMG')).forEach((image: HTMLImageElement) => {
-            if (image.complete) {
-                setImageCache(image);
-            }
-            else {
-                queue.push(image);
-            }
-        });
-        return queue;
-    })
-    .reduce((a, b) => a.concat(b), []);
-    if (images.length === 0) {
-        parseResume();
-    }
-    else {
-        main.loading = true;
-        const queue = images.map(image => {
-            return (
-                new Promise((resolve, reject) => {
-                    image.onload = resolve;
-                    image.onerror = reject;
-                })
-            );
-        });
-        Promise.all(queue)
-            .then((result: Event[]) => {
-                if (Array.isArray(result)) {
-                    result.forEach(item => {
-                        try {
-                            setImageCache(<HTMLImageElement> item.srcElement);
-                        }
-                        catch {
-                        }
-                    });
-                }
-                parseResume();
-            })
-            .catch((error: Event) => {
-                const message = error.srcElement ? (<HTMLImageElement> error.srcElement).src : '';
-                if (!util.hasValue(message) || confirm(`FAIL: ${message}`)) {
-                    parseResume();
-                }
-            });
-    }
-    return {
-        then: (resolve: () => void) => {
-            if (main.loading) {
-                __THEN = resolve;
-            }
-            else {
-                resolve();
-            }
-        }
-    };
+    return { then: (...args: any[]) => {} };
 }
 
 export function registerExtension(ext: Extension<T>) {
@@ -260,11 +120,6 @@ export function close() {
 
 export function reset() {
     if (main) {
-        for (const element of cacheRoot) {
-            delete element.dataset.iteration;
-            delete element.dataset.layoutName;
-        }
-        cacheRoot.clear();
         main.reset();
     }
 }
@@ -274,7 +129,7 @@ export function saveAllToDisk() {
         if (!main.closed) {
             main.finalize();
         }
-        main.resourceHandler.file.saveAllToDisk(main.viewData);
+        main.saveAllToDisk();
     }
 }
 

@@ -100,10 +100,10 @@ declare global {
             public readonly dir: string;
             public readonly nodes: T[];
             public readonly length: number;
-            public readonly previousElementSibling: Element | null;
-            public readonly nextElementSibling: Element | null;
-            public readonly firstElementChild: Element | null;
-            public readonly lastElementChild: Element | null;
+            public readonly previousElementSibling: Null<Element>;
+            public readonly nextElementSibling: Null<Element>;
+            public readonly firstElementChild: Null<Element>;
+            public readonly lastElementChild: Null<Element>;
             public readonly center: Point;
             public parent: T;
             public controlName: string;
@@ -158,9 +158,9 @@ declare global {
             public setBounds(calibrate?: boolean): void;
             public setDimensions(region?: string[]): void;
             public setMultiLine(): void;
-            public getParentElementAsNode(negative?: boolean, containerDefault?: T): Null<T>;
+            public getParentElementAsNode(negative?: boolean, containerDefault?: T): T | null;
             public remove(node: T): void;
-            public renderAppend(node: T): void;
+            public appendRendered(node: T): void;
             public resetBox(region: number, node?: T, negative?: boolean): void;
             public removeElement(): void;
             public previousSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): T | null;
