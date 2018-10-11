@@ -13,12 +13,12 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         return (
             this.included() ||
             (node.children.length > 1 && (
-              (node.display === 'table' && node.children.every(item => item.display === 'table-row' && item.children.every(child => child.display === 'table-cell'))) ||
-              (node.children.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
-                node.css('listStyle') === 'none' ||
-                node.children.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
-                (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.textElement))
-              ))
+                (node.display === 'table' && node.children.every(item => item.display === 'table-row' && item.children.every(child => child.display === 'table-cell'))) ||
+                (node.children.every(item => item.pageflow && !item.has('backgroundColor') && !item.has('backgroundImage') && (item.borderTopWidth + item.borderRightWidth + item.borderBottomWidth + item.borderLeftWidth === 0) && (!item.inlineElement || item.blockStatic)) && (
+                    node.css('listStyle') === 'none' ||
+                    node.children.every(item => item.display === 'list-item' && item.css('listStyleType') === 'none') ||
+                    (!hasValue(node.dataset.ext) && !node.flex.enabled && node.children.length > 1 && node.children.some(item => item.children.length > 1) && !node.children.some(item => item.display === 'list-item' || item.textElement))
+                ))
             ))
         );
     }
@@ -36,7 +36,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         };
         if (columnBalance) {
             const dimensions: number[][] = [];
-            node.each((item: T, index: number) => {
+            node.each((item, index: number) => {
                 const children = item.children as T[];
                 dimensions[index] = [];
                 for (let l = 0; l < children.length; l++) {
@@ -44,23 +44,21 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                 }
                 columns.push(children);
             });
-            const base =
-                columns[
-                    dimensions.findIndex((item: number[]) => {
-                        const column =
-                            dimensions.reduce((a, b) => {
-                                if (a.length === b.length) {
-                                    const sumA = a.reduce((c, d) => c + d, 0);
-                                    const sumB = b.reduce((c, d) => c + d, 0);
-                                    return sumA < sumB ? a : b;
-                                }
-                                else {
-                                    return a.length < b.length ? a : b;
-                                }
-                            });
-                        return (item === column);
-                    })
-                ];
+            const base = columns[
+                dimensions.findIndex((item: number[]) => {
+                    const column = dimensions.reduce((a, b) => {
+                        if (a.length === b.length) {
+                            const sumA = a.reduce((c, d) => c + d, 0);
+                            const sumB = b.reduce((c, d) => c + d, 0);
+                            return sumA < sumB ? a : b;
+                        }
+                        else {
+                            return a.length < b.length ? a : b;
+                        }
+                    });
+                    return (item === column);
+                })
+            ];
             if (base && base.length > 1) {
                 let maxIndex = -1;
                 let assigned: number[] = [];
@@ -74,7 +72,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                                 found.push(l);
                             }
                             else {
-                                const result = columns[m].findIndex((item: T, index) => index >= l && Math.floor(item.bounds.width) === Math.floor(bounds.width) && index < columns[m].length - 1);
+                                const result = columns[m].findIndex((item, index) => index >= l && Math.floor(item.bounds.width) === Math.floor(bounds.width) && index < columns[m].length - 1);
                                 if (result !== -1) {
                                     found.push(result);
                                 }
@@ -148,10 +146,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                             nextX.element.style.cssFloat = 'right';
                         }
                         function getRowIndex() {
-                            return columns[0].findIndex(item =>
-                                withinFraction(item.linear.top, nextX.linear.top) ||
-                                (nextX.linear.top >= item.linear.top && nextX.linear.bottom <= item.linear.bottom)
-                            );
+                            return columns[0].findIndex(item => withinFraction(item.linear.top, nextX.linear.top) || (nextX.linear.top >= item.linear.top && nextX.linear.bottom <= item.linear.bottom));
                         }
                         if (index === 0 || left >= columnRight[index - 1]) {
                             if (columns[index] == null) {
@@ -170,8 +165,8 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                         else {
                             const current = columns.length - 1;
                             if (columns[current]) {
-                                const minLeft = columns[current].reduce((a: number, b: T) => Math.min(a, b.linear.left), Number.MAX_VALUE);
-                                const maxRight = columns[current].reduce((a: number, b: T) => Math.max(a, b.linear.right), 0);
+                                const minLeft = columns[current].reduce((a: number, b) => Math.min(a, b.linear.left), Number.MAX_VALUE);
+                                const maxRight = columns[current].reduce((a: number, b) => Math.max(a, b.linear.right), 0);
                                 if (left > minLeft && right > maxRight) {
                                     const filtered = columns.filter(item => item);
                                     const rowIndex = getRowIndex();
@@ -314,21 +309,18 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             }
             else {
                 const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];
-                siblings =
-                    Array
-                        .from(node.documentParent.element.children)
-                        .map(element => {
-                            const item = getNodeFromElement(element);
-                            return (
-                                item &&
-                                item.visible &&
-                                !item.excluded &&
-                                !item.rendered &&
-                                item.linear.left >= node.linear.right &&
-                                item.linear.right <= columnEnd ? item : null
-                            );
-                        })
-                        .filter(item => item) as T[];
+                siblings = Array.from(node.documentParent.element.children).map(element => {
+                    const item = getNodeFromElement<T>(element);
+                    return (
+                        item &&
+                        item.visible &&
+                        !item.excluded &&
+                        !item.rendered &&
+                        item.linear.left >= node.linear.right &&
+                        item.linear.right <= columnEnd ? item : null
+                    );
+                })
+                .filter(item => item) as T[];
             }
             if (siblings && siblings.length > 0) {
                 siblings.unshift(node);

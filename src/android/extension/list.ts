@@ -1,5 +1,5 @@
 import { ListData } from '../../extension/types/data';
-import { SettingsAndroid } from '../lib/types';
+import { SettingsAndroid, ViewAttribute } from '../lib/types';
 import View from '../view';
 import ResourceHandler from '../resourcehandler';
 import { delimitUnit, parseRTL } from '../lib/util';
@@ -28,12 +28,11 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
             else if (parent.children[0] === node) {
                 paddingLeft += parentLeft;
             }
-            const ordinal =
-                node.children.find(item =>
-                    item.float === 'left' &&
-                    $util.convertInt(item.cssInitial('marginLeft', true)) < 0 &&
-                    Math.abs($util.convertInt(item.cssInitial('marginLeft', true))) <= $util.convertInt(item.documentParent.cssInitial('marginLeft', true))
-                ) as T;
+            const ordinal = <T> node.children.find(item =>
+                item.float === 'left' &&
+                $util.convertInt(item.cssInitial('marginLeft', true)) < 0 &&
+                Math.abs($util.convertInt(item.cssInitial('marginLeft', true))) <= $util.convertInt(item.documentParent.cssInitial('marginLeft', true))
+            );
             if (ordinal && mainData.ordinal === '') {
                 let output = '';
                 ordinal.parent = parent;
@@ -87,19 +86,16 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                         return 10;
                     }
                 })();
-                let marginLeftValue = left > 0 ? $util.formatPX(left) : '';
-                const paddingLeftValue = gravity === '' && image === '' ? $util.formatPX(paddingRight)
-                                                                        : (paddingLeft === 20 ? '2px' : '');
-                const paddingRightValue = gravity === 'right' && paddingLeft > 20 ? $util.formatPX(paddingRight) : '';
-                const options = {
+                let layoutMarginLeft = left > 0 ? $util.formatPX(left) : '';
+                const options: ViewAttribute = {
                     android: {},
                     app: {
                         layout_columnWeight: columnWeight
                     }
                 };
                 if (positionInside) {
-                    if (marginLeftValue !== '') {
-                        marginLeftValue = delimitUnit(node.nodeName, parseRTL('margin_left', settings), marginLeftValue, settings);
+                    if (layoutMarginLeft !== '') {
+                        layoutMarginLeft = delimitUnit(node.nodeName, parseRTL('margin_left', settings), layoutMarginLeft, settings);
                     }
                     controller.prependBefore(
                         node.id,
@@ -109,7 +105,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                             {
                                 android: {
                                     minWidth,
-                                    [parseRTL('layout_marginLeft', settings)]: marginLeftValue
+                                    [parseRTL('layout_marginLeft', settings)]: layoutMarginLeft
                                 },
                                 app: { layout_columnWeight: columnWeight }
                             },
@@ -125,9 +121,9 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                     Object.assign(options.android, {
                         minWidth,
                         gravity: paddingLeft > 20 ? parseRTL(gravity, settings) : '',
-                        [parseRTL('layout_marginLeft', settings)]: marginLeftValue,
-                        [parseRTL('paddingLeft', settings)]: paddingLeftValue,
-                        [parseRTL('paddingRight', settings)]: paddingRightValue,
+                        [parseRTL('layout_marginLeft', settings)]: layoutMarginLeft,
+                        [parseRTL('paddingLeft', settings)]: gravity === '' && image === '' ? $util.formatPX(paddingRight) : (paddingLeft === 20 ? '2px' : ''),
+                        [parseRTL('paddingRight', settings)]: gravity === 'right' && paddingLeft > 20 ? $util.formatPX(paddingRight) : '',
                         paddingTop: node.paddingTop > 0 ? $util.formatPX(node.paddingTop) : ''
                     });
                     if (columnCount === 3) {
@@ -164,7 +160,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                         node.id,
                         controller.renderNodeStatic(
                             image !== '' ? $enum.NODE_STANDARD.IMAGE
-                                         : mainData.ordinal !== '' ? $enum.NODE_STANDARD.TEXT : $enum.NODE_STANDARD.SPACE,
+                                         : (mainData.ordinal !== '' ? $enum.NODE_STANDARD.TEXT : $enum.NODE_STANDARD.SPACE),
                             parent.renderDepth + 1,
                             options,
                             'wrap_content',

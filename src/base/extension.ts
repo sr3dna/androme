@@ -51,15 +51,13 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
 
     public beforeInit(internal = false) {
         if (!internal && this.included()) {
-            this.dependencies
-                .filter(item => item.init)
-                .forEach(item => {
-                    const ext = this.application.getExtension(item.name);
-                    if (ext) {
-                        ext.setTarget(this.node, this.parent, <HTMLElement> this.element);
-                        ext.beforeInit(true);
-                    }
-                });
+            this.dependencies.filter(item => item.init).forEach(item => {
+                const ext = this.application.getExtension(item.name);
+                if (ext) {
+                    ext.setTarget(this.node, this.parent, <HTMLElement> this.element);
+                    ext.beforeInit(true);
+                }
+            });
         }
     }
 
@@ -69,15 +67,13 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
 
     public afterInit(internal = false) {
         if (!internal && this.included()) {
-            this.dependencies
-                .filter(item => item.init)
-                .forEach(item => {
-                    const ext = this.application.getExtension(item.name);
-                    if (ext) {
-                        ext.setTarget(this.node, this.parent, <HTMLElement> this.element);
-                        ext.afterInit(true);
-                    }
-                });
+            this.dependencies.filter(item => item.init).forEach(item => {
+                const ext = this.application.getExtension(item.name);
+                if (ext) {
+                    ext.setTarget(this.node, this.parent, <HTMLElement> this.element);
+                    ext.afterInit(true);
+                }
+            });
         }
     }
 

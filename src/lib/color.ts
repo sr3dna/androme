@@ -161,14 +161,6 @@ for (const i in X11_CSS3) {
 }
 HSL_SORTED.sort(sortHSL);
 
-function convertHexToHSL(value: string) {
-    const rgb = convertToRGB(value);
-    if (rgb) {
-        return convertToHSL(rgb);
-    }
-    return null;
-}
-
 function convertToHSL({ r = 0, g = 0, b = 0 }) {
     r = r / 255;
     g = g / 255;
@@ -230,17 +222,20 @@ export function getColorNearest(value: string) {
         return result[index];
     }
     else {
-        const hsl = convertHexToHSL(value);
-        if (hsl) {
-            result.push({
-                name: '',
-                hsl,
-                rgb: { r: -1, g: -1, b: -1 },
-                hex: ''
-            });
-            result.sort(sortHSL);
-            index = result.findIndex(item => item.name === '');
-            return result[Math.min(index + 1, result.length - 1)];
+        const rgb = convertToRGB(value);
+        if (rgb) {
+            const hsl = convertToHSL(rgb);
+            if (hsl) {
+                result.push({
+                    name: '',
+                    hsl,
+                    rgb: { r: -1, g: -1, b: -1 },
+                    hex: ''
+                });
+                result.sort(sortHSL);
+                index = result.findIndex(item => item.name === '');
+                return result[Math.min(index + 1, result.length - 1)];
+            }
         }
         return '';
     }

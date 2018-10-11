@@ -26,6 +26,7 @@ declare global {
             public registerExtension(ext: Extension<Node>): void;
             public finalize(): void;
             public reset(): void;
+            public setStyleMap(cacheImage: Map<string, Image>);
             public setConstraints(): void;
             public resetController(): void;
             public setResources(): void;
@@ -41,7 +42,6 @@ declare global {
             public writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>): string;
             public writeFrameLayoutVertical(group: Null<T>, parent: T, nodes: T[], cleared: Map<T, string>): string;
             public getEmptySpacer(nodeType: number, depth: number, width?: string, height?: string, columnSpan?: number): string;
-            public createLayout(filename: string): void;
             public updateLayout(content: string, pathname?: string, documentRoot?: boolean): void;
             public addInclude(filename: string, content: string): void;
             public addRenderQueue(id: string, views: string[]): void;

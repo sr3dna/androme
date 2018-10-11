@@ -26,15 +26,13 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
 
     public init(element: HTMLElement) {
         if (this.included(element)) {
-            Array
-                .from(element.children)
-                .some((item: HTMLElement) => {
-                    if (item.tagName === 'NAV' && !$util.includes(item.dataset.ext, $const.EXT_NAME.EXTERNAL)) {
-                        item.dataset.ext = ($util.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const.EXT_NAME.EXTERNAL;
-                        return true;
-                    }
-                    return false;
-                });
+            Array.from(element.children).some((item: HTMLElement) => {
+                if (item.tagName === 'NAV' && !$util.includes(item.dataset.ext, $const.EXT_NAME.EXTERNAL)) {
+                    item.dataset.ext = ($util.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const.EXT_NAME.EXTERNAL;
+                    return true;
+                }
+                return false;
+            });
             if (element.dataset.target) {
                 const target = document.getElementById(element.dataset.target);
                 if (target &&
@@ -64,48 +62,46 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         let output = '';
         let depth = target ? 0 : node.depth;
         let children = node.children.filter(item => item.auto).length;
-        Array
-            .from(node.element.children)
-            .forEach((element: HTMLElement) => {
-                if (element.tagName === 'IMG') {
-                    if ($util.hasValue(element.dataset.navigationIcon)) {
-                        const result = ResourceHandler.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
-                        if (result !== '') {
-                            $util.overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
-                            if ($dom.getStyle(element).display !== 'none') {
-                                children--;
-                            }
-                        }
-                    }
-                    if ($util.hasValue(element.dataset.collapseIcon)) {
-                        const result = ResourceHandler.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
-                        if (result !== '') {
-                            $util.overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
-                            if ($dom.getStyle(element).display !== 'none') {
-                                children--;
-                            }
+        Array.from(node.element.children).forEach((element: HTMLElement) => {
+            if (element.tagName === 'IMG') {
+                if ($util.hasValue(element.dataset.navigationIcon)) {
+                    const result = ResourceHandler.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
+                    if (result !== '') {
+                        $util.overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
+                        if ($dom.getStyle(element).display !== 'none') {
+                            children--;
                         }
                     }
                 }
-                if ($util.hasValue(element.dataset.target)) {
-                    children--;
-                }
-                else {
-                    const targetNode = $dom.getNodeFromElement<T>(element);
-                    if (targetNode) {
-                        switch (element.dataset.targetModule) {
-                            case 'appBar':
-                                appBarChildren.push(targetNode);
-                                children--;
-                                break;
-                            case 'collapsingToolbar':
-                                collapsingToolbarChildren.push(targetNode);
-                                children--;
-                                break;
+                if ($util.hasValue(element.dataset.collapseIcon)) {
+                    const result = ResourceHandler.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.MENU);
+                    if (result !== '') {
+                        $util.overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
+                        if ($dom.getStyle(element).display !== 'none') {
+                            children--;
                         }
                     }
                 }
-            });
+            }
+            if ($util.hasValue(element.dataset.target)) {
+                children--;
+            }
+            else {
+                const targetNode = $dom.getNodeFromElement<T>(element);
+                if (targetNode) {
+                    switch (element.dataset.targetModule) {
+                        case 'appBar':
+                            appBarChildren.push(targetNode);
+                            children--;
+                            break;
+                        case 'collapsingToolbar':
+                            collapsingToolbarChildren.push(targetNode);
+                            children--;
+                            break;
+                    }
+                }
+            }
+        });
         const hasCollapsingToolbar = options.collapsingToolbar != null || collapsingToolbarChildren.length > 0;
         const hasAppBar = options.appBar != null || appBarChildren.length > 0 || hasCollapsingToolbar;
         let appBarOverlay = '';
@@ -142,16 +138,15 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
             }
         }
         const innerDepth = depth + (hasAppBar ? 1 : 0) + (hasCollapsingToolbar ? 1 : 0);
-        output =
-            controller.renderNodeStatic(
-                VIEW_SUPPORT.TOOLBAR,
-                innerDepth,
-                optionsToolbar,
-                'match_parent',
-                'wrap_content',
-                node,
-                children > 0
-            );
+        output = controller.renderNodeStatic(
+            VIEW_SUPPORT.TOOLBAR,
+            innerDepth,
+            optionsToolbar,
+            'match_parent',
+            'wrap_content',
+            node,
+            children > 0
+        );
         if (hasCollapsingToolbar) {
             if (backgroundImage) {
                 const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
@@ -175,15 +170,13 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
                 $util.overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
                 $util.overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
                 $util.overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
-                output =
-                    controller.renderNodeStatic(
-                        NODE_ANDROID.IMAGE,
-                        innerDepth,
-                        optionsBackgroundImage,
-                        'match_parent',
-                        'match_parent'
-                    )
-                    + output;
+                output = controller.renderNodeStatic(
+                    NODE_ANDROID.IMAGE,
+                    innerDepth,
+                    optionsBackgroundImage,
+                    'match_parent',
+                    'match_parent'
+                ) + output;
                 node.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
             }
         }
@@ -208,16 +201,15 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
             appBarNode.parent = node.parent;
             appBarNode.nodeId = stripId(optionsAppBar.android.id);
             this.application.cache.append(appBarNode);
-            outer =
-                controller.renderNodeStatic(
-                    VIEW_SUPPORT.APPBAR,
-                    target ? -1 : depth,
-                    optionsAppBar,
-                    'match_parent',
-                    'wrap_content',
-                    appBarNode,
-                    true
-                );
+            outer = controller.renderNodeStatic(
+                VIEW_SUPPORT.APPBAR,
+                target ? -1 : depth,
+                optionsAppBar,
+                'match_parent',
+                'wrap_content',
+                appBarNode,
+                true
+            );
             if (hasCollapsingToolbar) {
                 depth++;
                 $util.overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsingtoolbar`);
@@ -232,23 +224,21 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
                 if (collapsingToolbarNode) {
                     collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
                     this.application.cache.append(collapsingToolbarNode);
-                    const content =
-                        controller.renderNodeStatic(
-                            VIEW_SUPPORT.COLLAPSING_TOOLBAR,
-                            target && !hasAppBar ? -1 : depth,
-                            optionsCollapsingToolbar,
-                            'match_parent',
-                            'match_parent',
-                            collapsingToolbarNode,
-                            true
-                        );
+                    const content = controller.renderNodeStatic(
+                        VIEW_SUPPORT.COLLAPSING_TOOLBAR,
+                        target && !hasAppBar ? -1 : depth,
+                        optionsCollapsingToolbar,
+                        'match_parent',
+                        'match_parent',
+                        collapsingToolbarNode,
+                        true
+                    );
                     outer = $xml.replacePlaceholder(outer, appBarNode.id, content);
                 }
             }
         }
         if (appBarNode) {
-            output = collapsingToolbarNode ? $xml.replacePlaceholder(outer, collapsingToolbarNode.id, output)
-                                           : $xml.replacePlaceholder(outer, appBarNode.id, output);
+            output = $xml.replacePlaceholder(outer, collapsingToolbarNode ? collapsingToolbarNode.id : appBarNode.id, output);
             appBarNode.render(target ? appBarNode : parent);
             if (!collapsingToolbarNode) {
                 node.parent = appBarNode;

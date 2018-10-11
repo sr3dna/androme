@@ -14,14 +14,19 @@ export interface SettingsAndroid extends Settings {
     convertPixels: string;
 }
 
+export type ViewAttribute = {
+    android: StringMap;
+    app: StringMap;
+};
+
 export type Constraint = {
-    horizontal: boolean,
-    vertical: boolean,
+    horizontal: boolean;
+    vertical: boolean;
     current: {
         adjacent: string,
         orientation: string,
         overwrite: boolean;
-    },
+    };
     layoutWidth: boolean;
     layoutHeight: boolean;
     layoutHorizontal: boolean;

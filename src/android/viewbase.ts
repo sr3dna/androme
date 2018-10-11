@@ -7,7 +7,7 @@ import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
-import $nodelist = androme.lib.base.NodeList;
+import NodeList = androme.lib.base.NodeList;
 
 export default (Base: Constructor<androme.lib.base.Node>) => {
     return class View extends Base {
@@ -23,7 +23,12 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         public static getCustomizationValue(api: number, tagName: string, obj: string, attr: string) {
             for (const build of [API_ANDROID[api], API_ANDROID[0]]) {
-                if (build && build.customizations && build.customizations[tagName] && build.customizations[tagName][obj] && $util.isString(build.customizations[tagName][obj][attr])) {
+                if (build &&
+                    build.customizations &&
+                    build.customizations[tagName] &&
+                    build.customizations[tagName][obj] &&
+                    $util.isString(build.customizations[tagName][obj][attr]))
+                {
                     return build.customizations[tagName][obj][attr];
                 }
             }
@@ -276,14 +281,50 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const parent = this.documentParent;
                 const renderParent = this.renderParent;
                 const renderChildren = this.renderChildren;
-                const width = this.linear ? this.linear.width
-                                          : (this.hasElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0);
-                const height = this.linear ? this.linear.height
-                                           : (this.hasElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0);
-                const widthParent = parent.initial.box ? parent.initial.box.width
-                                                       : (parent.element instanceof HTMLElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0);
-                const heightParent = parent.initial.box ? parent.initial.box.height
-                                                        : (parent.element instanceof HTMLElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0);
+                const width = (() => {
+                    if (this.plainText) {
+                        return this.bounds.width;
+                    }
+                    else if (this.linear && this.linear.width > 0) {
+                        return this.linear.width;
+                    }
+                    else {
+                        return this.hasElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0;
+                    }
+                })();
+                const height = (() => {
+                    if (this.plainText) {
+                        return this.bounds.height;
+                    }
+                    else if (this.linear && this.linear.height > 0) {
+                        return this.linear.height;
+                    }
+                    else {
+                        return this.hasElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0;
+                    }
+                })();
+                const widthParent = (() => {
+                    if (parent.initial.box && parent.initial.box.width > 0) {
+                        return parent.initial.box.width;
+                    }
+                    else if (parent.box && parent.box.width > 0) {
+                        return parent.box.width;
+                    }
+                    else {
+                        return parent.element instanceof HTMLElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0;
+                    }
+                })();
+                const heightParent = (() => {
+                    if (parent.initial.box && parent.initial.box.height > 0) {
+                        return parent.initial.box.height;
+                    }
+                    else if (parent.box && parent.box.height > 0) {
+                        return parent.box.height;
+                    }
+                    else {
+                        return parent.element instanceof HTMLElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0;
+                    }
+                })();
                 const styleMap = this.styleMap;
                 const constraint = this.constraint;
                 const tableElement = this.tagName === 'TABLE';
@@ -433,7 +474,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             this.android('layout_height', 'wrap_content', false);
                         }
                         else if (this.documentRoot) {
-                            const bottomHeight: number = Math.max.apply(null, renderChildren.filter(node => node.pageflow).map(node => node.linear.bottom)) || 0;
+                            const bottomHeight: number = Math.max.apply(null, renderChildren.filter(node => node.pageflow).map(node => node.linear.bottom));
                             this.android('layout_height', bottomHeight > 0 ? $util.formatPX(bottomHeight + this.paddingBottom + this.borderBottomWidth) : 'match_parent', false);
                         }
                         else {
@@ -502,11 +543,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             let verticalAlign = '';
             let floating = '';
             function mergeGravity(original?: Null<string>, ...alignment: string[]) {
-                const direction = [
-                        ...$util.trimNull(original).split('|'),
-                        ...alignment
-                    ]
-                    .filter(value => value);
+                const direction = [...$util.trimNull(original).split('|'), ...alignment].filter(value => value);
                 switch (direction.length) {
                     case 0:
                         return '';
@@ -542,10 +579,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                         const gravity = [x, y].filter(value => value);
                         const merged = gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|');
-                        return (
-                            merged !== '' ? (z !== '' ? `${merged}|${z}` : merged)
-                                          : z
-                        );
+                        return merged !== '' ? (z !== '' ? `${merged}|${z}` : merged) : z;
                 }
             }
             function setAutoMargin(node: View) {
@@ -756,11 +790,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public applyOptimizations(settings: SettingsAndroid, userAgent: number) {
-            const renderParent = this.renderParent;
-            const renderChildren = this.renderChildren;
             function getPaddedHeight(node: View) {
                 return node.paddingTop + node.paddingBottom + node.borderTopWidth + node.borderBottomWidth;
             }
+            const renderParent = this.renderParent;
+            const renderChildren = this.renderChildren;
             if (this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP)) {
                 const linearHorizontal = this.linearHorizontal;
                 if (this.blockWidth && !this.blockStatic) {
@@ -784,13 +818,13 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                     else {
                         const childIndex = renderParent.android('baselineAlignedChildIndex');
-                        if (this.renderParent.renderChildren.some(node => node.baseline && node.textElement) ||
-                            (childIndex !== '' && this.renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
+                        if (renderParent.renderChildren.some(node => node.baseline && node.textElement) ||
+                            (childIndex !== '' && renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
                             renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
                             (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
                             (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
                         {
-                            const baseline = $nodelist.textBaseline(renderChildren, userAgent);
+                            const baseline = NodeList.textBaseline(renderChildren, userAgent);
                             if (baseline.length > 0) {
                                 this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
                             }
@@ -809,23 +843,21 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
             if (this.pageflow) {
                 if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
-                    [['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP],
-                     ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]]
-                        .forEach((item: [string, string, number, number], index: number) => {
-                            const node = $dom.getNodeFromElement<View>(renderParent[item[0]]);
-                            if (node &&
-                                !node.lineBreak &&
-                                (node === this || node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1]))
+                    [['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, number, number], index: number) => {
+                        const node = $dom.getNodeFromElement<View>(renderParent[item[0]]);
+                        if (node &&
+                            !node.lineBreak &&
+                            (node === this || node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1]))
+                        {
+                            const marginOffset = renderParent[`margin${item[1]}`];
+                            if (marginOffset > 0 &&
+                                renderParent[`padding${item[1]}`] === 0 &&
+                                renderParent[`border${item[1]}Width`] === 0)
                             {
-                                const marginOffset = renderParent[`margin${item[1]}`];
-                                if (marginOffset > 0 &&
-                                    renderParent[`padding${item[1]}`] === 0 &&
-                                    renderParent[`border${item[1]}Width`] === 0)
-                                {
-                                    node.modifyBox(item[2], null);
-                                }
+                                node.modifyBox(item[2], null);
                             }
-                        });
+                        }
+                    });
                 }
                 if (this.hasElement && this.blockStatic) {
                     for (let i = 0; i < this.element.children.length; i++) {
@@ -1122,7 +1154,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent')
                                                             : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
                 this.each((node: View, index) => {
-                    if (!(node.floating || (relative && node.alignParent('left', settings)) || (index === 0 && (textAlign !== 'left' || node.plainText)) || ['SUP', 'SUB'].includes(node.tagName))) {
+                    if (!(node.floating ||
+                        (relative && node.alignParent('left', settings)) ||
+                        (index === 0 && (textAlign !== 'left' || node.plainText)) ||
+                        ['SUP', 'SUB'].includes(node.tagName)))
+                    {
                         const width = Math.round(node.actualLeft() - right);
                         if (width >= 1) {
                             node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, width);
@@ -1141,22 +1177,21 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         while (sibling && !this.initial.children.includes(sibling));
                         return sibling;
                     })();
-                    const elements =
-                        $dom.getElementsBetweenSiblings(
-                                previous ? (previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement) : null,
-                                node.baseElement)
-                            .filter(element => {
-                                const item = $dom.getNodeFromElement<View>(element);
-                                if (item && (
-                                      item.lineBreak ||
-                                      (item.excluded && item.blockStatic)
-                                   ))
-                                {
-                                    return true;
-                                }
-                                return false;
+                    const elements = $dom.getElementsBetweenSiblings(
+                          previous ? (previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement) : null,
+                          node.baseElement
+                        )
+                        .filter(element => {
+                            const item = $dom.getNodeFromElement<View>(element);
+                            if (item && (
+                                  item.lineBreak ||
+                                  (item.excluded && item.blockStatic)
+                               ))
+                            {
+                                return true;
                             }
-                        );
+                            return false;
+                        });
                     if (elements.length > 0) {
                         let bottom: number;
                         if (!previous) {
@@ -1168,12 +1203,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                     previous.length > 0 &&
                                     previous.renderChildren.some(item => !item.floating))
                                 {
-                                    return (
-                                        previous.renderChildren
-                                            .filter(item => !item.floating)
-                                            .sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0]
-                                            .linear.bottom
-                                    );
+                                    return previous.renderChildren.filter(item => !item.floating).sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0].linear.bottom;
                                 }
                                 return previous.linear.bottom;
                             })();
@@ -1241,8 +1271,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 this.linearHorizontal ||
                 this.hasAlign($enum.NODE_ALIGNMENT.HORIZONTAL) ||
                 (this.nodes.filter(node => node.pageflow).length > 1 && (
-                  $nodelist.linearX(this.nodes) ||
-                  (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.every(node => node.domElement)))
+                    NodeList.linearX(this.nodes) ||
+                    (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.every(node => node.domElement)))
                 )
             );
         }
@@ -1251,8 +1281,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 this.linearVertical ||
                 this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) ||
                 (this.nodes.filter(node => node.pageflow).length > 1 && (
-                  $nodelist.linearY(this.nodes)) ||
-                  (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.some(node => node.linearVertical))
+                    NodeList.linearY(this.nodes)) ||
+                    (this.is($enum.NODE_STANDARD.FRAME) && this.nodes.some(node => node.linearVertical))
                 )
             );
         }

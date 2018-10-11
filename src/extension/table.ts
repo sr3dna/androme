@@ -13,14 +13,10 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         const thead = node.children.filter(item => item.tagName === 'THEAD');
         const tbody = node.children.filter(item => item.tagName === 'TBODY');
         const tfoot = node.children.filter(item => item.tagName === 'TFOOT');
-        const colgroup =
-            Array
-                .from(node.element.children)
-                .find(element => element.tagName === 'COLGROUP');
+        const colgroup = Array.from(node.element.children).find(element => element.tagName === 'COLGROUP');
         const tableWidth = node.css('width');
         if (thead.length > 0) {
-            thead[0]
-                .cascade()
+            thead[0].cascade()
                 .filter(item => item.tagName === 'TH' || item.tagName === 'TD')
                 .forEach(item => item.inherit(thead[0], 'styleMap'));
             table.push(...thead[0].children as T[]);
@@ -33,8 +29,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             });
         }
         if (tfoot.length > 0) {
-            tfoot[0]
-                .cascade()
+            tfoot[0].cascade()
                 .filter(item => item.tagName === 'TH' || item.tagName === 'TD')
                 .forEach(item => item.inherit(tfoot[0], 'styleMap'));
             table.push(...tfoot[0].children as T[]);
@@ -42,10 +37,7 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         }
         const tableFixed = node.css('tableLayout') === 'fixed';
         const borderCollapse = node.css('borderCollapse') === 'collapse';
-        const [horizontal, vertical] = borderCollapse ? [0, 0]
-                                                      : node.css('borderSpacing')
-                                                            .split(' ')
-                                                            .map(value => parseInt(value));
+        const [horizontal, vertical] = borderCollapse ? [0, 0] : node.css('borderSpacing').split(' ').map(value => parseInt(value));
         if (horizontal > 0) {
             node.modifyBox(BOX_STANDARD.PADDING_LEFT, horizontal);
             node.modifyBox(BOX_STANDARD.PADDING_RIGHT, horizontal);
@@ -161,14 +153,10 @@ export default abstract class Table<T extends Node> extends Extension<T> {
         else if (mapWidth.every(value => isUnit(value))) {
             const pxWidth = mapWidth.reduce((a, b) => a + parseInt(b), 0);
             if ((isPercent(tableWidth) && tableWidth !== '100%') || pxWidth < node.viewWidth) {
-                mapWidth
-                    .filter(value => value !== '0px')
-                    .forEach((value, index) => mapWidth[index] = `${(parseInt(value) / pxWidth) * 100}%`);
+                mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = `${(parseInt(value) / pxWidth) * 100}%`);
             }
             else if (tableWidth === 'auto') {
-                mapWidth
-                    .filter(value => value !== '0px')
-                    .forEach((value, index) => mapWidth[index] = mapBounds[index] == null ? 'undefined' : `${(mapBounds[index] / node.bounds.width) * 100}%`);
+                mapWidth.filter(value => value !== '0px').forEach((value, index) => mapWidth[index] = mapBounds[index] == null ? 'undefined' : `${(mapBounds[index] / node.bounds.width) * 100}%`);
             }
             else if (pxWidth > node.viewWidth) {
                 node.css('width', 'auto');

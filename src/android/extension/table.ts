@@ -1,4 +1,3 @@
-
 import View from '../view';
 import { NODE_ANDROID } from '../lib/constant';
 
@@ -51,14 +50,13 @@ export default class <T extends View> extends androme.lib.base.extensions.Table<
             });
             if (requireWidth && !node.hasWidth) {
                 let widthParent = 0;
-                node.ascend()
-                    .some(item => {
-                        if (item.hasWidth) {
-                            widthParent = item.bounds.width;
-                            return true;
-                        }
-                        return false;
-                    });
+                node.ascend().some(item => {
+                    if (item.hasWidth) {
+                        widthParent = item.bounds.width;
+                        return true;
+                    }
+                    return false;
+                });
                 if (node.bounds.width >= widthParent) {
                     node.android('layout_width', 'match_parent');
                 }

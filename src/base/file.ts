@@ -43,25 +43,32 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
         }
         if (Array.isArray(files) && files.length > 0) {
             files.push(...this.queue);
-            fetch(`/api/savetodisk?directory=${encodeURIComponent(trimString(this.settings.outputDirectory, '/'))}&appname=${encodeURIComponent(this.appName.trim())}&filetype=${this.settings.outputArchiveFileType.toLocaleLowerCase()}&processingtime=${this.settings.outputMaxProcessingTime.toString().trim()}`, {
+            fetch(
+                `/api/savetodisk` +
+                `?directory=${encodeURIComponent(trimString(this.settings.outputDirectory, '/'))}` +
+                `&appname=${encodeURIComponent(this.appName.trim())}` +
+                `&filetype=${this.settings.outputArchiveFileType.toLowerCase()}` +
+                `&processingtime=${this.settings.outputMaxProcessingTime.toString().trim()}`,
+                {
                     method: 'POST',
                     body: JSON.stringify(files),
                     headers: new Headers({ 'Accept': 'application/json, text/plain, */*', 'Content-Type': 'application/json' })
-                })
-                .then((response: Response) => response.json())
-                .then(result => {
-                    if (result) {
-                        if (result.zipname) {
-                            fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(result.zipname)}`)
-                                .then((res: Response) => res.blob())
-                                .then(blob => this.downloadToDisk(blob, lastIndexOf(result.zipname)));
-                        }
-                        else if (result.system) {
-                            alert(`${result.application}\n\n${result.system}`);
-                        }
+                }
+            )
+            .then((response: Response) => response.json())
+            .then(result => {
+                if (result) {
+                    if (result.zipname) {
+                        fetch(`/api/downloadtobrowser?filename=${encodeURIComponent(result.zipname)}`)
+                            .then((res: Response) => res.blob())
+                            .then(blob => this.downloadToDisk(blob, lastIndexOf(result.zipname)));
                     }
-                })
-                .catch(err => alert(`ERROR: ${err}`));
+                    else if (result.system) {
+                        alert(`${result.application}\n\n${result.system}`);
+                    }
+                }
+            })
+            .catch(err => alert(`ERROR: ${err}`));
         }
     }
 

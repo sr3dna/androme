@@ -34,105 +34,6 @@ let system: FunctionMap = {} as any;
 const cacheRoot = new Set<HTMLElement>();
 const cacheImage = new Map<string, Image>();
 
-function setStyleMap() {
-    let warning = false;
-    for (let i = 0; i < document.styleSheets.length; i++) {
-        const styleSheet = <CSSStyleSheet> document.styleSheets[i];
-        if (styleSheet.cssRules) {
-            for (let j = 0; j < styleSheet.cssRules.length; j++) {
-                try {
-                    const rule = <CSSStyleRule> styleSheet.cssRules[j];
-                    const attrs = new Set<string>();
-                    for (const attr of Array.from(rule.style)) {
-                        attrs.add(util.convertCamelCase(attr));
-                    }
-                    Array
-                        .from(document.querySelectorAll(rule.selectorText))
-                        .forEach((element: HTMLElement) => {
-                            for (const attr of Array.from(element.style)) {
-                                attrs.add(util.convertCamelCase(attr));
-                            }
-                            const style = dom.getStyle(element);
-                            const styleMap: StringMap = {};
-                            for (const attr of attrs) {
-                                const value: string = rule.style[attr];
-                                if (element.style[attr]) {
-                                    styleMap[attr] = element.style[attr];
-                                }
-                                else if (style[attr] === value) {
-                                    styleMap[attr] = style[attr];
-                                }
-                                else if (value) {
-                                    switch (attr) {
-                                        case 'fontSize':
-                                            styleMap[attr] = style[attr] as string;
-                                            break;
-                                        case 'width':
-                                        case 'height':
-                                        case 'lineHeight':
-                                        case 'verticalAlign':
-                                        case 'columnGap':
-                                        case 'top':
-                                        case 'right':
-                                        case 'bottom':
-                                        case 'left':
-                                        case 'marginTop':
-                                        case 'marginRight':
-                                        case 'marginBottom':
-                                        case 'marginLeft':
-                                        case 'paddingTop':
-                                        case 'paddingRight':
-                                        case 'paddingBottom':
-                                        case 'paddingLeft':
-                                            styleMap[attr] = /^[A-Za-z\-]+$/.test(value) || util.isPercent(value) ? value
-                                                                                                                  : util.convertPX(value, style.fontSize);
-                                            break;
-                                        default:
-                                            if (styleMap[attr] == null) {
-                                                styleMap[attr] = value;
-                                            }
-                                            break;
-                                    }
-                                }
-                            }
-                            if (main.settings.preloadImages &&
-                                util.hasValue(styleMap['backgroundImage']) &&
-                                styleMap['backgroundImage'] !== 'initial')
-                            {
-                                styleMap['backgroundImage']
-                                    .split(',')
-                                    .map((value: string) => value.trim())
-                                    .forEach(value => {
-                                        const url = dom.cssResolveUrl(value);
-                                        if (url !== '' && !cacheImage.has(url)) {
-                                            cacheImage.set(url, { width: 0, height: 0, url });
-                                        }
-                                    });
-                            }
-                            const data = dom.getElementCache(element, 'styleMap');
-                            if (data) {
-                                Object.assign(data, styleMap);
-                            }
-                            else {
-                                dom.setElementCache(element, 'style', style);
-                                dom.setElementCache(element, 'styleMap', styleMap);
-                            }
-                        });
-                }
-                catch (error) {
-                    if (!warning) {
-                        alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). ' +
-                              'Either use a local web server (http://), embed your CSS files into a <style> tag, or use a different browser. ' +
-                              'See the README for further instructions.\n\n' +
-                              `${styleSheet.href}\n\n${error}`);
-                        warning = true;
-                    }
-                }
-            }
-        }
-    }
-}
-
 function setImageCache(element: HTMLImageElement) {
     if (element && util.hasValue(element.src)) {
         const image: Image = {
@@ -192,7 +93,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     let __THEN: () => void;
     main.elements.clear();
     main.loading = false;
-    setStyleMap();
+    main.setStyleMap(cacheImage);
     if (main.appName === '' && elements.length === 0) {
         elements.push(document.body);
     }
@@ -208,9 +109,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     function parseResume() {
         main.loading = false;
         if (main.settings.preloadImages && rootElement) {
-            Array
-                .from(rootElement.getElementsByClassName('androme.preload'))
-                .forEach(element => rootElement.removeChild(element));
+            Array.from(rootElement.getElementsByClassName('androme.preload')).forEach(element => rootElement.removeChild(element));
         }
         main.resourceHandler.imageDimensions = cacheImage;
         for (const element of main.elements) {
@@ -258,24 +157,19 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
             }
         }
     }
-    const images: HTMLImageElement[] =
-        Array
-            .from(main.elements)
-            .map(element => {
-                const queue: HTMLImageElement[] = [];
-                Array
-                    .from(element.querySelectorAll('IMG'))
-                    .forEach((image: HTMLImageElement) => {
-                        if (image.complete) {
-                            setImageCache(image);
-                        }
-                        else {
-                            queue.push(image);
-                        }
-                    });
-                return queue;
-            })
-            .reduce((a, b) => a.concat(b), []);
+    const images: HTMLImageElement[] = Array.from(main.elements).map(element => {
+        const queue: HTMLImageElement[] = [];
+        Array.from(element.querySelectorAll('IMG')).forEach((image: HTMLImageElement) => {
+            if (image.complete) {
+                setImageCache(image);
+            }
+            else {
+                queue.push(image);
+            }
+        });
+        return queue;
+    })
+    .reduce((a, b) => a.concat(b), []);
     if (images.length === 0) {
         parseResume();
     }
@@ -289,8 +183,7 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
                 })
             );
         });
-        Promise
-            .all(queue)
+        Promise.all(queue)
             .then((result: Event[]) => {
                 if (Array.isArray(result)) {
                     result.forEach(item => {
@@ -322,8 +215,8 @@ export function parseDocument(...elements: Null<string | HTMLElement>[]) {
     };
 }
 
-export function registerExtension(ext: androme.lib.base.Extension<T>) {
-    if (main && util.isString(ext.name) && Array.isArray(ext.tagNames)) {
+export function registerExtension(ext: Extension<T>) {
+    if (main && ext instanceof Extension && util.isString(ext.name) && Array.isArray(ext.tagNames)) {
         main.registerExtension(ext);
     }
 }

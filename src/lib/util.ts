@@ -6,7 +6,7 @@ const NUMERALS = [
 ];
 
 function sort<T>(list: T[], asc = 0, ...attrs: string[]) {
-    return list.sort((a: T, b: T) => {
+    return list.sort((a, b) => {
         for (const attr of attrs) {
             const result = compareObject(a, b, attr);
             if (result && result[0] !== result[1]) {
@@ -196,11 +196,7 @@ export function isPercent(value: string) {
 }
 
 export function includes(source: Null<string>, value: string, delimiter = ',') {
-    return source ? source
-                        .split(delimiter)
-                        .map(segment => segment.trim())
-                        .includes(value)
-                  : false;
+    return source ? source.split(delimiter).map(segment => segment.trim()).includes(value) : false;
 }
 
 export function optional(obj: Null<{}>, value: string, type?: string) {
@@ -213,7 +209,13 @@ export function optional(obj: Null<{}>, value: string, type?: string) {
         do {
             result = result[attrs[i]] != null ? result[attrs[i]] : null;
         }
-        while (result != null && ++i < attrs.length && typeof result !== 'string' && typeof result !== 'number' && typeof result !== 'boolean');
+        while (
+            result != null &&
+            ++i < attrs.length &&
+            typeof result !== 'string' &&
+            typeof result !== 'number' &&
+            typeof result !== 'boolean'
+        );
         valid = result != null && i === attrs.length;
     }
     switch (type) {
@@ -239,16 +241,14 @@ export function resolvePath(value: string) {
             if (value.startsWith('../')) {
                 const parts: string[] = [];
                 let levels = 0;
-                value
-                    .split('/')
-                    .forEach(dir => {
-                        if (dir === '..') {
-                            levels++;
-                        }
-                        else {
-                            parts.push(dir);
-                        }
-                    });
+                value.split('/').forEach(dir => {
+                    if (dir === '..') {
+                        levels++;
+                    }
+                    else {
+                        parts.push(dir);
+                    }
+                });
                 pathname = pathname.slice(0, Math.max(pathname.length - levels, 0));
                 pathname.push(...parts);
                 value = location.origin + pathname.join('/');
@@ -344,7 +344,13 @@ export function withinRange(a: number, b: number, offset = 0) {
 }
 
 export function withinFraction(lower: number, upper: number) {
-    return lower === upper || Math.floor(lower) === Math.floor(upper) || Math.ceil(lower) === Math.ceil(upper) || Math.ceil(lower) === Math.floor(upper) || Math.floor(lower) === Math.ceil(upper);
+    return (
+        lower === upper ||
+        Math.floor(lower) === Math.floor(upper) ||
+        Math.ceil(lower) === Math.ceil(upper) ||
+        Math.ceil(lower) === Math.floor(upper) ||
+        Math.floor(lower) === Math.ceil(upper)
+    );
 }
 
 export function overwriteDefault(options: {}, namespace: string, attr: string, value: string) {

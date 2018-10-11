@@ -1,4 +1,4 @@
-import { SettingsAndroid } from '../../lib/types';
+import { SettingsAndroid, ViewAttribute } from '../../lib/types';
 import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
 import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constant';
@@ -44,16 +44,15 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
 
     public processNode(): ExtensionResult {
         const node = this.node;
-        const output =
-            this.application.viewController.renderNodeStatic(
-                VIEW_NAVIGATION.MENU,
-                0,
-                {},
-                '',
-                '',
-                node,
-                true
-            );
+        const output = this.application.viewController.renderNodeStatic(
+            VIEW_NAVIGATION.MENU,
+            0,
+            {},
+            '',
+            '',
+            node,
+            true
+        );
         node.documentRoot = true;
         node.nodeType = $enum.NODE_STANDARD.BLOCK;
         node.excludeResource |= $enum.NODE_RESOURCE.ALL;
@@ -71,7 +70,7 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
             return { output: '', complete: true, next: true };
         }
         const element = <HTMLElement> node.element;
-        const options: ObjectMap<StringMap> = { android: {}, app: {} };
+        const options: ViewAttribute = { android: {}, app: {} };
         let nodeName = VIEW_NAVIGATION.ITEM;
         let title = '';
         let next = false;
@@ -82,24 +81,22 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
                     title = element.title;
                 }
                 else {
-                    Array
-                        .from(node.element.childNodes)
-                        .some((item: HTMLElement) => {
-                            if (item.nodeName === '#text') {
-                                if (item.textContent) {
-                                    title = item.textContent.trim();
-                                    if (title !== '') {
-                                        return true;
-                                    }
+                    Array.from(node.element.childNodes).some((item: HTMLElement) => {
+                        if (item.nodeName === '#text') {
+                            if (item.textContent) {
+                                title = item.textContent.trim();
+                                if (title !== '') {
+                                    return true;
                                 }
-                                return false;
-                            }
-                            else if (item.tagName !== 'NAV') {
-                                title = item.innerText.trim();
-                                return true;
                             }
                             return false;
-                        });
+                        }
+                        else if (item.tagName !== 'NAV') {
+                            title = item.innerText.trim();
+                            return true;
+                        }
+                        return false;
+                    });
                 }
                 node.each(item => item.tagName !== 'NAV' && item.hide());
             }
@@ -166,16 +163,15 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
         else {
             node.controlName = nodeName;
         }
-        const output =
-            this.application.viewController.renderNodeStatic(
-                nodeName,
-                parent.renderDepth + 1,
-                options,
-                '',
-                '',
-                node,
-                layout
-            );
+        const output = this.application.viewController.renderNodeStatic(
+            nodeName,
+            parent.renderDepth + 1,
+            options,
+            '',
+            '',
+            node,
+            layout
+        );
         node.excludeResource |= $enum.NODE_RESOURCE.ALL;
         node.excludeProcedure |= $enum.NODE_PROCEDURE.ALL;
         node.rendered = true;

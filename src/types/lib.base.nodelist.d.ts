@@ -18,7 +18,7 @@ declare global {
             public readonly linearX: boolean;
             public readonly linearY: boolean;
             constructor(nodes?: T[], parent?: T);
-            public [Symbol.iterator]();
+            public [Symbol.iterator](): Iterator<T>;
             public reset(): void;
             public get(index?: number): T;
             public append(...nodes: T[]): void;

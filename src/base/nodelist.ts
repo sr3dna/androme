@@ -88,19 +88,17 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
     public static textBaseline<T extends Node>(list: T[], userAgent: number) {
         let baseline: T[] = [];
         if (!list.some(node => (node.textElement || node.imageElement) && node.baseline)) {
-            baseline =
-                list.filter(node => node.baseline)
-                    .sort((a, b) => {
-                        let nodeTypeA = a.nodeType;
-                        let nodeTypeB = b.nodeType;
-                        if (a.layoutHorizontal) {
-                            nodeTypeA = Math.min.apply(null, a.children.map((item: T) => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
-                        }
-                        if (b.layoutHorizontal) {
-                            nodeTypeB = Math.min.apply(null, b.children.map((item: T) => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
-                        }
-                        return nodeTypeA <= nodeTypeB ? -1 : 1;
-                    });
+            baseline = list.filter(node => node.baseline).sort((a, b) => {
+                let nodeTypeA = a.nodeType;
+                let nodeTypeB = b.nodeType;
+                if (a.layoutHorizontal) {
+                    nodeTypeA = Math.min.apply(null, a.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                }
+                if (b.layoutHorizontal) {
+                    nodeTypeB = Math.min.apply(null, b.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
+                }
+                return nodeTypeA <= nodeTypeB ? -1 : 1;
+            });
         }
         else {
             const lineHeight: number = Math.max.apply(null, list.map(node => node.lineHeight));
@@ -109,68 +107,66 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                 const result = list.filter(node => node.lineHeight === lineHeight);
                 return (result.length === list.length ? result.filter(node => node.hasElement) : result).filter(node => node.baseline);
             }
-            baseline =
-                list.filter(node => node.baselineInside)
-                    .sort((a, b) => {
-                        let heightA = a.bounds.height;
-                        let heightB = b.bounds.height;
-                        if (hasBit(userAgent, USER_AGENT.EDGE)) {
-                            if (a.textElement) {
-                                heightA = Math.max(Math.floor(heightA), a.lineHeight);
-                            }
-                            if (b.textElement) {
-                                heightB = Math.max(Math.floor(heightB), b.lineHeight);
-                            }
+            baseline = list.filter(node => node.baselineInside).sort((a, b) => {
+                let heightA = a.bounds.height;
+                let heightB = b.bounds.height;
+                if (hasBit(userAgent, USER_AGENT.EDGE)) {
+                    if (a.textElement) {
+                        heightA = Math.max(Math.floor(heightA), a.lineHeight);
+                    }
+                    if (b.textElement) {
+                        heightB = Math.max(Math.floor(heightB), b.lineHeight);
+                    }
+                }
+                if (!a.imageElement || !b.imageElement) {
+                    const fontSizeA = convertInt(a.css('fontSize'));
+                    const fontSizeB = convertInt(b.css('fontSize'));
+                    if (a.multiLine || b.multiLine) {
+                        if (a.lineHeight > 0 && b.lineHeight > 0) {
+                            return a.lineHeight >= b.lineHeight ? -1 : 1;
                         }
-                        if (!a.imageElement || !b.imageElement) {
-                            const fontSizeA = convertInt(a.css('fontSize'));
-                            const fontSizeB = convertInt(b.css('fontSize'));
-                            if (a.multiLine || b.multiLine) {
-                                if (a.lineHeight > 0 && b.lineHeight > 0) {
-                                    return a.lineHeight >= b.lineHeight ? -1 : 1;
-                                }
-                                else if (fontSizeA === fontSizeB) {
-                                    return a.hasElement || !b.hasElement ? -1 : 1;
-                                }
-                            }
-                            if (a.nodeType !== b.nodeType && (a.nodeType < NODE_STANDARD.TEXT || b.nodeType < NODE_STANDARD.TEXT)) {
-                                if (a.textElement || a.imageElement) {
-                                    return -1;
-                                }
-                                else if (b.textElement || b.imageElement) {
-                                    return 1;
-                                }
-                                return a.nodeType < b.nodeType ? -1 : 1;
-                            }
-                            else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
+                        else if (fontSizeA === fontSizeB) {
+                            return a.hasElement || !b.hasElement ? -1 : 1;
+                        }
+                    }
+                    if (a.nodeType !== b.nodeType && (a.nodeType < NODE_STANDARD.TEXT || b.nodeType < NODE_STANDARD.TEXT)) {
+                        if (a.textElement || a.imageElement) {
+                            return -1;
+                        }
+                        else if (b.textElement || b.imageElement) {
+                            return 1;
+                        }
+                        return a.nodeType < b.nodeType ? -1 : 1;
+                    }
+                    else if ((a.lineHeight > heightB && b.lineHeight === 0) || b.imageElement) {
+                        return -1;
+                    }
+                    else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
+                        return 1;
+                    }
+                    else {
+                        if (fontSizeA === fontSizeB && heightA === heightB) {
+                            if (a.hasElement && !b.hasElement) {
                                 return -1;
                             }
-                            else if ((b.lineHeight > heightA && a.lineHeight === 0) || a.imageElement) {
+                            else if (!a.hasElement && b.hasElement) {
                                 return 1;
                             }
                             else {
-                                if (fontSizeA === fontSizeB && heightA === heightB) {
-                                    if (a.hasElement && !b.hasElement) {
-                                        return -1;
-                                    }
-                                    else if (!a.hasElement && b.hasElement) {
-                                        return 1;
-                                    }
-                                    else {
-                                        return a.siblingIndex <= b.siblingIndex ? -1 : 1;
-                                    }
-                                }
-                                else if (
-                                    fontSizeA !== fontSizeB &&
-                                    fontSizeA !== 0 &&
-                                    fontSizeB !== 0)
-                                {
-                                    return fontSizeA > fontSizeB ? -1 : 1;
-                                }
+                                return a.siblingIndex <= b.siblingIndex ? -1 : 1;
                             }
                         }
-                        return heightA >= heightB ? -1 : 1;
-                    });
+                        else if (
+                            fontSizeA !== fontSizeB &&
+                            fontSizeA !== 0 &&
+                            fontSizeB !== 0)
+                        {
+                            return fontSizeA > fontSizeB ? -1 : 1;
+                        }
+                    }
+                }
+                return heightA >= heightB ? -1 : 1;
+            });
         }
         let fontFamily: string;
         let fontSize: string;
@@ -210,29 +206,19 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                 let horizontal = false;
                 if (traverse) {
                     if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
-                        const result =
-                            NodeList.cleared(
-                                Array
-                                    .from(parent.baseElement.children)
-                                    .map(element => getNodeFromElement(element) as T)
-                                    .filter(node => node)
-                            );
-                        horizontal =
-                            nodes
-                                .slice()
-                                .sort(NodeList.siblingIndex)
-                                .every((node, index) => {
-                                    if (index > 0) {
-                                        if (node.companion && node.companion.documentParent === parent) {
-                                            node = node.companion as T;
-                                        }
-                                        const previous = node.previousSibling();
-                                        if (previous) {
-                                            return !node.alignedVertically(previous, result);
-                                        }
-                                    }
-                                    return true;
-                                });
+                        const result = NodeList.clearedSiblings(parent);
+                        horizontal = nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
+                            if (index > 0) {
+                                if (node.companion && node.companion.documentParent === parent) {
+                                    node = node.companion as T;
+                                }
+                                const previous = node.previousSibling();
+                                if (previous) {
+                                    return !node.alignedVertically(previous, result);
+                                }
+                            }
+                            return true;
+                        });
                     }
                 }
                 if (horizontal || !traverse) {
@@ -264,33 +250,28 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
             default:
                 const parent = this.documentParent(nodes);
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
-                    const result: Map<T, string> =
-                        NodeList.cleared(
-                            Array
-                                .from(parent.baseElement.children)
-                                .map(element => getNodeFromElement(element) as T)
-                                .filter(node => node)
-                        );
+                    const result = NodeList.clearedSiblings(parent);
                     return (
-                        nodes
-                            .slice()
-                            .sort(NodeList.siblingIndex)
-                            .every((node, index) => {
-                                if (index > 0 && !node.lineBreak) {
-                                    if (node.companion && node.companion.documentParent === parent) {
-                                        node = node.companion as T;
-                                    }
-                                    const previous = node.previousSibling();
-                                    if (previous) {
-                                        return node.alignedVertically(previous, result);
-                                    }
+                        nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
+                            if (index > 0 && !node.lineBreak) {
+                                if (node.companion && node.companion.documentParent === parent) {
+                                    node = node.companion as T;
                                 }
-                                return true;
-                            })
+                                const previous = node.previousSibling() as T;
+                                if (previous) {
+                                    return node.alignedVertically(previous, result);
+                                }
+                            }
+                            return true;
+                        })
                     );
                 }
                 return false;
         }
+    }
+
+    private static clearedSiblings<T extends Node>(parent: T): Map<T, string> {
+        return NodeList.cleared(Array.from(parent.baseElement.children).map(element => getNodeFromElement(element) as T).filter(node => node));
     }
 
     private static documentParent<T extends Node>(nodes: T[]) {

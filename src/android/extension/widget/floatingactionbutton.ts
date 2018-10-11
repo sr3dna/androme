@@ -16,8 +16,7 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
         const element = node.element;
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = $color.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-        $util.overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceHandler.addColor(backgroundColor[0], backgroundColor[2])}`
-                                                                                          : '?attr/colorAccent');
+        $util.overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceHandler.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent');
         if (node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
             $util.overwriteDefault(options, 'android', 'focusable', 'false');
         }
@@ -41,15 +40,14 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
         if (src !== '') {
             $util.overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
-        const output =
-            this.application.viewController.renderNodeStatic(
-                VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
-                target ? -1 : parent.renderDepth + 1,
-                options,
-                'wrap_content',
-                'wrap_content',
-                node
-            );
+        const output = this.application.viewController.renderNodeStatic(
+            VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
+            target ? -1 : parent.renderDepth + 1,
+            options,
+            'wrap_content',
+            'wrap_content',
+            node
+        );
         node.nodeType = $enum.NODE_STANDARD.BUTTON;
         node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
         if (!node.pageflow || target) {

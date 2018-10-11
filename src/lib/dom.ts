@@ -51,10 +51,7 @@ export function getNodeFromElement<T extends androme.lib.base.Node>(element: Nul
 export function getRangeClientRect(element: Element): [Null<BoxDimensions>, boolean] {
     const range = document.createRange();
     range.selectNodeContents(element);
-    const domRect =
-        Array
-            .from(range.getClientRects())
-            .filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
+    const domRect = Array.from(range.getClientRects()).filter(item => !(Math.round(item.width) === 0 && withinFraction(item.left, item.right)));
     let result: BoxDimensions = getClientRect();
     let multiLine = false;
     if (domRect.length > 0) {
@@ -159,7 +156,7 @@ export function cssResolveUrl(value: string) {
 
 export function cssInherit(element: Element, attr: string, tagName = '', exclude?: string[]) {
     let result = '';
-    let current: Null<Element> = element.parentElement;
+    let current = element.parentElement;
     while (current && current.tagName !== tagName) {
         result = getStyle(current)[attr] || '';
         if (exclude && exclude.some(value => result.indexOf(value) !== -1)) {
@@ -203,22 +200,24 @@ export function cssFromParent(element: Element, attr: string) {
 export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = true) {
     let valid = false;
     let depth = -1;
-    function findFreeForm(elements: any[]) {
+    function findFreeForm(elements: any[]): boolean {
         if (depth++ === maxDepth) {
             return true;
         }
-        return elements.some((item: Element) => {
-            if (item.nodeName === '#text') {
-                if (isPlainText(item, whiteSpace) || (cssParent(item, 'whiteSpace', 'pre', 'pre-wrap') && item.textContent && item.textContent !== '')) {
-                    valid = true;
-                    return true;
+        return (
+            elements.some((item: Element) => {
+                if (item.nodeName === '#text') {
+                    if (isPlainText(item, whiteSpace) || (cssParent(item, 'whiteSpace', 'pre', 'pre-wrap') && item.textContent && item.textContent !== '')) {
+                        valid = true;
+                        return true;
+                    }
                 }
-            }
-            else if (item instanceof HTMLElement && item.childNodes.length > 0) {
-                return findFreeForm(Array.from(item.childNodes));
-            }
-            return false;
-        });
+                else if (item instanceof HTMLElement && item.childNodes.length > 0) {
+                    return findFreeForm(Array.from(item.childNodes));
+                }
+                return false;
+            })
+        );
     }
     if (element.nodeName === '#text') {
         maxDepth = 0;
@@ -263,18 +262,12 @@ export function hasLineBreak(element: Null<Element>) {
     if (element) {
         const node = getNodeFromElement(element);
         const fromParent = element.nodeName === '#text';
-        let whiteSpace = '';
-        if (node) {
-            whiteSpace = node.css('whiteSpace');
-        }
-        else {
-            whiteSpace = getStyle(element).whiteSpace || '';
-        }
+        const whiteSpace = node ? node.css('whiteSpace') : (getStyle(element).whiteSpace || '');
         return (
             (element instanceof HTMLElement && element.children.length > 0 && Array.from(element.children).some(item => item.tagName === 'BR')) ||
             (/\n/.test(element.textContent || '') && (
-              ['pre', 'pre-wrap'].includes(whiteSpace) ||
-              (fromParent && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
+                ['pre', 'pre-wrap'].includes(whiteSpace) ||
+                (fromParent && cssParent(element, 'whiteSpace', 'pre', 'pre-wrap'))
             ))
         );
     }
@@ -287,8 +280,8 @@ export function isLineBreak(element: Null<Element>, excluded = true) {
         return (
             node.tagName === 'BR' ||
             (excluded && node.block && (
-              node.excluded ||
-              node.textContent.trim() === '')
+                node.excluded ||
+                node.textContent.trim() === '')
             )
         );
     }
@@ -305,13 +298,12 @@ export function getElementsBetweenSiblings(firstElement: Null<Element>, secondEl
             if (firstIndex !== -1 && secondIndex !== -1 && firstIndex !== secondIndex) {
                 let result = elements.slice(Math.min(firstIndex, secondIndex) + 1, Math.max(firstIndex, secondIndex));
                 if (!whiteSpace) {
-                    result =
-                        result.filter(element => {
-                            if (element.nodeName.charAt(0) === '#') {
-                                return isPlainText(element);
-                            }
-                            return true;
-                        });
+                    result = result.filter(element => {
+                        if (element.nodeName.charAt(0) === '#') {
+                            return isPlainText(element);
+                        }
+                        return true;
+                    });
                 }
                 else {
                     result = result.filter(element => element.nodeName !== '#comment');
@@ -357,18 +349,16 @@ export function isElementVisible(element: Element) {
                     if (valid) {
                         if (element.children.length > 0) {
                             return (
-                                Array
-                                    .from(element.children)
-                                    .some((item: Element) => {
-                                        const style = getStyle(item);
-                                        const float = style.cssFloat;
-                                        const position = style.position;
-                                        return (
-                                            (position !== 'static' && position !== 'initial') ||
-                                            float === 'left' ||
-                                            float === 'right'
-                                        );
-                                    })
+                                Array.from(element.children).some((item: Element) => {
+                                    const style = getStyle(item);
+                                    const float = style.cssFloat;
+                                    const position = style.position;
+                                    return (
+                                        (position !== 'static' && position !== 'initial') ||
+                                        float === 'left' ||
+                                        float === 'right'
+                                    );
+                                })
                             );
                         }
                     }
@@ -385,11 +375,7 @@ export function isElementVisible(element: Element) {
 
 export function findNestedExtension(element: Element, name: string): Null<HTMLElement> {
     if (element instanceof HTMLElement) {
-        return (
-            Array
-                .from(element.children)
-                .find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement
-        );
+        return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement;
     }
     return null;
 }

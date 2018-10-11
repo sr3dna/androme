@@ -98,16 +98,12 @@ export default abstract class NodeGroup<T extends Node> extends Node {
             return this.css('display');
         }
         else {
-            return (
-                this.children.every(node => node.blockStatic) ||
-                this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.PERCENT) ? 'block'
-                                                                          : this.children.every(node => node.inline) ? 'inline' : 'inline-block'
-            );
+            return this.children.every(node => node.blockStatic) || this.of(NODE_STANDARD.CONSTRAINT, NODE_ALIGNMENT.PERCENT) ? 'block' : this.children.every(node => node.inline) ? 'inline' : 'inline-block';
         }
     }
 
     get baseElement() {
-        function cascade(nodes: T[]) {
+        function cascade(nodes: T[]): Null<Element> {
             for (let i = 0; i < nodes.length; i++) {
                 const item = nodes[i] as T;
                 if (item.hasElement || item.plainText) {

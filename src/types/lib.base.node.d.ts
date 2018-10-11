@@ -28,7 +28,7 @@ declare global {
             public companion: T;
             public constraint: ObjectMap<any>;
             public readonly renderChildren: T[];
-            public readonly initial: Initialization<T>;
+            public readonly initial: InitialData<T>;
             public readonly documentParent: T;
             public readonly linearHorizontal: boolean;
             public readonly linearVertical: boolean;

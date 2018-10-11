@@ -67,8 +67,7 @@ export function replaceUnit(value: string, { density = 160, convertPixels = 'dp'
 export function calculateBias(start: number, end: number, accurracy: number) {
     return (
         parseFloat(
-            Math.max(start === 0 ? 0
-                                 : (end === 0 ? 1 : (start / (start + end))), 0)
+            Math.max(start !== 0 ? (end === 0 ? 1 : (start / (start + end))) : 0, 0)
                 .toFixed(accurracy)
         )
     );

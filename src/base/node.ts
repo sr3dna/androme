@@ -32,7 +32,7 @@ export default abstract class Node implements androme.lib.base.Node {
     public visible = true;
     public excluded = false;
     public rendered = false;
-    public readonly initial: Initialization<T>;
+    public readonly initial: InitialData<T>;
 
     protected abstract _namespaces: Set<string>;
     protected abstract _controlName: string;
@@ -404,7 +404,7 @@ export default abstract class Node implements androme.lib.base.Node {
     public cssParent(attr: string, startChild = false, ignoreHidden = false) {
         let result = '';
         if (this.baseElement) {
-            let current = (startChild ? this : getNodeFromElement(this.baseElement.parentElement)) as T;
+            let current = startChild ? this : getNodeFromElement(this.baseElement.parentElement) as T;
             while (current) {
                 result = current.initial.styleMap[attr] || '';
                 if (result || current.documentBody) {
@@ -505,8 +505,7 @@ export default abstract class Node implements androme.lib.base.Node {
                 if (this._element.parentElement) {
                     exclude += '|' + trimNull(this._element.parentElement.dataset[`${item[0]}Child`]);
                 }
-                exclude
-                    .split('|')
+                exclude.split('|')
                     .map(value => value.toUpperCase().trim())
                     .forEach(value => {
                         if (item[1][value] != null) {
@@ -621,7 +620,7 @@ export default abstract class Node implements androme.lib.base.Node {
 
     public getParentElementAsNode(negative = false, containerDefault?: T) {
         if (this._element) {
-            let parent = getNodeFromElement(this._element.parentElement) as Null<T>;
+            let parent: Null<T> = getNodeFromElement(this._element.parentElement) as T;
             if (!this.pageflow) {
                 let found = false;
                 let previous: Null<T> = null;
@@ -1081,7 +1080,7 @@ export default abstract class Node implements androme.lib.base.Node {
                         hasFreeFormText(this._element) &&
                         (this.children.length === 0 || this.children.every(node => !!getElementCache(node.element, 'supportInline'))) &&
                         (this._element.childNodes.length === 0 || !Array.from(this._element.childNodes).some((element: Element) => {
-                            const node = getNodeFromElement(element);
+                            const node = getNodeFromElement(element) as T;
                             return !!node && !node.lineBreak && (!node.excluded || !node.visible);
                         }))
                     );

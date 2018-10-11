@@ -12,13 +12,13 @@ export default abstract class List<T extends Node> extends Extension<T> {
         return (
             super.condition() &&
             children.length > 0 && (
-              children.every(item => item.blockStatic) ||
-              children.every(item => item.inlineElement) ||
-              (children.every(item => item.floating) && NodeList.floated(children).size === 1) ||
-              children.every((item, index) => !item.floating && (index === 0 || index === children.length - 1 || item.blockStatic || (item.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic)))
+                children.every(item => item.blockStatic) ||
+                children.every(item => item.inlineElement) ||
+                (children.every(item => item.floating) && NodeList.floated(children).size === 1) ||
+                children.every((item, index) => !item.floating && (index === 0 || index === children.length - 1 || item.blockStatic || (item.inlineElement && children[index - 1].blockStatic && children[index + 1].blockStatic)))
             ) && (
-              children.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || this.hasSingleImage(item))) ||
-              children.every((item: T) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && this.hasSingleImage(item))
+                children.some((item: T) => item.display === 'list-item' && (item.css('listStyleType') !== 'none' || this.hasSingleImage(item))) ||
+                children.every((item: T) => item.tagName !== 'LI' && item.styleMap.listStyleType === 'none' && this.hasSingleImage(item))
             )
         );
     }

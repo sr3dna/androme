@@ -440,12 +440,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public hasDrawableBackground(object?: BoxStyle) {
         return (
             object != null && (
-              this.borderVisible(object.borderTop) ||
-              this.borderVisible(object.borderRight) ||
-              this.borderVisible(object.borderBottom) ||
-              this.borderVisible(object.borderLeft) ||
-              object.borderRadius.length > 0 ||
-              (object.backgroundImage !== '' && object.backgroundImage !== 'none')
+                this.borderVisible(object.borderTop) ||
+                this.borderVisible(object.borderRight) ||
+                this.borderVisible(object.borderBottom) ||
+                this.borderVisible(object.borderLeft) ||
+                object.borderRadius.length > 0 ||
+                (object.backgroundImage !== '' && object.backgroundImage !== 'none')
             )
         );
     }

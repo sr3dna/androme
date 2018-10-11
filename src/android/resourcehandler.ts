@@ -9,6 +9,7 @@ import $dom = androme.lib.dom;
 import $xml = androme.lib.xml;
 import $color = androme.lib.color;
 import $resource = androme.lib.base.Resource;
+import NodeList = androme.lib.base.NodeList;
 
 import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
 import LAYERLIST_TMPL from './template/resource/layer-list';
@@ -118,15 +119,14 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         return resourceName;
                     }
                 }
-                name =
-                    name.trim()
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]/g, '_')
-                        .replace(/_+/g, '_')
-                        .split('_')
-                        .slice(0, 4)
-                        .join('_')
-                        .replace(/_+$/g, '');
+                name = name.trim()
+                    .toLowerCase()
+                    .replace(/[^a-z0-9]/g, '_')
+                    .replace(/_+/g, '_')
+                    .split('_')
+                    .slice(0, 4)
+                    .join('_')
+                    .replace(/_+$/g, '');
                 if (numeric || /^[0-9]/.test(name) || RESERVED_JAVA.includes(name)) {
                     name = `__${name}`;
                 }
@@ -148,37 +148,35 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         const images = {};
         if (srcset !== '') {
             const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
-            srcset
-                .split(',')
-                .forEach(value => {
-                    const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
-                    if (match) {
-                        if (match[2] == null) {
-                            match[2] = '1x';
-                        }
-                        const image = filepath + $util.lastIndexOf(match[1]);
-                        switch (match[2]) {
-                            case '0.75x':
-                                images['ldpi'] = image;
-                                break;
-                            case '1x':
-                                images['mdpi'] = image;
-                                break;
-                            case '1.5x':
-                                images['hdpi'] = image;
-                                break;
-                            case '2x':
-                                images['xhdpi'] = image;
-                                break;
-                            case '3x':
-                                images['xxhdpi'] = image;
-                                break;
-                            case '4x':
-                                images['xxxhdpi'] = image;
-                                break;
-                        }
+            srcset.split(',').forEach(value => {
+                const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                if (match) {
+                    if (match[2] == null) {
+                        match[2] = '1x';
                     }
-                });
+                    const image = filepath + $util.lastIndexOf(match[1]);
+                    switch (match[2]) {
+                        case '0.75x':
+                            images['ldpi'] = image;
+                            break;
+                        case '1x':
+                            images['mdpi'] = image;
+                            break;
+                        case '1.5x':
+                            images['hdpi'] = image;
+                            break;
+                        case '2x':
+                            images['xhdpi'] = image;
+                            break;
+                        case '3x':
+                            images['xxhdpi'] = image;
+                            break;
+                        case '4x':
+                            images['xxxhdpi'] = image;
+                            break;
+                    }
+                }
+            });
         }
         if (images['mdpi'] == null) {
             images['mdpi'] = element.src;
@@ -219,8 +217,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
 
     public static addColor(value: string, opacity = '1') {
         value = value.toUpperCase().trim();
-        const opaque = parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}`
-                                               : value;
+        const opaque = parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}` : value;
         if (value !== '') {
             let colorName = '';
             if (!$resource.STORED.colors.has(opaque)) {
@@ -273,10 +270,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         this._tagCount = {};
     }
 
-    public finalize(viewData: ViewData<androme.lib.base.NodeList<T>>) {
+    public finalize(viewData: ViewData<NodeList<T>>) {
         const styles: ObjectMap<string[]> = {};
         this.processFontStyle(viewData);
-        viewData.cache.each((node: T) => {
+        viewData.cache.each(node => {
             const children = node.renderChildren.filter(item => item.visible && item.auto);
             if (children.length > 1) {
                 const map = new Map<string, number>();
@@ -284,29 +281,27 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 let valid = true;
                 for (let i = 0; i < children.length; i++) {
                     let found = false;
-                    children[i]
-                        .combine('_', 'android')
-                        .some(value => {
-                            if (value.startsWith('style=')) {
-                                if (i === 0) {
-                                    style = value;
-                                }
-                                else {
-                                    if (style === '' || value !== style) {
-                                        valid = false;
-                                        return true;
-                                    }
-                                }
-                                found = true;
+                    children[i].combine('_', 'android').some(value => {
+                        if (value.startsWith('style=')) {
+                            if (i === 0) {
+                                style = value;
                             }
                             else {
-                                if (!map.has(value)) {
-                                    map.set(value, 0);
+                                if (style === '' || value !== style) {
+                                    valid = false;
+                                    return true;
                                 }
-                                map.set(value, (map.get(value) as number) + 1);
                             }
-                            return false;
-                        });
+                            found = true;
+                        }
+                        else {
+                            if (!map.has(value)) {
+                                map.set(value, 0);
+                            }
+                            map.set(value, (map.get(value) as number) + 1);
+                        }
+                        return false;
+                    });
                     if (!valid || (style !== '' && !found)) {
                         valid = false;
                         break;
@@ -386,11 +381,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 let backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
                 let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
-                let backgroundPosition: string[] = [];
                 const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
                 const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
                 const backgroundImageUrl: string[] = [];
                 const backgroundDimensions: Null<Image>[] = [];
+                let backgroundPosition: string[] = [];
                 for (let i = 0; i < backgroundImage.length; i++) {
                     if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
                         backgroundImageUrl.push(backgroundImage[i]);
@@ -439,7 +434,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             item.color = ResourceHandler.addColor(item.color[0], item.color[2]);
                         }
                     });
-                    let data;
+                    let data: {};
                     const image2: BackgroundImage[] = [];
                     const image3: BackgroundImage[] = [];
                     let template: Null<ObjectMap<string>> = null;
@@ -712,8 +707,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     tileMode,
                                     tileModeX,
                                     tileModeY,
-                                    width: (stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : ''),
-                                    height: (stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : ''),
+                                    width: stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : '',
+                                    height: stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '',
                                     image: backgroundImage[i]
                                 });
                             }
@@ -979,29 +974,27 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 const textShadow = node.css('textShadow');
                 if (textShadow !== 'none') {
-                    [/^(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})$/,
-                     /^([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) (.+)$/]
-                        .some((value, index) => {
-                            const match = textShadow.match(value);
-                            if (match) {
-                                const color = $color.parseRGBA(match[(index === 0 ? 1 : 4)]);
-                                if (color.length > 0) {
-                                    node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
-                                }
-                                node.android('shadowDx', $util.convertInt(match[(index === 0 ? 2 : 1)]).toString());
-                                node.android('shadowDy', $util.convertInt(match[(index === 0 ? 3 : 2)]).toString());
-                                node.android('shadowRadius', $util.convertInt(match[(index === 0 ? 4 : 3)]).toString());
-                                return true;
+                    [/^(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})$/, /^([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) (.+)$/].some((value, index) => {
+                        const match = textShadow.match(value);
+                        if (match) {
+                            const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
+                            if (color.length > 0) {
+                                node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
                             }
-                            return false;
-                        });
+                            node.android('shadowDx', $util.convertInt(match[index === 0 ? 2 : 1]).toString());
+                            node.android('shadowDy', $util.convertInt(match[index === 0 ? 3 : 2]).toString());
+                            node.android('shadowRadius', $util.convertInt(match[index === 0 ? 4 : 3]).toString());
+                            return true;
+                        }
+                        return false;
+                    });
                 }
             }
         });
         for (const tag in nodeName) {
-            const nodes = new androme.lib.base.NodeList(nodeName[tag]);
             const sorted: StyleList = [];
-            nodes.each((node: T) => {
+            const nodes = new NodeList(nodeName[tag]);
+            nodes.each(node => {
                 let system = false;
                 const nodeId = node.id;
                 const companion = node.companion;
@@ -1019,9 +1012,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
                 if (stored.fontFamily) {
-                    let fontFamily =
-                        stored.fontFamily
-                        .split(',')[0]
+                    let fontFamily = stored.fontFamily.split(',')[0]
                         .replace(/"/g, '')
                         .toLowerCase()
                         .trim();
@@ -1099,24 +1090,23 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public setImageSource() {
-        this.cache.list
-            .filter(node =>
-                node.visible &&
-                (node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
-                !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)
-            )
-            .forEach(node => {
-                const element = <HTMLImageElement> node.element;
-                if (!$dom.getElementCache(element, 'imageSource') || this.settings.alwaysReevaluateResources) {
-                    const result = node.imageElement ? ResourceHandler.addImageSrcSet(element)
-                                                     : ResourceHandler.addImage({ 'mdpi': element.src });
-                    if (result !== '') {
-                        const method = METHOD_ANDROID['imageSource'];
-                        node.formatted($util.formatString(method['src'], result), node.renderExtension.size === 0);
-                        $dom.setElementCache(element, 'imageSource', result);
-                    }
+        this.cache.list.filter(node =>
+            node.visible &&
+            (node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
+            !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)
+        )
+        .forEach(node => {
+            const element = <HTMLImageElement> node.element;
+            if (!$dom.getElementCache(element, 'imageSource') || this.settings.alwaysReevaluateResources) {
+                const result = node.imageElement ? ResourceHandler.addImageSrcSet(element)
+                                                    : ResourceHandler.addImage({ 'mdpi': element.src });
+                if (result !== '') {
+                    const method = METHOD_ANDROID['imageSource'];
+                    node.formatted($util.formatString(method['src'], result), node.renderExtension.size === 0);
+                    $dom.setElementCache(element, 'imageSource', result);
                 }
-            });
+            }
+        });
     }
 
     public setOptionArray() {
@@ -1135,13 +1125,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                 }
                 if (stored.stringArray) {
-                    result =
-                        stored.stringArray
-                            .map(value => {
-                                const name = ResourceHandler.addString(value, '', this.settings);
-                                return name !== '' ? `@string/${name}` : '';
-                            })
-                            .filter(name => name);
+                    result = stored.stringArray.map(value => {
+                        const name = ResourceHandler.addString(value, '', this.settings);
+                        return name !== '' ? `@string/${name}` : '';
+                    })
+                    .filter(name => name);
                 }
                 const arrayValue = result.join('-');
                 let arrayName = '';
@@ -1230,41 +1218,38 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         this.addFile(options.output.path, options.output.file, xml);
     }
 
-    private processFontStyle(viewData: ViewData<androme.lib.base.NodeList<T>>) {
+    private processFontStyle(viewData: ViewData<NodeList<T>>) {
         const style: ObjectMapNested<number[]> = {};
         const layout: ObjectMapNested<number[]> = {};
         const resource: ObjectMap<StyleTag[]> = {};
-        const inherit = new Set<string>();
         const mapNode: ObjectMapNested<string[]> = {};
+        const inherit = new Set<string>();
         for (const tag in this._tagStyle) {
             style[tag] = {};
             layout[tag] = {};
             const count = this._tagCount[tag];
-            let sorted: StyleList =
-                this._tagStyle[tag]
-                    .filter((item: ObjectMap<number[]>) => Object.keys(item).length > 0)
-                    .sort((a, b) => {
-                        let maxA = 0;
-                        let maxB = 0;
-                        let countA = 0;
-                        let countB = 0;
-                        for (const attr in a) {
-                            maxA = Math.max(a[attr].length, maxA);
-                            countA += a[attr].length;
-                        }
-                        for (const attr in b) {
-                            if (b[attr]) {
-                                maxB = Math.max(b[attr].length, maxB);
-                                countB += b[attr].length;
-                            }
-                        }
-                        if (maxA !== maxB) {
-                            return maxA > maxB ? -1 : 1;
-                        }
-                        else {
-                            return countA >= countB ? -1 : 1;
-                        }
-                    });
+            let sorted = this._tagStyle[tag].filter(item => Object.keys(item).length > 0).sort((a, b) => {
+                let maxA = 0;
+                let maxB = 0;
+                let countA = 0;
+                let countB = 0;
+                for (const attr in a) {
+                    maxA = Math.max(a[attr].length, maxA);
+                    countA += a[attr].length;
+                }
+                for (const attr in b) {
+                    if (b[attr]) {
+                        maxB = Math.max(b[attr].length, maxB);
+                        countB += b[attr].length;
+                    }
+                }
+                if (maxA !== maxB) {
+                    return maxA > maxB ? -1 : 1;
+                }
+                else {
+                    return countA >= countB ? -1 : 1;
+                }
+            });
             do {
                 if (sorted.length === 1) {
                     for (const attr in sorted[0]) {
@@ -1345,9 +1330,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     else {
                                         combined[index] = new Set([...attr1.split(';'), ...attr2.split(';')]);
                                     }
-                                    deleteKeys
-                                        .add(attr1)
-                                        .add(attr2);
+                                    deleteKeys.add(attr1).add(attr2);
                                 }
                             }
                         }
@@ -1357,15 +1340,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             style[tag][attrs] = filtered[attrs];
                         }
                         for (const index in combined) {
-                            const attrs =
-                                Array
-                                    .from(combined[index])
-                                    .sort()
-                                    .join(';');
-                            const ids =
-                                index
-                                    .split(',')
-                                    .map(value => parseInt(value));
+                            const attrs = Array.from(combined[index]).sort().join(';');
+                            const ids = index.split(',').map(value => parseInt(value));
                             this.deleteStyleAttribute(sorted, attrs, ids);
                             style[tag][attrs] = ids;
                         }
@@ -1387,17 +1363,16 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             delete sorted[i];
                         }
                     }
-                    sorted =
-                        sorted.filter((item: ObjectMap<number[]>) => {
-                            if (item) {
-                                for (const attr in item) {
-                                    if (item[attr] && item[attr].length > 0) {
-                                        return true;
-                                    }
+                    sorted = sorted.filter((item: ObjectMap<number[]>) => {
+                        if (item) {
+                            for (const attr in item) {
+                                if (item[attr] && item[attr].length > 0) {
+                                    return true;
                                 }
                             }
-                            return false;
-                        });
+                        }
+                        return false;
+                    });
                 }
             }
             while (sorted.length > 0);
@@ -1417,7 +1392,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 if (c === d) {
                     [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
                 }
-                return (c >= d ? -1 : 1);
+                return c >= d ? -1 : 1;
             });
             tagData.forEach((item, index) => item.name = $util.capitalize(tagName) + (index > 0 ? `_${index}` : ''));
             resource[tagName] = tagData;
@@ -1459,49 +1434,41 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         }
         for (const styles of inherit) {
             let parent = '';
-            styles
-                .split('.')
-                .forEach(value => {
-                    const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
-                    if (match) {
-                        const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
-                        $resource.STORED.styles
-                            .set(value, {
-                                parent,
-                                attributes: tagData.attributes
-                            });
-                        parent = value;
-                    }
-                });
+            styles.split('.').forEach(value => {
+                const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
+                if (match) {
+                    const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
+                    $resource.STORED.styles.set(value, { parent, attributes: tagData.attributes });
+                    parent = value;
+                }
+            });
         }
     }
 
     private deleteStyleAttribute(sorted: ObjectMap<number[]>[], attrs: string, ids: number[]) {
-        attrs
-            .split(';')
-            .forEach(value => {
-                for (let i = 0; i < sorted.length; i++) {
-                    if (sorted[i]) {
-                        let index = -1;
-                        let key = '';
-                        for (const j in sorted[i]) {
-                            if (j === value) {
-                                index = i;
-                                key = j;
-                                i = sorted.length;
-                                break;
-                            }
-                        }
-                        if (index !== -1) {
-                            sorted[index][key] = sorted[index][key].filter((id: number) => !ids.includes(id));
-                            if (sorted[index][key].length === 0) {
-                                delete sorted[index][key];
-                            }
+        attrs.split(';').forEach(value => {
+            for (let i = 0; i < sorted.length; i++) {
+                if (sorted[i]) {
+                    let index = -1;
+                    let key = '';
+                    for (const j in sorted[i]) {
+                        if (j === value) {
+                            index = i;
+                            key = j;
+                            i = sorted.length;
                             break;
                         }
                     }
+                    if (index !== -1) {
+                        sorted[index][key] = sorted[index][key].filter(id => !ids.includes(id));
+                        if (sorted[index][key].length === 0) {
+                            delete sorted[index][key];
+                        }
+                        break;
+                    }
                 }
-            });
+            }
+        });
     }
 
     private getShapeAttribute(stored: BoxStyle, name: string, direction = -1, hasInset = false, isInset = false): any[] | boolean {
@@ -1560,8 +1527,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
               border.style === 'ridge'
            ))
         {
-            let colorName = border.color;
-            let hexValue = ResourceHandler.getColor(colorName as string);
+            let colorName = border.color as string;
+            let hexValue = ResourceHandler.getColor(colorName);
             if (hexValue !== '') {
                 let opacity = '1';
                 if (hexValue.length === 9) {

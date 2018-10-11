@@ -28,7 +28,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
             const view = views[i];
-            files.push(this.getLayoutFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
+            files.push(this.createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
         }
         const xml = this.resourceDrawableToXml();
         files.push(...this.parseFileDetails(this.resourceStringToXml()));
@@ -49,7 +49,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             const view = views[i];
             result[view.filename] = view.content;
             if (saveToDisk) {
-                files.push(this.getLayoutFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
+                files.push(this.createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
             }
         }
         if (saveToDisk) {
@@ -216,13 +216,10 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                     parent: style.parent || '',
                     '2': []
                 };
-                style.attributes
-                    .split(';')
-                    .sort()
-                    .forEach((attr: string) => {
-                        const [name2, value] = attr.split('=');
-                        styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
-                    });
+                style.attributes.split(';').sort().forEach((attr: string) => {
+                    const [name2, value] = attr.split('=');
+                    styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
+                });
                 root['1'].push(styleItem);
             }
             xml = $xml.createTemplate(template, data);
@@ -330,7 +327,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
         return result;
     }
 
-    private getLayoutFile(pathname: string, filename: string, content: string): PlainFile {
+    private createPlainFile(pathname: string, filename: string, content: string): PlainFile {
         return {
             pathname,
             filename,

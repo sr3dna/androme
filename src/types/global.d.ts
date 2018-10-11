@@ -139,7 +139,7 @@ type Point = {
     y: number;
 };
 
-type Initialization<T> = {
+type InitialData<T> = {
     readonly styleMap: StringMap,
     readonly children: T[],
     readonly bounds: BoxDimensions,

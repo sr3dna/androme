@@ -25,13 +25,11 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
 
     public init(element: HTMLElement) {
         if (this.included(element) && element.children.length > 0) {
-            Array
-                .from(element.children)
-                .forEach((item: HTMLElement) => {
-                    if (item.tagName === 'NAV' && !$util.includes(item.dataset.ext, $const.EXT_NAME.EXTERNAL)) {
-                        item.dataset.ext = ($util.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const.EXT_NAME.EXTERNAL;
-                    }
-                });
+            Array.from(element.children).forEach((item: HTMLElement) => {
+                if (item.tagName === 'NAV' && !$util.includes(item.dataset.ext, $const.EXT_NAME.EXTERNAL)) {
+                    item.dataset.ext = ($util.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const.EXT_NAME.EXTERNAL;
+                }
+            });
             this.application.elements.add(element);
             return true;
         }
@@ -53,16 +51,15 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
             navView.android('layout_height', 'match_parent');
             navView.auto = false;
         }
-        const output =
-            this.application.viewController.renderNodeStatic(
-                VIEW_SUPPORT.DRAWER,
-                node.depth,
-                options,
-                'match_parent',
-                'match_parent',
-                node,
-                true
-            );
+        const output = this.application.viewController.renderNodeStatic(
+            VIEW_SUPPORT.DRAWER,
+            node.depth,
+            options,
+            'match_parent',
+            'match_parent',
+            node,
+            true
+        );
         node.documentRoot = true;
         node.rendered = true;
         node.nodeType = $enum.NODE_STANDARD.BLOCK;
@@ -93,14 +90,13 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
             $util.overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
             $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
             $util.overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
-            const output =
-                application.viewController.renderNodeStatic(
-                    VIEW_SUPPORT.NAVIGATION_VIEW,
-                    node.depth + 1,
-                    options,
-                    'wrap_content',
-                    'match_parent'
-                );
+            const output = application.viewController.renderNodeStatic(
+                VIEW_SUPPORT.NAVIGATION_VIEW,
+                node.depth + 1,
+                options,
+                'wrap_content',
+                'match_parent'
+            );
             application.addRenderQueue(node.id.toString(), [output]);
         }
     }

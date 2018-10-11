@@ -23,15 +23,14 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
         const parent = this.parent as T;
         const options = Object.assign({}, this.options[node.element.id]);
         $util.overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
-        const output =
-            this.application.viewController.renderNodeStatic(
-                VIEW_SUPPORT.BOTTOM_NAVIGATION,
-                node.depth,
-                options,
-                parent.is($enum.NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent',
-                'wrap_content',
-                node
-            );
+        const output = this.application.viewController.renderNodeStatic(
+            VIEW_SUPPORT.BOTTOM_NAVIGATION,
+            node.depth,
+            options,
+            parent.is($enum.NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent',
+            'wrap_content',
+            node
+        );
         for (let i = 5; i < node.children.length; i++) {
             node.children[i].hide();
             node.children[i].cascade().forEach(item => item.hide());
