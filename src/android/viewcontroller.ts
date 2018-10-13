@@ -1554,7 +1554,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 break;
             case NODE_ANDROID.GRID:
                 options = {
-                    app: {
+                    android: {
                         columnCount: options && $util.convertInt(options.columnCount) > 0 ? options.columnCount.toString() : '2',
                         rowCount: options && $util.convertInt(options.rowCount > 0) ? options.rowCount.toString() : ''
                     }
@@ -1962,7 +1962,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             $enum.NODE_STANDARD.SPACE,
             depth,
             {
-                app: {
+                android: {
                     layout_columnWeight: percent,
                     layout_columnSpan: columnSpan.toString()
                 }

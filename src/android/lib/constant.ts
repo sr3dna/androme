@@ -42,7 +42,7 @@ export const NODE_ANDROID = {
     FRAME: 'FrameLayout',
     LINEAR: 'LinearLayout',
     RADIO_GROUP: 'RadioGroup',
-    GRID: 'android.support.v7.widget.GridLayout',
+    GRID: 'GridLayout',
     RELATIVE: 'RelativeLayout',
     CONSTRAINT: 'android.support.constraint.ConstraintLayout',
     SCROLL_HORIZONTAL: 'HorizontalScrollView',

@@ -7,13 +7,13 @@ export default class <T extends View> extends androme.lib.base.extensions.Table<
     public processNode(): ExtensionResult {
         const result = super.processNode();
         const node = this.node;
-        const columnCount = $util.convertInt(node.app('columnCount'));
+        const columnCount = $util.convertInt(node.android('columnCount'));
         if (columnCount > 1) {
             let requireWidth = !!node.data($const.EXT_NAME.TABLE, 'expand');
             node.each((item: T) => {
                 if (item.css('width') === '0px') {
                     item.android('layout_width', '0px');
-                    item.app('layout_columnWeight', ((<HTMLTableCellElement> item.element).colSpan || 1).toString());
+                    item.android('layout_columnWeight', ((<HTMLTableCellElement> item.element).colSpan || 1).toString());
                 }
                 else {
                     const expand: boolean | null = item.data($const.EXT_NAME.TABLE, 'expand');
@@ -24,17 +24,17 @@ export default class <T extends View> extends androme.lib.base.extensions.Table<
                             const percent = $util.convertFloat(item.data($const.EXT_NAME.TABLE, 'percent')) / 100;
                             if (percent > 0) {
                                 item.android('layout_width', '0px');
-                                item.app('layout_columnWeight', $util.trimEnd(percent.toFixed(3), '0'));
+                                item.android('layout_columnWeight', $util.trimEnd(percent.toFixed(3), '0'));
                                 requireWidth = true;
                             }
                         }
                         else {
-                            item.app('layout_columnWeight', '0');
+                            item.android('layout_columnWeight', '0');
                         }
                     }
                     if (downsized) {
                         if (exceed) {
-                            item.app('layout_columnWeight', '0.01');
+                            item.android('layout_columnWeight', '0.01');
                         }
                         else {
                             if (item.textElement) {
@@ -73,10 +73,10 @@ export default class <T extends View> extends androme.lib.base.extensions.Table<
         const columnSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'colSpan'));
         const spaceSpan = $util.convertInt(node.data($const.EXT_NAME.TABLE, 'spaceSpan'));
         if (rowSpan > 1) {
-            node.app('layout_rowSpan', rowSpan.toString());
+            node.android('layout_rowSpan', rowSpan.toString());
         }
         if (columnSpan > 1) {
-            node.app('layout_columnSpan', columnSpan.toString());
+            node.android('layout_columnSpan', columnSpan.toString());
         }
         if (spaceSpan > 0) {
             const parent = this.parent as T;

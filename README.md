@@ -337,7 +337,7 @@ The attributes "include" and "include-end" can only be applied to elements which
         android:orientation="vertical"
         android:paddingHorizontal="@dimen/form_padding_horizontal"
         android:paddingVertical="@dimen/form_padding_vertical">
-        <android.support.v7.widget.GridLayout
+        <GridLayout
             android:id="@+id/gridlayout_1"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
@@ -365,9 +365,9 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Text" />
             <Space
                 android:id="@+id/space_1"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <RelativeLayout
                 android:id="@+id/relativelayout_1"
                 android:layout_height="wrap_content"
@@ -395,7 +395,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol67029"
+                    android:text="@string/__symbol26341"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -463,9 +463,9 @@ The attributes "include" and "include-end" can only be applied to elements which
             </RelativeLayout>
             <Space
                 android:id="@+id/space_2"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_3"
                 android:layout_height="wrap_content"
@@ -492,9 +492,9 @@ The attributes "include" and "include-end" can only be applied to elements which
             </LinearLayout>
             <Space
                 android:id="@+id/space_3"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_4"
                 android:layout_height="wrap_content"
@@ -515,9 +515,9 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Select" />
             <Space
                 android:id="@+id/space_4"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <RelativeLayout
                 android:id="@+id/relativelayout_3"
                 android:layout_height="wrap_content"
@@ -545,7 +545,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol67029"
+                    android:text="@string/__symbol26341"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -578,9 +578,9 @@ The attributes "include" and "include-end" can only be applied to elements which
             </LinearLayout>
             <Space
                 android:id="@+id/space_5"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_5"
                 android:layout_height="wrap_content"
@@ -601,9 +601,9 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Select" />
             <Space
                 android:id="@+id/space_6"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_6"
                 android:layout_height="wrap_content"
@@ -624,9 +624,9 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Select" />
             <Space
                 android:id="@+id/space_7"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_7"
                 android:layout_height="wrap_content"
@@ -645,7 +645,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:paddingHorizontal="@dimen/select_padding_horizontal"
                 android:paddingVertical="@dimen/select_padding_vertical"
                 style="@style/Select" />
-        </android.support.v7.widget.GridLayout>
+        </GridLayout>
         <View
             android:id="@+id/view_1"
             android:background="@color/light_gray_1"
@@ -653,7 +653,7 @@ The attributes "include" and "include-end" can only be applied to elements which
             android:layout_height="@dimen/hr_height"
             android:layout_marginVertical="@dimen/hr_margin_vertical"
             android:layout_width="@dimen/hr_width" />
-        <android.support.v7.widget.GridLayout
+        <GridLayout
             android:id="@+id/gridlayout_2"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
@@ -681,9 +681,9 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Select" />
             <Space
                 android:id="@+id/space_8"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_9"
                 android:layout_height="wrap_content"
@@ -704,9 +704,9 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Select" />
             <Space
                 android:id="@+id/space_9"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_10"
                 android:layout_height="wrap_content"
@@ -762,9 +762,9 @@ The attributes "include" and "include-end" can only be applied to elements which
             </LinearLayout>
             <Space
                 android:id="@+id/space_10"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_11"
                 android:layout_height="wrap_content"
@@ -785,9 +785,9 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Select" />
             <Space
                 android:id="@+id/space_11"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_12"
                 android:layout_height="wrap_content"
@@ -808,9 +808,9 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Select" />
             <Space
                 android:id="@+id/space_12"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_13"
                 android:layout_height="wrap_content"
@@ -831,9 +831,9 @@ The attributes "include" and "include-end" can only be applied to elements which
                 style="@style/Select" />
             <Space
                 android:id="@+id/space_13"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_14"
                 android:layout_height="wrap_content"
@@ -885,9 +885,9 @@ The attributes "include" and "include-end" can only be applied to elements which
             </LinearLayout>
             <Space
                 android:id="@+id/space_14"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_15"
                 android:layout_height="wrap_content"
@@ -952,9 +952,9 @@ The attributes "include" and "include-end" can only be applied to elements which
             </LinearLayout>
             <Space
                 android:id="@+id/space_15"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <RelativeLayout
                 android:id="@+id/relativelayout_4"
                 android:layout_height="wrap_content"
@@ -982,7 +982,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol67029"
+                    android:text="@string/__symbol26341"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1026,9 +1026,9 @@ The attributes "include" and "include-end" can only be applied to elements which
             </LinearLayout>
             <Space
                 android:id="@+id/space_16"
+                android:layout_columnSpan="2"
                 android:layout_height="@dimen/space_height"
-                android:layout_width="match_parent"
-                app:layout_columnSpan="2" />
+                android:layout_width="match_parent" />
             <TextView
                 android:id="@+id/textview_16"
                 android:layout_height="wrap_content"
@@ -1101,7 +1101,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:textAllCaps="false"
                     style="@style/Button_1" />
             </LinearLayout>
-        </android.support.v7.widget.GridLayout>
+        </GridLayout>
     </LinearLayout>
 </LinearLayout>
 ```
@@ -1113,7 +1113,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol67029">):</string>
+    <string name="__symbol26341">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>

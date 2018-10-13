@@ -358,7 +358,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 }
                                 else if (renderParent.of($enum.NODE_STANDARD.GRID, $enum.NODE_ALIGNMENT.PERCENT)) {
                                     this.android('layout_width', '0px');
-                                    this.app('layout_columnWeight', (parseInt(styleMap.width) / 100).toFixed(2));
+                                    this.android('layout_columnWeight', (parseInt(styleMap.width) / 100).toFixed(2));
                                 }
                                 else {
                                     const widthPercent = Math.ceil(this.bounds.width) - (!tableElement ? this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth : 0);
@@ -395,7 +395,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                     if (this.android('layout_width') === '') {
                         const widthDefined = renderChildren.filter(node => !node.autoMargin && node.has('width', $enum.CSS_STANDARD.UNIT, { map: 'initial' }));
-                        if ($util.convertFloat(this.app('layout_columnWeight')) > 0) {
+                        if ($util.convertFloat(this.android('layout_columnWeight')) > 0) {
                             this.android('layout_width', '0px');
                         }
                         else if (
@@ -534,7 +534,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         public setAlignment(settings: SettingsAndroid) {
             const renderParent = this.renderParent;
             const textAlignParent = this.cssParent('textAlign');
-            const obj = renderParent.is($enum.NODE_STANDARD.GRID) ? 'app' : 'android';
             const left = parseRTL('left', settings);
             const right = parseRTL('right', settings);
             let textAlign = this.styleMap.textAlign || '';
@@ -607,7 +606,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                     if (alignment.length > 0) {
                         const gravity = node.blockWidth ? 'gravity' : 'layout_gravity';
-                        node[obj](gravity, mergeGravity(node[obj](gravity), ...alignment));
+                        node.android(gravity, mergeGravity(node.android(gravity), ...alignment));
                         return true;
                     }
                 }
@@ -664,7 +663,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
             if (renderParent.linearVertical || (this.documentRoot && this.linearVertical)) {
                 if (this.float === 'right') {
-                    this[obj]('layout_gravity', right);
+                    this.android('layout_gravity', right);
                 }
                 else {
                     setAutoMargin(this);
@@ -679,7 +678,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 }
             }
             if (renderParent.tagName === 'TABLE') {
-                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), 'fill'));
+                this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), 'fill'));
                 if (textAlign === '' && this.tagName === 'TH') {
                     textAlign = 'center';
                 }
@@ -711,7 +710,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         textAlign = setTextAlign(floating);
                     }
                     else {
-                        this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), floating));
+                        this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), floating));
                     }
                 }
                 else if (renderParent.hasAlign($enum.NODE_ALIGNMENT.VERTICAL)) {
@@ -724,14 +723,14 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     !this.floating &&
                     !this.autoMargin)
                 {
-                    this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), convertHorizontal(textAlignParent)));
+                    this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), convertHorizontal(textAlignParent)));
                 }
                 if (textAlign === '') {
                     textAlign = textAlignParent;
                 }
             }
             if (verticalAlign !== '' && renderParent.linearHorizontal) {
-                this[obj]('layout_gravity', mergeGravity(this[obj]('layout_gravity'), verticalAlign));
+                this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), verticalAlign));
                 verticalAlign = '';
             }
             if (this.documentRoot && (
@@ -739,7 +738,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                   this.is($enum.NODE_STANDARD.FRAME)
                ))
             {
-                this.delete(obj, 'layout_gravity');
+                this.delete('android', 'layout_gravity');
             }
             this.android('gravity', mergeGravity(this.android('gravity'), convertHorizontal(textAlign), verticalAlign));
         }
@@ -966,7 +965,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         if (this.has('width', $enum.CSS_STANDARD.AUTO, { map: 'initial' }) && renderChildren.every(node => node.inlineWidth)) {
                             for (const node of renderChildren) {
                                 node.android('layout_width', '0px');
-                                node.app('layout_columnWeight', '1');
+                                node.android('layout_columnWeight', '1');
                             }
                         }
                     }

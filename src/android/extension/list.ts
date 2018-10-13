@@ -1,5 +1,5 @@
 import { ListData } from '../../extension/types/data';
-import { SettingsAndroid, ViewAttribute } from '../lib/types';
+import { SettingsAndroid } from '../lib/types';
 import View from '../view';
 import ResourceHandler from '../resourcehandler';
 import { delimitUnit, parseRTL } from '../lib/util';
@@ -22,7 +22,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
             let paddingLeft = node.marginLeft;
             node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
             if (parent.is($enum.NODE_STANDARD.GRID)) {
-                columnCount = $util.convertInt(parent.app('columnCount'));
+                columnCount = $util.convertInt(parent.android('columnCount'));
                 paddingLeft += parentLeft;
             }
             else if (parent.children[0] === node) {
@@ -47,7 +47,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                 }
                 controller.prependBefore(node.id, output);
                 if (columnCount === 3) {
-                    node.app('layout_columnSpan', '2');
+                    node.android('layout_columnSpan', '2');
                 }
                 paddingLeft += ordinal.marginLeft;
                 ordinal.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
@@ -87,9 +87,8 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                     }
                 })();
                 let layoutMarginLeft = left > 0 ? $util.formatPX(left) : '';
-                const options: ViewAttribute = {
-                    android: {},
-                    app: { layout_columnWeight: columnWeight }
+                const options = {
+                    android: { layout_columnWeight: columnWeight }
                 };
                 if (positionInside) {
                     if (layoutMarginLeft !== '') {
@@ -103,9 +102,9 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                             {
                                 android: {
                                     minWidth,
+                                    layout_columnWeight: columnWeight,
                                     [parseRTL('layout_marginLeft', settings)]: layoutMarginLeft
-                                },
-                                app: { layout_columnWeight: columnWeight }
+                                }
                             },
                             'wrap_content',
                             'wrap_content'
@@ -125,11 +124,11 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                         paddingTop: node.paddingTop > 0 ? $util.formatPX(node.paddingTop) : ''
                     });
                     if (columnCount === 3) {
-                        node.app('layout_columnSpan', '2');
+                        node.android('layout_columnSpan', '2');
                     }
                 }
                 if (node.tagName === 'DT' && image === '') {
-                    node.app('layout_columnSpan', columnCount.toString());
+                    node.android('layout_columnSpan', columnCount.toString());
                 }
                 else {
                     if (image !== '') {
@@ -169,7 +168,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                 }
             }
             if (columnCount > 0) {
-                node.app('layout_columnWeight', '1');
+                node.android('layout_columnWeight', '1');
             }
         }
         return { output: '', complete: true };
@@ -178,7 +177,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
     public beforeInsert() {
         const node = this.node;
         if (node.is($enum.NODE_STANDARD.GRID)) {
-            const columnCount = node.app('columnCount');
+            const columnCount = node.android('columnCount');
             const children = node.renderChildren;
             for (let i = 0; i < children.length; i++) {
                 const current = children[i];
@@ -205,7 +204,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                             $enum.NODE_STANDARD.SPACE,
                             current.renderDepth,
                             {
-                                app: { layout_columnSpan: columnCount.toString() }
+                                android: { layout_columnSpan: columnCount.toString() }
                             },
                             'match_parent',
                             $util.formatPX(spaceHeight)

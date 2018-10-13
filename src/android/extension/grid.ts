@@ -12,13 +12,13 @@ export default class <T extends View> extends androme.lib.base.extensions.Grid<T
         const data: GridCellData = node.data($const.EXT_NAME.GRID, 'cellData');
         if (data) {
             if (data.rowSpan > 1) {
-                node.app('layout_rowSpan', data.rowSpan.toString());
+                node.android('layout_rowSpan', data.rowSpan.toString());
             }
             if (data.columnSpan > 1) {
-                node.app('layout_columnSpan', data.columnSpan.toString());
+                node.android('layout_columnSpan', data.columnSpan.toString());
             }
             if (node.parent.display === 'table' && node.display === 'table-cell') {
-                node.app('layout_gravity', 'fill');
+                node.android('layout_gravity', 'fill');
             }
         }
         return super.processChild();
