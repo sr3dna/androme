@@ -107,7 +107,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
             const boundsHeight: number = Math.max.apply(null, list.map(node => node.bounds.height));
             if (lineHeight > boundsHeight) {
                 const result = list.filter(node => node.lineHeight === lineHeight);
-                return (result.length === list.length ? result.filter(node => node.hasElement) : result).filter(node => node.baseline);
+                return (result.length === list.length ? result.filter(node => node.htmlElement) : result).filter(node => node.baseline);
             }
             baseline = list.filter(node => node.baselineInside).sort((a, b) => {
                 let heightA = a.bounds.height;
@@ -128,7 +128,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                             return a.lineHeight >= b.lineHeight ? -1 : 1;
                         }
                         else if (fontSizeA === fontSizeB) {
-                            return a.hasElement || !b.hasElement ? -1 : 1;
+                            return a.htmlElement || !b.htmlElement ? -1 : 1;
                         }
                     }
                     if (a.nodeType !== b.nodeType && (a.nodeType < NODE_STANDARD.TEXT || b.nodeType < NODE_STANDARD.TEXT)) {
@@ -148,10 +148,10 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                     }
                     else {
                         if (fontSizeA === fontSizeB && heightA === heightB) {
-                            if (a.hasElement && !b.hasElement) {
+                            if (a.htmlElement && !b.htmlElement) {
                                 return -1;
                             }
-                            else if (!a.hasElement && b.hasElement) {
+                            else if (!a.htmlElement && b.htmlElement) {
                                 return 1;
                             }
                             else {
@@ -381,7 +381,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
     }
 
     get elements() {
-        return this._list.filter(node => node.visible && node.hasElement);
+        return this._list.filter(node => node.visible && node.styleElement);
     }
 
     get nextId() {

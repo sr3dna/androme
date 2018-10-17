@@ -380,7 +380,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 !connected &&
                                 !['SUP', 'SUB'].includes(current.tagName) &&
                                 (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && (
-                                    (current.float !== 'right' && Math.floor(baseWidth) - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
+                                    (current.float !== 'right' && Math.floor(baseWidth) - (current.styleElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
                                     (current.multiLine && $dom.hasLineBreak(current.element)) ||
                                     (previous.multiLine && previous.textContent.trim() !== '' && !/^\s*\n+/.test(previous.textContent) && !/\n+\s*$/.test(previous.textContent) && $dom.hasLineBreak(previous.element)) ||
                                     (previousSibling && previousSibling.lineBreak) ||
@@ -758,7 +758,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 if (mapSibling(current, 'bottomTop')) {
                                     mapDelete(current, 'bottom');
                                 }
-                                if (current.plainText || (!current.hasElement && current.renderChildren.some(item => item.textElement))) {
+                                if (current.plainText || (!current.styleElement && current.renderChildren.some(item => item.textElement))) {
                                     const textAlign = current.cssParent('textAlign');
                                     if (textAlign === 'right') {
                                         current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
@@ -2063,7 +2063,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 node.setNodeType(viewName);
                 break;
         }
-        const displayName = node.hasElement ? node.nodeName : viewName;
+        const displayName = node.styleElement ? node.nodeName : viewName;
         if ($util.hasValue(width)) {
             if (!isNaN(parseInt(width))) {
                 width = delimitUnit(displayName, 'width', width, this.settings);

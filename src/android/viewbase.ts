@@ -289,7 +289,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return this.linear.width;
                     }
                     else {
-                        return this.presentationElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0;
+                        return this.styleElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0;
                     }
                 })();
                 const height = (() => {
@@ -300,7 +300,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return this.linear.height;
                     }
                     else {
-                        return this.presentationElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0;
+                        return this.styleElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0;
                     }
                 })();
                 const widthParent = (() => {
@@ -311,7 +311,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return parent.box.width;
                     }
                     else {
-                        return parent.presentationElement ? (<HTMLElement> parent.element).offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0;
+                        return parent.styleElement ? (<HTMLElement> parent.element).offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0;
                     }
                 })();
                 const heightParent = (() => {
@@ -322,7 +322,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return parent.box.height;
                     }
                     else {
-                        return parent.presentationElement ? (<HTMLElement> parent.element).offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0;
+                        return parent.styleElement ? (<HTMLElement> parent.element).offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0;
                     }
                 })();
                 const styleMap = this.styleMap;
@@ -434,8 +434,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 if (width >= widthParent ||
                                     (this.linearVertical && !this.floating && !this.autoMargin) ||
                                     (this.is($enum.NODE_STANDARD.FRAME) && renderChildren.some(node => node.blockStatic && (node.autoMarginHorizontal || node.autoMarginLeft))) ||
-                                    (!this.hasElement && this.length > 0 && renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !renderChildren.some(item => item.plainText && item.multiLine)) ||
-                                    (this.hasElement && this.blockStatic && (
+                                    (!this.htmlElement && this.length > 0 && renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !renderChildren.some(item => item.plainText && item.multiLine)) ||
+                                    (this.htmlElement && this.blockStatic && (
                                         this.documentParent.documentBody ||
                                         this.ascend().every(node => node.blockStatic) ||
                                         (this.documentParent.blockStatic && this.nodeType <= $enum.NODE_STANDARD.LINEAR && (!previousSibling || !previousSibling.floating) && (!nextSibling || !nextSibling.floating))
@@ -865,7 +865,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                     });
                 }
-                if (this.hasElement && this.blockStatic) {
+                if (this.htmlElement && this.blockStatic) {
                     for (let i = 0; i < this.element.children.length; i++) {
                         const element = this.element.children[i];
                         const node = $dom.getNodeFromElement<View>(element);
@@ -981,7 +981,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     borderWidth = this.css('boxSizing') === 'content-box';
                 }
                 else {
-                    if (this.presentationElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
+                    if (this.styleElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                         if (!(renderParent.tagName === 'TABLE' || this.css('boxSizing') === 'border-box')) {
                             const minWidth = $util.convertInt(this.android('minWidth'));
                             const minHeight = $util.convertInt(this.android('minHeight'));
@@ -1021,7 +1021,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 }
             }
             if (this.linearHorizontal || this.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL)) {
-                const pageflow = renderChildren.filter(node => !node.floating && (node.hasElement || node.renderChildren.length === 0));
+                const pageflow = renderChildren.filter(node => !node.floating && (node.styleElement || node.renderChildren.length === 0));
                 if (pageflow.length > 0 &&
                     pageflow.every(node => node.baseline || node.has('verticalAlign', $enum.CSS_STANDARD.UNIT)) && (
                         pageflow.some(node => (node.imageOrSvgElement) && node.toInt('verticalAlign') !== 0) ||
@@ -1184,7 +1184,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return current;
                     })();
                     const elements = $dom.getElementsBetweenSiblings(
-                        previous ? (previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement) : null,
+                        previous ? (previous.length > 0 && !previous.styleElement ? previous.lastElementChild : previous.baseElement) : null,
                         node.baseElement
                     )
                     .filter(element => {

@@ -40,12 +40,11 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         if (columnBalance) {
             const dimensions: number[][] = [];
             node.each((item, index: number) => {
-                const children = item.children as T[];
                 dimensions[index] = [];
-                for (let l = 0; l < children.length; l++) {
-                    dimensions[index].push(children[l].bounds.width);
+                for (let l = 0; l < item.children.length; l++) {
+                    dimensions[index].push(item.children[l].bounds.width);
                 }
-                columns.push(children);
+                columns.push(item.children.slice() as T[]);
             });
             const base = columns[
                 dimensions.findIndex(item => {
@@ -220,13 +219,15 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
         if (columns.length > 1 && columns[0].length === node.children.length) {
             mainData.columnCount = columnBalance ? columns[0].length : columns.length;
             output = this.application.writeGridLayout(node, parent, mainData.columnCount);
-            node.children.length = 0;
+            node.children.slice().forEach(item => {
+                node.remove(item);
+                item.hide();
+            });
             for (let l = 0, count = 0; l < columns.length; l++) {
                 let spacer = 0;
                 for (let m = 0, start = 0; m < columns[l].length; m++) {
                     const item = columns[l][m];
                     if (!(<any> item).spacer) {
-                        item.parent.hide();
                         item.parent = node;
                         const data: GridCellData = {
                             inherit: true,

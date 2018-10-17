@@ -181,10 +181,9 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
         const node = this.node;
         if (node.is($enum.NODE_STANDARD.GRID)) {
             const columnCount = node.android('columnCount');
-            const children = node.renderChildren;
-            for (let i = 0; i < children.length; i++) {
-                const current = children[i];
-                const previous = children[i - 1];
+            for (let i = 0; i < node.renderChildren.length; i++) {
+                const current = node.renderChildren[i];
+                const previous = node.renderChildren[i - 1];
                 let spaceHeight = 0;
                 if (previous) {
                     const marginBottom = $util.convertInt(previous.android('layout_marginBottom'));

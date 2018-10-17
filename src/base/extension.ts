@@ -36,7 +36,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
     }
 
     public is(node: T) {
-        return node.hasElement && (this.tagNames.length === 0 || this.tagNames.includes(node.tagName));
+        return node.styleElement && (this.tagNames.length === 0 || this.tagNames.includes(node.tagName));
     }
 
     public require(value: string, init = false) {

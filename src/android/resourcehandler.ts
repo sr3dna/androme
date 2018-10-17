@@ -582,8 +582,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 const method = METHOD_ANDROID['boxStyle'];
                 const companion = node.companion;
                 if (companion &&
+                    companion.htmlElement &&
                     !companion.visible &&
-                    companion.hasElement &&
                     !$dom.cssFromParent(companion.element, 'backgroundColor'))
                 {
                     const boxStyle: BoxStyle = $dom.getElementCache(companion.element, 'boxStyle');
@@ -1446,7 +1446,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                     }
                 }
-                if (node.hasElement) {
+                if (node.htmlElement) {
                     switch (node.css('fontVariant')) {
                         case 'small-caps':
                             stored.value = stored.value.toUpperCase();

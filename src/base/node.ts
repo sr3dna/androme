@@ -100,7 +100,7 @@ export default abstract class Node implements androme.lib.base.Node {
 
     public init() {
         if (!this._initialized) {
-            if (this.presentationElement) {
+            if (this.styleElement) {
                 const element = <HTMLElement> this._element;
                 const styleMap = getElementCache(element, 'styleMap') || {};
                 for (const inline of Array.from(element.style)) {
@@ -507,7 +507,7 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     public setExclusions() {
-        if (this.hasElement) {
+        if (this.styleElement) {
             [['excludeSection', APP_SECTION], ['excludeProcedure', NODE_PROCEDURE], ['excludeResource', NODE_RESOURCE]].forEach((item: [string, any]) => {
                 let exclude = this.dataset[item[0]] || '';
                 if (this._element.parentElement) {
@@ -525,7 +525,7 @@ export default abstract class Node implements androme.lib.base.Node {
     public setBounds(calibrate = false) {
         if (this._element) {
             if (!calibrate) {
-                if (this.hasElement) {
+                if (this.styleElement) {
                     this.bounds = assignBounds(this._element.getBoundingClientRect());
                 }
                 else {
@@ -686,7 +686,12 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     public remove(node: T) {
-        this.children = this.children.filter(child => child !== node);
+        for (let i = 0; i < this.children.length; i++) {
+            if (node === this.children[i]) {
+                this.children.splice(i, 1);
+                break;
+            }
+        }
     }
 
     public appendRendered(node: T) {
@@ -785,7 +790,7 @@ export default abstract class Node implements androme.lib.base.Node {
 
     private boxAttribute(region: string, direction: string) {
         const attr = region + direction;
-        if (this.hasElement) {
+        if (this.styleElement) {
             const value = this.css(attr);
             if (isPercent(value)) {
                 return this.style[attr] && this.style[attr] !== value ? convertInt(this.style[attr]) : this.documentParent.box[(direction === 'Left' || direction === 'Right' ? 'width' : 'height')] * (convertInt(value) / 100);
@@ -802,7 +807,7 @@ export default abstract class Node implements androme.lib.base.Node {
     private getOverflow() {
         if (this._overflow == null) {
             this._overflow = 0;
-            if (this.hasElement) {
+            if (this.styleElement) {
                 const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
                 if (this.toInt('width') > 0 && (
                         overflow === 'scroll' ||
@@ -828,14 +833,14 @@ export default abstract class Node implements androme.lib.base.Node {
     set parent(value) {
         if (value !== this._parent) {
             if (this._parent) {
-                this._parent.children = this._parent.children.filter(node => node !== this);
+                this._parent.remove(this);
             }
             this._parent = value;
         }
         if (value) {
             if (!value.children.includes(this)) {
                 value.children.push(this);
-                if (!value.hasElement && this.siblingIndex !== -1) {
+                if (!value.styleElement && this.siblingIndex !== -1) {
                     value.siblingIndex = Math.min(this.siblingIndex, value.siblingIndex);
                 }
             }
@@ -858,7 +863,7 @@ export default abstract class Node implements androme.lib.base.Node {
     get nodeName() {
         return (
             this._nodeName ||
-            (this.presentationElement ? (this.tagName === 'INPUT' ? (<HTMLInputElement> this._element).type : this.tagName).toUpperCase() : '')
+            (this.styleElement ? (this.tagName === 'INPUT' ? (<HTMLInputElement> this._element).type : this.tagName).toUpperCase() : '')
         );
     }
 
@@ -877,15 +882,15 @@ export default abstract class Node implements androme.lib.base.Node {
         return (this._tagName || (this._element && this._element.tagName) || '').toUpperCase();
     }
 
-    get hasElement() {
+    get htmlElement() {
         return this._element instanceof HTMLElement;
     }
 
     get domElement() {
-        return this.presentationElement || this.plainText;
+        return this.styleElement || this.plainText;
     }
 
-    get presentationElement() {
+    get styleElement() {
         return this._element instanceof HTMLElement || this.svgElement;
     }
 
@@ -1085,7 +1090,7 @@ export default abstract class Node implements androme.lib.base.Node {
                     break;
                 default:
                     this._inlineText = (
-                        this.hasElement &&
+                        this.htmlElement &&
                         hasFreeFormText(this._element) &&
                         (this.children.length === 0 || this.children.every(node => !!getElementCache(node.element, 'inlineSupport'))) &&
                         (this._element.childNodes.length === 0 || !Array.from(this._element.childNodes).some((element: Element) => {

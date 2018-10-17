@@ -103,7 +103,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
         function cascade(nodes: T[]): Null<Element> {
             for (let i = 0; i < nodes.length; i++) {
                 const item = nodes[i] as T;
-                if (item.hasElement || item.plainText) {
+                if (item.styleElement || item.plainText) {
                     return item.element;
                 }
                 else if (item.length > 0) {

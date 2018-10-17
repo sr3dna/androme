@@ -361,7 +361,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             const preAlignment: ObjectIndex<StringMap> = {};
             const direction: HTMLElement[] = [];
             for (const node of this.cache) {
-                if (node.presentationElement) {
+                if (node.styleElement) {
                     const element = <HTMLElement> node.element;
                     const textAlign = node.css('textAlign');
                     preAlignment[node.id] = {};
@@ -411,7 +411,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 node.setMultiLine();
             }
             for (const node of this.cache) {
-                if (node.presentationElement) {
+                if (node.styleElement) {
                     const element = <HTMLElement> node.element;
                     const attrs = preAlignment[node.id];
                     if (attrs) {
@@ -451,7 +451,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
             for (const node of this.cache.elements) {
-                if (node.hasElement) {
+                if (node.htmlElement) {
                     let i = 0;
                     Array.from(node.element.childNodes).forEach((element: Element) => {
                         const item = getNodeFromElement(element);
@@ -902,7 +902,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         if (next) {
                             continue;
                         }
-                        if (nodeY.presentationElement) {
+                        if (nodeY.styleElement) {
                             const processed: Extension<T>[] = [];
                             this.prioritizeExtensions(this.extensions, nodeY.element).some(item => {
                                 if (item.is(nodeY)) {

@@ -40,9 +40,9 @@ declare global {
             public readonly blockHeight: boolean;
             public readonly baseElement: Element;
             public readonly tagName: string;
-            public readonly hasElement: boolean;
+            public readonly htmlElement: boolean;
             public readonly domElement: boolean;
-            public readonly presentationElement: boolean;
+            public readonly styleElement: boolean;
             public readonly documentBody: boolean;
             public readonly dataset: DOMStringMap;
             public readonly extension: string;
