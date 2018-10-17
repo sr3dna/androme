@@ -1,5 +1,6 @@
 import Node from './node';
 import Application from './application';
+
 import { capitalize, convertCamelCase, includes } from '../lib/util';
 
 export default abstract class Extension<T extends Node> implements androme.lib.base.Extension<T> {

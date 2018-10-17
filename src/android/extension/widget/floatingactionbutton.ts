@@ -1,8 +1,11 @@
 import { SettingsAndroid } from '../../lib/types';
+
+import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
+
 import View from '../../view';
 import ResourceHandler from '../../resourcehandler';
+
 import { parseRTL } from '../../lib/util';
-import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;

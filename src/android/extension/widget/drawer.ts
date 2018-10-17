@@ -1,13 +1,15 @@
-import View from '../../view';
-import { parseRTL } from '../../lib/util';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
+
+import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
+
+import View from '../../view';
+
+import { parseRTL } from '../../lib/util';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
-
-import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
 
 export default class Drawer<T extends View> extends androme.lib.base.Extension<T> {
     constructor(

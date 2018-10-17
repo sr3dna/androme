@@ -1,11 +1,14 @@
 import { GridCellData, GridData } from './types/data';
+
+import { BOX_STANDARD, NODE_ALIGNMENT } from '../lib/enumeration';
+import { EXT_NAME } from '../lib/constant';
+
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import Extension from '../base/extension';
+
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
 import { getBoxRect, getNodeFromElement } from '../lib/dom';
-import { BOX_STANDARD, NODE_ALIGNMENT } from '../lib/enumeration';
-import { EXT_NAME } from '../lib/constant';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
     public condition() {

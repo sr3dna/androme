@@ -1,12 +1,14 @@
+import { NODE_RESOURCE, USER_AGENT } from '../lib/enumeration';
+
 import Node from './node';
 import NodeList from './nodelist';
 import Application from './application';
 import File from './file';
+
 import { convertInt, convertPX, hasValue, isNumber, isPercent, hasBit } from '../lib/util';
 import { cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
 import { replaceEntity } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
-import { NODE_RESOURCE, USER_AGENT } from '../lib/enumeration';
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
     public static STORED: ResourceMap = {

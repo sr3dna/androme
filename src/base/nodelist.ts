@@ -1,7 +1,9 @@
+import { NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
+
 import Node from './node';
+
 import { convertInt, hasBit, partition, sortAsc, sortDesc } from '../lib/util';
 import { getNodeFromElement } from '../lib/dom';
-import { NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
 export default class NodeList<T extends Node> implements androme.lib.base.NodeList<T> {
     public static siblingIndex<T extends Node>(a: T, b: T) {
@@ -220,17 +222,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                     }
                 }
                 if (horizontal || !traverse) {
-                    return nodes.every(node =>
-                        !nodes.some(sibling => {
-                            if (sibling !== node &&
-                                node.linear.top >= sibling.linear.bottom &&
-                                node.intersectY(sibling.linear))
-                            {
-                                return true;
-                            }
-                            return false;
-                        })
-                    );
+                    return nodes.every(node => !nodes.some(sibling => sibling !== node && node.linear.top >= sibling.linear.bottom && node.intersectY(sibling.linear)));
                 }
                 return false;
         }

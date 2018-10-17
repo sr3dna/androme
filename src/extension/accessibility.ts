@@ -1,8 +1,10 @@
+import { NODE_PROCEDURE } from '../lib/enumeration';
+
 import Node from '../base/node';
 import Extension from '../base/extension';
+
 import { hasValue } from '../lib/util';
 import { getNodeFromElement } from '../lib/dom';
-import { NODE_PROCEDURE } from '../lib/enumeration';
 
 export default abstract class Accessibility<T extends Node> extends Extension<T> {
     public afterInit() {

@@ -1,11 +1,12 @@
-import View from '../../view';
 import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
+
+import EXTENSION_GENERIC_TMPL from '../../template/extension/generic';
+
+import View from '../../view';
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
-
-import EXTENSION_GENERIC_TMPL from '../../template/extension/generic';
 
 export default class BottomNavigation<T extends View> extends androme.lib.base.Extension<T> {
     constructor(

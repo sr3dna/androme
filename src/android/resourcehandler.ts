@@ -1,7 +1,14 @@
 import { SettingsAndroid } from './lib/types';
-import View from './view';
-import { generateId, replaceUnit } from './lib/util';
+
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
+
+import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
+import LAYERLIST_TMPL from './template/resource/layer-list';
+import VECTOR_TMPL from './template/resource/vector';
+
+import View from './view';
+
+import { generateId, replaceUnit } from './lib/util';
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
@@ -10,10 +17,6 @@ import $xml = androme.lib.xml;
 import $color = androme.lib.color;
 import $resource = androme.lib.base.Resource;
 import NodeList = androme.lib.base.NodeList;
-
-import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
-import LAYERLIST_TMPL from './template/resource/layer-list';
-import VECTOR_TMPL from './template/resource/vector';
 
 const METHOD_ANDROID = {
     'boxStyle': {
@@ -145,8 +148,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public static addImageSrcSet(element: HTMLImageElement, prefix = '') {
+        const images: StringMap = {};
         const srcset = element.srcset.trim();
-        const images = {};
         if (srcset !== '') {
             const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
             srcset.split(',').forEach(value => {
@@ -155,25 +158,25 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     if (match[2] == null) {
                         match[2] = '1x';
                     }
-                    const image = filepath + $util.lastIndexOf(match[1]);
+                    const src = filepath + $util.lastIndexOf(match[1]);
                     switch (match[2]) {
                         case '0.75x':
-                            images['ldpi'] = image;
+                            images['ldpi'] = src;
                             break;
                         case '1x':
-                            images['mdpi'] = image;
+                            images['mdpi'] = src;
                             break;
                         case '1.5x':
-                            images['hdpi'] = image;
+                            images['hdpi'] = src;
                             break;
                         case '2x':
-                            images['xhdpi'] = image;
+                            images['xhdpi'] = src;
                             break;
                         case '3x':
-                            images['xxhdpi'] = image;
+                            images['xxhdpi'] = src;
                             break;
                         case '4x':
-                            images['xxxhdpi'] = image;
+                            images['xxxhdpi'] = src;
                             break;
                     }
                 }
@@ -254,6 +257,183 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             return [$util.convertPX(match[1], fontSize), $util.convertPX(match[2], fontSize)];
         }
         return ['', ''];
+    }
+
+    private static deleteStyleAttribute(sorted: ObjectMap<number[]>[], attrs: string, ids: number[]) {
+        attrs.split(';').forEach(value => {
+            for (let i = 0; i < sorted.length; i++) {
+                if (sorted[i]) {
+                    let index = -1;
+                    let key = '';
+                    for (const j in sorted[i]) {
+                        if (j === value) {
+                            index = i;
+                            key = j;
+                            i = sorted.length;
+                            break;
+                        }
+                    }
+                    if (index !== -1) {
+                        sorted[index][key] = sorted[index][key].filter(id => !ids.includes(id));
+                        if (sorted[index][key].length === 0) {
+                            delete sorted[index][key];
+                        }
+                        break;
+                    }
+                }
+            }
+        });
+    }
+
+    private static getStoredDrawable(xml: string) {
+        for (const [name, value] of $resource.STORED.drawables.entries()) {
+            if (value === xml) {
+                return name;
+            }
+        }
+        return '';
+    }
+
+    private static getShapeAttribute(stored: BoxStyle, name: string, direction = -1, hasInset = false, isInset = false): any[] | boolean {
+        switch (name) {
+            case 'stroke':
+                if (stored.border && stored.border.width !== '0px') {
+                    if (!hasInset || isInset) {
+                        return [{
+                            width: stored.border.width,
+                            borderStyle: ResourceHandler.getBorderStyle(stored.border, isInset ? direction : -1)
+                        }];
+                    }
+                    else if (hasInset) {
+                        return [{
+                            width: $util.formatPX(Math.ceil(parseInt(stored.border.width) / 2)),
+                            borderStyle: ResourceHandler.getBorderStyle(stored.border, direction, true)
+                        }];
+                    }
+                }
+                return false;
+            case 'backgroundColor':
+                return stored.backgroundColor.length !== 0 && stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false;
+            case 'radius':
+                if (stored.borderRadius.length === 1) {
+                    if (stored.borderRadius[0] !== '0px') {
+                        return [{ radius: stored.borderRadius[0] }];
+                    }
+                }
+                else if (stored.borderRadius.length > 1) {
+                    const result = {};
+                    stored.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                    return [result];
+                }
+                return false;
+
+        }
+        return false;
+    }
+
+    private static getBorderStyle(border: BorderAttribute, direction = -1, halfSize = false): StringMap {
+        const result = {
+            solid: `android:color="@color/${border.color}"`,
+            groove: '',
+            ridge: ''
+        };
+        Object.assign(result, {
+            double: result.solid,
+            inset: result.solid,
+            outset: result.solid,
+            dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
+            dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
+        });
+        const groove = border.style === 'groove';
+        if (parseInt(border.width) > 1 && (
+                groove ||
+                border.style === 'ridge'
+           ))
+        {
+            let colorName = $util.isString(border.color) ? border.color : '';
+            let hexValue = ResourceHandler.getColor(colorName);
+            if (hexValue !== '') {
+                let opacity = '1';
+                if (hexValue.length === 9) {
+                    hexValue = `#${hexValue.substring(3)}`;
+                    opacity = `0.${hexValue.substring(1, 3)}`;
+                }
+                const reduced = $color.parseRGBA($color.reduceToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
+                if (reduced.length > 0) {
+                    colorName = ResourceHandler.addColor(reduced[0], opacity);
+                }
+            }
+            const colorReduced = `android:color="@color/${colorName}"`;
+            if (groove) {
+                if (halfSize) {
+                    switch (direction) {
+                        case 0:
+                            result['groove'] = colorReduced;
+                            break;
+                        case 1:
+                            result['groove'] = colorReduced;
+                            break;
+                        case 2:
+                            result['groove'] = result.solid;
+                            break;
+                        case 3:
+                            result['groove'] = result.solid;
+                            break;
+                    }
+                }
+                else {
+                    switch (direction) {
+                        case 0:
+                            result['groove'] = result.solid;
+                            break;
+                        case 1:
+                            result['groove'] = result.solid;
+                            break;
+                        case 2:
+                            result['groove'] = colorReduced;
+                            break;
+                        case 3:
+                            result['groove'] = colorReduced;
+                            break;
+                    }
+                }
+            }
+            else {
+                if (halfSize) {
+                    switch (direction) {
+                        case 0:
+                            result['ridge'] = result.solid;
+                            break;
+                        case 1:
+                            result['ridge'] = result.solid;
+                            break;
+                        case 2:
+                            result['ridge'] = colorReduced;
+                            break;
+                        case 3:
+                            result['ridge'] = colorReduced;
+                            break;
+                    }
+                }
+                else {
+                    switch (direction) {
+                        case 0:
+                            result['ridge'] = colorReduced;
+                            break;
+                        case 1:
+                            result['ridge'] = colorReduced;
+                            break;
+                        case 2:
+                            result['ridge'] = result.solid;
+                            break;
+                        case 3:
+                            result['ridge'] = result.solid;
+                            break;
+                    }
+                }
+            }
+        }
+        return result[border.style] || result.solid;
     }
 
     public settings: SettingsAndroid;
@@ -381,12 +561,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
                 const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
                 const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
-                const backgroundImageUrl: string[] = [];
                 const backgroundDimensions: Null<Image>[] = [];
                 let backgroundPosition: string[] = [];
                 for (let i = 0; i < backgroundImage.length; i++) {
                     if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
-                        backgroundImageUrl.push(backgroundImage[i]);
                         const image = this.imageDimensions.get($dom.cssResolveUrl(backgroundImage[i]));
                         backgroundDimensions.push(image);
                         backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
@@ -731,8 +909,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             }
                         }
                     });
-                    const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
-                    const borderRadius = this.getShapeAttribute(stored, 'radius');
+                    const backgroundColor = ResourceHandler.getShapeAttribute(stored, 'backgroundColor');
+                    const borderRadius = ResourceHandler.getShapeAttribute(stored, 'radius');
                     function createDoubleBorder(templateData: {}, border: BorderAttribute, top: boolean, right: boolean, bottom: boolean, left: boolean) {
                         const width = parseInt(border.width);
                         const baseWidth = Math.floor(width / 3);
@@ -748,7 +926,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             'left': left ? '' :  leftTop,
                             '5': [{
                                 width: $util.formatPX(leftWidth),
-                                borderStyle: this.getBorderStyle(border)
+                                borderStyle: ResourceHandler.getBorderStyle(border)
                             }],
                             '6': borderRadius
                         });
@@ -762,7 +940,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             'left': left ? indentWidth : leftTop,
                             '5': [{
                                 width: $util.formatPX(rightWidth),
-                                borderStyle: this.getBorderStyle(border)
+                                borderStyle: ResourceHandler.getBorderStyle(border)
                             }],
                             '6': borderRadius
                         });
@@ -777,7 +955,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             template = $xml.parseTemplate(SHAPERECTANGLE_TMPL);
                             data = {
                                 '0': [{
-                                    '1': this.getShapeAttribute(stored, 'stroke'),
+                                    '1': ResourceHandler.getShapeAttribute(stored, 'stroke'),
                                     '2': backgroundColor,
                                     '3': borderRadius
                                 }]
@@ -791,7 +969,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     '2': image2.length > 0 ? image2 : false,
                                     '3': image3.length > 0 ? image3 : false,
                                     '4': [{
-                                        '5': this.getShapeAttribute(stored, 'stroke'),
+                                        '5': ResourceHandler.getShapeAttribute(stored, 'stroke'),
                                         '6': borderRadius
                                     }],
                                     '7': false
@@ -813,7 +991,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         const root = $xml.getTemplateLevel(data, '0');
                         const borderVisible = borders.filter(item => this.borderVisible(item));
                         const borderWidth = new Set(borderVisible.map(item => item.width));
-                        const borderStyle = new Set(borderVisible.map(item => this.getBorderStyle(item)));
+                        const borderStyle = new Set(borderVisible.map(item => ResourceHandler.getBorderStyle(item)));
                         const borderData = borderVisible[0];
                         if (borderWidth.size === 1 &&
                             borderStyle.size === 1 &&
@@ -838,7 +1016,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     'right': this.borderVisible(stored.borderRight) ? '' : rightBottom,
                                     'bottom': this.borderVisible(stored.borderBottom) ? '' : rightBottom,
                                     'left': this.borderVisible(stored.borderLeft) ? '' : leftTop,
-                                    '5': this.getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
+                                    '5': ResourceHandler.getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
                                     '6': borderRadius
                                 });
                             }
@@ -868,7 +1046,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                             'right': i === 1 ? '' : rightBottom,
                                             'bottom': i === 2 ? '' : rightBottom,
                                             'left': i === 3 ? '' : leftTop,
-                                            '5': this.getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
+                                            '5': ResourceHandler.getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
                                             '6': borderRadius
                                         });
                                         if (hasInset) {
@@ -879,7 +1057,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                                 'right': i === 1 ? '' : rightBottom,
                                                 'bottom': i === 2 ? '' : rightBottom,
                                                 'left': i === 3 ? '' : leftTop,
-                                                '8': this.getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true)
+                                                '8': ResourceHandler.getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true)
                                             });
                                         }
                                     }
@@ -895,7 +1073,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     if (template) {
                         const xml = $xml.createTemplate(template, data);
-                        resourceName = this.getStoredDrawable(xml);
+                        resourceName = ResourceHandler.getStoredDrawable(xml);
                         if (resourceName === '') {
                             resourceName = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
                             $resource.STORED.drawables.set(resourceName, xml);
@@ -1185,7 +1363,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             root['3'] = false;
                         }
                         const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), data);
-                        result = this.getStoredDrawable(xml);
+                        result = ResourceHandler.getStoredDrawable(xml);
                         if (result === '') {
                             result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
                             $resource.STORED.drawables.set(result, xml);
@@ -1432,13 +1610,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                         deleteKeys.forEach(value => delete filtered[value]);
                         for (const attrs in filtered) {
-                            this.deleteStyleAttribute(sorted, attrs, filtered[attrs]);
+                            ResourceHandler.deleteStyleAttribute(sorted, attrs, filtered[attrs]);
                             style[tag][attrs] = filtered[attrs];
                         }
                         for (const index in combined) {
                             const attrs = Array.from(combined[index]).sort().join(';');
                             const ids = index.split(',').map(value => parseInt(value));
-                            this.deleteStyleAttribute(sorted, attrs, ids);
+                            ResourceHandler.deleteStyleAttribute(sorted, attrs, ids);
                             style[tag][attrs] = ids;
                         }
                     }
@@ -1539,182 +1717,5 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
             });
         }
-    }
-
-    private deleteStyleAttribute(sorted: ObjectMap<number[]>[], attrs: string, ids: number[]) {
-        attrs.split(';').forEach(value => {
-            for (let i = 0; i < sorted.length; i++) {
-                if (sorted[i]) {
-                    let index = -1;
-                    let key = '';
-                    for (const j in sorted[i]) {
-                        if (j === value) {
-                            index = i;
-                            key = j;
-                            i = sorted.length;
-                            break;
-                        }
-                    }
-                    if (index !== -1) {
-                        sorted[index][key] = sorted[index][key].filter(id => !ids.includes(id));
-                        if (sorted[index][key].length === 0) {
-                            delete sorted[index][key];
-                        }
-                        break;
-                    }
-                }
-            }
-        });
-    }
-
-    private getStoredDrawable(xml: string) {
-        for (const [name, value] of $resource.STORED.drawables.entries()) {
-            if (value === xml) {
-                return name;
-            }
-        }
-        return '';
-    }
-
-    private getShapeAttribute(stored: BoxStyle, name: string, direction = -1, hasInset = false, isInset = false): any[] | boolean {
-        switch (name) {
-            case 'stroke':
-                if (stored.border && stored.border.width !== '0px') {
-                    if (!hasInset || isInset) {
-                        return [{
-                            width: stored.border.width,
-                            borderStyle: this.getBorderStyle(stored.border, isInset ? direction : -1)
-                        }];
-                    }
-                    else if (hasInset) {
-                        return [{
-                            width: $util.formatPX(Math.ceil(parseInt(stored.border.width) / 2)),
-                            borderStyle: this.getBorderStyle(stored.border, direction, true)
-                        }];
-                    }
-                }
-                return false;
-            case 'backgroundColor':
-                return stored.backgroundColor.length !== 0 && stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false;
-            case 'radius':
-                if (stored.borderRadius.length === 1) {
-                    if (stored.borderRadius[0] !== '0px') {
-                        return [{ radius: stored.borderRadius[0] }];
-                    }
-                }
-                else if (stored.borderRadius.length > 1) {
-                    const result = {};
-                    stored.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
-                    return [result];
-                }
-                return false;
-
-        }
-        return false;
-    }
-
-    private getBorderStyle(border: BorderAttribute, direction = -1, halfSize = false): StringMap {
-        const result = {
-            solid: `android:color="@color/${border.color}"`,
-            groove: '',
-            ridge: ''
-        };
-        Object.assign(result, {
-            double: result.solid,
-            inset: result.solid,
-            outset: result.solid,
-            dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
-            dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
-        });
-        const groove = border.style === 'groove';
-        if (parseInt(border.width) > 1 && (
-                groove ||
-                border.style === 'ridge'
-           ))
-        {
-            let colorName = $util.isString(border.color) ? border.color : '';
-            let hexValue = ResourceHandler.getColor(colorName);
-            if (hexValue !== '') {
-                let opacity = '1';
-                if (hexValue.length === 9) {
-                    hexValue = `#${hexValue.substring(3)}`;
-                    opacity = `0.${hexValue.substring(1, 3)}`;
-                }
-                const reduced = $color.parseRGBA($color.reduceToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
-                if (reduced.length > 0) {
-                    colorName = ResourceHandler.addColor(reduced[0], opacity);
-                }
-            }
-            const colorReduced = `android:color="@color/${colorName}"`;
-            if (groove) {
-                if (halfSize) {
-                    switch (direction) {
-                        case 0:
-                            result['groove'] = colorReduced;
-                            break;
-                        case 1:
-                            result['groove'] = colorReduced;
-                            break;
-                        case 2:
-                            result['groove'] = result.solid;
-                            break;
-                        case 3:
-                            result['groove'] = result.solid;
-                            break;
-                    }
-                }
-                else {
-                    switch (direction) {
-                        case 0:
-                            result['groove'] = result.solid;
-                            break;
-                        case 1:
-                            result['groove'] = result.solid;
-                            break;
-                        case 2:
-                            result['groove'] = colorReduced;
-                            break;
-                        case 3:
-                            result['groove'] = colorReduced;
-                            break;
-                    }
-                }
-            }
-            else {
-                if (halfSize) {
-                    switch (direction) {
-                        case 0:
-                            result['ridge'] = result.solid;
-                            break;
-                        case 1:
-                            result['ridge'] = result.solid;
-                            break;
-                        case 2:
-                            result['ridge'] = colorReduced;
-                            break;
-                        case 3:
-                            result['ridge'] = colorReduced;
-                            break;
-                    }
-                }
-                else {
-                    switch (direction) {
-                        case 0:
-                            result['ridge'] = colorReduced;
-                            break;
-                        case 1:
-                            result['ridge'] = colorReduced;
-                            break;
-                        case 2:
-                            result['ridge'] = result.solid;
-                            break;
-                        case 3:
-                            result['ridge'] = result.solid;
-                            break;
-                    }
-                }
-            }
-        }
-        return result[border.style] || result.solid;
     }
 }

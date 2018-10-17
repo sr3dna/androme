@@ -1,9 +1,11 @@
-import Node from '../base/node';
-import Extension from '../base/extension';
-import { convertFloat, convertInt, formatPX, hasBit, isPercent, isUnit } from '../lib/util';
-import { cssInherit, getStyle } from '../lib/dom';
 import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
+
+import Node from '../base/node';
+import Extension from '../base/extension';
+
+import { convertFloat, convertInt, formatPX, hasBit, isPercent, isUnit } from '../lib/util';
+import { cssInherit, getStyle } from '../lib/dom';
 
 export default abstract class Table<T extends Node> extends Extension<T> {
     public processNode(): ExtensionResult {

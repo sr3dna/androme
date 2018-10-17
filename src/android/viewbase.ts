@@ -1,7 +1,9 @@
 import { Constraint, SettingsAndroid } from './lib/types';
-import API_ANDROID from './customizations';
-import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
+
 import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
+import API_ANDROID from './customizations';
+
+import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
@@ -1187,14 +1189,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     )
                     .filter(element => {
                         const item = $dom.getNodeFromElement<View>(element);
-                        if (item && (
-                                item.lineBreak ||
-                                (item.excluded && item.blockStatic)
-                           ))
-                        {
-                            return true;
-                        }
-                        return false;
+                        return (item && (
+                            item.lineBreak ||
+                            (item.excluded && item.blockStatic)
+                        ));
                     });
                     if (elements.length > 0) {
                         let bottom: number;

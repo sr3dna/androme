@@ -1,4 +1,5 @@
 import { GridCellData, GridData } from '../../extension/types/data';
+
 import View from '../view';
 
 import $enum = androme.lib.enumeration;

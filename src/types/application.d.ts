@@ -82,12 +82,12 @@ type LayoutMapY<T> = Map<number, Map<number, T>>;
 type ResourceMap = {
     strings: Map<string, string>;
     arrays: Map<string, string[]>;
-    fonts: Map<string, {}>;
+    fonts: Map<string, ObjectMap<boolean>>;
     colors: Map<string, string>;
     styles: Map<string, any>;
     dimens: Map<string, string>;
     drawables: Map<string, string>;
-    images: Map<string, {}>;
+    images: Map<string, StringMap>;
 };
 
 type NodeConstructor<T> = {

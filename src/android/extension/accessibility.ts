@@ -1,5 +1,6 @@
-import View from '../view';
 import { NODE_ANDROID } from '../lib/constant';
+
+import View from '../view';
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;

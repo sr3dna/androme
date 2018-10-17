@@ -1,4 +1,5 @@
 import { SettingsAndroid } from '../lib/types';
+
 import View from '../view';
 import ResourceHandler from '../resourcehandler';
 

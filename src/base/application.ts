@@ -1,12 +1,14 @@
+import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
+
 import Node from './node';
 import NodeList from './nodelist';
 import Controller from './controller';
 import Resource from './resource';
 import Extension from './extension';
+
 import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isUnit, sortAsc, trimString, trimNull } from '../lib/util';
 import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isPresentationElement, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
-import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
 export default class Application<T extends Node> implements androme.lib.base.Application<T> {
     public viewController: Controller<T>;
@@ -1081,10 +1083,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                 if (linearY ||
                                                     (!relativeWrap && children.some(node => {
                                                         const previous = node.previousSibling();
-                                                        if (previous && node.alignedVertically(previous, clearedInside)) {
-                                                            return true;
-                                                        }
-                                                        return false;
+                                                        return (previous != null && node.alignedVertically(previous, clearedInside));
                                                     })))
                                                 {
                                                     output = this.writeLinearLayout(nodeY, parentY, false);
@@ -2117,10 +2116,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             return false;
         }
         if (floated.size === 1 && floating.length === nodes.length) {
-            if (linearX && cleared.size === 0) {
-                return false;
-            }
-            return true;
+            return !(linearX && cleared.size === 0);
         }
         return (
             cleared.size === 0 &&

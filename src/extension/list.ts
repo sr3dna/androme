@@ -1,10 +1,13 @@
 import { ListData } from './types/data';
+
+import { BOX_STANDARD, NODE_RESOURCE } from '../lib/enumeration';
+import { EXT_NAME } from '../lib/constant';
+
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
 import Extension from '../base/extension';
+
 import { convertAlpha, convertRoman } from '../lib/util';
-import { BOX_STANDARD, NODE_RESOURCE } from '../lib/enumeration';
-import { EXT_NAME } from '../lib/constant';
 
 export default abstract class List<T extends Node> extends Extension<T> {
     public condition() {

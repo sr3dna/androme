@@ -1,17 +1,20 @@
 import { SettingsAndroid } from '../../lib/types';
-import View from '../../view';
-import ResourceHandler from '../../resourcehandler';
-import { delimitUnit, stripId } from '../../lib/util';
+
 import { NODE_ANDROID } from '../../lib/constant';
 import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
+
+import EXTENSION_APPBAR_TMPL from '../../template/extension/appbar';
+
+import View from '../../view';
+import ResourceHandler from '../../resourcehandler';
+
+import { delimitUnit, stripId } from '../../lib/util';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 import $xml = androme.lib.xml;
-
-import EXTENSION_APPBAR_TMPL from '../../template/extension/appbar';
 
 export default class Toolbar<T extends View> extends androme.lib.base.Extension<T> {
     constructor(

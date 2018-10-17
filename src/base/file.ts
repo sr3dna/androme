@@ -1,5 +1,6 @@
 import Node from './node';
 import NodeList from './nodelist';
+
 import { lastIndexOf, trimString } from '../lib/util';
 
 type ExpressResult = {

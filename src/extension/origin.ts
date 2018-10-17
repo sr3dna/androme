@@ -1,7 +1,9 @@
+import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
+
 import Node from '../base/node';
 import Extension from '../base/extension';
+
 import { convertInt, formatPX } from '../lib/util';
-import { BOX_STANDARD, CSS_STANDARD } from '../lib/enumeration';
 
 export default class Origin<T extends Node> extends Extension<T> {
     public afterInit() {

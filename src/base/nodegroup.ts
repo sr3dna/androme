@@ -1,7 +1,9 @@
+import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/enumeration';
+
 import Node from './node';
 import NodeList from './nodelist';
+
 import { assignBounds, getClientRect, getNodeFromElement } from '../lib/dom';
-import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/enumeration';
 
 export default abstract class NodeGroup<T extends Node> extends Node {
     public init() {

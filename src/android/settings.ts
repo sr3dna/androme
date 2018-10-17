@@ -1,4 +1,5 @@
 import { SettingsAndroid } from './lib/types';
+
 import { BUILD_ANDROID, DENSITY_ANDROID } from './lib/constant';
 
 const settings: SettingsAndroid = {

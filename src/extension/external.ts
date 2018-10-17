@@ -1,5 +1,6 @@
 import Node from '../base/node';
 import Extension from '../base/extension';
+
 import { deleteElementCache, getElementCache, getStyle, setElementCache } from '../lib/dom';
 
 export default class External<T extends Node> extends Extension<T> {

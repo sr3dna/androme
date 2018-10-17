@@ -1,7 +1,8 @@
-import Node from '../base/node';
-import Extension from '../base/extension';
 import { NODE_STANDARD } from '../lib/enumeration';
 import { EXT_NAME } from '../lib/constant';
+
+import Node from '../base/node';
+import Extension from '../base/extension';
 
 export default abstract class Custom<T extends Node> extends Extension<T> {
     protected constructor(

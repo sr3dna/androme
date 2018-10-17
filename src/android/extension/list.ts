@@ -1,9 +1,12 @@
-import { ListData } from '../../extension/types/data';
 import { SettingsAndroid } from '../lib/types';
+import { ListData } from '../../extension/types/data';
+
+import { NODE_ANDROID } from '../lib/constant';
+
 import View from '../view';
 import ResourceHandler from '../resourcehandler';
+
 import { delimitUnit, parseRTL } from '../lib/util';
-import { NODE_ANDROID } from '../lib/constant';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;

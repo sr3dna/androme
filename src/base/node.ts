@@ -1,8 +1,10 @@
-import Extension from './extension';
-import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
-import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/enumeration';
 import { BLOCK_ELEMENT, INLINE_ELEMENT } from '../lib/constant';
+
+import Extension from './extension';
+
+import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
+import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
 
 type T = Node;
 
@@ -242,8 +244,7 @@ export default abstract class Node implements androme.lib.base.Node {
             function copyMap(source: StringMap, destination: StringMap) {
                 for (const attr in source) {
                     if (source[attr] == null) {
-                        const value = source[attr];
-                        destination[attr] = value;
+                        destination[attr] = source[attr];
                     }
                 }
             }
@@ -343,45 +344,52 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     public intersect(rect: BoxDimensions, dimension = 'linear') {
-        const top = rect.top > this[dimension].top && rect.top < this[dimension].bottom;
-        const right = Math.floor(rect.right) > Math.ceil(this[dimension].left) && rect.right < this[dimension].right;
-        const bottom = Math.floor(rect.bottom) > Math.ceil(this[dimension].top) && rect.bottom < this[dimension].bottom;
-        const left = rect.left > this[dimension].left && rect.left < this[dimension].right;
+        const bounds: BoxDimensions = this[dimension] || this.linear;
+        const top = rect.top > bounds.top && rect.top < bounds.bottom;
+        const right = Math.floor(rect.right) > Math.ceil(bounds.left) && rect.right < bounds.right;
+        const bottom = Math.floor(rect.bottom) > Math.ceil(bounds.top) && rect.bottom < bounds.bottom;
+        const left = rect.left > bounds.left && rect.left < bounds.right;
         return (top && (left || right)) || (bottom && (left || right));
     }
 
     public intersectX(rect: BoxDimensions, dimension = 'linear') {
+        const bounds: BoxDimensions = this[dimension] || this.linear;
         return (
-            (rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
-            (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) ||
-            (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom) ||
-            (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom)
+            (rect.top >= bounds.top && rect.top < bounds.bottom) ||
+            (rect.bottom > bounds.top && rect.bottom <= bounds.bottom) ||
+            (bounds.top >= rect.top && this[dimension].bottom <= rect.bottom) ||
+            (rect.top >= bounds.top && rect.bottom <= bounds.bottom)
         );
     }
 
     public intersectY(rect: BoxDimensions, dimension = 'linear') {
+        const bounds: BoxDimensions = this[dimension] || this.linear;
         return (
-            (rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
-            (rect.right > this[dimension].left && rect.right <= this[dimension].right) ||
-            (this[dimension].left >= rect.left && this[dimension].right <= rect.right) ||
-            (rect.left >= this[dimension].left && rect.right <= this[dimension].right)
+            (rect.left >= bounds.left && rect.left < bounds.right) ||
+            (rect.right > bounds.left && rect.right <= bounds.right) ||
+            (bounds.left >= rect.left && bounds.right <= rect.right) ||
+            (rect.left >= bounds.left && rect.right <= bounds.right)
         );
     }
 
     public withinX(rect: BoxDimensions, dimension = 'linear') {
-        return this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom;
+        const bounds: BoxDimensions = this[dimension] || this.linear;
+        return bounds.top >= rect.top && bounds.bottom <= rect.bottom;
     }
 
     public withinY(rect: BoxDimensions, dimension = 'linear') {
-        return this[dimension].left >= rect.left && this[dimension].right <= rect.right;
+        const bounds: BoxDimensions = this[dimension] || this.linear;
+        return bounds.left >= rect.left && bounds.right <= rect.right;
     }
 
     public outsideX(rect: BoxDimensions, dimension = 'linear') {
-        return this[dimension].right < rect.left || this[dimension].left > rect.right;
+        const bounds: BoxDimensions = this[dimension] || this.linear;
+        return bounds.right < rect.left || bounds.left > rect.right;
     }
 
     public outsideY(rect: BoxDimensions, dimension = 'linear') {
-        return this[dimension].bottom < rect.top || this[dimension].top > rect.bottom;
+        const bounds: BoxDimensions = this[dimension] || this.linear;
+        return bounds.bottom < rect.top || bounds.top > rect.bottom;
     }
 
     public css(attr: string | object, value = ''): string {

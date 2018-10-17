@@ -1,7 +1,9 @@
+import { EXT_NAME } from '../lib/constant';
+
 import Node from '../base/node';
 import Extension from '../base/extension';
+
 import { deleteElementCache, getElementCache, getStyle, setElementCache } from '../lib/dom';
-import { EXT_NAME } from '../lib/constant';
 
 export default abstract class Nav<T extends Node> extends Extension<T> {
     protected constructor(

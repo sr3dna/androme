@@ -1,12 +1,14 @@
 import { SettingsAndroid } from './lib/types';
+
+import { XMLNS_ANDROID } from './lib/constant';
+import { WIDGET_NAME } from './extension/lib/constant';
+import SETTINGS from './settings';
+import API_ANDROID from './customizations';
+
 import View from './view';
 import ViewController from './viewcontroller';
 import ResourceHandler from './resourcehandler';
 import FileHandler from './filehandler';
-import Settings from './settings';
-import API_ANDROID from './customizations';
-import { XMLNS_ANDROID } from './lib/constant';
-import { WIDGET_NAME } from './extension/lib/constant';
 
 import External from './extension/external';
 import Origin from './extension/origin';
@@ -45,7 +47,7 @@ const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
 const appBase: AppFramework<T> = {
     create() {
         const EXT_NAME = androme.lib.constant.EXT_NAME;
-        settings = Object.assign({}, Settings);
+        settings = Object.assign({}, SETTINGS);
         const fileHandler = new FileHandler<T>(settings);
         application = new androme.lib.base.Application(framework);
         viewController = new ViewController<T>();
