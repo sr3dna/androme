@@ -21,9 +21,17 @@ interface Settings {
 }
 
 type SettingsInternal = {
+    includes: boolean,
+    inline: {
+        always: string[],
+        tagName: string[]
+    },
     layout: {
-        pathname: string;
+        pathName: string;
         fileExtension: string;
+    },
+    unsupported: {
+        tagName: string[]
     }
 };
 

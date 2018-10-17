@@ -4,7 +4,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Extension from './extension';
 import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isUnit, sortAsc, trimString, trimNull } from '../lib/util';
-import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, setElementCache } from '../lib/dom';
+import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isPresentationElement, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
@@ -18,10 +18,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public closed = false;
     public readonly cache = new NodeList<T>();
     public readonly cacheSession = new NodeList<T>();
-    public readonly elements = new Set<HTMLElement>();
+    public readonly elements = new Set<Element>();
     public readonly extensions: Extension<T>[] = [];
 
-    private _cacheRoot = new Set<HTMLElement>();
+    private _cacheRoot = new Set<Element>();
     private _cacheImage = new Map<string, Image>();
     private _settings: Settings;
     private _sorted: ObjectMap<number[]> = {};
@@ -94,9 +94,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public reset() {
         for (const node of this.cacheSession) {
-            deleteElementCache(node.element, 'node', 'style', 'styleMap', 'supportInline', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
+            deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
         }
-        for (const element of this._cacheRoot) {
+        for (const element of this._cacheRoot as Set<HTMLElement>) {
             delete element.dataset.iteration;
             delete element.dataset.layoutName;
         }
@@ -140,7 +140,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         this.resourceHandler.reset();
     }
 
-    public parseDocument(...elements: Null<string | HTMLElement>[]): FunctionMap<void> {
+    public parseDocument(...elements: Null<string | Element>[]): FunctionMap<void> {
         let __THEN: () => void;
         this.elements.clear();
         this.loading = false;
@@ -152,7 +152,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             if (typeof element === 'string') {
                 element = document.getElementById(element);
             }
-            if (element instanceof HTMLElement) {
+            if (element instanceof HTMLElement || element instanceof SVGElement) {
                 this.elements.add(element);
             }
         }
@@ -287,24 +287,23 @@ export default class Application<T extends Node> implements androme.lib.base.App
         else {
             return false;
         }
-        const supportInline = this.settings.renderInlineText ? ['BR'] : this.viewController.supportInline;
+        const inlineAlways = this.viewController.settingsInternal.inline.always;
+        const inlineSupport = this.settings.renderInlineText ? [] : this.viewController.settingsInternal.inline.tagName;
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
             return (
                 (!styleMap || Object.keys(styleMap).length === 0) &&
                 element.children.length === 0 &&
-                supportInline.includes(element.tagName)
+                inlineSupport.includes(element.tagName)
             );
         }
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.elements.has(element)) {
                 this.prioritizeExtensions(this.extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
-                    if (inlineElement(element) &&
-                        element.parentElement &&
-                        Array.from(element.parentElement.children).every(item => inlineElement(item)))
+                    if (inlineAlways.includes(element.tagName) || (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item))))
                     {
-                        setElementCache(element, 'supportInline', true);
+                        setElementCache(element, 'inlineSupport', true);
                     }
                     let valid = true;
                     let current = element.parentElement;
@@ -348,7 +347,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                     else if (element.tagName !== 'BR') {
                         const elementNode = getNodeFromElement<T>(element);
-                        if (!supportInline.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
+                        if (!inlineSupport.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
                             valid = true;
                         }
                     }
@@ -360,7 +359,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             const preAlignment: ObjectIndex<StringMap> = {};
             const direction: HTMLElement[] = [];
             for (const node of this.cache) {
-                if (node.hasElement) {
+                if (node.presentationElement) {
                     const element = <HTMLElement> node.element;
                     const textAlign = node.css('textAlign');
                     preAlignment[node.id] = {};
@@ -410,7 +409,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 node.setMultiLine();
             }
             for (const node of this.cache) {
-                if (node.hasElement) {
+                if (node.presentationElement) {
                     const element = <HTMLElement> node.element;
                     const attrs = preAlignment[node.id];
                     if (attrs) {
@@ -450,15 +449,17 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
             for (const node of this.cache.elements) {
-                let i = 0;
-                Array.from(node.element.childNodes).forEach((element: Element) => {
-                    const item = getNodeFromElement(element);
-                    if (item && !item.excluded && item.pageflow) {
-                        item.siblingIndex = i++;
-                    }
-                });
-                node.children.sort(NodeList.siblingIndex);
-                node.initial.children.push(...node.children.slice());
+                if (node.hasElement) {
+                    let i = 0;
+                    Array.from(node.element.childNodes).forEach((element: Element) => {
+                        const item = getNodeFromElement(element);
+                        if (item && !item.excluded && item.pageflow) {
+                            item.siblingIndex = i++;
+                        }
+                    });
+                    node.children.sort(NodeList.siblingIndex);
+                    node.initial.children.push(...node.children.slice());
+                }
             }
             this.cache.sortAsc('depth', 'id');
             for (const ext of this.extensions) {
@@ -561,7 +562,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         insertNodeTemplate(external, node, current, output, current);
                     }
                     else {
-                        if (!application.elements.has(<HTMLElement> node.element)) {
+                        if (!application.elements.has(node.element)) {
                             if (node.dataset.target) {
                                 const target = document.getElementById(node.dataset.target);
                                 if (target && target !== parent.element) {
@@ -620,12 +621,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 let k = -1;
                 while (++k < axisY.length) {
                     let nodeY = axisY[k];
-                    if (!nodeY.visible || (!nodeY.documentRoot && this.elements.has(<HTMLElement> nodeY.element))) {
+                    if (!nodeY.visible || (!nodeY.documentRoot && this.elements.has(nodeY.element))) {
                         continue;
                     }
                     let parentY = nodeY.parent as T;
                     let currentY = '';
-                    if (this.viewController.supportInclude) {
+                    const includeSupport = this.viewController.settingsInternal.includes;
+                    if (includeSupport) {
                         if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
                             const filename = trimNull(nodeY.dataset.include);
                             if (filename !== '' && includes.indexOf(filename) === -1) {
@@ -898,7 +900,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         if (next) {
                             continue;
                         }
-                        if (nodeY.element instanceof HTMLElement) {
+                        if (nodeY.presentationElement) {
                             const processed: Extension<T>[] = [];
                             this.prioritizeExtensions(this.extensions, nodeY.element).some(item => {
                                 if (item.is(nodeY)) {
@@ -1118,7 +1120,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                         renderNode(nodeY, parentY, output, currentY);
                     }
-                    if (this.viewController.supportInclude && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
+                    if (includeSupport && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
                         if (includes.length > 0 && nodeY.dataset.includeEnd === 'true') {
                             includes.pop();
                         }
@@ -1156,7 +1158,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 }
             }
-            if (this.viewController.supportInclude) {
+            if (this.viewController.settingsInternal.includes) {
                 for (const [filename, templates] of external.entries()) {
                     const content = Array.from(templates.values());
                     if (content.length > 0) {
@@ -1811,7 +1813,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public createLayoutFile(pathname: string, filename: string, content: string, documentRoot = false) {
-        pathname = pathname || this.viewController.settingsInternal.layout.pathname;
+        pathname = pathname || this.viewController.settingsInternal.layout.pathName;
         const layout: PlainFile = {
             pathname,
             filename,
@@ -1828,7 +1830,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public createIncludeFile(filename: string, content: string) {
         this._includes.push({
-            pathname: this.viewController.settingsInternal.layout.pathname,
+            pathname: this.viewController.settingsInternal.layout.pathName,
             filename,
             content
         });
@@ -1934,13 +1936,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         }
-        else if (element instanceof HTMLElement) {
-            switch (element.tagName) {
-                case 'OPTION':
-                case 'MAP':
-                case 'AREA':
-                    return null;
-            }
+        else if (isPresentationElement(element)) {
             const elementNode = new this.nodeObject(this.cache.nextId, element);
             this.viewController.initNode(elementNode);
             if (isElementVisible(element)) {
@@ -2064,9 +2060,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
     }
 
-    private prioritizeExtensions(extensions: Extension<T>[], element: HTMLElement) {
+    private prioritizeExtensions(extensions: Extension<T>[], element: Element) {
         let result: string[] = [];
-        let current: Null<HTMLElement> = element;
+        let current: Null<HTMLElement> = <HTMLElement> element;
         while (current) {
             result = [
                 ...result,
@@ -2137,7 +2133,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     (['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(verticalAlign) || (isUnit(verticalAlign) && parseInt(verticalAlign) >= 0))
                 );
             }) && (
-                visible.some(node => ((node.textElement || node.imageElement) && node.baseline) || (node.plainText && node.multiLine)) ||
+                visible.some(node => ((node.textElement || node.imageElement || node.svgElement) && node.baseline) || (node.plainText && node.multiLine)) ||
                 (!linearX && nodes.every(node => node.pageflow && node.inlineElement))
             )
         );

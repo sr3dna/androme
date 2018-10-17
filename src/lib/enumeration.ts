@@ -67,6 +67,7 @@ export enum NODE_STANDARD {
     EDIT,
     SELECT,
     RANGE,
+    SVG,
     TEXT,
     IMAGE,
     BUTTON,

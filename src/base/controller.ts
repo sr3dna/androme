@@ -24,8 +24,6 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     public abstract renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
     public abstract finalize(data: ViewData<NodeList<T>>): void;
     public abstract get baseTemplate(): string;
-    public abstract get supportInline(): string[];
-    public abstract get supportInclude(): boolean;
     public abstract get settingsInternal(): SettingsInternal;
 
     public reset() {

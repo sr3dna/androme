@@ -52,10 +52,11 @@ declare global {
             export function getStyle(element: Null<Element>, cache?: boolean): CSSStyleDeclaration;
             export function getBoxSpacing(element: Element, complete?: boolean, merge?: boolean): BoxModel;
             export function cssResolveUrl(value: string): string;
-            export function cssInherit(element: Element, attr: string, tagName?: string, exclude?: string[]): string;
+            export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]): string;
             export function cssParent(element: Element, attr: string, ...styles: string[]): boolean;
             export function cssFromParent(element: Element, attr: string): boolean;
             export function hasFreeFormText(element: Element, maxDepth?: number, whiteSpace?: boolean): boolean;
+            export function cssAttribute(element: Element, attr: string): string;
             export function isPlainText(element: Null<Element>, whiteSpace?: boolean): boolean;
             export function hasLineBreak(element: Null<Element>): boolean;
             export function isLineBreak(element: Null<Element>, excluded?: boolean): boolean;

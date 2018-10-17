@@ -287,7 +287,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return this.linear.width;
                     }
                     else {
-                        return this.hasElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0;
+                        return this.presentationElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0;
                     }
                 })();
                 const height = (() => {
@@ -298,7 +298,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return this.linear.height;
                     }
                     else {
-                        return this.hasElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0;
+                        return this.presentationElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0;
                     }
                 })();
                 const widthParent = (() => {
@@ -309,7 +309,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return parent.box.width;
                     }
                     else {
-                        return parent.element instanceof HTMLElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0;
+                        return parent.presentationElement ? (<HTMLElement> parent.element).offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0;
                     }
                 })();
                 const heightParent = (() => {
@@ -320,7 +320,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return parent.box.height;
                     }
                     else {
-                        return parent.element instanceof HTMLElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0;
+                        return parent.presentationElement ? (<HTMLElement> parent.element).offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0;
                     }
                 })();
                 const styleMap = this.styleMap;
@@ -399,8 +399,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             this.android('layout_width', '0px');
                         }
                         else if (
-                            widthDefined.length > 0 &&
-                            widthDefined.some(node => node.bounds.width >= this.box.width))
+                            (widthDefined.length > 0 &&
+                            widthDefined.some(node => node.bounds.width >= this.box.width)) ||
+                            this.svgElement)
                         {
                             this.android('layout_width', 'wrap_content');
                         }
@@ -496,7 +497,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 }
                 if (this.android('layout_height') === '') {
-                    if (height >= heightParent &&
+                    if (this.svgElement) {
+                        this.android('layout_height', 'wrap_content');
+                    }
+                    else if (height >= heightParent &&
                         parent.hasHeight &&
                         !(this.inlineElement && this.nodeType < $enum.NODE_STANDARD.INLINE) &&
                         !(renderParent.is($enum.NODE_STANDARD.RELATIVE) && renderParent.inlineHeight))
@@ -526,8 +530,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 }
             }
-            if (this.cssParent('visibility', true) === 'hidden') {
-                this.android('visibility', 'invisible');
+            switch (this.cssParent('visibility', true)) {
+                case 'hidden':
+                case 'collapse':
+                    this.android('visibility', 'invisible');
+                    break;
             }
         }
 
@@ -972,7 +979,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     borderWidth = this.css('boxSizing') === 'content-box';
                 }
                 else {
-                    if (this.hasElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
+                    if (this.presentationElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                         if (!(renderParent.tagName === 'TABLE' || this.css('boxSizing') === 'border-box')) {
                             const minWidth = $util.convertInt(this.android('minWidth'));
                             const minHeight = $util.convertInt(this.android('minHeight'));
@@ -1015,7 +1022,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const pageflow = renderChildren.filter(node => !node.floating && (node.hasElement || node.renderChildren.length === 0));
                 if (pageflow.length > 0 &&
                     pageflow.every(node => node.baseline || node.has('verticalAlign', $enum.CSS_STANDARD.UNIT)) && (
-                        pageflow.some(node => node.imageElement && node.toInt('verticalAlign') !== 0) ||
+                        pageflow.some(node => (node.imageOrSvgElement) && node.toInt('verticalAlign') !== 0) ||
                         (pageflow.some(node => node.toInt('verticalAlign') < 0) && pageflow.some(node => node.toInt('verticalAlign') > 0))
                    ))
                 {
@@ -1025,7 +1032,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     if (marginTop > 0) {
                         pageflow.forEach(node => {
                             const offset = node.toInt('verticalAlign');
-                            const offsetHeight = (node.imageElement ? node.bounds.height : 0) + (offset > 0 ? offset : 0);
+                            const offsetHeight = (node.imageOrSvgElement ? node.bounds.height : 0) + (offset > 0 ? offset : 0);
                             if (offsetHeight >= offsetTop) {
                                 if (offsetHeight > offsetTop) {
                                     tallest.length = 0;
@@ -1034,12 +1041,12 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 offsetTop = offsetHeight;
                             }
                         });
-                        tallest.sort(a => a.imageElement ? -1 : 1);
+                        tallest.sort(a => a.imageOrSvgElement ? -1 : 1);
                         pageflow.forEach(node => {
                             if (!tallest.includes(node)) {
                                 const offset = node.toInt('verticalAlign');
                                 if (marginTop > 0) {
-                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageElement ? node.bounds.height : 0));
+                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageOrSvgElement ? node.bounds.height : 0));
                                 }
                                 if (offset !== 0) {
                                     node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
@@ -1057,11 +1064,12 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 }
             }
-            if (this.inline && !this.floating) {
+            if ((this.inline || (this.imageOrSvgElement && this.display === 'inline-block') && !this.floating)) {
                 const offset = this.toInt('verticalAlign');
                 if (offset !== 0) {
                     this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
                     if (offset < 0 &&
+                        this.display !== 'inline-block' &&
                         renderParent.layoutHorizontal &&
                         renderParent.inlineHeight)
                     {

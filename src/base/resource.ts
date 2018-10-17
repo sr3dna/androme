@@ -3,7 +3,7 @@ import NodeList from './nodelist';
 import Application from './application';
 import File from './file';
 import { convertInt, convertPX, hasValue, isNumber, isPercent, hasBit } from '../lib/util';
-import { cssFromParent, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
+import { cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
 import { replaceEntity } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
 import { NODE_RESOURCE, USER_AGENT } from '../lib/enumeration';
@@ -111,50 +111,124 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     this.settings.alwaysReevaluateResources
                ))
             {
-                const boxModel = {
-                    borderTop: this.parseBorderStyle,
-                    borderRight: this.parseBorderStyle,
-                    borderBottom: this.parseBorderStyle,
-                    borderLeft: this.parseBorderStyle,
-                    borderRadius: this.parseBorderRadius,
-                    backgroundColor: this.parseBackgroundColor,
-                    backgroundImage: !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE),
-                    backgroundSize: this.parseBoxDimensions,
-                    backgroundRepeat: true,
-                    backgroundPositionX: true,
-                    backgroundPositionY: true
-                };
-                const result: BoxStyle = {} as any;
-                for (const attr in boxModel) {
+                const boxStyle: BoxStyle = {
+                    borderTop: null,
+                    borderRight: null,
+                    borderBottom: null,
+                    borderLeft: null,
+                    borderRadius: null,
+                    backgroundColor: null,
+                    backgroundSize: null,
+                    backgroundImage: null,
+                    backgroundRepeat: null,
+                    backgroundPositionX: null,
+                    backgroundPositionY: null
+                } as any;
+                for (const attr in boxStyle) {
                     const value = node.css(attr);
-                    if (typeof boxModel[attr] === 'function') {
-                        result[attr] = boxModel[attr](value, node, attr);
-                    }
-                    else if (boxModel[attr] === true) {
-                        result[attr] = value;
-                    }
-                    else {
-                        result[attr] = '';
+                    switch (attr) {
+                        case 'borderTop':
+                        case 'borderRight':
+                        case 'borderBottom':
+                        case 'borderLeft': {
+                            let cssColor = node.css(`${attr}Color`);
+                            switch (cssColor) {
+                                case 'initial':
+                                    cssColor = value;
+                                    break;
+                                case 'inherit':
+                                case 'currentColor':
+                                    cssColor = cssInherit(node.element, `${attr}Color`);
+                                    break;
+                            }
+                            const style = node.css(`${attr}Style`) || 'none';
+                            let width = node.css(`${attr}Width`) || '1px';
+                            const color = style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : [];
+                            if (style === 'inset' && width === '0px') {
+                                width = '1px';
+                            }
+                            boxStyle[attr] = {
+                                style,
+                                width,
+                                color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0']
+                            };
+                            break;
+                        }
+                        case 'borderRadius': {
+                            const [top, right, bottom, left] = [
+                                node.css('borderTopLeftRadius'),
+                                node.css('borderTopRightRadius'),
+                                node.css('borderBottomLeftRadius'),
+                                node.css('borderBottomRightRadius')
+                            ];
+                            if (top === right && right === bottom && bottom === left) {
+                                boxStyle[attr] = top === '' || top === '0px' ? [] : [top];
+                            }
+                            else {
+                                boxStyle[attr] = [top, right, bottom, left];
+                            }
+                            break;
+                        }
+                        case 'backgroundColor': {
+                            boxStyle[attr] = parseRGBA(value, node.css('opacity'));
+                            break;
+                        }
+                        case 'backgroundSize': {
+                            const fontSize = node.css('fontSize');
+                            let result: string[] = [];
+                            if (value !== 'auto' && value !== 'auto auto' && value !== 'initial' && value !== '0px') {
+                                const match = value.match(/^([0-9\.]+(?:px|pt|em|%)|auto)(?: ([0-9\.]+(?:px|pt|em|%)|auto))?(?: ([0-9\.]+(?:px|pt|em)))?(?: ([0-9\.]+(?:px|pt|em)))?$/);
+                                if (match) {
+                                    if (match[1] === 'auto' || match[2] === 'auto') {
+                                        result = [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
+                                    }
+                                    else if (isPercent(match[1]) && match[3] == null) {
+                                        result = [match[1], match[2]];
+                                    }
+                                    else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
+                                        result = [convertPX(match[1], fontSize)];
+                                    }
+                                    else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
+                                        result = [convertPX(match[1], fontSize), convertPX(match[2], fontSize)];
+                                    }
+                                    else {
+                                        result = [convertPX(match[1], fontSize), convertPX(match[2], fontSize), convertPX(match[3], fontSize), convertPX(match[4], fontSize)];
+                                    }
+                                }
+                            }
+                            boxStyle[attr] = result;
+                            break;
+                        }
+                        case 'backgroundImage': {
+                            boxStyle[attr] = !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE) ? value : '';
+                            break;
+                        }
+                        case 'backgroundRepeat':
+                        case 'backgroundPositionX':
+                        case 'backgroundPositionY': {
+                            boxStyle[attr] = value;
+                            break;
+                        }
                     }
                 }
-                if (Array.isArray(result.backgroundColor) &&
+                if (Array.isArray(boxStyle.backgroundColor) &&
                     !node.has('backgroundColor') && (
-                        node.cssParent('backgroundColor', false, true) === result.backgroundColor[1] ||
+                        node.cssParent('backgroundColor', false, true) === boxStyle.backgroundColor[1] ||
                         (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))
                    ))
                 {
-                    result.backgroundColor.length = 0;
+                    boxStyle.backgroundColor.length = 0;
                 }
-                if (result.borderTop.style !== 'none') {
-                    const borderTop = JSON.stringify(result.borderTop);
-                    if (borderTop === JSON.stringify(result.borderRight) &&
-                        borderTop === JSON.stringify(result.borderBottom) &&
-                        borderTop === JSON.stringify(result.borderLeft))
+                if (boxStyle.borderTop.style !== 'none') {
+                    const borderTop = JSON.stringify(boxStyle.borderTop);
+                    if (borderTop === JSON.stringify(boxStyle.borderRight) &&
+                        borderTop === JSON.stringify(boxStyle.borderBottom) &&
+                        borderTop === JSON.stringify(boxStyle.borderLeft))
                     {
-                        result.border = result.borderTop;
+                        boxStyle.border = boxStyle.borderTop;
                     }
                 }
-                setElementCache(node.element, 'boxStyle', result);
+                setElementCache(node.element, 'boxStyle', boxStyle);
             }
         });
     }
@@ -446,76 +520,5 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 (object.backgroundImage !== '' && object.backgroundImage !== 'none')
             )
         );
-    }
-
-    private parseBorderStyle(value: string, node: T, attr: string): BorderAttribute {
-        let cssColor = node.css(`${attr}Color`);
-        switch (cssColor) {
-            case 'initial':
-                cssColor = value;
-                break;
-            case 'inherit':
-            case 'currentColor':
-                cssColor = node.documentParent.css(`${attr}Color`);
-                break;
-        }
-        const style = node.css(`${attr}Style`) || 'none';
-        let width = node.css(`${attr}Width`) || '1px';
-        const color = style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : [];
-        if (style === 'inset' && width === '0px') {
-            width = '1px';
-        }
-        return {
-            style,
-            width,
-            color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0']
-        };
-    }
-
-    private parseBorderRadius(value: string, node: T) {
-        const [top, right, bottom, left] = [
-            node.css('borderTopLeftRadius'),
-            node.css('borderTopRightRadius'),
-            node.css('borderBottomLeftRadius'),
-            node.css('borderBottomRightRadius')
-        ];
-        if (top === right && right === bottom && bottom === left) {
-            return top === '' || top === '0px' ? [] : [top];
-        }
-        else {
-            return [top, right, bottom, left];
-        }
-    }
-
-    private parseBackgroundColor(value: string, node: T) {
-        return parseRGBA(value, node.css('opacity'));
-    }
-
-    private parseBoxDimensions(value: string, node: T) {
-        const fontSize = node.css('fontSize');
-        if (value !== 'auto' && value !== 'initial') {
-            const match = value.match(/^([0-9\.]+(?:px|pt|em|%)|auto)(?: ([0-9\.]+(?:px|pt|em|%)|auto))?(?: ([0-9\.]+(?:px|pt|em)))?(?: ([0-9\.]+(?:px|pt|em)))?$/);
-            if (match) {
-                if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
-                    return [];
-                }
-                if (match[1] === 'auto' || match[2] === 'auto') {
-                    return [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
-                }
-                else if (isPercent(match[1]) && match[3] == null) {
-                    return [match[1], match[2]];
-                }
-                else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
-                    return [convertPX(match[1], fontSize)];
-                }
-                else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
-                    return [convertPX(match[1], fontSize), convertPX(match[2], fontSize)];
-                }
-                else {
-                    return [convertPX(match[1], fontSize), convertPX(match[2], fontSize), convertPX(match[3], fontSize), convertPX(match[4], fontSize)];
-                }
-            }
-        }
-        return [];
     }
 }

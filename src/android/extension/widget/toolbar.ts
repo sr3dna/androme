@@ -59,7 +59,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         const backgroundImage = node.has('backgroundImage');
         const appBarChildren: T[] = [];
         const collapsingToolbarChildren: T[] = [];
-        let output = '';
+        let output: string;
         let depth = target ? 0 : node.depth;
         let children = node.children.filter(item => item.auto).length;
         Array.from(node.element.children).forEach((element: HTMLElement) => {

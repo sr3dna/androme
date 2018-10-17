@@ -98,8 +98,8 @@ export default abstract class Node implements androme.lib.base.Node {
 
     public init() {
         if (!this._initialized) {
-            const element = this._element;
-            if (element instanceof HTMLElement) {
+            if (this.presentationElement) {
+                const element = <HTMLElement> this._element;
                 const styleMap = getElementCache(element, 'styleMap') || {};
                 for (const inline of Array.from(element.style)) {
                     styleMap[convertCamelCase(inline)] = element.style[inline];
@@ -109,7 +109,7 @@ export default abstract class Node implements androme.lib.base.Node {
                 Object.assign(this.initial.styleMap, styleMap);
             }
             if (this.id !== 0) {
-                setElementCache(element, 'node', this);
+                setElementCache(this._element, 'node', this);
             }
             this._initialized = true;
         }
@@ -850,7 +850,7 @@ export default abstract class Node implements androme.lib.base.Node {
     get nodeName() {
         return (
             this._nodeName ||
-            (this.hasElement ? (this.tagName === 'INPUT' ? (<HTMLInputElement> this._element).type.toUpperCase() : this.tagName) : '')
+            (this.presentationElement ? (this.tagName === 'INPUT' ? (<HTMLInputElement> this._element).type : this.tagName).toUpperCase() : '')
         );
     }
 
@@ -866,7 +866,7 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     get tagName() {
-        return this._tagName || (this._element && this._element.tagName) || '';
+        return (this._tagName || (this._element && this._element.tagName) || '').toUpperCase();
     }
 
     get hasElement() {
@@ -874,7 +874,11 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     get domElement() {
-        return this.hasElement || this.plainText;
+        return this.presentationElement || this.plainText;
+    }
+
+    get presentationElement() {
+        return this._element instanceof HTMLElement || this.svgElement;
     }
 
     get documentBody() {
@@ -1075,7 +1079,7 @@ export default abstract class Node implements androme.lib.base.Node {
                     this._inlineText = (
                         this.hasElement &&
                         hasFreeFormText(this._element) &&
-                        (this.children.length === 0 || this.children.every(node => !!getElementCache(node.element, 'supportInline'))) &&
+                        (this.children.length === 0 || this.children.every(node => !!getElementCache(node.element, 'inlineSupport'))) &&
                         (this._element.childNodes.length === 0 || !Array.from(this._element.childNodes).some((element: Element) => {
                             const node = getNodeFromElement(element) as T;
                             return !!node && !node.lineBreak && (!node.excluded || !node.visible);
@@ -1093,6 +1097,14 @@ export default abstract class Node implements androme.lib.base.Node {
 
     get imageElement() {
         return this.tagName === 'IMG';
+    }
+
+    get svgElement() {
+        return this.tagName === 'SVG';
+    }
+
+    get imageOrSvgElement() {
+        return this.imageElement || this.svgElement;
     }
 
     get lineBreak() {

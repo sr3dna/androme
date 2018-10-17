@@ -13,6 +13,7 @@ import NodeList = androme.lib.base.NodeList;
 
 import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
 import LAYERLIST_TMPL from './template/resource/layer-list';
+import VECTOR_TMPL from './template/resource/vector';
 
 const METHOD_ANDROID = {
     'boxStyle': {
@@ -45,7 +46,7 @@ type StyleTag = {
 };
 
 type BackgroundImage = {
-    image: string;
+    src: string;
     top: string;
     right: string;
     bottom: string;
@@ -691,7 +692,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     tileModeY,
                                     width: '',
                                     height: '',
-                                    image: backgroundImage[i]
+                                    src: backgroundImage[i]
                                 });
                             }
                             else {
@@ -706,7 +707,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     tileModeY,
                                     width: stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : '',
                                     height: stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '',
-                                    image: backgroundImage[i]
+                                    src: backgroundImage[i]
                                 });
                             }
                         }
@@ -731,7 +732,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                     });
                     const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
-                    const radius = this.getShapeAttribute(stored, 'radius');
+                    const borderRadius = this.getShapeAttribute(stored, 'radius');
                     function createDoubleBorder(templateData: {}, border: BorderAttribute, top: boolean, right: boolean, bottom: boolean, left: boolean) {
                         const width = parseInt(border.width);
                         const baseWidth = Math.floor(width / 3);
@@ -745,8 +746,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             'right': right ? '' :  leftTop,
                             'bottom': bottom ? '' :  rightBottom,
                             'left': left ? '' :  leftTop,
-                            '5': [{ width: $util.formatPX(leftWidth), borderStyle: this.getBorderStyle(border) }],
-                            '6': radius
+                            '5': [{
+                                width: $util.formatPX(leftWidth),
+                                borderStyle: this.getBorderStyle(border)
+                            }],
+                            '6': borderRadius
                         });
                         leftTop = `-${$util.formatPX(width + 1)}`;
                         rightBottom = `-${$util.formatPX(width)}`;
@@ -756,8 +760,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             'right': right ? indentWidth : rightBottom,
                             'bottom': bottom ? indentWidth : rightBottom,
                             'left': left ? indentWidth : leftTop,
-                            '5': [{ width: $util.formatPX(rightWidth), borderStyle: this.getBorderStyle(border) }],
-                            '6': radius
+                            '5': [{
+                                width: $util.formatPX(rightWidth),
+                                borderStyle: this.getBorderStyle(border)
+                            }],
+                            '6': borderRadius
                         });
                     }
                     if (stored.border &&
@@ -766,13 +773,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             (parseInt(stored.border.width) > 2 && stored.border.style === 'double')
                        ))
                     {
-                        if (backgroundImage.length === 0) {
+                        if (backgroundImage.length === 0 && (borderRadius  === false || borderRadius[0].radius)) {
                             template = $xml.parseTemplate(SHAPERECTANGLE_TMPL);
                             data = {
                                 '0': [{
                                     '1': this.getShapeAttribute(stored, 'stroke'),
                                     '2': backgroundColor,
-                                    '3': radius
+                                    '3': borderRadius
                                 }]
                             };
                         }
@@ -785,7 +792,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     '3': image3.length > 0 ? image3 : false,
                                     '4': [{
                                         '5': this.getShapeAttribute(stored, 'stroke'),
-                                        '6': radius
+                                        '6': borderRadius
                                     }],
                                     '7': false
                                 }]
@@ -832,7 +839,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     'bottom': this.borderVisible(stored.borderBottom) ? '' : rightBottom,
                                     'left': this.borderVisible(stored.borderLeft) ? '' : leftTop,
                                     '5': this.getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
-                                    '6': radius
+                                    '6': borderRadius
                                 });
                             }
                         }
@@ -862,7 +869,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                             'bottom': i === 2 ? '' : rightBottom,
                                             'left': i === 3 ? '' : leftTop,
                                             '5': this.getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
-                                            '6': radius
+                                            '6': borderRadius
                                         });
                                         if (hasInset) {
                                             leftTop = `-${$util.formatPX(width + 1)}`;
@@ -888,12 +895,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     if (template) {
                         const xml = $xml.createTemplate(template, data);
-                        for (const [name, value] of $resource.STORED.drawables.entries()) {
-                            if (value === xml) {
-                                resourceName = name;
-                                break;
-                            }
-                        }
+                        resourceName = this.getStoredDrawable(xml);
                         if (resourceName === '') {
                             resourceName = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
                             $resource.STORED.drawables.set(resourceName, xml);
@@ -904,7 +906,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         node.data('RESOURCE', 'backgroundImage', true);
                         if (this.settings.autoSizeBackgroundImage &&
                             !node.documentRoot &&
-                            !node.imageElement &&
+                            !node.imageOrSvgElement &&
                             node.renderParent.tagName !== 'TABLE' &&
                             !node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT))
                         {
@@ -1089,17 +1091,115 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     public setImageSource() {
         this.cache.list.filter(node =>
             node.visible &&
-            (node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
+            (node.imageOrSvgElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
             !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)
         )
         .forEach(node => {
-            const element = <HTMLImageElement> node.element;
-            if (!$dom.getElementCache(element, 'imageSource') || this.settings.alwaysReevaluateResources) {
-                const result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
+            if (!$dom.getElementCache(node.element, 'imageSource') || this.settings.alwaysReevaluateResources) {
+                let result = '';
+                if (node.svgElement) {
+                    const element = <SVGSVGElement> node.element;
+                    if (element.children.length > 0) {
+                        const data = {
+                            '0': [{
+                                width: $util.formatPX(element.width.baseVal.value),
+                                height: $util.formatPX(element.height.baseVal.value),
+                                viewportWidth: element.viewBox.baseVal.width ? element.viewBox.baseVal.width.toString() : false,
+                                viewportHeight: element.viewBox.baseVal.height ? element.viewBox.baseVal.height.toString() : false,
+                                alpha: node.css('opacity'),
+                                '1': [{
+                                    name: element.id ? `group${$util.capitalize(element.id)}` : false,
+                                    translateX: element.x.baseVal.value ? element.x.baseVal.value.toString() : false,
+                                    translateY: element.y.baseVal.value ? element.y.baseVal.value.toString() : false,
+                                    '2': [],
+                                    '3': []
+                                }]
+                            }]
+                        };
+                        function getPath(item: Element, clipPath = false) {
+                            const d = $dom.cssAttribute(item, 'd');
+                            if (d && d !== 'none' && $dom.cssAttribute(item, 'display') !== 'none' && !['hidden', 'collpase'].includes($dom.cssAttribute(item, 'visibility'))) {
+                                let fillColor = $dom.cssAttribute(item, 'fill');
+                                let strokeColor = $dom.cssAttribute(item, 'stroke');
+                                const color = $color.parseHex($dom.cssAttribute(item, 'color'));
+                                if (fillColor === 'currentColor') {
+                                    fillColor = color || $color.parseHex($dom.cssInherit(item, 'color'));
+                                }
+                                else {
+                                    fillColor = $color.parseHex(fillColor || '#000000');
+                                }
+                                if (strokeColor === 'currentColor') {
+                                    strokeColor = color || $color.parseHex($dom.cssInherit(item, 'color'));
+                                }
+                                else {
+                                    strokeColor = $color.parseHex(strokeColor || '');
+                                }
+                                if (clipPath) {
+                                    return {
+                                        name: item.id,
+                                        d
+                                    };
+                                }
+                                else {
+                                    return {
+                                        name: item.id,
+                                        fillColor,
+                                        strokeColor,
+                                        strokeWidth: ($util.convertInt($dom.cssAttribute(item, 'stroke-width'))).toString() || '',
+                                        fillAlpha: $dom.cssAttribute(item, 'fill-opacity'),
+                                        strokeAlpha: $dom.cssAttribute(item, 'stroke-opacity'),
+                                        strokeLineCap: $dom.cssAttribute(item, 'stroke-linecap'),
+                                        strokeLineJoin: $dom.cssAttribute(item, 'stroke-linejoin'),
+                                        strokeMiterLimit: $dom.cssAttribute(item, 'stroke-miterlimit'),
+                                        d
+                                    };
+                                }
+                            }
+                            return null;
+                        }
+                        const root = $xml.getTemplateLevel(data, '0', '1');
+                        for (let i = 0; i < element.children.length; i++) {
+                            const item = <SVGPathElement> element.children[i];
+                            if (item.tagName === 'path') {
+                                const path = getPath(item);
+                                if (path) {
+                                    root['3'].push(path);
+                                }
+                            }
+                            else if (item.tagName === 'clipPath') {
+                                for (let j = 0; j < item.children.length; j++) {
+                                    const subitem = item.children[j];
+                                    if (subitem.tagName === 'path') {
+                                        const path = getPath(subitem, true);
+                                        if (path) {
+                                            root['2'].push(path);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        if (root['2'].length === 0) {
+                            root['2'] = false;
+                        }
+                        if (root['3'].length === 0) {
+                            root['3'] = false;
+                        }
+                        const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), data);
+                        result = this.getStoredDrawable(xml);
+                        if (result === '') {
+                            result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
+                            $resource.STORED.drawables.set(result, xml);
+                        }
+                    }
+                }
+                else {
+                    const element = <HTMLImageElement> node.element;
+                    result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
+                }
                 if (result !== '') {
                     const method = METHOD_ANDROID['imageSource'];
                     node.formatted($util.formatString(method['src'], result), node.renderExtension.size === 0);
-                    $dom.setElementCache(element, 'imageSource', result);
+                    $dom.setElementCache(node.element, 'imageSource', result);
                 }
             }
         });
@@ -1465,6 +1565,15 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
             }
         });
+    }
+
+    private getStoredDrawable(xml: string) {
+        for (const [name, value] of $resource.STORED.drawables.entries()) {
+            if (value === xml) {
+                return name;
+            }
+        }
+        return '';
     }
 
     private getShapeAttribute(stored: BoxStyle, name: string, direction = -1, hasInset = false, isInset = false): any[] | boolean {

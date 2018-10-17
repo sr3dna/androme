@@ -33,6 +33,7 @@ export const NODE_ANDROID = {
     EDIT: 'EditText',
     SELECT: 'Spinner',
     RANGE: 'SeekBar',
+    SVG: 'ImageView',
     TEXT: 'TextView',
     IMAGE: 'ImageView',
     BUTTON: 'Button',
@@ -157,7 +158,6 @@ export const WEBVIEW_ANDROID = [
     'H6',
     'DEL',
     'LABEL',
-    'BR',
     'PLAINTEXT'
 ];
 

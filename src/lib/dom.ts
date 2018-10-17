@@ -1,4 +1,4 @@
-import { convertInt, hasValue, includes, resolvePath, withinFraction } from './util';
+import { convertCamelCase, convertInt, hasValue, includes, resolvePath, withinFraction } from './util';
 
 export function getBoxRect(): BoxRect {
     return {
@@ -154,12 +154,12 @@ export function cssResolveUrl(value: string) {
     return '';
 }
 
-export function cssInherit(element: Element, attr: string, tagName = '', exclude?: string[]) {
+export function cssInherit(element: Element, attr: string, exclude?: string[], tagNames?: string[]) {
     let result = '';
     let current = element.parentElement;
-    while (current && current.tagName !== tagName) {
+    while (current && (tagNames == null || !tagNames.includes(current.tagName))) {
         result = getStyle(current)[attr] || '';
-        if (exclude && exclude.some(value => result.indexOf(value) !== -1)) {
+        if (result === 'inherit' || (exclude && exclude.some(value => result.indexOf(value) !== -1))) {
             result = '';
         }
         if (current === document.body || result) {
@@ -195,6 +195,10 @@ export function cssFromParent(element: Element, attr: string) {
         );
     }
     return false;
+}
+
+export function cssAttribute(element: Element, attr: string): string {
+    return element.getAttribute(attr) || getStyle(element)[convertCamelCase(attr)] || '';
 }
 
 export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = true) {
@@ -316,16 +320,13 @@ export function getElementsBetweenSiblings(firstElement: Null<Element>, secondEl
     return [];
 }
 
+export function isPresentationElement(element: Element): element is HTMLElement {
+    return element instanceof HTMLElement || element instanceof SVGSVGElement;
+}
+
 export function isElementVisible(element: Element) {
-    if (!getElementCache(element, 'supportInline')) {
-        if (element instanceof HTMLElement) {
-            switch (element.tagName) {
-                case 'BR':
-                case 'OPTION':
-                case 'MAP':
-                case 'AREA':
-                    return false;
-            }
+    if (!getElementCache(element, 'inlineSupport')) {
+        if (isPresentationElement(element)) {
             if (typeof element.getBoundingClientRect === 'function') {
                 const bounds = element.getBoundingClientRect();
                 if ((bounds.width !== 0 && bounds.height !== 0) ||

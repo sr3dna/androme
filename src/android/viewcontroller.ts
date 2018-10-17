@@ -1116,7 +1116,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                             if (chainable.list.every(upper =>
                                                                     $util.sameValue(first, upper, `linear.${opposing[0]}`) &&
                                                                     chainable.list.some(lower => !$util.sameValue(first, lower, `linear.${opposing[1]}`))
-                                                                ))
+                                                               ))
                                                             {
                                                                 chainable.each(item => mapDelete(item, opposing[1]));
                                                             }
@@ -1818,7 +1818,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             node.android('max', element.max);
                         }
                         if ($util.hasValue(element.value)) {
-                            node.android('progess', element.value);
+                            node.android('progress', element.value);
                         }
                         break;
                 }
@@ -2177,7 +2177,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 if (!chained.has(adjacent) && (
                                         adjacent.app(connected[0]) === item.stringId ||
                                         adjacent.app(connected[1]) === item.stringId
-                                    ))
+                                   ))
                                 {
                                     chained.add(adjacent);
                                     valid = true;
@@ -2475,19 +2475,19 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         return BASE_TMPL;
     }
 
-    get supportInline() {
-        return WEBVIEW_ANDROID;
-    }
-
-    get supportInclude() {
-        return true;
-    }
-
     get settingsInternal(): SettingsInternal {
         return {
+            includes: true,
             layout: {
-                pathname: 'res/layout',
+                pathName: 'res/layout',
                 fileExtension: 'xml'
+            },
+            inline: {
+                always: ['BR'],
+                tagName: WEBVIEW_ANDROID,
+            },
+            unsupported: {
+                tagName: ['OPTION', 'MAP', 'AREA']
             }
         };
     }

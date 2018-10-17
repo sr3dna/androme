@@ -42,6 +42,7 @@ declare global {
             public readonly tagName: string;
             public readonly hasElement: boolean;
             public readonly domElement: boolean;
+            public readonly presentationElement: boolean;
             public readonly documentBody: boolean;
             public readonly dataset: DOMStringMap;
             public readonly extension: string;
@@ -76,6 +77,8 @@ declare global {
             public readonly inlineText: boolean;
             public readonly plainText: boolean;
             public readonly imageElement: boolean;
+            public readonly svgElement: boolean;
+            public readonly imageOrSvgElement: boolean;
             public readonly lineBreak: boolean;
             public readonly textElement: boolean;
             public readonly block: boolean;

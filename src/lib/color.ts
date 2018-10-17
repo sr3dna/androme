@@ -248,9 +248,14 @@ export function getColorByName(value: string) {
 
 export function parseRGBA(value: string, opacity = '1'): string[] {
     if (value !== '') {
-        const color = getColorByName(value);
-        if (color) {
-            return [color.hex, formatRGB(<RGB> color.rgb), opacity];
+        if (value === 'initial') {
+            value = '#000000';
+        }
+        else {
+            const color = getColorByName(value);
+            if (color) {
+                return [color.hex, formatRGB(<RGB> color.rgb), opacity];
+            }
         }
         const rgb = convertToRGB(value);
         if (rgb) {

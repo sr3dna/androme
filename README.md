@@ -315,7 +315,6 @@ The attributes "include" and "include-end" can only be applied to elements which
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:id="@+id/androme_ui"
     android:gravity="top"
     android:layout_height="wrap_content"
@@ -339,12 +338,12 @@ The attributes "include" and "include-end" can only be applied to elements which
         android:paddingVertical="@dimen/form_padding_vertical">
         <GridLayout
             android:id="@+id/gridlayout_1"
+            android:columnCount="2"
             android:layout_height="wrap_content"
             android:layout_width="match_parent"
             android:paddingBottom="@dimen/ul_padding_bottom"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
-            android:paddingTop="@dimen/ul_padding_top"
-            app:columnCount="2">
+            android:paddingTop="@dimen/ul_padding_top">
             <TextView
                 android:id="@+id/textview_2"
                 android:labelFor="@+id/order"
@@ -395,7 +394,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol26341"
+                    android:text="@string/__symbol63222"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -545,7 +544,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol26341"
+                    android:text="@string/__symbol63222"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -655,12 +654,12 @@ The attributes "include" and "include-end" can only be applied to elements which
             android:layout_width="@dimen/hr_width" />
         <GridLayout
             android:id="@+id/gridlayout_2"
+            android:columnCount="2"
             android:layout_height="wrap_content"
             android:layout_width="wrap_content"
             android:paddingBottom="@dimen/ul_padding_bottom"
             android:paddingHorizontal="@dimen/ul_padding_horizontal"
-            android:paddingTop="@dimen/ul_padding_top"
-            app:columnCount="2">
+            android:paddingTop="@dimen/ul_padding_top">
             <TextView
                 android:id="@+id/textview_8"
                 android:layout_height="wrap_content"
@@ -982,7 +981,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol26341"
+                    android:text="@string/__symbol63222"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1113,7 +1112,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol26341">):</string>
+    <string name="__symbol63222">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>

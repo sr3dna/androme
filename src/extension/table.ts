@@ -83,12 +83,12 @@ export default abstract class Table<T extends Node> extends Extension<T> {
                         }
                     }
                     else {
-                        let value = cssInherit(item, 'background', 'TABLE', ['rgba(0, 0, 0, 0)', 'transparent']);
+                        let value = cssInherit(item, 'background', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
                         if (value !== '') {
                             item.style.background = value;
                         }
                         else {
-                            value = cssInherit(item, 'backgroundColor', 'TABLE', ['rgba(0, 0, 0, 0)', 'transparent']);
+                            value = cssInherit(item, 'backgroundColor', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
                             if (value !== '') {
                                 item.style.backgroundColor = value;
                             }

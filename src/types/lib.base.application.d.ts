@@ -12,7 +12,7 @@ declare global {
             public readonly framework: number;
             public readonly cache: NodeList<T>;
             public readonly cacheSession: NodeList<T>;
-            public readonly elements: Set<HTMLElement>;
+            public readonly elements: Set<Element>;
             public readonly extensions: Extension<T>[];
             public appName: string;
             public layoutProcessing: PlainFile;
@@ -26,7 +26,7 @@ declare global {
             public registerExtension(ext: Extension<Node>): void;
             public finalize(): void;
             public reset(): void;
-            public parseDocument(...elements: Null<string | HTMLElement>[]): FunctionMap<void>;
+            public parseDocument(...elements: Null<string | Element>[]): FunctionMap<void>;
             public setConstraints(): void;
             public resetController(): void;
             public setResources(): void;

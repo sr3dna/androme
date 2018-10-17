@@ -5,8 +5,6 @@ declare global {
             public cache: NodeList<T>;
             public application: Application<T>;
             public readonly baseTemplate: string;
-            public readonly supportInline: string[];
-            public readonly supportInclude: boolean;
             public readonly settingsInternal: SettingsInternal;
             public initNode(node: T): void;
             public createGroup(parent: T, node: T, children: T[]): T;

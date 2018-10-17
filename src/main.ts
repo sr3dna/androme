@@ -68,7 +68,7 @@ export function setFramework(module: AppFramework<T>, cached = false) {
     reset();
 }
 
-export function parseDocument(...elements: Null<string | HTMLElement>[]): FunctionMap<void> {
+export function parseDocument(...elements: Null<string | Element>[]): FunctionMap<void> {
     if (main && !main.closed) {
         return main.parseDocument(...elements);
     }
