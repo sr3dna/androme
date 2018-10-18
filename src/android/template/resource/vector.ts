@@ -11,7 +11,7 @@ const template = [
     '!2',
     '!3',
 '		<path',
-'			android:name="{@name}" android:fillColor="{fillColor}" android:strokeColor="{@strokeColor}" android:strokeWidth="{@strokeWidth}" android:strokeAlpha="{@strokeAlpha}" android:fillAlpha="{@fillAlpha}" android:strokeLineCap="{@strokeLineCap}" android:strokeLineJoin="{@strokeLineJoin}" android:strokeMiterLimit="{@strokeMiterLimit}"',
+'			android:name="{@name}" android:fillColor="{@fillColor}" android:fillAlpha="{@fillAlpha}" android:strokeColor="{@strokeColor}" android:strokeWidth="{@strokeWidth}" android:strokeAlpha="{@strokeAlpha}" android:strokeLineCap="{@strokeLineCap}" android:strokeLineJoin="{@strokeLineJoin}" android:strokeMiterLimit="{@strokeMiterLimit}"',
 '			android:pathData="{d}" />',
     '!3',
 '	</group>',

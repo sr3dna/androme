@@ -320,13 +320,13 @@ export function getElementsBetweenSiblings(firstElement: Null<Element>, secondEl
     return [];
 }
 
-export function isPresentationElement(element: Element): element is HTMLElement {
+export function isStyleElement(element: Element): element is HTMLElement {
     return element instanceof HTMLElement || element instanceof SVGSVGElement;
 }
 
 export function isElementVisible(element: Element) {
-    if (!getElementCache(element, 'inlineSupport')) {
-        if (isPresentationElement(element)) {
+    if (!getElementCache(element, 'inlineSupport') && !(element.parentElement instanceof SVGSVGElement)) {
+        if (isStyleElement(element)) {
             if (typeof element.getBoundingClientRect === 'function') {
                 const bounds = element.getBoundingClientRect();
                 if ((bounds.width !== 0 && bounds.height !== 0) ||

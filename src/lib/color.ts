@@ -251,6 +251,10 @@ export function parseRGBA(value: string, opacity = '1'): string[] {
         if (value === 'initial') {
             value = '#000000';
         }
+        else if (value === 'transparent') {
+            value = '#000000';
+            opacity = '0';
+        }
         else {
             const color = getColorByName(value);
             if (color) {

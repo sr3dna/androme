@@ -7,7 +7,7 @@ import Resource from './resource';
 import Extension from './extension';
 
 import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isUnit, sortAsc, trimString, trimNull } from '../lib/util';
-import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isPresentationElement, setElementCache } from '../lib/dom';
+import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isStyleElement, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
 export default class Application<T extends Node> implements androme.lib.base.Application<T> {
@@ -1935,7 +1935,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         }
-        else if (isPresentationElement(element)) {
+        else if (isStyleElement(element)) {
             const elementNode = new this.nodeObject(this.cache.nextId, element);
             this.viewController.initNode(elementNode);
             if (isElementVisible(element)) {

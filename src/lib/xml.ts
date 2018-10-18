@@ -114,7 +114,7 @@ export function createTemplate(template: ObjectMap<string>, data: {}, index?: st
     }
     for (const i in data) {
         let value: any = '';
-        if (data[i] === false) {
+        if (data[i] === false || (Array.isArray(data[i]) && data[i].length === 0)) {
             output = output.replace(`{%${i}}`, '');
             continue;
         }
