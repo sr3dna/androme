@@ -43,6 +43,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         private static _documentBody: View;
 
+        private static getPaddedHeight(node: View) {
+            return node.paddingTop + node.paddingBottom + node.borderTopWidth + node.borderBottomWidth;
+        }
+
         public constraint: Constraint;
         public api = 0;
         public children: View[] = [];
@@ -796,58 +800,33 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public applyOptimizations(settings: SettingsAndroid, userAgent: number) {
-            function getPaddedHeight(node: View) {
-                return node.paddingTop + node.paddingBottom + node.borderTopWidth + node.borderBottomWidth;
-            }
-            const renderParent = this.renderParent;
-            const renderChildren = this.renderChildren;
-            if (this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP)) {
-                const linearHorizontal = this.linearHorizontal;
-                if (this.blockWidth && !this.blockStatic) {
-                    [[linearHorizontal, this.inlineElement, 'width'], [!linearHorizontal, true, 'height']].forEach((value: [boolean, boolean, string]) => {
-                        const attr = `inline${$util.capitalize(value[2])}`;
-                        if (value[0] &&
-                            value[1] &&
-                            !this[attr] && renderChildren.every(node => node[attr]))
-                        {
-                            this.android(`layout_${value[2]}`, 'wrap_content');
-                        }
-                    });
-                }
-                if (linearHorizontal) {
-                    if (!renderChildren.some(node => node.imageElement && node.baseline) && (
-                            this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) ||
-                            renderChildren.some(node => node.floating || !node.siblingflow)
-                       ))
-                    {
-                        this.android('baselineAligned', 'false');
-                    }
-                    else {
-                        const childIndex = renderParent.android('baselineAlignedChildIndex');
-                        if (renderParent.renderChildren.some(node => node.baseline && node.textElement) ||
-                            (childIndex !== '' && renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
-                            renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
-                            (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
-                            (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
-                        {
-                            const baseline = NodeList.textBaseline(renderChildren, userAgent);
-                            if (baseline.length > 0) {
-                                this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
+            this.setBlockSpacing();
+            this.bindWhiteSpace(settings);
+            this.autoSizeBoxModel(settings);
+            this.alignLinearLayout(settings, userAgent);
+            this.alignRelativePosition();
+        }
+
+        public applyCustomizations(settings: SettingsAndroid) {
+            for (const build of [API_ANDROID[0], API_ANDROID[this.api]]) {
+                if (build && build.customizations) {
+                    for (const nodeName of [this.tagName, this.controlName]) {
+                        const customizations = build.customizations[nodeName];
+                        if (customizations) {
+                            for (const obj in customizations) {
+                                for (const attr in customizations[obj]) {
+                                    this.attr(obj, attr, customizations[obj][attr], settings.customizationsOverwritePrivilege);
+                                }
                             }
                         }
                     }
-                    if (settings.ellipsisOnTextOverflow &&
-                        this.length > 1 &&
-                        renderChildren.every(node => node.textElement && !node.floating))
-                    {
-                        const node = renderChildren[renderChildren.length - 1];
-                        if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
-                            node.android('singleLine', 'true');
-                        }
-                    }
                 }
             }
+        }
+
+        private setBlockSpacing() {
             if (this.pageflow) {
+                const renderParent = this.renderParent;
                 if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
                     [['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, number, number], index: number) => {
                         const node = $dom.getNodeFromElement<View>(renderParent[item[0]]);
@@ -901,8 +880,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 }
             }
-            this.bindWhiteSpace(settings);
+        }
+
+        private autoSizeBoxModel(settings: SettingsAndroid) {
             if (settings.autoSizePaddingAndBorderWidth && !this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT)) {
+                const renderParent = this.renderParent;
                 let layoutWidth = $util.convertInt(this.android('layout_width'));
                 let layoutHeight = $util.convertInt(this.android('layout_height'));
                 let borderWidth = false;
@@ -971,8 +953,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         if (this.bounds.width > width) {
                             this.android('layout_width', $util.formatPX(this.bounds.width));
                         }
-                        if (this.has('width', $enum.CSS_STANDARD.AUTO, { map: 'initial' }) && renderChildren.every(node => node.inlineWidth)) {
-                            for (const node of renderChildren) {
+                        if (this.has('width', $enum.CSS_STANDARD.AUTO, { map: 'initial' }) && this.renderChildren.every(node => node.inlineWidth)) {
+                            for (const node of this.renderChildren) {
                                 node.android('layout_width', '0px');
                                 node.android('layout_columnWeight', '1');
                             }
@@ -986,7 +968,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             const minWidth = $util.convertInt(this.android('minWidth'));
                             const minHeight = $util.convertInt(this.android('minHeight'));
                             const paddedWidth = this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
-                            const paddedHeight = getPaddedHeight(this);
+                            const paddedHeight = View.getPaddedHeight(this);
                             if (layoutWidth > 0 &&
                                 this.toInt('width', 0, { map: 'initial' }) > 0 &&
                                 paddedWidth > 0)
@@ -1018,131 +1000,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     this.modifyBox($enum.BOX_STANDARD.PADDING_RIGHT, this.borderRightWidth);
                     this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, this.borderBottomWidth);
                     this.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
-                }
-            }
-            if (this.linearHorizontal || this.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL)) {
-                const pageflow = renderChildren.filter(node => !node.floating && (node.styleElement || node.renderChildren.length === 0));
-                if (pageflow.length > 0 &&
-                    pageflow.every(node => node.baseline || node.has('verticalAlign', $enum.CSS_STANDARD.UNIT)) && (
-                        pageflow.some(node => (node.imageOrSvgElement) && node.toInt('verticalAlign') !== 0) ||
-                        (pageflow.some(node => node.toInt('verticalAlign') < 0) && pageflow.some(node => node.toInt('verticalAlign') > 0))
-                   ))
-                {
-                    const marginTop: number = Math.max.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
-                    const tallest: View[] = [];
-                    let offsetTop = 0;
-                    if (marginTop > 0) {
-                        pageflow.forEach(node => {
-                            const offset = node.toInt('verticalAlign');
-                            const offsetHeight = (node.imageOrSvgElement ? node.bounds.height : 0) + (offset > 0 ? offset : 0);
-                            if (offsetHeight >= offsetTop) {
-                                if (offsetHeight > offsetTop) {
-                                    tallest.length = 0;
-                                }
-                                tallest.push(node);
-                                offsetTop = offsetHeight;
-                            }
-                        });
-                        tallest.sort(a => a.imageOrSvgElement ? -1 : 1);
-                        pageflow.forEach(node => {
-                            if (!tallest.includes(node)) {
-                                const offset = node.toInt('verticalAlign');
-                                if (marginTop > 0) {
-                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageOrSvgElement ? node.bounds.height : 0));
-                                }
-                                if (offset !== 0) {
-                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
-                                    node.css('verticalAlign', '0px');
-                                }
-                            }
-                        });
-                        tallest.forEach(node => node.css('verticalAlign', '0px'));
-                    }
-                }
-                if (renderChildren.some(node => node.tagName === 'SUB') && this.inlineHeight) {
-                    const offsetHeight = $util.convertInt(View.getCustomizationValue(this.api, 'SUB', 'android', 'layout_marginTop'));
-                    if (offsetHeight > 0) {
-                        this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + getPaddedHeight(this)));
-                    }
-                }
-            }
-            if ((this.inline || (this.imageOrSvgElement && this.display === 'inline-block') && !this.floating)) {
-                const offset = this.toInt('verticalAlign');
-                if (offset !== 0) {
-                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
-                    if (offset < 0 &&
-                        this.display !== 'inline-block' &&
-                        renderParent.layoutHorizontal &&
-                        renderParent.inlineHeight)
-                    {
-                        renderParent.android('layout_height', $util.formatPX(renderParent.bounds.height + getPaddedHeight(renderParent)));
-                    }
-                }
-            }
-            if (this.position === 'relative' || renderParent.is($enum.NODE_STANDARD.FRAME)) {
-                const top = this.toInt('top');
-                const bottom = this.toInt('bottom');
-                const left = this.toInt('left');
-                if (top !== 0) {
-                    if (top < 0 &&
-                        renderParent.is($enum.NODE_STANDARD.RELATIVE, $enum.NODE_STANDARD.LINEAR) &&
-                        this.floating &&
-                        !!this.data('RESOURCE', 'backgroundImage'))
-                    {
-                        let found = false;
-                        renderParent.renderChildren.some((node: View) => {
-                            if (node === this) {
-                                found = true;
-                            }
-                            else {
-                                if (node.android('layout_below') !== '') {
-                                    return true;
-                                }
-                                else if (found) {
-                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.abs(top));
-                                }
-                            }
-                            return false;
-                        });
-                    }
-                    else {
-                        this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, top, true);
-                    }
-                }
-                else if (bottom !== 0) {
-                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, bottom * -1, true);
-                }
-                if (left !== 0) {
-                    if (this.float === 'right' || (this.position === 'relative' && this.autoMarginLeft)) {
-                        this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, left * -1, true);
-                    }
-                    else {
-                        this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, left, true);
-                    }
-                }
-            }
-            if (!this.plainText && !renderParent.linearHorizontal) {
-                const offset = (this.lineHeight + this.toInt('verticalAlign')) - this.actualHeight;
-                if (offset > 0) {
-                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));
-                    this.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
-                }
-            }
-        }
-
-        public applyCustomizations(settings: SettingsAndroid) {
-            for (const build of [API_ANDROID[0], API_ANDROID[this.api]]) {
-                if (build && build.customizations) {
-                    for (const nodeName of [this.tagName, this.controlName]) {
-                        const customizations = build.customizations[nodeName];
-                        if (customizations) {
-                            for (const obj in customizations) {
-                                for (const attr in customizations[obj]) {
-                                    this.attr(obj, attr, customizations[obj][attr], settings.customizationsOverwritePrivilege);
-                                }
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -1219,6 +1076,153 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                     }
                 }, true);
+            }
+        }
+
+        private alignLinearLayout(settings: SettingsAndroid, userAgent: number) {
+            if (this.linearHorizontal) {
+                const renderParent = this.renderParent;
+                const renderChildren = this.renderChildren;
+                const pageflow = renderChildren.filter(node => !node.floating && (node.styleElement || node.renderChildren.length === 0));
+                if (pageflow.length > 0 &&
+                    pageflow.every(node => node.baseline || node.has('verticalAlign', $enum.CSS_STANDARD.UNIT)) && (
+                        (pageflow.some(node => node.toInt('verticalAlign') < 0) && pageflow.some(node => node.toInt('verticalAlign') > 0)) ||
+                        pageflow.some(node => node.imageElement && node.toInt('verticalAlign') !== 0)
+                   ))
+                {
+                    const tallest: View[] = [];
+                    const marginTop: number = Math.max.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
+                    let offsetTop = 0;
+                    if (marginTop > 0) {
+                        pageflow.forEach(node => {
+                            const offset = node.toInt('verticalAlign');
+                            const offsetHeight = (node.imageElement ? node.bounds.height : 0) + (offset > 0 ? offset : 0);
+                            if (offsetHeight >= offsetTop) {
+                                if (offsetHeight > offsetTop) {
+                                    tallest.length = 0;
+                                }
+                                tallest.push(node);
+                                offsetTop = offsetHeight;
+                            }
+                        });
+                        tallest.sort(a => a.imageElement ? -1 : 1);
+                        pageflow.forEach(node => {
+                            if (!tallest.includes(node)) {
+                                const offset = node.toInt('verticalAlign');
+                                if (marginTop > 0) {
+                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageElement ? node.bounds.height : 0));
+                                }
+                                if (offset !== 0) {
+                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
+                                    node.css('verticalAlign', '0px');
+                                }
+                            }
+                        });
+                        tallest.forEach(node => node.css('verticalAlign', '0px'));
+                    }
+                }
+                if (renderChildren.some(node => node.tagName === 'SUB') && this.inlineHeight) {
+                    const offsetHeight = $util.convertInt(View.getCustomizationValue(this.api, 'SUB', 'android', 'layout_marginTop'));
+                    if (offsetHeight > 0) {
+                        this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + View.getPaddedHeight(this)));
+                    }
+                }
+                if (!renderChildren.some(node => node.imageElement && node.baseline) && (
+                        this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) ||
+                        renderChildren.some(node => node.floating || !node.siblingflow)
+                   ))
+                {
+                    this.android('baselineAligned', 'false');
+                }
+                else {
+                    const childIndex = renderParent.android('baselineAlignedChildIndex');
+                    if (renderParent.renderChildren.some(node => node.baseline && node.textElement) ||
+                        (childIndex !== '' && renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
+                        renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
+                        (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
+                        (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
+                    {
+                        const baseline = NodeList.textBaseline(renderChildren, userAgent);
+                        if (baseline.length > 0) {
+                            this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
+                        }
+                    }
+                }
+                if (settings.ellipsisOnTextOverflow &&
+                    this.length > 1 &&
+                    renderChildren.every(node => node.textElement && !node.floating))
+                {
+                    const node = renderChildren[renderChildren.length - 1];
+                    if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
+                        node.android('singleLine', 'true');
+                    }
+                }
+            }
+        }
+
+        private alignRelativePosition() {
+            const renderParent = this.renderParent;
+            if ((this.inline || (this.imageOrSvgElement && this.display === 'inline-block') && !this.floating)) {
+                const offset = this.toInt('verticalAlign');
+                if (offset !== 0) {
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
+                    if (offset < 0 &&
+                        this.display !== 'inline-block' &&
+                        renderParent.layoutHorizontal &&
+                        renderParent.inlineHeight)
+                    {
+                        renderParent.android('layout_height', $util.formatPX(renderParent.bounds.height + View.getPaddedHeight(renderParent)));
+                    }
+                }
+            }
+            if (this.position === 'relative' || renderParent.is($enum.NODE_STANDARD.FRAME)) {
+                const top = this.toInt('top');
+                const bottom = this.toInt('bottom');
+                const left = this.toInt('left');
+                if (top !== 0) {
+                    if (top < 0 &&
+                        renderParent.is($enum.NODE_STANDARD.RELATIVE, $enum.NODE_STANDARD.LINEAR) &&
+                        this.floating &&
+                        !!this.data('RESOURCE', 'backgroundImage'))
+                    {
+                        let found = false;
+                        renderParent.renderChildren.some((node: View) => {
+                            if (node === this) {
+                                found = true;
+                            }
+                            else {
+                                if (node.android('layout_below') !== '') {
+                                    return true;
+                                }
+                                else if (found) {
+                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.abs(top));
+                                }
+                            }
+                            return false;
+                        });
+                    }
+                    else {
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, top, true);
+                    }
+                }
+                else if (bottom !== 0) {
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, bottom * -1, true);
+                }
+                if (left !== 0) {
+                    if (this.float === 'right' || (this.position === 'relative' && this.autoMarginLeft)) {
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, left * -1, true);
+                    }
+                    else {
+                        this.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, left, true);
+                    }
+                }
+            }
+            if (!this.plainText && !renderParent.linearHorizontal) {
+                const offset = (this.lineHeight + this.toInt('verticalAlign')) - this.actualHeight;
+                if (offset > 0) {
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));
+                    this.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
+                }
             }
         }
 

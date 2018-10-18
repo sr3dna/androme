@@ -1330,9 +1330,6 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                         const root = $xml.getTemplateLevel(data, '0');
                         const nestedSvg = Array.from(element.children).filter(item => item.tagName === 'svg') as SVGSVGElement[];
-                        if (nestedSvg.length > 0) {
-                            console.log(1);
-                        }
                         [element, ...nestedSvg].forEach((svg, index) => {
                             const group: ObjectMap<any> = {
                                 name: `group_${index}`,

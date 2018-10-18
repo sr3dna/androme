@@ -6,10 +6,6 @@ import { convertInt, hasBit, partition, sortAsc, sortDesc } from '../lib/util';
 import { getNodeFromElement } from '../lib/dom';
 
 export default class NodeList<T extends Node> implements androme.lib.base.NodeList<T> {
-    public static siblingIndex<T extends Node>(a: T, b: T) {
-        return a.siblingIndex <= b.siblingIndex ? -1 : 1;
-    }
-
     public static outerRegion<T extends Node>(list: T[], dimension = 'linear') {
         let top: T[] = [];
         let right: T[] = [];
@@ -254,6 +250,10 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                 }
                 return false;
         }
+    }
+
+    public static siblingIndex<T extends Node>(a: T, b: T) {
+        return a.siblingIndex <= b.siblingIndex ? -1 : 1;
     }
 
     private static clearedSiblings<T extends Node>(parent: T): Map<T, string> {
