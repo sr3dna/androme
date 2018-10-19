@@ -1329,15 +1329,42 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             return null;
                         }
                         const root = $xml.getTemplateLevel(data, '0');
-                        const nestedSvg = Array.from(element.children).filter(item => item.tagName === 'svg') as SVGSVGElement[];
-                        [element, ...nestedSvg].forEach((svg, index) => {
+                        const nestedSvgG = Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'g') as SVGSVGElement[];
+                        [element, ...nestedSvgG].forEach((svg, index) => {
                             const group: ObjectMap<any> = {
                                 name: `group_${index}`,
-                                translateX: index > 0 ? svg.x.baseVal.value.toString() : false,
-                                translateY: index > 0 ? svg.y.baseVal.value.toString() : false,
                                 '2': [],
                                 '3': []
                             };
+                            if (svg.tagName === 'g') {
+                                const g = <SVGGElement> svg;
+                                for (let i = 0; i < g.transform.baseVal.numberOfItems; i++) {
+                                    const transform = g.transform.baseVal.getItem(i);
+                                    switch (transform.type) {
+                                        case SVGTransform.SVG_TRANSFORM_TRANSLATE:
+                                            group.translateX = transform.matrix.e.toString();
+                                            group.translateY = transform.matrix.f.toString();
+                                            break;
+                                        case SVGTransform.SVG_TRANSFORM_SCALE:
+                                            group.scaleX = transform.matrix.a.toString();
+                                            group.scaleY = transform.matrix.d.toString();
+                                            break;
+                                        case SVGTransform.SVG_TRANSFORM_ROTATE:
+                                            group.rotation = transform.angle.toString();
+                                            break;
+                                        case SVGTransform.SVG_TRANSFORM_SKEWX:
+                                            group.pivotX = transform.angle.toString();
+                                            break;
+                                        case SVGTransform.SVG_TRANSFORM_SKEWY:
+                                            group.pivotY = transform.angle.toString();
+                                            break;
+                                    }
+                                }
+                            }
+                            else {
+                                group.translateX = index > 0 ? svg.x.baseVal.value.toString() : false;
+                                group.translateY = index > 0 ? svg.y.baseVal.value.toString() : false;
+                            }
                             const clipPath = Array.from(svg.children).filter(item => item.tagName === 'clipPath') as SVGClipPathElement[];
                             [svg, ...clipPath].forEach((shapes, layerIndex) => {
                                 for (let i = 0; i < shapes.children.length; i++) {
