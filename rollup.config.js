@@ -51,7 +51,6 @@ export default [
         },
         plugins: [
             babel(),
-            babel(),
             terser({
                 compress: {
                     pure_getters: true,

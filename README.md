@@ -88,8 +88,7 @@ androme.settings = {
         'androme.accessibility',
         'androme.list',
         'androme.table',
-        'androme.grid',
-        'androme.widget' // androme.widget.floatingactionbutton | androme.widget.menu | androme.widget.bottomnavigation | androme.widget.coordinator | androme.widget.toolbar | androme.widget.drawer
+        'androme.grid'
     ],
     targetAPI: 26,
     density: 160,
@@ -152,6 +151,13 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 Most of the Android support library extensions can be configured using the same attribute name in the Android documentation. See /demo/*.html for usage instructions.
 
+- android.widget.coordinator
+- android.widget.floatingactionbutton
+- android.widget.menu
+- android.widget.bottomnavigation
+- android.widget.toolbar
+- android.widget.drawer
+
 <img src="demos/android/custom.viewpager.tablayout.png" alt="custom: viewpager + tablayout" />
 
 <img src="demos/android/drawer.png" alt="drawer: floating action button" />
@@ -166,10 +172,15 @@ Most of the Android support library extensions can be configured using the same 
 
 ### Extensions: Configuration
 
+The <script async> attribute is required if you prefer having the extension loaded automatically rather than using "registerExtension".
+
 ```javascript
+<script async src="/dist/extensions/android.widget.coordinator.min.js"></script>
+<script async src="/dist/extensions/android.widget.floatingactionbutton.min.js"></script>
+<script async src="/dist/extensions/android.widget.menu.min.js"></script>
 <script>
     // configure an extension (built-in)
-    androme.configureExtension('androme.widget.toolbar', { // optional: default configuration is provided
+    androme.configureExtension('android.widget.toolbar', { // optional: default configuration is provided
         'elementId': { // HTML DOM
             appBar: {
                 android: {

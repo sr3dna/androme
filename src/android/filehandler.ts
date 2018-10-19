@@ -1,6 +1,7 @@
-import { SettingsAndroid } from './lib/types';
+import { SettingsAndroid } from './types/local';
 
-import { BUILD_ANDROID, FONTWEIGHT_ANDROID } from './lib/constant';
+import { BUILD_ANDROID } from './lib/enumeration';
+import { FONTWEIGHT_ANDROID } from './lib/constant';
 
 import STRING_TMPL from './template/resource/string';
 import STRINGARRAY_TMPL from './template/resource/string-array';

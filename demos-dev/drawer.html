@@ -83,15 +83,23 @@
         System.import('/build/main.js').then(result => {
             androme = result;
             System.import('/build/android/main.js').then(result => {
-                androme.setFramework(result['default']);
-                androme.parseDocument('androme_ui').then(function() {
-                    androme.close();
+                android = result['default'];
+                androme.setFramework(android);
+                Promise.all([
+                    System.import('/build/android/extension/widget/coordinator/main.js'),
+                    System.import('/build/android/extension/widget/floatingactionbutton/main.js'),
+                    System.import('/build/android/extension/widget/menu/main.js'),
+                    System.import('/build/android/extension/widget/drawer/main.js')
+                ]).then(result => {
+                    androme.parseDocument('androme_ui').then(function() {
+                        androme.close();
 
-                    var views = androme.system.writeLayoutAllXml();
-                    document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+                        var views = androme.system.writeLayoutAllXml();
+                        document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
 
-                    var resource = androme.system.writeResourceAllXml();
-                    document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                        var resource = androme.system.writeResourceAllXml();
+                        document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                    });
                 });
             });
         });
@@ -104,8 +112,8 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui">
-        <div id="drawer_demo" data-ext="androme.widget.drawer" onclick="toggleAside();">
-            <div data-ext="androme.widget.coordinator" data-include="drawer_content" data-include-end="true">
+        <div id="drawer_demo" data-ext="android.widget.drawer" onclick="toggleAside();">
+            <div data-ext="android.widget.coordinator" data-include="drawer_content" data-include-end="true">
                 <div style="padding: 0px 20px 20px 20px;">
                     <h3>title</h3>
                     <div class="content">
@@ -118,10 +126,10 @@
                         content content content content content content content content content content
                         content content content content content content content content content content
                     </div>
-                    <input id="fab_menu" type="button" data-ext="androme.widget.floatingactionbutton" />
+                    <input id="fab_menu" type="button" data-ext="android.widget.floatingactionbutton" />
                     <br /><br /><br /><br /><br /><br />
                 </div>
-                <button id="fab_left" data-ext="androme.widget.floatingactionbutton"></button>
+                <button id="fab_left" data-ext="android.widget.floatingactionbutton"></button>
             </div>
             <aside id="drawer_aside">
                 <div>

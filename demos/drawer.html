@@ -109,10 +109,20 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script src="../dist/android.framework.min.js"></script>
-    <script src="common/prod.js"></script>
+    <script async src="../dist/extensions/android.widget.coordinator.min.js"></script>
+    <script async src="../dist/extensions/android.widget.floatingactionbutton.min.js"></script>
+    <script async src="../dist/extensions/android.widget.menu.min.js"></script>
+    <script async src="../dist/extensions/android.widget.drawer.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
+            //  <script> WITHOUT ASYNC: manual registerExtension required
+            //
+            //  androme.registerExtension(android.widget.floatingactionbutton);
+            //  androme.registerExtension(android.widget.menu);
+            //  androme.registerExtension(android.widget.coordinator);
+            //  androme.registerExtension(android.widget.drawer);
+            //
             androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
@@ -128,12 +138,13 @@
             element.style.display = (element.style.display == 'block' ? 'none' : 'block');
         }
     </script>
+    <script src="common/prod.js"></script>
 </head>
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui">
-        <div id="drawer_demo" data-ext="androme.widget.drawer" onclick="toggleAside();">
-            <div data-ext="androme.widget.coordinator" data-include="drawer_content" data-include-end="true">
+        <div id="drawer_demo" data-ext="android.widget.drawer" onclick="toggleAside();">
+            <div data-ext="android.widget.coordinator" data-include="drawer_content" data-include-end="true">
                 <div style="padding: 0px 20px 20px 20px;">
                     <h3>title</h3>
                     <div class="content">
@@ -146,10 +157,10 @@
                         content content content content content content content content content content
                         content content content content content content content content content content
                     </div>
-                    <input id="fab_menu" type="button" data-ext="androme.widget.floatingactionbutton" />
+                    <input id="fab_menu" type="button" data-ext="android.widget.floatingactionbutton" />
                     <br /><br /><br /><br /><br /><br />
                 </div>
-                <button id="fab_left" data-ext="androme.widget.floatingactionbutton"></button>
+                <button id="fab_left" data-ext="android.widget.floatingactionbutton"></button>
             </div>
             <aside id="drawer_aside">
                 <div>

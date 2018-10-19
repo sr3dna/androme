@@ -36,6 +36,7 @@ type SettingsInternal = {
 };
 
 interface AppFramework<T extends androme.lib.base.Node> {
+    lib: ObjectMap<any>;
     system: FunctionMap<any>;
     create(): AppBase<T>;
     cached(): AppBase<T>;

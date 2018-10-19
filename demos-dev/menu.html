@@ -51,15 +51,20 @@
         System.import('/build/main.js').then(result => {
             androme = result;
             System.import('/build/android/main.js').then(result => {
-                androme.setFramework(result['default']);
-                androme.parseDocument('androme_ui').then(function() {
-                    androme.close();
+                android = result['default'];
+                androme.setFramework(android);
+                Promise.all([
+                    System.import('/build/android/extension/widget/menu/main.js')
+                ]).then(result => {
+                    androme.parseDocument('androme_ui').then(function() {
+                        androme.close();
 
-                    var views = androme.system.writeLayoutAllXml();
-                    document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+                        var views = androme.system.writeLayoutAllXml();
+                        document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
 
-                    var resource = androme.system.writeResourceAllXml();
-                    document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                        var resource = androme.system.writeResourceAllXml();
+                        document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                    });
                 });
             });
         });
@@ -74,7 +79,7 @@
     <div id="androme_ui" style="width: 200px;">
         <button onclick="document.getElementById('menu_demo').style.display = 'block';">Show Menu</button>
         <button onclick="document.getElementById('menu_demo').style.display = 'none';">Hide Menu</button>
-        <nav id="menu_demo" data-ext="androme.widget.menu">
+        <nav id="menu_demo" data-ext="android.widget.menu">
             <div
                 style="background: url(../demos/images/icons8-chrome.png) no-repeat; background-size: 24px; background-position: 12px 6px;" title="Item 1"
                 data-id="@+id/menu_item_1"

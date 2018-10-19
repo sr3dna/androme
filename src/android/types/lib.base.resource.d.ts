@@ -1,0 +1,20 @@
+import { SettingsAndroid } from './local';
+
+declare global {
+    namespace android.lib.base {
+        export class Resource<T extends View> extends androme.lib.base.Resource<T> {
+            public static getStored(name: string): Map<string, any>;
+            public static formatOptions(options: {}, settings: SettingsAndroid): {};
+            public static addString(value: string, name?: string, settings?: SettingsAndroid): string;
+            public static addImageSrcSet(element: HTMLImageElement, prefix?: string): string;
+            public static addImage(images: StringMap, prefix?: string): string;
+            public static addImageURL(value: string, prefix?: string): string;
+            public static addColor(value: string, opacity?: string): string;
+            public static getColor(value: string): string;
+            public static parseBackgroundPosition(value: string, fontSize: string): string[];
+            public addTheme(template: string, data: {}, options: {}): void;
+        }
+    }
+}
+
+export {};

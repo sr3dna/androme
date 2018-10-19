@@ -105,13 +105,26 @@
             float: left;
         }
     </style>
+    <script src="common/prod.js"></script>
     <script src="../dist/androme.min.js"></script>
     <script src="../dist/android.framework.min.js"></script>
-    <script src="common/prod.js"></script>
+    <script async src="../dist/extensions/android.widget.coordinator.min.js"></script>
+    <script async src="../dist/extensions/android.widget.floatingactionbutton.min.js"></script>
+    <script async src="../dist/extensions/android.widget.menu.min.js"></script>
+    <script async src="../dist/extensions/android.widget.toolbar.min.js"></script>
+    <script async src="../dist/extensions/android.widget.drawer.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            androme.ext('androme.widget.drawer', { // optional: default configuration is provided
+            //  <script> WITHOUT ASYNC: manual registerExtension required
+            //
+            //  androme.registerExtension(android.widget.floatingactionbutton);
+            //  androme.registerExtension(android.widget.menu);
+            //  androme.registerExtension(android.widget.toolbar);
+            //  androme.registerExtension(android.widget.coordinator);
+            //  androme.registerExtension(android.widget.drawer);
+            //
+            androme.ext('android.widget.drawer', {
                 self: {
                     android: {
                         fitsSystemWindows: 'true'
@@ -125,7 +138,7 @@
                 resource: {
                     output: {
                         path: 'res/values-v21',
-                        file: 'androme.widget.drawer.xml'
+                        file: 'android.widget.drawer.xml'
                     },
                     appTheme: 'AppTheme',
                     parentTheme: 'Theme.AppCompat.Light.NoActionBar',
@@ -134,7 +147,7 @@
                     }
                 }
             });
-            androme.ext('androme.widget.toolbar', { // optional: default configuration is provided
+            androme.ext('android.widget.toolbar', {
                 toolbar_demo: {
                     appBar: {
                         android: {
@@ -168,10 +181,10 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" style="width: 200px;">
-        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-target="drawer_content">
+        <div id="toolbar_demo" data-ext="android.widget.toolbar" data-target="drawer_content">
             <img src="images/icons8-menu-24.png" data-navigation-icon="true" onclick="toggleDrawer(this, true);" />
             <img src="images/icons8-left-24.png" data-collapse-icon="true" onclick="toggleDrawer(this, false);" style="display: none;" />
-            <nav id="toolbar_menu" data-ext="androme.widget.menu">
+            <nav id="toolbar_menu" data-ext="android.widget.menu">
                 <div
                     data-show-as-action="always"
                     title="Web">
@@ -184,12 +197,12 @@
                 </div>
             </nav>
         </div>
-        <div id="drawer_demo" data-ext="androme.widget.drawer">
-            <div id="drawer_content" data-ext="androme.widget.coordinator" data-include="drawer_content" data-include-end="true"></div>
+        <div id="drawer_demo" data-ext="android.widget.drawer">
+            <div id="drawer_content" data-ext="android.widget.coordinator" data-include="drawer_content" data-include-end="true"></div>
             <div id="drawer_header" data-ext="androme.external">
                 <span style="margin-top: 100px; display: block;">android@user.com</span>
             </div>
-            <nav id="drawer_menu" data-ext="androme.widget.menu">
+            <nav id="drawer_menu" data-ext="android.widget.menu">
                 <div>
                     <img src="images/icons8-chrome.png" />
                     <label>Chrome</label>

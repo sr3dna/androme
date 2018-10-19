@@ -49,29 +49,35 @@
         System.import('/build/main.js').then(result => {
             androme = result;
             System.import('/build/android/main.js').then(result => {
-                androme.setFramework(result['default']);
-                androme.ext('androme.widget.bottomnavigation', {
+                android = result['default'];
+                androme.setFramework(android);
+                Promise.all([
+                    System.import('/build/android/extension/widget/menu/main.js'),
+                    System.import('/build/android/extension/widget/bottomnavigation/main.js')
+                ]).then(result => {
+                    androme.ext('android.widget.bottomnavigation', {
                     bottomnavigation_demo: {
-                        android: {
-                            background: '?android:attr/windowBackground'
+                            android: {
+                                background: '?android:attr/windowBackground'
+                            },
+                            app: {
+                                itemIconTint: '#000000',
+                                itemTextColor: '#000000'
+                            }
                         },
-                        app: {
-                            itemIconTint: '#000000',
-                            itemTextColor: '#000000'
+                        resource: {
+                            parentTheme: 'Theme.AppCompat.Light.NoActionBar'
                         }
-                    },
-                    resource: {
-                        parentTheme: 'Theme.AppCompat.Light.NoActionBar'
-                    }
-                });
-                androme.parseDocument('androme_ui').then(function() {
-                    androme.close();
+                    });
+                    androme.parseDocument('androme_ui').then(function() {
+                        androme.close();
 
-                    var views = androme.system.writeLayoutAllXml();
-                    document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+                        var views = androme.system.writeLayoutAllXml();
+                        document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
 
-                    var resource = androme.system.writeResourceAllXml();
-                    document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                        var resource = androme.system.writeResourceAllXml();
+                        document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                    });
                 });
             });
         });
@@ -99,8 +105,8 @@
         <br />
         <br />
         <br />
-        <div id="bottomnavigation_demo" data-ext="androme.widget.bottomnavigation">
-            <nav id="bottomnavigation_menu" data-ext="androme.widget.menu">
+        <div id="bottomnavigation_demo" data-ext="android.widget.bottomnavigation">
+            <nav id="bottomnavigation_menu" data-ext="android.widget.menu">
                 <div>
                     <img src="../demos/images/icons8-chrome.png" /><br />
                     <label>Chrome</label>

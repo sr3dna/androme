@@ -1,7 +1,10 @@
-import { Constraint, SettingsAndroid } from './lib/types';
+import { Constraint, SettingsAndroid } from './types/local';
 
-import { AXIS_ANDROID, BOX_ANDROID, BUILD_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
+import { BUILD_ANDROID } from './lib/enumeration';
+import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, RESERVED_JAVA } from './lib/constant';
 import API_ANDROID from './customizations';
+
+import NodeList = androme.lib.base.NodeList;
 
 import { calculateBias, generateId, parseRTL, stripId } from './lib/util';
 
@@ -9,7 +12,6 @@ import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
-import NodeList = androme.lib.base.NodeList;
 
 export default (Base: Constructor<androme.lib.base.Node>) => {
     return class View extends Base {
@@ -119,7 +121,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        public alignParent(position: string, settings: {}) {
+        public alignParent(position: string, settings: SettingsAndroid) {
             if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE)) {
                 const direction = $util.capitalize(parseRTL(position, settings));
                 if (this.renderParent.controlName === NODE_ANDROID.CONSTRAINT) {

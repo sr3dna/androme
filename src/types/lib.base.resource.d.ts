@@ -10,7 +10,6 @@ declare global {
             public file: File<T>;
             constructor(file: File<T>);
             public setImageSource(): void;
-            public addTheme(template: string, data: {}, options: {}): void;
             public finalize(viewData: ViewData<NodeList<T>>): void;
             public addFile(pathname: string, filename: string, content?: string, uri?: string): void;
             public reset(): void;

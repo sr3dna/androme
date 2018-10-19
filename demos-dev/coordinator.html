@@ -52,15 +52,21 @@
         System.import('/build/main.js').then(result => {
             androme = result;
             System.import('/build/android/main.js').then(result => {
-                androme.setFramework(result['default']);
-                androme.parseDocument('androme_ui').then(function() {
-                    androme.close();
+                android = result['default'];
+                androme.setFramework(android);
+                Promise.all([
+                    System.import('/build/android/extension/widget/coordinator/main.js'),
+                    System.import('/build/android/extension/widget/floatingactionbutton/main.js')
+                ]).then(result => {
+                    androme.parseDocument('androme_ui').then(function() {
+                        androme.close();
 
-                    var views = androme.system.writeLayoutAllXml();
-                    document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+                        var views = androme.system.writeLayoutAllXml();
+                        document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
 
-                    var resource = androme.system.writeResourceAllXml();
-                    document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                        var resource = androme.system.writeResourceAllXml();
+                        document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                    });
                 });
             });
         });
@@ -68,7 +74,7 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_ui" data-ext="androme.widget.coordinator">
+    <div id="androme_ui" data-ext="android.widget.coordinator">
         <div data-include="coordinator_content" data-include-end="true">
             <div style="padding: 0px 20px;">
                 <h3>title</h2>
@@ -86,9 +92,9 @@
                 content content content content content content content content content content
             </div>
         </div>
-        <button id="fab_web" data-ext="androme.widget.floatingactionbutton"></button>
-        <button id="fab_browse_page" data-ext="androme.widget.floatingactionbutton"></button>
-        <button id="fab_left" data-ext="androme.widget.floatingactionbutton"></button>
+        <button id="fab_web" data-ext="android.widget.floatingactionbutton"></button>
+        <button id="fab_browse_page" data-ext="android.widget.floatingactionbutton"></button>
+        <button id="fab_left" data-ext="android.widget.floatingactionbutton"></button>
     </div>
     <!-- END: DEMO -->
 

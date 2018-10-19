@@ -1,5 +1,5 @@
-var lib = null;
 var androme = null;
+var android = null;
 
 System.config({
     packages: {

@@ -1,4 +1,4 @@
-import { SettingsAndroid } from './lib/types';
+import { SettingsAndroid } from './types/local';
 
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
@@ -7,6 +7,7 @@ import LAYERLIST_TMPL from './template/resource/layer-list';
 import VECTOR_TMPL from './template/resource/vector';
 
 import View from './view';
+import NodeList = androme.lib.base.NodeList;
 
 import { generateId, replaceUnit } from './lib/util';
 
@@ -16,7 +17,6 @@ import $dom = androme.lib.dom;
 import $xml = androme.lib.xml;
 import $color = androme.lib.color;
 import $resource = androme.lib.base.Resource;
-import NodeList = androme.lib.base.NodeList;
 
 const METHOD_ANDROID = {
     'boxStyle': {
@@ -1329,8 +1329,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             return null;
                         }
                         const root = $xml.getTemplateLevel(data, '0');
-                        const nestedSvgG = Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'g') as SVGSVGElement[];
-                        [element, ...nestedSvgG].forEach((svg, index) => {
+                        const gOrSvg = Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'g') as SVGSVGElement[];
+                        [element, ...gOrSvg].forEach((svg, index) => {
                             const group: ObjectMap<any> = {
                                 name: `group_${index}`,
                                 '2': [],

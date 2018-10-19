@@ -1,4 +1,4 @@
-import { BUILD_ANDROID } from './lib/constant';
+import { BUILD_ANDROID } from './lib/enumeration';
 
 type Customizations = {
     [index: number]: {

@@ -1,4 +1,4 @@
-/* androme 2.0.1
+/* androme 2.0.2
    https://github.com/anpham6/androme */
 
 var android = (function () {
@@ -33,12 +33,19 @@ var android = (function () {
         DENSITY_ANDROID[DENSITY_ANDROID["XXHDPI"] = 480] = "XXHDPI";
         DENSITY_ANDROID[DENSITY_ANDROID["XXXHDPI"] = 640] = "XXXHDPI";
     })(DENSITY_ANDROID || (DENSITY_ANDROID = {}));
+
+    var enumeration = /*#__PURE__*/Object.freeze({
+        get BUILD_ANDROID () { return BUILD_ANDROID; },
+        get DENSITY_ANDROID () { return DENSITY_ANDROID; }
+    });
+
     const NODE_ANDROID = {
         CHECKBOX: 'CheckBox',
         RADIO: 'RadioButton',
         EDIT: 'EditText',
         SELECT: 'Spinner',
         RANGE: 'SeekBar',
+        SVG: 'ImageView',
         TEXT: 'TextView',
         IMAGE: 'ImageView',
         BUTTON: 'Button',
@@ -54,6 +61,16 @@ var android = (function () {
         SCROLL_HORIZONTAL: 'HorizontalScrollView',
         SCROLL_VERTICAL: 'android.support.v4.widget.NestedScrollView',
         GUIDELINE: 'android.support.constraint.Guideline'
+    };
+    const VIEW_SUPPORT = {
+        DRAWER: 'android.support.v4.widget.DrawerLayout',
+        NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',
+        COORDINATOR: 'android.support.design.widget.CoordinatorLayout',
+        APPBAR: 'android.support.design.widget.AppBarLayout',
+        COLLAPSING_TOOLBAR: 'android.support.design.widget.CollapsingToolbarLayout',
+        TOOLBAR: 'android.support.v7.widget.Toolbar',
+        FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton',
+        BOTTOM_NAVIGATION: 'android.support.design.widget.BottomNavigationView'
     };
     const BOX_ANDROID = {
         MARGIN: 'layout_margin',
@@ -155,7 +172,6 @@ var android = (function () {
         'H6',
         'DEL',
         'LABEL',
-        'BR',
         'PLAINTEXT'
     ];
     const RESERVED_JAVA = [
@@ -213,6 +229,68 @@ var android = (function () {
         'volatile',
         'while'
     ];
+    const DRAWABLE_PREFIX = {
+        MENU: 'ic_menu_',
+        DIALOG: 'ic_dialog_'
+    };
+
+    var constant = /*#__PURE__*/Object.freeze({
+        NODE_ANDROID: NODE_ANDROID,
+        VIEW_SUPPORT: VIEW_SUPPORT,
+        BOX_ANDROID: BOX_ANDROID,
+        AXIS_ANDROID: AXIS_ANDROID,
+        XMLNS_ANDROID: XMLNS_ANDROID,
+        FONT_ANDROID: FONT_ANDROID,
+        FONTALIAS_ANDROID: FONTALIAS_ANDROID,
+        FONTREPLACE_ANDROID: FONTREPLACE_ANDROID,
+        FONTWEIGHT_ANDROID: FONTWEIGHT_ANDROID,
+        WEBVIEW_ANDROID: WEBVIEW_ANDROID,
+        RESERVED_JAVA: RESERVED_JAVA,
+        DRAWABLE_PREFIX: DRAWABLE_PREFIX
+    });
+
+    const settings = {
+        builtInExtensions: [
+            'androme.external',
+            'androme.origin',
+            'androme.custom',
+            'androme.accessibility',
+            'androme.list',
+            'androme.table',
+            'androme.grid'
+        ],
+        targetAPI: BUILD_ANDROID.OREO,
+        density: DENSITY_ANDROID.MDPI,
+        supportRTL: true,
+        dimensResourceValue: true,
+        numberResourceValue: false,
+        fontAliasResourceValue: true,
+        alwaysReevaluateResources: true,
+        renderInlineText: true,
+        ellipsisOnTextOverflow: true,
+        preloadImages: true,
+        autoSizeBackgroundImage: true,
+        autoSizePaddingAndBorderWidth: true,
+        whitespaceHorizontalOffset: 3.5,
+        whitespaceVerticalOffset: 16,
+        constraintChainDisabled: false,
+        constraintChainPackedHorizontalOffset: 3.5,
+        constraintChainPackedVerticalOffset: 16,
+        constraintCirclePositionAbsolute: false,
+        constraintPercentAccuracy: 4,
+        supportNegativeLeftTop: true,
+        floatOverlapDisabled: false,
+        collapseUnattributedElements: true,
+        customizationsOverwritePrivilege: false,
+        showAttributes: true,
+        insertSpaces: 4,
+        convertPixels: 'dp',
+        autoCloseOnWrite: true,
+        outputDirectory: 'app/src/main',
+        outputMainFileName: 'activity_main.xml',
+        outputArchiveFileType: 'zip',
+        outputMaxProcessingTime: 30
+    };
 
     const API_ANDROID = {
         [BUILD_ANDROID.PIE]: {
@@ -347,7 +425,7 @@ var android = (function () {
     function stripId(value) {
         return value ? value.replace(/@\+?id\//, '') : '';
     }
-    function convertDP(value, dpi = 160, font = false) {
+    function convertUnit(value, dpi = 160, font = false) {
         if (value) {
             value = parseFloat(value);
             if (!isNaN(value)) {
@@ -364,7 +442,7 @@ var android = (function () {
     function replaceUnit(value, { density = 160, convertPixels = 'dp' }, font = false) {
         switch (convertPixels) {
             case 'dp':
-                return value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], density, font) + capture[3]);
+                return value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], density, font) + capture[3]);
             default:
                 return value;
         }
@@ -388,11 +466,22 @@ var android = (function () {
         return value;
     }
 
+    var util = /*#__PURE__*/Object.freeze({
+        resetId: resetId,
+        generateId: generateId,
+        stripId: stripId,
+        convertUnit: convertUnit,
+        delimitUnit: delimitUnit,
+        replaceUnit: replaceUnit,
+        calculateBias: calculateBias,
+        parseRTL: parseRTL
+    });
+
+    var NodeList = androme.lib.base.NodeList;
     var $enum = androme.lib.enumeration;
     var $const = androme.lib.constant;
     var $util = androme.lib.util;
     var $dom = androme.lib.dom;
-    var NodeList = androme.lib.base.NodeList;
     var ViewBase = (Base) => {
         return class View extends Base {
             constructor(id = 0, element) {
@@ -430,6 +519,9 @@ var android = (function () {
             }
             static getControlName(nodeType) {
                 return NODE_ANDROID[$enum.NODE_STANDARD[nodeType]];
+            }
+            static getPaddedHeight(node) {
+                return node.paddingTop + node.paddingBottom + node.borderTopWidth + node.borderBottomWidth;
             }
             attr(obj, attr, value = '', overwrite = true) {
                 if (!this.supported(obj, attr)) {
@@ -635,7 +727,7 @@ var android = (function () {
                             return this.linear.width;
                         }
                         else {
-                            return this.hasElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0;
+                            return this.styleElement ? this.element.clientWidth + this.borderLeftWidth + this.borderRightWidth + this.marginLeft + this.marginRight : 0;
                         }
                     })();
                     const height = (() => {
@@ -646,7 +738,7 @@ var android = (function () {
                             return this.linear.height;
                         }
                         else {
-                            return this.hasElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0;
+                            return this.styleElement ? this.element.clientHeight + this.borderTopWidth + this.borderBottomWidth + this.marginTop + this.marginBottom : 0;
                         }
                     })();
                     const widthParent = (() => {
@@ -657,7 +749,7 @@ var android = (function () {
                             return parent.box.width;
                         }
                         else {
-                            return parent.element instanceof HTMLElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0;
+                            return parent.styleElement ? parent.element.offsetWidth - (parent.paddingLeft + parent.paddingRight + parent.borderLeftWidth + parent.borderRightWidth) : 0;
                         }
                     })();
                     const heightParent = (() => {
@@ -668,7 +760,7 @@ var android = (function () {
                             return parent.box.height;
                         }
                         else {
-                            return parent.element instanceof HTMLElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0;
+                            return parent.styleElement ? parent.element.offsetHeight - (parent.paddingTop + parent.paddingBottom + parent.borderTopWidth + parent.borderBottomWidth) : 0;
                         }
                     })();
                     const styleMap = this.styleMap;
@@ -740,8 +832,9 @@ var android = (function () {
                             if ($util.convertFloat(this.android('layout_columnWeight')) > 0) {
                                 this.android('layout_width', '0px');
                             }
-                            else if (widthDefined.length > 0 &&
-                                widthDefined.some(node => node.bounds.width >= this.box.width)) {
+                            else if ((widthDefined.length > 0 &&
+                                widthDefined.some(node => node.bounds.width >= this.box.width)) ||
+                                this.svgElement) {
                                 this.android('layout_width', 'wrap_content');
                             }
                             else if ((this.blockStatic && this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL)) ||
@@ -767,8 +860,8 @@ var android = (function () {
                                     if (width >= widthParent ||
                                         (this.linearVertical && !this.floating && !this.autoMargin) ||
                                         (this.is($enum.NODE_STANDARD.FRAME) && renderChildren.some(node => node.blockStatic && (node.autoMarginHorizontal || node.autoMarginLeft))) ||
-                                        (!this.hasElement && this.length > 0 && renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !renderChildren.some(item => item.plainText && item.multiLine)) ||
-                                        (this.hasElement && this.blockStatic && (this.documentParent.documentBody ||
+                                        (!this.htmlElement && this.length > 0 && renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !renderChildren.some(item => item.plainText && item.multiLine)) ||
+                                        (this.htmlElement && this.blockStatic && (this.documentParent.documentBody ||
                                             this.ascend().every(node => node.blockStatic) ||
                                             (this.documentParent.blockStatic && this.nodeType <= $enum.NODE_STANDARD.LINEAR && (!previousSibling || !previousSibling.floating) && (!nextSibling || !nextSibling.floating))))) {
                                         this.android('layout_width', 'match_parent');
@@ -825,7 +918,10 @@ var android = (function () {
                         }
                     }
                     if (this.android('layout_height') === '') {
-                        if (height >= heightParent &&
+                        if (this.svgElement) {
+                            this.android('layout_height', 'wrap_content');
+                        }
+                        else if (height >= heightParent &&
                             parent.hasHeight &&
                             !(this.inlineElement && this.nodeType < $enum.NODE_STANDARD.INLINE) &&
                             !(renderParent.is($enum.NODE_STANDARD.RELATIVE) && renderParent.inlineHeight)) {
@@ -851,8 +947,11 @@ var android = (function () {
                         }
                     }
                 }
-                if (this.cssParent('visibility', true) === 'hidden') {
-                    this.android('visibility', 'invisible');
+                switch (this.cssParent('visibility', true)) {
+                    case 'hidden':
+                    case 'collapse':
+                        this.android('visibility', 'invisible');
+                        break;
                 }
             }
             setAlignment(settings) {
@@ -1102,52 +1201,31 @@ var android = (function () {
                 }
             }
             applyOptimizations(settings, userAgent) {
-                function getPaddedHeight(node) {
-                    return node.paddingTop + node.paddingBottom + node.borderTopWidth + node.borderBottomWidth;
-                }
-                const renderParent = this.renderParent;
-                const renderChildren = this.renderChildren;
-                if (this.is($enum.NODE_STANDARD.LINEAR, $enum.NODE_STANDARD.RADIO_GROUP)) {
-                    const linearHorizontal = this.linearHorizontal;
-                    if (this.blockWidth && !this.blockStatic) {
-                        [[linearHorizontal, this.inlineElement, 'width'], [!linearHorizontal, true, 'height']].forEach((value) => {
-                            const attr = `inline${$util.capitalize(value[2])}`;
-                            if (value[0] &&
-                                value[1] &&
-                                !this[attr] && renderChildren.every(node => node[attr])) {
-                                this.android(`layout_${value[2]}`, 'wrap_content');
-                            }
-                        });
-                    }
-                    if (linearHorizontal) {
-                        if (!renderChildren.some(node => node.imageElement && node.baseline) && (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) ||
-                            renderChildren.some(node => node.floating || !node.siblingflow))) {
-                            this.android('baselineAligned', 'false');
-                        }
-                        else {
-                            const childIndex = renderParent.android('baselineAlignedChildIndex');
-                            if (renderParent.renderChildren.some(node => node.baseline && node.textElement) ||
-                                (childIndex !== '' && renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
-                                renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
-                                (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
-                                (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline))) {
-                                const baseline = NodeList.textBaseline(renderChildren, userAgent);
-                                if (baseline.length > 0) {
-                                    this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
+                this.setBlockSpacing();
+                this.bindWhiteSpace(settings);
+                this.autoSizeBoxModel(settings);
+                this.alignLinearLayout(settings, userAgent);
+                this.alignRelativePosition();
+            }
+            applyCustomizations(settings) {
+                for (const build of [API_ANDROID[0], API_ANDROID[this.api]]) {
+                    if (build && build.customizations) {
+                        for (const nodeName of [this.tagName, this.controlName]) {
+                            const customizations = build.customizations[nodeName];
+                            if (customizations) {
+                                for (const obj in customizations) {
+                                    for (const attr in customizations[obj]) {
+                                        this.attr(obj, attr, customizations[obj][attr], settings.customizationsOverwritePrivilege);
+                                    }
                                 }
                             }
                         }
-                        if (settings.ellipsisOnTextOverflow &&
-                            this.length > 1 &&
-                            renderChildren.every(node => node.textElement && !node.floating)) {
-                            const node = renderChildren[renderChildren.length - 1];
-                            if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
-                                node.android('singleLine', 'true');
-                            }
-                        }
                     }
                 }
+            }
+            setBlockSpacing() {
                 if (this.pageflow) {
+                    const renderParent = this.renderParent;
                     if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
                         [['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]].forEach((item, index) => {
                             const node = $dom.getNodeFromElement(renderParent[item[0]]);
@@ -1163,7 +1241,7 @@ var android = (function () {
                             }
                         });
                     }
-                    if (this.hasElement && this.blockStatic) {
+                    if (this.htmlElement && this.blockStatic) {
                         for (let i = 0; i < this.element.children.length; i++) {
                             const element = this.element.children[i];
                             const node = $dom.getNodeFromElement(element);
@@ -1199,8 +1277,10 @@ var android = (function () {
                         }
                     }
                 }
-                this.bindWhiteSpace(settings);
+            }
+            autoSizeBoxModel(settings) {
                 if (settings.autoSizePaddingAndBorderWidth && !this.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT)) {
+                    const renderParent = this.renderParent;
                     let layoutWidth = $util.convertInt(this.android('layout_width'));
                     let layoutHeight = $util.convertInt(this.android('layout_height'));
                     let borderWidth = false;
@@ -1268,8 +1348,8 @@ var android = (function () {
                             if (this.bounds.width > width) {
                                 this.android('layout_width', $util.formatPX(this.bounds.width));
                             }
-                            if (this.has('width', $enum.CSS_STANDARD.AUTO, { map: 'initial' }) && renderChildren.every(node => node.inlineWidth)) {
-                                for (const node of renderChildren) {
+                            if (this.has('width', $enum.CSS_STANDARD.AUTO, { map: 'initial' }) && this.renderChildren.every(node => node.inlineWidth)) {
+                                for (const node of this.renderChildren) {
                                     node.android('layout_width', '0px');
                                     node.android('layout_columnWeight', '1');
                                 }
@@ -1278,12 +1358,12 @@ var android = (function () {
                         borderWidth = this.css('boxSizing') === 'content-box';
                     }
                     else {
-                        if (this.hasElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
+                        if (this.styleElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
                             if (!(renderParent.tagName === 'TABLE' || this.css('boxSizing') === 'border-box')) {
                                 const minWidth = $util.convertInt(this.android('minWidth'));
                                 const minHeight = $util.convertInt(this.android('minHeight'));
                                 const paddedWidth = this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
-                                const paddedHeight = getPaddedHeight(this);
+                                const paddedHeight = View.getPaddedHeight(this);
                                 if (layoutWidth > 0 &&
                                     this.toInt('width', 0, { map: 'initial' }) > 0 &&
                                     paddedWidth > 0) {
@@ -1313,13 +1393,80 @@ var android = (function () {
                         this.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, this.borderLeftWidth);
                     }
                 }
-                if (this.linearHorizontal || this.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL)) {
-                    const pageflow = renderChildren.filter(node => !node.floating && (node.hasElement || node.renderChildren.length === 0));
+            }
+            bindWhiteSpace(settings) {
+                if (!this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (this.linearHorizontal ||
+                    this.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL, $enum.NODE_ALIGNMENT.MULTILINE) ||
+                    this.of($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_ALIGNMENT.HORIZONTAL))) {
+                    const textAlign = this.css('textAlign');
+                    const textIndent = this.toInt('textIndent');
+                    const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
+                    const relative = this.is($enum.NODE_STANDARD.RELATIVE);
+                    let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent') : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
+                    this.each((node, index) => {
+                        if (!(node.floating ||
+                            (relative && node.alignParent('left', settings)) ||
+                            (index === 0 && (textAlign !== 'left' || node.plainText)) ||
+                            ['SUP', 'SUB'].includes(node.tagName))) {
+                            const width = Math.round(node.actualLeft() - right);
+                            if (width >= 1) {
+                                node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, width);
+                            }
+                        }
+                        right = node.actualRight();
+                    }, true);
+                }
+                else if (this.linearVertical) {
+                    this.each((node) => {
+                        const previous = (() => {
+                            let current = node;
+                            do {
+                                current = current.previousSibling(true, false, false);
+                            } while (current && !this.initial.children.includes(current));
+                            return current;
+                        })();
+                        const elements = $dom.getElementsBetweenSiblings(previous ? (previous.length > 0 && !previous.styleElement ? previous.lastElementChild : previous.baseElement) : null, node.baseElement)
+                            .filter(element => {
+                            const item = $dom.getNodeFromElement(element);
+                            return (item && (item.lineBreak ||
+                                (item.excluded && item.blockStatic)));
+                        });
+                        if (elements.length > 0) {
+                            let bottom;
+                            if (!previous) {
+                                bottom = this.box.top;
+                            }
+                            else {
+                                bottom = (() => {
+                                    if (previous.layoutHorizontal &&
+                                        previous.length > 0 &&
+                                        previous.renderChildren.some(item => !item.floating)) {
+                                        return previous.renderChildren.filter(item => !item.floating).sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0].linear.bottom;
+                                    }
+                                    return previous.linear.bottom;
+                                })();
+                            }
+                            if (elements.length === 1 && elements[0].tagName === 'BR' && previous && previous.inline && node.inline) {
+                                return;
+                            }
+                            const height = Math.round(node.linear.top - bottom);
+                            if (height >= 1) {
+                                node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, height);
+                            }
+                        }
+                    }, true);
+                }
+            }
+            alignLinearLayout(settings, userAgent) {
+                if (this.linearHorizontal) {
+                    const renderParent = this.renderParent;
+                    const renderChildren = this.renderChildren;
+                    const pageflow = renderChildren.filter(node => !node.floating && (node.styleElement || node.renderChildren.length === 0));
                     if (pageflow.length > 0 &&
-                        pageflow.every(node => node.baseline || node.has('verticalAlign', $enum.CSS_STANDARD.UNIT)) && (pageflow.some(node => node.imageElement && node.toInt('verticalAlign') !== 0) ||
-                        (pageflow.some(node => node.toInt('verticalAlign') < 0) && pageflow.some(node => node.toInt('verticalAlign') > 0)))) {
-                        const marginTop = Math.max.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
+                        pageflow.every(node => node.baseline || node.has('verticalAlign', $enum.CSS_STANDARD.UNIT)) && ((pageflow.some(node => node.toInt('verticalAlign') < 0) && pageflow.some(node => node.toInt('verticalAlign') > 0)) ||
+                        pageflow.some(node => node.imageElement && node.toInt('verticalAlign') !== 0))) {
                         const tallest = [];
+                        const marginTop = Math.max.apply(null, pageflow.map(node => node.toInt('verticalAlign')));
                         let offsetTop = 0;
                         if (marginTop > 0) {
                             pageflow.forEach(node => {
@@ -1352,18 +1499,47 @@ var android = (function () {
                     if (renderChildren.some(node => node.tagName === 'SUB') && this.inlineHeight) {
                         const offsetHeight = $util.convertInt(View.getCustomizationValue(this.api, 'SUB', 'android', 'layout_marginTop'));
                         if (offsetHeight > 0) {
-                            this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + getPaddedHeight(this)));
+                            this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + View.getPaddedHeight(this)));
+                        }
+                    }
+                    if (!renderChildren.some(node => node.imageElement && node.baseline) && (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) ||
+                        renderChildren.some(node => node.floating || !node.siblingflow))) {
+                        this.android('baselineAligned', 'false');
+                    }
+                    else {
+                        const childIndex = renderParent.android('baselineAlignedChildIndex');
+                        if (renderParent.renderChildren.some(node => node.baseline && node.textElement) ||
+                            (childIndex !== '' && renderParent.renderChildren.findIndex(node => node === this) === parseInt(childIndex)) ||
+                            renderChildren.some(node => !node.alignOrigin || !node.baseline) ||
+                            (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
+                            (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline))) {
+                            const baseline = NodeList.textBaseline(renderChildren, userAgent);
+                            if (baseline.length > 0) {
+                                this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
+                            }
+                        }
+                    }
+                    if (settings.ellipsisOnTextOverflow &&
+                        this.length > 1 &&
+                        renderChildren.every(node => node.textElement && !node.floating)) {
+                        const node = renderChildren[renderChildren.length - 1];
+                        if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
+                            node.android('singleLine', 'true');
                         }
                     }
                 }
-                if (this.inline && !this.floating) {
+            }
+            alignRelativePosition() {
+                const renderParent = this.renderParent;
+                if ((this.inline || (this.imageOrSvgElement && this.display === 'inline-block') && !this.floating)) {
                     const offset = this.toInt('verticalAlign');
                     if (offset !== 0) {
                         this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
                         if (offset < 0 &&
+                            this.display !== 'inline-block' &&
                             renderParent.layoutHorizontal &&
                             renderParent.inlineHeight) {
-                            renderParent.android('layout_height', $util.formatPX(renderParent.bounds.height + getPaddedHeight(renderParent)));
+                            renderParent.android('layout_height', $util.formatPX(renderParent.bounds.height + View.getPaddedHeight(renderParent)));
                         }
                     }
                 }
@@ -1414,88 +1590,6 @@ var android = (function () {
                         this.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, Math.floor(offset / 2));
                         this.modifyBox($enum.BOX_STANDARD.MARGIN_BOTTOM, Math.ceil(offset / 2));
                     }
-                }
-            }
-            applyCustomizations(settings) {
-                for (const build of [API_ANDROID[0], API_ANDROID[this.api]]) {
-                    if (build && build.customizations) {
-                        for (const nodeName of [this.tagName, this.controlName]) {
-                            const customizations = build.customizations[nodeName];
-                            if (customizations) {
-                                for (const obj in customizations) {
-                                    for (const attr in customizations[obj]) {
-                                        this.attr(obj, attr, customizations[obj][attr], settings.customizationsOverwritePrivilege);
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            bindWhiteSpace(settings) {
-                if (!this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) && (this.linearHorizontal ||
-                    this.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.HORIZONTAL, $enum.NODE_ALIGNMENT.MULTILINE) ||
-                    this.of($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_ALIGNMENT.HORIZONTAL))) {
-                    const textAlign = this.css('textAlign');
-                    const textIndent = this.toInt('textIndent');
-                    const valueBox = this.valueBox($enum.BOX_STANDARD.PADDING_LEFT);
-                    const relative = this.is($enum.NODE_STANDARD.RELATIVE);
-                    let right = this.box.left + (textIndent > 0 ? this.toInt('textIndent') : (textIndent < 0 && valueBox[0] === 1 ? valueBox[0] : 0));
-                    this.each((node, index) => {
-                        if (!(node.floating ||
-                            (relative && node.alignParent('left', settings)) ||
-                            (index === 0 && (textAlign !== 'left' || node.plainText)) ||
-                            ['SUP', 'SUB'].includes(node.tagName))) {
-                            const width = Math.round(node.actualLeft() - right);
-                            if (width >= 1) {
-                                node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, width);
-                            }
-                        }
-                        right = node.actualRight();
-                    }, true);
-                }
-                else if (this.linearVertical) {
-                    this.each((node) => {
-                        const previous = (() => {
-                            let current = node;
-                            do {
-                                current = current.previousSibling(true, false, false);
-                            } while (current && !this.initial.children.includes(current));
-                            return current;
-                        })();
-                        const elements = $dom.getElementsBetweenSiblings(previous ? (previous.length > 0 && !previous.hasElement ? previous.lastElementChild : previous.baseElement) : null, node.baseElement)
-                            .filter(element => {
-                            const item = $dom.getNodeFromElement(element);
-                            if (item && (item.lineBreak ||
-                                (item.excluded && item.blockStatic))) {
-                                return true;
-                            }
-                            return false;
-                        });
-                        if (elements.length > 0) {
-                            let bottom;
-                            if (!previous) {
-                                bottom = this.box.top;
-                            }
-                            else {
-                                bottom = (() => {
-                                    if (previous.layoutHorizontal &&
-                                        previous.length > 0 &&
-                                        previous.renderChildren.some(item => !item.floating)) {
-                                        return previous.renderChildren.filter(item => !item.floating).sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0].linear.bottom;
-                                    }
-                                    return previous.linear.bottom;
-                                })();
-                            }
-                            if (elements.length === 1 && elements[0].tagName === 'BR' && previous && previous.inline && node.inline) {
-                                return;
-                            }
-                            const height = Math.round(node.linear.top - bottom);
-                            if (height >= 1) {
-                                node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, height);
-                            }
-                        }
-                    }, true);
                 }
             }
             get stringId() {
@@ -1575,6 +1669,8 @@ var android = (function () {
     class View extends ViewBase(androme.lib.base.Node) {
     }
 
+    var BASE_TMPL = '<?xml version="1.0" encoding="utf-8"?>\n{:0}';
+
     class ViewGroup extends ViewBase(androme.lib.base.NodeGroup) {
         constructor(id, node, parent, children) {
             super(id);
@@ -1583,9 +1679,11 @@ var android = (function () {
             this.depth = node.depth;
             this.nodeName = `${node.nodeName}_GROUP`;
             this.documentParent = node.documentParent;
-            if (Array.isArray(children) && children.length > 0) {
+            if (Array.isArray(children)) {
                 this.children = children;
-                this.init();
+                if (children.length > 0) {
+                    this.init();
+                }
             }
         }
     }
@@ -1620,11 +1718,11 @@ var android = (function () {
         '	</item>',
         '!1',
         '!2',
-        '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}" android:drawable="@drawable/{image}" width="{@width}" height="{@height}" />',
+        '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}" android:drawable="@drawable/{src}" width="{@width}" height="{@height}" />',
         '!2',
         '!3',
         '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}">',
-        '		<bitmap android:src="@drawable/{image}" android:gravity="{@gravity}" android:tileMode="{@tileMode}" android:tileModeX="{@tileModeX}" android:tileModeY="{@tileModeY}" />',
+        '		<bitmap android:src="@drawable/{src}" android:gravity="{@gravity}" android:tileMode="{@tileMode}" android:tileModeX="{@tileModeX}" android:tileModeY="{@tileModeY}" />',
         '	</item>',
         '!3',
         '!7',
@@ -1653,13 +1751,36 @@ var android = (function () {
     ];
     var LAYERLIST_TMPL = template$1.join('\n');
 
+    const template$2 = [
+        '!0',
+        '<?xml version="1.0" encoding="utf-8"?>',
+        '<vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="{width}" android:height="{height}" android:viewportWidth="{@viewportWidth}" android:viewportHeight="{@viewportHeight}" android:alpha="{@alpha}">',
+        '!1',
+        '	<group android:name="{@name}" android:rotation="{@rotation}" android:pivotX="{@pivotX}" android:pivotY="{@pivotY}" android:scaleX="{@scaleX}" android:scaleY="{@scaleY}" android:translateX="{@translateX}" android:translateY="{@translateY}">',
+        '!2',
+        '		<clip-path',
+        '			android:name="{@name}"',
+        '			android:pathData="{d}" />',
+        '!2',
+        '!3',
+        '		<path',
+        '			android:name="{@name}" android:fillColor="{@fillColor}" android:fillAlpha="{@fillAlpha}" android:strokeColor="{@strokeColor}" android:strokeWidth="{@strokeWidth}" android:strokeAlpha="{@strokeAlpha}" android:strokeLineCap="{@strokeLineCap}" android:strokeLineJoin="{@strokeLineJoin}" android:strokeMiterLimit="{@strokeMiterLimit}"',
+        '			android:pathData="{d}" />',
+        '!3',
+        '	</group>',
+        '!1',
+        '</vector>',
+        '!0'
+    ];
+    var VECTOR_TMPL = template$2.join('\n');
+
+    var NodeList$1 = androme.lib.base.NodeList;
     var $enum$1 = androme.lib.enumeration;
     var $util$1 = androme.lib.util;
     var $dom$1 = androme.lib.dom;
     var $xml = androme.lib.xml;
     var $color = androme.lib.color;
     var $resource = androme.lib.base.Resource;
-    var NodeList$1 = androme.lib.base.NodeList;
     const METHOD_ANDROID = {
         'boxStyle': {
             'background': 'android:background="@drawable/{0}"',
@@ -1769,8 +1890,8 @@ var android = (function () {
             return '';
         }
         static addImageSrcSet(element, prefix = '') {
-            const srcset = element.srcset.trim();
             const images = {};
+            const srcset = element.srcset.trim();
             if (srcset !== '') {
                 const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
                 srcset.split(',').forEach(value => {
@@ -1779,25 +1900,25 @@ var android = (function () {
                         if (match[2] == null) {
                             match[2] = '1x';
                         }
-                        const image = filepath + $util$1.lastIndexOf(match[1]);
+                        const src = filepath + $util$1.lastIndexOf(match[1]);
                         switch (match[2]) {
                             case '0.75x':
-                                images['ldpi'] = image;
+                                images['ldpi'] = src;
                                 break;
                             case '1x':
-                                images['mdpi'] = image;
+                                images['mdpi'] = src;
                                 break;
                             case '1.5x':
-                                images['hdpi'] = image;
+                                images['hdpi'] = src;
                                 break;
                             case '2x':
-                                images['xhdpi'] = image;
+                                images['xhdpi'] = src;
                                 break;
                             case '3x':
-                                images['xxhdpi'] = image;
+                                images['xxhdpi'] = src;
                                 break;
                             case '4x':
-                                images['xxxhdpi'] = image;
+                                images['xxxhdpi'] = src;
                                 break;
                         }
                     }
@@ -1873,6 +1994,175 @@ var android = (function () {
                 return [$util$1.convertPX(match[1], fontSize), $util$1.convertPX(match[2], fontSize)];
             }
             return ['', ''];
+        }
+        static deleteStyleAttribute(sorted, attrs, ids) {
+            attrs.split(';').forEach(value => {
+                for (let i = 0; i < sorted.length; i++) {
+                    if (sorted[i]) {
+                        let index = -1;
+                        let key = '';
+                        for (const j in sorted[i]) {
+                            if (j === value) {
+                                index = i;
+                                key = j;
+                                i = sorted.length;
+                                break;
+                            }
+                        }
+                        if (index !== -1) {
+                            sorted[index][key] = sorted[index][key].filter(id => !ids.includes(id));
+                            if (sorted[index][key].length === 0) {
+                                delete sorted[index][key];
+                            }
+                            break;
+                        }
+                    }
+                }
+            });
+        }
+        static getStoredDrawable(xml) {
+            for (const [name, value] of $resource.STORED.drawables.entries()) {
+                if (value === xml) {
+                    return name;
+                }
+            }
+            return '';
+        }
+        static getShapeAttribute(stored, name, direction = -1, hasInset = false, isInset = false) {
+            switch (name) {
+                case 'stroke':
+                    if (stored.border && stored.border.width !== '0px') {
+                        if (!hasInset || isInset) {
+                            return [{
+                                    width: stored.border.width,
+                                    borderStyle: ResourceHandler.getBorderStyle(stored.border, isInset ? direction : -1)
+                                }];
+                        }
+                        else if (hasInset) {
+                            return [{
+                                    width: $util$1.formatPX(Math.ceil(parseInt(stored.border.width) / 2)),
+                                    borderStyle: ResourceHandler.getBorderStyle(stored.border, direction, true)
+                                }];
+                        }
+                    }
+                    return false;
+                case 'backgroundColor':
+                    return stored.backgroundColor.length !== 0 && stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false;
+                case 'radius':
+                    if (stored.borderRadius.length === 1) {
+                        if (stored.borderRadius[0] !== '0px') {
+                            return [{ radius: stored.borderRadius[0] }];
+                        }
+                    }
+                    else if (stored.borderRadius.length > 1) {
+                        const result = {};
+                        stored.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                        return [result];
+                    }
+                    return false;
+            }
+            return false;
+        }
+        static getBorderStyle(border, direction = -1, halfSize = false) {
+            const result = {
+                solid: `android:color="@color/${border.color}"`,
+                groove: '',
+                ridge: ''
+            };
+            Object.assign(result, {
+                double: result.solid,
+                inset: result.solid,
+                outset: result.solid,
+                dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
+                dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
+            });
+            const groove = border.style === 'groove';
+            if (parseInt(border.width) > 1 && (groove ||
+                border.style === 'ridge')) {
+                let colorName = $util$1.isString(border.color) ? border.color : '';
+                let hexValue = ResourceHandler.getColor(colorName);
+                if (hexValue !== '') {
+                    let opacity = '1';
+                    if (hexValue.length === 9) {
+                        hexValue = `#${hexValue.substring(3)}`;
+                        opacity = `0.${hexValue.substring(1, 3)}`;
+                    }
+                    const reduced = $color.parseRGBA($color.reduceToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
+                    if (reduced.length > 0) {
+                        colorName = ResourceHandler.addColor(reduced[0], opacity);
+                    }
+                }
+                const colorReduced = `android:color="@color/${colorName}"`;
+                if (groove) {
+                    if (halfSize) {
+                        switch (direction) {
+                            case 0:
+                                result['groove'] = colorReduced;
+                                break;
+                            case 1:
+                                result['groove'] = colorReduced;
+                                break;
+                            case 2:
+                                result['groove'] = result.solid;
+                                break;
+                            case 3:
+                                result['groove'] = result.solid;
+                                break;
+                        }
+                    }
+                    else {
+                        switch (direction) {
+                            case 0:
+                                result['groove'] = result.solid;
+                                break;
+                            case 1:
+                                result['groove'] = result.solid;
+                                break;
+                            case 2:
+                                result['groove'] = colorReduced;
+                                break;
+                            case 3:
+                                result['groove'] = colorReduced;
+                                break;
+                        }
+                    }
+                }
+                else {
+                    if (halfSize) {
+                        switch (direction) {
+                            case 0:
+                                result['ridge'] = result.solid;
+                                break;
+                            case 1:
+                                result['ridge'] = result.solid;
+                                break;
+                            case 2:
+                                result['ridge'] = colorReduced;
+                                break;
+                            case 3:
+                                result['ridge'] = colorReduced;
+                                break;
+                        }
+                    }
+                    else {
+                        switch (direction) {
+                            case 0:
+                                result['ridge'] = colorReduced;
+                                break;
+                            case 1:
+                                result['ridge'] = colorReduced;
+                                break;
+                            case 2:
+                                result['ridge'] = result.solid;
+                                break;
+                            case 3:
+                                result['ridge'] = result.solid;
+                                break;
+                        }
+                    }
+                }
+            }
+            return result[border.style] || result.solid;
         }
         reset() {
             super.reset();
@@ -1990,12 +2280,10 @@ var android = (function () {
                     let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
                     const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
                     const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
-                    const backgroundImageUrl = [];
                     const backgroundDimensions = [];
                     let backgroundPosition = [];
                     for (let i = 0; i < backgroundImage.length; i++) {
                         if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
-                            backgroundImageUrl.push(backgroundImage[i]);
                             const image = this.imageDimensions.get($dom$1.cssResolveUrl(backgroundImage[i]));
                             backgroundDimensions.push(image);
                             backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
@@ -2013,8 +2301,8 @@ var android = (function () {
                     const method = METHOD_ANDROID['boxStyle'];
                     const companion = node.companion;
                     if (companion &&
+                        companion.htmlElement &&
                         !companion.visible &&
-                        companion.hasElement &&
                         !$dom$1.cssFromParent(companion.element, 'backgroundColor')) {
                         const boxStyle = $dom$1.getElementCache(companion.element, 'boxStyle');
                         if (Array.isArray(boxStyle.backgroundColor) && boxStyle.backgroundColor.length > 0) {
@@ -2296,7 +2584,7 @@ var android = (function () {
                                         tileModeY,
                                         width: '',
                                         height: '',
-                                        image: backgroundImage[i]
+                                        src: backgroundImage[i]
                                     });
                                 }
                                 else {
@@ -2311,7 +2599,7 @@ var android = (function () {
                                         tileModeY,
                                         width: stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : '',
                                         height: stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '',
-                                        image: backgroundImage[i]
+                                        src: backgroundImage[i]
                                     });
                                 }
                             }
@@ -2335,8 +2623,8 @@ var android = (function () {
                                 }
                             }
                         });
-                        const backgroundColor = this.getShapeAttribute(stored, 'backgroundColor');
-                        const radius = this.getShapeAttribute(stored, 'radius');
+                        const backgroundColor = ResourceHandler.getShapeAttribute(stored, 'backgroundColor');
+                        const borderRadius = ResourceHandler.getShapeAttribute(stored, 'radius');
                         function createDoubleBorder(templateData, border, top, right, bottom, left) {
                             const width = parseInt(border.width);
                             const baseWidth = Math.floor(width / 3);
@@ -2350,8 +2638,11 @@ var android = (function () {
                                 'right': right ? '' : leftTop,
                                 'bottom': bottom ? '' : rightBottom,
                                 'left': left ? '' : leftTop,
-                                '5': [{ width: $util$1.formatPX(leftWidth), borderStyle: this.getBorderStyle(border) }],
-                                '6': radius
+                                '5': [{
+                                        width: $util$1.formatPX(leftWidth),
+                                        borderStyle: ResourceHandler.getBorderStyle(border)
+                                    }],
+                                '6': borderRadius
                             });
                             leftTop = `-${$util$1.formatPX(width + 1)}`;
                             rightBottom = `-${$util$1.formatPX(width)}`;
@@ -2361,20 +2652,23 @@ var android = (function () {
                                 'right': right ? indentWidth : rightBottom,
                                 'bottom': bottom ? indentWidth : rightBottom,
                                 'left': left ? indentWidth : leftTop,
-                                '5': [{ width: $util$1.formatPX(rightWidth), borderStyle: this.getBorderStyle(border) }],
-                                '6': radius
+                                '5': [{
+                                        width: $util$1.formatPX(rightWidth),
+                                        borderStyle: ResourceHandler.getBorderStyle(border)
+                                    }],
+                                '6': borderRadius
                             });
                         }
                         if (stored.border &&
                             this.borderVisible(stored.border) && !((parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
                             (parseInt(stored.border.width) > 2 && stored.border.style === 'double'))) {
-                            if (backgroundImage.length === 0) {
+                            if (backgroundImage.length === 0 && (borderRadius === false || borderRadius[0].radius)) {
                                 template = $xml.parseTemplate(SHAPERECTANGLE_TMPL);
                                 data = {
                                     '0': [{
-                                            '1': this.getShapeAttribute(stored, 'stroke'),
+                                            '1': ResourceHandler.getShapeAttribute(stored, 'stroke'),
                                             '2': backgroundColor,
-                                            '3': radius
+                                            '3': borderRadius
                                         }]
                                 };
                             }
@@ -2386,8 +2680,8 @@ var android = (function () {
                                             '2': image2.length > 0 ? image2 : false,
                                             '3': image3.length > 0 ? image3 : false,
                                             '4': [{
-                                                    '5': this.getShapeAttribute(stored, 'stroke'),
-                                                    '6': radius
+                                                    '5': ResourceHandler.getShapeAttribute(stored, 'stroke'),
+                                                    '6': borderRadius
                                                 }],
                                             '7': false
                                         }]
@@ -2408,7 +2702,7 @@ var android = (function () {
                             const root = $xml.getTemplateLevel(data, '0');
                             const borderVisible = borders.filter(item => this.borderVisible(item));
                             const borderWidth = new Set(borderVisible.map(item => item.width));
-                            const borderStyle = new Set(borderVisible.map(item => this.getBorderStyle(item)));
+                            const borderStyle = new Set(borderVisible.map(item => ResourceHandler.getBorderStyle(item)));
                             const borderData = borderVisible[0];
                             if (borderWidth.size === 1 &&
                                 borderStyle.size === 1 &&
@@ -2432,8 +2726,8 @@ var android = (function () {
                                         'right': this.borderVisible(stored.borderRight) ? '' : rightBottom,
                                         'bottom': this.borderVisible(stored.borderBottom) ? '' : rightBottom,
                                         'left': this.borderVisible(stored.borderLeft) ? '' : leftTop,
-                                        '5': this.getShapeAttribute({ border: borderVisible[0] }, 'stroke'),
-                                        '6': radius
+                                        '5': ResourceHandler.getShapeAttribute({ border: borderVisible[0] }, 'stroke'),
+                                        '6': borderRadius
                                     });
                                 }
                             }
@@ -2462,8 +2756,8 @@ var android = (function () {
                                                 'right': i === 1 ? '' : rightBottom,
                                                 'bottom': i === 2 ? '' : rightBottom,
                                                 'left': i === 3 ? '' : leftTop,
-                                                '5': this.getShapeAttribute({ border }, 'stroke', i, hasInset),
-                                                '6': radius
+                                                '5': ResourceHandler.getShapeAttribute({ border }, 'stroke', i, hasInset),
+                                                '6': borderRadius
                                             });
                                             if (hasInset) {
                                                 leftTop = `-${$util$1.formatPX(width + 1)}`;
@@ -2473,28 +2767,17 @@ var android = (function () {
                                                     'right': i === 1 ? '' : rightBottom,
                                                     'bottom': i === 2 ? '' : rightBottom,
                                                     'left': i === 3 ? '' : leftTop,
-                                                    '8': this.getShapeAttribute({ border }, 'stroke', i, true, true)
+                                                    '8': ResourceHandler.getShapeAttribute({ border }, 'stroke', i, true, true)
                                                 });
                                             }
                                         }
                                     }
                                 }
                             }
-                            if (root['4'].length === 0) {
-                                root['4'] = false;
-                            }
-                            if (root['7'].length === 0) {
-                                root['7'] = false;
-                            }
                         }
                         if (template) {
                             const xml = $xml.createTemplate(template, data);
-                            for (const [name, value] of $resource.STORED.drawables.entries()) {
-                                if (value === xml) {
-                                    resourceName = name;
-                                    break;
-                                }
-                            }
+                            resourceName = ResourceHandler.getStoredDrawable(xml);
                             if (resourceName === '') {
                                 resourceName = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
                                 $resource.STORED.drawables.set(resourceName, xml);
@@ -2505,7 +2788,7 @@ var android = (function () {
                             node.data('RESOURCE', 'backgroundImage', true);
                             if (this.settings.autoSizeBackgroundImage &&
                                 !node.documentRoot &&
-                                !node.imageElement &&
+                                !node.imageOrSvgElement &&
                                 node.renderParent.tagName !== 'TABLE' &&
                                 !node.hasBit('excludeProcedure', $enum$1.NODE_PROCEDURE.AUTOFIT)) {
                                 const sizeParent = { width: 0, height: 0 };
@@ -2682,16 +2965,210 @@ var android = (function () {
         }
         setImageSource() {
             this.cache.list.filter(node => node.visible &&
-                (node.imageElement || (node.tagName === 'INPUT' && node.element.type === 'image')) &&
+                (node.imageOrSvgElement || (node.tagName === 'INPUT' && node.element.type === 'image')) &&
                 !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.IMAGE_SOURCE))
                 .forEach(node => {
-                const element = node.element;
-                if (!$dom$1.getElementCache(element, 'imageSource') || this.settings.alwaysReevaluateResources) {
-                    const result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
+                if (!$dom$1.getElementCache(node.element, 'imageSource') || this.settings.alwaysReevaluateResources) {
+                    let result = '';
+                    if (node.svgElement) {
+                        const element = node.element;
+                        if (element.children.length > 0) {
+                            const opacity = node.css('opacity');
+                            const data = {
+                                '0': [{
+                                        width: $util$1.formatPX(element.width.baseVal.value),
+                                        height: $util$1.formatPX(element.height.baseVal.value),
+                                        viewportWidth: element.viewBox.baseVal.width > 0 ? element.viewBox.baseVal.width.toString() : false,
+                                        viewportHeight: element.viewBox.baseVal.height > 0 ? element.viewBox.baseVal.height.toString() : false,
+                                        alpha: parseFloat(opacity) < 1 ? opacity : false,
+                                        '1': []
+                                    }]
+                            };
+                            function getPath(item, d, clipped) {
+                                if (d === '') {
+                                    d = $dom$1.cssAttribute(item, 'd');
+                                }
+                                if (d && d !== 'none' && $dom$1.cssAttribute(item, 'display') !== 'none' && !['hidden', 'collpase'].includes($dom$1.cssAttribute(item, 'visibility'))) {
+                                    let fillColor = $dom$1.cssAttribute(item, 'fill');
+                                    let strokeColor = $dom$1.cssAttribute(item, 'stroke');
+                                    const color = $color.parseHex($dom$1.cssAttribute(item, 'color'));
+                                    if (fillColor === 'currentColor') {
+                                        fillColor = color || $color.parseHex($dom$1.cssInherit(item, 'color'));
+                                    }
+                                    else {
+                                        fillColor = $color.parseHex(fillColor || '#000000');
+                                    }
+                                    if (strokeColor === 'currentColor') {
+                                        strokeColor = color || $color.parseHex($dom$1.cssInherit(item, 'color'));
+                                    }
+                                    else {
+                                        strokeColor = $color.parseHex(strokeColor || '');
+                                    }
+                                    if (clipped) {
+                                        return {
+                                            name: item.id,
+                                            d
+                                        };
+                                    }
+                                    else {
+                                        const fillAlpha = $dom$1.cssAttribute(item, 'fill-opacity');
+                                        const strokeAlpha = $dom$1.cssAttribute(item, 'stroke-opacity');
+                                        return {
+                                            name: item.id,
+                                            fillColor,
+                                            strokeColor,
+                                            strokeWidth: ($util$1.convertInt($dom$1.cssAttribute(item, 'stroke-width'))).toString() || '',
+                                            fillAlpha: parseFloat(fillAlpha) < 1 ? fillAlpha : '',
+                                            strokeAlpha: parseFloat(strokeAlpha) < 1 ? strokeAlpha : '',
+                                            strokeLineCap: $dom$1.cssAttribute(item, 'stroke-linecap'),
+                                            strokeLineJoin: $dom$1.cssAttribute(item, 'stroke-linejoin'),
+                                            strokeMiterLimit: $dom$1.cssAttribute(item, 'stroke-miterlimit'),
+                                            d
+                                        };
+                                    }
+                                }
+                                return null;
+                            }
+                            const root = $xml.getTemplateLevel(data, '0');
+                            const gOrSvg = Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'g');
+                            [element, ...gOrSvg].forEach((svg, index) => {
+                                const group = {
+                                    name: `group_${index}`,
+                                    '2': [],
+                                    '3': []
+                                };
+                                if (svg.tagName === 'g') {
+                                    const g = svg;
+                                    for (let i = 0; i < g.transform.baseVal.numberOfItems; i++) {
+                                        const transform = g.transform.baseVal.getItem(i);
+                                        switch (transform.type) {
+                                            case SVGTransform.SVG_TRANSFORM_TRANSLATE:
+                                                group.translateX = transform.matrix.e.toString();
+                                                group.translateY = transform.matrix.f.toString();
+                                                break;
+                                            case SVGTransform.SVG_TRANSFORM_SCALE:
+                                                group.scaleX = transform.matrix.a.toString();
+                                                group.scaleY = transform.matrix.d.toString();
+                                                break;
+                                            case SVGTransform.SVG_TRANSFORM_ROTATE:
+                                                group.rotation = transform.angle.toString();
+                                                break;
+                                            case SVGTransform.SVG_TRANSFORM_SKEWX:
+                                                group.pivotX = transform.angle.toString();
+                                                break;
+                                            case SVGTransform.SVG_TRANSFORM_SKEWY:
+                                                group.pivotY = transform.angle.toString();
+                                                break;
+                                        }
+                                    }
+                                }
+                                else {
+                                    group.translateX = index > 0 ? svg.x.baseVal.value.toString() : false;
+                                    group.translateY = index > 0 ? svg.y.baseVal.value.toString() : false;
+                                }
+                                const clipPath = Array.from(svg.children).filter(item => item.tagName === 'clipPath');
+                                [svg, ...clipPath].forEach((shapes, layerIndex) => {
+                                    for (let i = 0; i < shapes.children.length; i++) {
+                                        const tagName = shapes.children[i].tagName;
+                                        const clipped = layerIndex > 0;
+                                        const dataIndex = clipped ? '2' : '3';
+                                        switch (tagName) {
+                                            case 'path': {
+                                                const item = shapes.children[i];
+                                                const path = getPath(item, '', clipped);
+                                                if (path) {
+                                                    group[dataIndex].push(path);
+                                                }
+                                                break;
+                                            }
+                                            case 'line': {
+                                                const item = shapes.children[i];
+                                                if (item.x1.baseVal.value !== 0 || item.y1.baseVal.value !== 0 || item.x2.baseVal.value !== 0 || item.y2.baseVal.value !== 0) {
+                                                    const path = getPath(item, `M${item.x1.baseVal.value},${item.y1.baseVal.value} L${item.x2.baseVal.value},${item.y2.baseVal.value}`, clipped);
+                                                    if (path && path.strokeColor) {
+                                                        if (!clipped) {
+                                                            path.fillAlpha = '';
+                                                            path.fillColor = '';
+                                                        }
+                                                        group[dataIndex].push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            case 'rect': {
+                                                const item = shapes.children[i];
+                                                if (item.width.baseVal.value > 0 && item.height.baseVal.value > 0) {
+                                                    const x = item.x.baseVal.value;
+                                                    const y = item.y.baseVal.value;
+                                                    const path = getPath(item, `M${x},${y} H${x + item.width.baseVal.value} V${y + item.height.baseVal.value} H${x} L${x},${y}`, clipped);
+                                                    if (path) {
+                                                        group[dataIndex].push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            case 'polyline':
+                                            case 'polygon': {
+                                                const item = shapes.children[i];
+                                                if (item.points.numberOfItems > 0) {
+                                                    const d = [];
+                                                    for (let j = 0; j < item.points.numberOfItems; j++) {
+                                                        const point = item.points.getItem(j);
+                                                        d.push(`${point.x},${point.y}`);
+                                                    }
+                                                    const path = getPath(item, `M${d.join(' ') + (tagName === 'polygon' ? 'z' : '')}`, clipped);
+                                                    if (path) {
+                                                        group[dataIndex].push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            case 'circle': {
+                                                const item = shapes.children[i];
+                                                const r = item.r.baseVal.value;
+                                                if (r > 0) {
+                                                    const path = getPath(item, `M${item.cx.baseVal.value},${item.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`, clipped);
+                                                    if (path) {
+                                                        group[dataIndex].push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            case 'ellipse': {
+                                                const item = shapes.children[i];
+                                                const rx = item.rx.baseVal.value;
+                                                const ry = item.ry.baseVal.value;
+                                                if (rx > 0 && ry > 0) {
+                                                    const path = getPath(item, `M${item.cx.baseVal.value - rx},${item.cy.baseVal.value}a${rx},${ry} 0 1,0 ${rx * 2},0a${rx},${ry} 0 1,0 -${rx * 2},0`, clipped);
+                                                    if (path) {
+                                                        group[dataIndex].push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                });
+                                if (group['3'].length > 0) {
+                                    root['1'].push(group);
+                                }
+                            });
+                            const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), data);
+                            result = ResourceHandler.getStoredDrawable(xml);
+                            if (result === '') {
+                                result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
+                                $resource.STORED.drawables.set(result, xml);
+                            }
+                        }
+                    }
+                    else {
+                        const element = node.element;
+                        result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
+                    }
                     if (result !== '') {
                         const method = METHOD_ANDROID['imageSource'];
                         node.formatted($util$1.formatString(method['src'], result), node.renderExtension.size === 0);
-                        $dom$1.setElementCache(element, 'imageSource', result);
+                        $dom$1.setElementCache(node.element, 'imageSource', result);
                     }
                 }
             });
@@ -2758,7 +3235,7 @@ var android = (function () {
                             }
                         }
                     }
-                    if (node.hasElement) {
+                    if (node.htmlElement) {
                         switch (node.css('fontVariant')) {
                             case 'small-caps':
                                 stored.value = stored.value.toUpperCase();
@@ -2920,13 +3397,13 @@ var android = (function () {
                             }
                             deleteKeys.forEach(value => delete filtered[value]);
                             for (const attrs in filtered) {
-                                this.deleteStyleAttribute(sorted, attrs, filtered[attrs]);
+                                ResourceHandler.deleteStyleAttribute(sorted, attrs, filtered[attrs]);
                                 style[tag][attrs] = filtered[attrs];
                             }
                             for (const index in combined) {
                                 const attrs = Array.from(combined[index]).sort().join(';');
                                 const ids = index.split(',').map(value => parseInt(value));
-                                this.deleteStyleAttribute(sorted, attrs, ids);
+                                ResourceHandler.deleteStyleAttribute(sorted, attrs, ids);
                                 style[tag][attrs] = ids;
                             }
                         }
@@ -3027,176 +3504,13 @@ var android = (function () {
                 });
             }
         }
-        deleteStyleAttribute(sorted, attrs, ids) {
-            attrs.split(';').forEach(value => {
-                for (let i = 0; i < sorted.length; i++) {
-                    if (sorted[i]) {
-                        let index = -1;
-                        let key = '';
-                        for (const j in sorted[i]) {
-                            if (j === value) {
-                                index = i;
-                                key = j;
-                                i = sorted.length;
-                                break;
-                            }
-                        }
-                        if (index !== -1) {
-                            sorted[index][key] = sorted[index][key].filter(id => !ids.includes(id));
-                            if (sorted[index][key].length === 0) {
-                                delete sorted[index][key];
-                            }
-                            break;
-                        }
-                    }
-                }
-            });
-        }
-        getShapeAttribute(stored, name, direction = -1, hasInset = false, isInset = false) {
-            switch (name) {
-                case 'stroke':
-                    if (stored.border && stored.border.width !== '0px') {
-                        if (!hasInset || isInset) {
-                            return [{
-                                    width: stored.border.width,
-                                    borderStyle: this.getBorderStyle(stored.border, isInset ? direction : -1)
-                                }];
-                        }
-                        else if (hasInset) {
-                            return [{
-                                    width: $util$1.formatPX(Math.ceil(parseInt(stored.border.width) / 2)),
-                                    borderStyle: this.getBorderStyle(stored.border, direction, true)
-                                }];
-                        }
-                    }
-                    return false;
-                case 'backgroundColor':
-                    return stored.backgroundColor.length !== 0 && stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false;
-                case 'radius':
-                    if (stored.borderRadius.length === 1) {
-                        if (stored.borderRadius[0] !== '0px') {
-                            return [{ radius: stored.borderRadius[0] }];
-                        }
-                    }
-                    else if (stored.borderRadius.length > 1) {
-                        const result = {};
-                        stored.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
-                        return [result];
-                    }
-                    return false;
-            }
-            return false;
-        }
-        getBorderStyle(border, direction = -1, halfSize = false) {
-            const result = {
-                solid: `android:color="@color/${border.color}"`,
-                groove: '',
-                ridge: ''
-            };
-            Object.assign(result, {
-                double: result.solid,
-                inset: result.solid,
-                outset: result.solid,
-                dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
-                dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
-            });
-            const groove = border.style === 'groove';
-            if (parseInt(border.width) > 1 && (groove ||
-                border.style === 'ridge')) {
-                let colorName = $util$1.isString(border.color) ? border.color : '';
-                let hexValue = ResourceHandler.getColor(colorName);
-                if (hexValue !== '') {
-                    let opacity = '1';
-                    if (hexValue.length === 9) {
-                        hexValue = `#${hexValue.substring(3)}`;
-                        opacity = `0.${hexValue.substring(1, 3)}`;
-                    }
-                    const reduced = $color.parseRGBA($color.reduceToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
-                    if (reduced.length > 0) {
-                        colorName = ResourceHandler.addColor(reduced[0], opacity);
-                    }
-                }
-                const colorReduced = `android:color="@color/${colorName}"`;
-                if (groove) {
-                    if (halfSize) {
-                        switch (direction) {
-                            case 0:
-                                result['groove'] = colorReduced;
-                                break;
-                            case 1:
-                                result['groove'] = colorReduced;
-                                break;
-                            case 2:
-                                result['groove'] = result.solid;
-                                break;
-                            case 3:
-                                result['groove'] = result.solid;
-                                break;
-                        }
-                    }
-                    else {
-                        switch (direction) {
-                            case 0:
-                                result['groove'] = result.solid;
-                                break;
-                            case 1:
-                                result['groove'] = result.solid;
-                                break;
-                            case 2:
-                                result['groove'] = colorReduced;
-                                break;
-                            case 3:
-                                result['groove'] = colorReduced;
-                                break;
-                        }
-                    }
-                }
-                else {
-                    if (halfSize) {
-                        switch (direction) {
-                            case 0:
-                                result['ridge'] = result.solid;
-                                break;
-                            case 1:
-                                result['ridge'] = result.solid;
-                                break;
-                            case 2:
-                                result['ridge'] = colorReduced;
-                                break;
-                            case 3:
-                                result['ridge'] = colorReduced;
-                                break;
-                        }
-                    }
-                    else {
-                        switch (direction) {
-                            case 0:
-                                result['ridge'] = colorReduced;
-                                break;
-                            case 1:
-                                result['ridge'] = colorReduced;
-                                break;
-                            case 2:
-                                result['ridge'] = result.solid;
-                                break;
-                            case 3:
-                                result['ridge'] = result.solid;
-                                break;
-                        }
-                    }
-                }
-            }
-            return result[border.style] || result.solid;
-        }
     }
 
-    var BASE_TMPL = '<?xml version="1.0" encoding="utf-8"?>\n{:0}';
-
+    var NodeList$2 = androme.lib.base.NodeList;
     var $enum$2 = androme.lib.enumeration;
     var $util$2 = androme.lib.util;
     var $dom$2 = androme.lib.dom;
     var $xml$1 = androme.lib.xml;
-    var NodeList$2 = androme.lib.base.NodeList;
     const MAP_LAYOUT = {
         relativeParent: {
             top: 'layout_alignParentTop',
@@ -3230,6 +3544,144 @@ var android = (function () {
             super(...arguments);
             this._merge = {};
         }
+        static getEnclosingTag(depth, controlName, id, xml = '', preXml = '', postXml = '') {
+            const indent = $util$2.repeat(Math.max(0, depth));
+            let output = preXml +
+                `{<${id}}`;
+            if (xml !== '') {
+                output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}}>\n` +
+                    xml +
+                    indent + `</${controlName}>\n`;
+            }
+            else {
+                output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}} />\n`;
+            }
+            output += `{>${id}}` +
+                postXml;
+            return output;
+        }
+        static parseAttributes(node) {
+            if (node.dir === 'rtl') {
+                if (node.nodeType < $enum$2.NODE_STANDARD.INLINE) {
+                    node.android('textDirection', 'rtl');
+                }
+                else if (node.length > 0) {
+                    node.android('layoutDirection', 'rtl');
+                }
+            }
+            for (const name in node.dataset) {
+                if (/^attr[A-Z]+/.test(name)) {
+                    const obj = $util$2.capitalize(name.substring(4), false);
+                    node.dataset[name].split(';').forEach(values => {
+                        const [key, value] = values.split('::');
+                        if ($util$2.hasValue(key) && $util$2.hasValue(value)) {
+                            node.attr(obj, key, value);
+                        }
+                    });
+                }
+            }
+            const indent = $util$2.repeat(node.renderDepth + 1);
+            return node.combine().map(value => `\n${indent + value}`).join('');
+        }
+        static getRootNamespace(content) {
+            let output = '';
+            for (const namespace in XMLNS_ANDROID) {
+                if (new RegExp(`\\s+${namespace}:`).test(content)) {
+                    output += `\n\txmlns:${namespace}="${XMLNS_ANDROID[namespace]}"`;
+                }
+            }
+            return output;
+        }
+        static getDimensResourceKey(resource, key, value) {
+            return resource.has(key) && resource.get(key) !== value ? generateId('dimens', `${key}_1`) : key;
+        }
+        static setAlignParent(node, orientation = '', bias = false) {
+            const map = MAP_LAYOUT.constraint;
+            [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
+                if (!node.constraint[value] && (orientation === '' ||
+                    value === orientation)) {
+                    node.app(map[index === 0 ? 'left' : 'top'], 'parent');
+                    node.app(map[index === 0 ? 'right' : 'bottom'], 'parent');
+                    node.constraint[value] = true;
+                    if (bias) {
+                        node.app(`layout_constraint${value.charAt(0).toUpperCase() + value.substring(1)}_bias`, node[`${value}Bias`]);
+                    }
+                }
+            });
+        }
+        static partitionChain(node, nodes, orientation, validate) {
+            const map = MAP_LAYOUT.constraint;
+            const mapParent = [];
+            const coordinate = [];
+            const connected = [];
+            switch (orientation) {
+                case AXIS_ANDROID.HORIZONTAL:
+                    mapParent.push(map['left'], map['right']);
+                    coordinate.push('linear.top', 'linear.bottom');
+                    connected.push(map['leftRight'], map['rightLeft']);
+                    break;
+                case AXIS_ANDROID.VERTICAL:
+                    mapParent.push(map['top'], map['bottom']);
+                    coordinate.push('linear.left', 'linear.right');
+                    connected.push(map['topBottom'], map['bottomTop']);
+                    break;
+            }
+            return coordinate.map(value => {
+                const sameXY = $util$2.sortAsc(nodes.list.filter(item => $util$2.sameValue(node, item, value)), coordinate[0]);
+                if (sameXY.length > 1) {
+                    if (!validate || (!sameXY.some(item => item.floating) && sameXY[0].app(mapParent[0]) === 'parent' && sameXY[sameXY.length - 1].app(mapParent[1]) === 'parent')) {
+                        return sameXY;
+                    }
+                    else {
+                        const chained = new Set([node]);
+                        let valid;
+                        do {
+                            valid = false;
+                            Array.from(chained).some(item => sameXY.some(adjacent => {
+                                if (!chained.has(adjacent) && (adjacent.app(connected[0]) === item.stringId ||
+                                    adjacent.app(connected[1]) === item.stringId)) {
+                                    chained.add(adjacent);
+                                    valid = true;
+                                }
+                                return valid;
+                            }));
+                        } while (valid);
+                        return Array.from(chained);
+                    }
+                }
+                return [];
+            })
+                .reduce((a, b) => a.length >= b.length ? a : b);
+        }
+        static checkSingleLine(node, nowrap = false, flexParent = false) {
+            if (node && node.textElement && (nowrap ||
+                flexParent ||
+                (!node.hasWidth && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1))) {
+                node.android('singleLine', 'true');
+            }
+        }
+        static adjustLineHeight(nodes, parent) {
+            const lineHeight = Math.max.apply(null, nodes.map(node => node.toInt('lineHeight')));
+            if (lineHeight > 0) {
+                let minHeight = Number.MAX_VALUE;
+                let offsetTop = 0;
+                const valid = nodes.every(node => {
+                    const offset = lineHeight - node.bounds.height;
+                    if (offset > 0) {
+                        minHeight = Math.min(offset, minHeight);
+                        if (lineHeight === node.toInt('lineHeight')) {
+                            offsetTop = Math.max(node.toInt('top') < 0 ? Math.abs(node.toInt('top')) : 0, offsetTop);
+                        }
+                        return true;
+                    }
+                    return false;
+                });
+                if (valid) {
+                    parent.modifyBox($enum$2.BOX_STANDARD.PADDING_TOP, Math.floor(minHeight / 2));
+                    parent.modifyBox($enum$2.BOX_STANDARD.PADDING_BOTTOM, Math.ceil(minHeight / 2) + offsetTop);
+                }
+            }
+        }
         initNode(node) {
             node.api = this.settings.targetAPI;
         }
@@ -3238,7 +3690,16 @@ var android = (function () {
             for (const value of [...data.views, ...data.includes]) {
                 value.content = $xml$1.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
                 if (this.settings.dimensResourceValue) {
-                    value.content = this.parseDimensions(value.content);
+                    let content = value.content;
+                    const resource = ResourceHandler.getStored('dimens');
+                    const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
+                    let match;
+                    while ((match = pattern.exec(content)) != null) {
+                        const key = ViewController.getDimensResourceKey(resource, `${match[2]}_${parseRTL(match[3], this.settings)}`, match[4]);
+                        resource.set(key, match[4]);
+                        content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
+                    }
+                    value.content = content;
                 }
                 value.content = replaceUnit(value.content, this.settings);
                 value.content = $xml$1.replaceTab(value.content, this.settings);
@@ -3309,6 +3770,9 @@ var android = (function () {
                 const flex = node.flex;
                 if (relative || constraint || flex.enabled) {
                     const nodes = new NodeList$2(node.renderChildren.filter(item => item.auto), node);
+                    if (nodes.length === 0) {
+                        return;
+                    }
                     const cleared = NodeList$2.cleared(node.initial.children);
                     if (relative) {
                         mapLayout = MAP_LAYOUT.relative;
@@ -3384,7 +3848,7 @@ var android = (function () {
                                 if (!noWrap &&
                                     !connected &&
                                     !['SUP', 'SUB'].includes(current.tagName) &&
-                                    (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && ((current.float !== 'right' && Math.floor(baseWidth) - (current.hasElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
+                                    (previous.float !== 'left' || current.linear.top >= previous.linear.bottom) && ((current.float !== 'right' && Math.floor(baseWidth) - (current.styleElement && current.inlineStatic ? current.paddingLeft + current.paddingRight : 0) > boxWidth) ||
                                     (current.multiLine && $dom$2.hasLineBreak(current.element)) ||
                                     (previous.multiLine && previous.textContent.trim() !== '' && !/^\s*\n+/.test(previous.textContent) && !/\n+\s*$/.test(previous.textContent) && $dom$2.hasLineBreak(previous.element)) ||
                                     (previousSibling && previousSibling.lineBreak) ||
@@ -3420,14 +3884,14 @@ var android = (function () {
                                         rowPreviousLeft = null;
                                     }
                                     if (this.settings.ellipsisOnTextOverflow && previous.linearHorizontal) {
-                                        this.checkSingleLine(previous.children[previous.children.length - 1], true);
+                                        ViewController.checkSingleLine(previous.children[previous.children.length - 1], true);
                                     }
                                     if (rowPaddingLeft > 0) {
                                         if (this.settings.ellipsisOnTextOverflow &&
                                             rows.length === 1 &&
                                             rows[0].length === 1 &&
                                             rows[0][0].textElement) {
-                                            this.checkSingleLine(rows[0][0], true);
+                                            ViewController.checkSingleLine(rows[0][0], true);
                                         }
                                         current.modifyBox($enum$2.BOX_STANDARD.PADDING_LEFT, rowPaddingLeft);
                                     }
@@ -3447,7 +3911,7 @@ var android = (function () {
                                         current.anchor(sideSibling, previous.stringId);
                                     }
                                     if (connected || baseWidth > boxWidth) {
-                                        this.checkSingleLine(current);
+                                        ViewController.checkSingleLine(current);
                                     }
                                     if (rowPreviousBottom) {
                                         current.anchor(mapLayout['topBottom'], rowPreviousBottom.stringId);
@@ -3490,7 +3954,7 @@ var android = (function () {
                                 for (let i = 1; i < nodes.length; i++) {
                                     const item = nodes.get(i);
                                     if (!item.multiLine && !item.floating && !item.alignParent('left', this.settings)) {
-                                        this.checkSingleLine(item, false, widthParent);
+                                        ViewController.checkSingleLine(item, false, widthParent);
                                     }
                                 }
                             }
@@ -3499,7 +3963,7 @@ var android = (function () {
                                     if (row.length > 1) {
                                         const item = row[row.length - 1];
                                         if (item.inlineText) {
-                                            this.checkSingleLine(item, false, widthParent);
+                                            ViewController.checkSingleLine(item, false, widthParent);
                                         }
                                     }
                                 }
@@ -3573,7 +4037,7 @@ var android = (function () {
                                         current.app(mapLayout['top'], 'parent');
                                         break;
                                     case 'middle':
-                                        this.setAlignParent(current, AXIS_ANDROID.VERTICAL);
+                                        ViewController.setAlignParent(current, AXIS_ANDROID.VERTICAL);
                                         break;
                                     case 'baseline':
                                         if (alignWith) {
@@ -3602,7 +4066,7 @@ var android = (function () {
                                 pageflow.each(current => {
                                     const parent = current.documentParent;
                                     if (current.autoMarginHorizontal) {
-                                        this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
+                                        ViewController.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                     }
                                     else {
                                         if (current.linear.left <= parent.box.left ||
@@ -3737,7 +4201,7 @@ var android = (function () {
                                     if (mapSibling(current, 'bottomTop')) {
                                         mapDelete(current, 'bottom');
                                     }
-                                    if (current.plainText || (!current.hasElement && current.renderChildren.some(item => item.textElement))) {
+                                    if (current.plainText || (!current.styleElement && current.renderChildren.some(item => item.textElement))) {
                                         const textAlign = current.cssParent('textAlign');
                                         if (textAlign === 'right') {
                                             current.anchor(mapLayout['right'], 'parent', AXIS_ANDROID.HORIZONTAL);
@@ -3745,7 +4209,7 @@ var android = (function () {
                                         }
                                         else if (textAlign === 'center') {
                                             current.constraint.horizontal = false;
-                                            this.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
+                                            ViewController.setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                         }
                                     }
                                 });
@@ -3910,20 +4374,25 @@ var android = (function () {
                                     horizontal.push(new NodeList$2(row));
                                 }
                                 else {
+                                    const mapId = new Set();
+                                    function availableChain(list) {
+                                        const id = list.map(item => item.id).sort().join('-');
+                                        return !mapId.has(id) && mapId.add(id) != null;
+                                    }
                                     const horizontalChain = pageflow.list.filter(current => !current.constraint.horizontal);
                                     const verticalChain = pageflow.list.filter(current => !current.constraint.vertical);
                                     pageflow.list.some(current => {
                                         const horizontalOutput = [];
                                         const verticalOutput = [];
                                         if (horizontalChain.includes(current)) {
-                                            horizontalOutput.push(...this.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, !percentage));
-                                            if (horizontalOutput.length > 0) {
+                                            horizontalOutput.push(...ViewController.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, !percentage));
+                                            if (horizontalOutput.length > 1 && availableChain(horizontalOutput)) {
                                                 horizontal.push(new NodeList$2(horizontalOutput).sortAsc('linear.left'));
                                             }
                                         }
                                         if (verticalChain.includes(current) && !percentage) {
-                                            verticalOutput.push(...this.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, true));
-                                            if (verticalOutput.length > 0) {
+                                            verticalOutput.push(...ViewController.partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, true));
+                                            if (verticalOutput.length > 1 && availableChain(verticalOutput)) {
                                                 vertical.push(new NodeList$2(verticalOutput).sortAsc('linear.top'));
                                             }
                                         }
@@ -3934,20 +4403,10 @@ var android = (function () {
                                 }
                                 [horizontal, vertical].forEach((connected, index) => {
                                     if (connected.length > 0) {
-                                        const mapId = new Set();
+                                        const inverse = index === 0 ? 1 : 0;
                                         const connectedRows = [];
-                                        connected
-                                            .filter(current => {
-                                            const id = current.list.map(item => item.id).sort().join('-');
-                                            if (!mapId.has(id)) {
-                                                mapId.add(id);
-                                                return true;
-                                            }
-                                            return false;
-                                        })
-                                            .forEach((chainable, level) => {
-                                            if (chainable.length > (flex.enabled ? 0 : 1)) {
-                                                const inverse = index === 0 ? 1 : 0;
+                                        connected.forEach((chainable, level) => {
+                                            if (chainable.length > 0) {
                                                 const [HV, VH] = [MAP_CHAIN['horizontalVertical'][index], MAP_CHAIN['horizontalVertical'][inverse]];
                                                 const [LT, TL] = [MAP_CHAIN['leftTop'][index], MAP_CHAIN['leftTop'][inverse]];
                                                 const [RB, BR] = [MAP_CHAIN['rightBottom'][index], MAP_CHAIN['rightBottom'][inverse]];
@@ -3971,7 +4430,8 @@ var android = (function () {
                                                 let disconnected = false;
                                                 let marginDelete = false;
                                                 let maxOffset = -1;
-                                                const attrs = index === 0 ? ['left', 'leftRight', 'top', AXIS_ANDROID.VERTICAL, 'hasWidth', 'right', 'marginHorizontal'] : ['top', 'topBottom', 'left', AXIS_ANDROID.HORIZONTAL, 'hasHeight', 'bottom', 'marginVertical'];
+                                                const attrs = index === 0 ? ['left', 'leftRight', 'top', AXIS_ANDROID.VERTICAL, 'hasWidth', 'right', 'marginHorizontal']
+                                                    : ['top', 'topBottom', 'left', AXIS_ANDROID.HORIZONTAL, 'hasHeight', 'bottom', 'marginVertical'];
                                                 for (let i = 0; i < chainable.length; i++) {
                                                     const item = chainable.get(i);
                                                     if (i === 0) {
@@ -4023,7 +4483,7 @@ var android = (function () {
                                                     const previous = chainable.get(i - 1);
                                                     if (flex.enabled) {
                                                         if (chain.linear[TL] === node.box[TL] && chain.linear[BR] === node.box[BR]) {
-                                                            this.setAlignParent(chain, orientationInverse);
+                                                            ViewController.setAlignParent(chain, orientationInverse);
                                                         }
                                                         const rowNext = connected[level + 1];
                                                         if (rowNext) {
@@ -4138,7 +4598,7 @@ var android = (function () {
                                                                     chain.android(`layout_${HW.toLowerCase()}`, '0px');
                                                                 }
                                                                 chain.constraint[orientationInverse] = false;
-                                                                this.setAlignParent(chain, orientationInverse);
+                                                                ViewController.setAlignParent(chain, orientationInverse);
                                                                 break;
                                                         }
                                                         if (chain.flex.basis !== 'auto') {
@@ -4206,6 +4666,7 @@ var android = (function () {
                                                 }
                                                 else if (!flex.enabled && columnCount > 0) {
                                                     first.app(chainStyle, index === 0 ? 'spread_inside' : 'packed');
+                                                    marginDelete = index === 0;
                                                 }
                                                 else {
                                                     const alignLeft = $util$2.withinFraction(node.box.left, first.linear.left);
@@ -4256,8 +4717,8 @@ var android = (function () {
                                                     }
                                                     if (!flex.enabled) {
                                                         (index === 0 ? [[TL, BR], [BR, TL]] : [[LT, RB], [RB, LT]]).forEach(opposing => {
-                                                            if (chainable.list.every(upper => $util$2.sameValue(first, upper, `linear.${opposing[0]}`) &&
-                                                                chainable.list.some(lower => !$util$2.sameValue(first, lower, `linear.${opposing[1]}`)))) {
+                                                            if (chainable.list.some(lower => !$util$2.sameValue(first, lower, `linear.${opposing[1]}`)) &&
+                                                                chainable.list.every(upper => $util$2.sameValue(first, upper, `linear.${opposing[0]}`))) {
                                                                 chainable.each(item => mapDelete(item, opposing[1]));
                                                             }
                                                         });
@@ -4268,9 +4729,6 @@ var android = (function () {
                                                                 }
                                                             }
                                                         });
-                                                    }
-                                                    else {
-                                                        marginDelete = true;
                                                     }
                                                 }
                                                 if (marginDelete) {
@@ -4366,7 +4824,7 @@ var android = (function () {
                                 unanchored.each(current => {
                                     if ($util$2.withinRange(current.horizontalBias(this.settings), 0.5, 0.01) &&
                                         $util$2.withinRange(current.verticalBias(this.settings), 0.5, 0.01)) {
-                                        this.setAlignParent(current);
+                                        ViewController.setAlignParent(current);
                                     }
                                     else if (this.settings.constraintCirclePositionAbsolute &&
                                         adjacent.length > 0 &&
@@ -4644,7 +5102,7 @@ var android = (function () {
                 }
                 else {
                     if (node.linearHorizontal) {
-                        this.adjustLineHeight(node.renderChildren, node);
+                        ViewController.adjustLineHeight(node.renderChildren, node);
                     }
                 }
             });
@@ -4751,7 +5209,7 @@ var android = (function () {
                 node.render(target ? node : parent);
             }
             node.apply(options);
-            return this.getEnclosingTag(target || $util$2.hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth, viewName, node.id, $xml$1.formatPlaceholder(node.id), preXml, postXml);
+            return ViewController.getEnclosingTag(target || $util$2.hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth, viewName, node.id, $xml$1.formatPlaceholder(node.id), preXml, postXml);
         }
         renderNode(node, parent, nodeName, recursive = false) {
             const target = $util$2.hasValue(node.dataset.target) && !$util$2.hasValue(node.dataset.include);
@@ -4833,7 +5291,7 @@ var android = (function () {
                                 }
                                 node.parent = container;
                                 this.cache.append(container);
-                                return this.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, this.renderNode(node, container, nodeName, true));
+                                return ViewController.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, this.renderNode(node, container, nodeName, true));
                             }
                         }
                         else {
@@ -4904,7 +5362,7 @@ var android = (function () {
                                     if (checked !== '') {
                                         group.android('checkedButton', checked);
                                     }
-                                    return this.getEnclosingTag(group.renderDepth, NODE_ANDROID.RADIO_GROUP, group.id, xml);
+                                    return ViewController.getEnclosingTag(group.renderDepth, NODE_ANDROID.RADIO_GROUP, group.id, xml);
                                 }
                             }
                             break;
@@ -4922,7 +5380,7 @@ var android = (function () {
                                 node.android('max', element.max);
                             }
                             if ($util$2.hasValue(element.value)) {
-                                node.android('progess', element.value);
+                                node.android('progress', element.value);
                             }
                             break;
                     }
@@ -4973,7 +5431,7 @@ var android = (function () {
                     break;
             }
             node.render(target ? node : parent);
-            return this.getEnclosingTag(target || $util$2.hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth, node.controlName, node.id);
+            return ViewController.getEnclosingTag(target || $util$2.hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth, node.controlName, node.id);
         }
         renderNodeStatic(nodeName, depth, options = {}, width = '', height = '', node, children) {
             if (!node) {
@@ -4992,7 +5450,7 @@ var android = (function () {
                     node.setNodeType(viewName);
                     break;
             }
-            const displayName = node.hasElement ? node.nodeName : viewName;
+            const displayName = node.styleElement ? node.nodeName : viewName;
             if ($util$2.hasValue(width)) {
                 if (!isNaN(parseInt(width))) {
                     width = delimitUnit(displayName, 'width', width, this.settings);
@@ -5006,7 +5464,7 @@ var android = (function () {
                 node.android('layout_height', height, false);
             }
             node.renderDepth = renderDepth;
-            let output = this.getEnclosingTag(!node.documentRoot && depth === 0 ? -1 : depth, viewName, node.id, children ? $xml$1.formatPlaceholder(node.id) : '');
+            let output = ViewController.getEnclosingTag(!node.documentRoot && depth === 0 ? -1 : depth, viewName, node.id, children ? $xml$1.formatPlaceholder(node.id) : '');
             if (this.settings.showAttributes && node.id === 0) {
                 const indent = $util$2.repeat(renderDepth + 1);
                 const attrs = node.combine().map(value => `\n${indent + value}`).join('');
@@ -5037,13 +5495,12 @@ var android = (function () {
                 percent = (parseInt(width) / 100).toFixed(2);
                 width = '0px';
             }
-            const xml = this.renderNodeStatic($enum$2.NODE_STANDARD.SPACE, depth, {
+            return this.renderNodeStatic($enum$2.NODE_STANDARD.SPACE, depth, {
                 android: {
                     layout_columnWeight: percent,
                     layout_columnSpan: columnSpan.toString()
                 }
             }, width, $util$2.hasValue(height) ? height : 'wrap_content');
-            return xml;
         }
         baseRenderDepth(name) {
             return this._merge[name] ? 0 : -1;
@@ -5099,28 +5556,21 @@ var android = (function () {
                     const group = groups[nodeName];
                     for (const name in group) {
                         const [dimen, attr, value] = name.split(',');
-                        const key = this.getDimensResourceKey(resource, `${nodeName}_${parseRTL(dimen, this.settings)}`, value);
+                        const key = ViewController.getDimensResourceKey(resource, `${nodeName}_${parseRTL(dimen, this.settings)}`, value);
                         group[name].forEach(node => node[attr.indexOf('constraint') !== -1 ? 'app' : 'android'](attr, `@dimen/${key}`));
                         resource.set(key, value);
                     }
                 }
             }
         }
-        getEnclosingTag(depth, controlName, id, xml = '', preXml = '', postXml = '') {
-            const indent = $util$2.repeat(Math.max(0, depth));
-            let output = preXml +
-                `{<${id}}`;
-            if (xml !== '') {
-                output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}}>\n` +
-                    xml +
-                    indent + `</${controlName}>\n`;
+        setAttributes(data) {
+            if (this.settings.showAttributes) {
+                const cache = data.cache.visible.map(node => ({ pattern: $xml$1.formatPlaceholder(node.id, '@'), attributes: ViewController.parseAttributes(node) }));
+                for (const value of [...data.views, ...data.includes]) {
+                    cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
+                    value.content = value.content.replace(`{#0}`, ViewController.getRootNamespace(value.content));
+                }
             }
-            else {
-                output += indent + `<${controlName}${depth === 0 ? '{#0}' : ''}{@${id}} />\n`;
-            }
-            output += `{>${id}}` +
-                postXml;
-            return output;
         }
         valueBox(node, region) {
             const name = $util$2.convertEnum(parseInt(region), $enum$2.BOX_STANDARD, BOX_ANDROID);
@@ -5130,125 +5580,11 @@ var android = (function () {
             }
             return ['', '0px'];
         }
-        parseDimensions(content) {
-            const resource = ResourceHandler.getStored('dimens');
-            const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
-            let match;
-            while ((match = pattern.exec(content)) != null) {
-                const key = this.getDimensResourceKey(resource, `${match[2]}_${parseRTL(match[3], this.settings)}`, match[4]);
-                resource.set(key, match[4]);
-                content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
-            }
-            return content;
-        }
-        setAttributes(data) {
-            if (this.settings.showAttributes) {
-                const cache = data.cache.visible.map(node => ({ pattern: $xml$1.formatPlaceholder(node.id, '@'), attributes: this.parseAttributes(node) }));
-                for (const value of [...data.views, ...data.includes]) {
-                    cache.forEach(item => value.content = value.content.replace(item.pattern, item.attributes));
-                    value.content = value.content.replace(`{#0}`, this.getRootNamespace(value.content));
-                }
-            }
-        }
-        parseAttributes(node) {
-            if (node.dir === 'rtl') {
-                if (node.nodeType < $enum$2.NODE_STANDARD.INLINE) {
-                    node.android('textDirection', 'rtl');
-                }
-                else if (node.length > 0) {
-                    node.android('layoutDirection', 'rtl');
-                }
-            }
-            for (const name in node.dataset) {
-                if (/^attr[A-Z]+/.test(name)) {
-                    const obj = $util$2.capitalize(name.substring(4), false);
-                    node.dataset[name].split(';').forEach(values => {
-                        const [key, value] = values.split('::');
-                        if ($util$2.hasValue(key) && $util$2.hasValue(value)) {
-                            node.attr(obj, key, value);
-                        }
-                    });
-                }
-            }
-            const indent = $util$2.repeat(node.renderDepth + 1);
-            return node.combine().map(value => `\n${indent + value}`).join('');
-        }
-        getRootNamespace(content) {
-            let output = '';
-            for (const namespace in XMLNS_ANDROID) {
-                if (new RegExp(`\\s+${namespace}:`).test(content)) {
-                    output += `\n\txmlns:${namespace}="${XMLNS_ANDROID[namespace]}"`;
-                }
-            }
-            return output;
-        }
-        getDimensResourceKey(resource, key, value) {
-            if (resource.has(key) && resource.get(key) !== value) {
-                key = generateId('dimens', `${key}_1`);
-            }
-            return key;
-        }
-        setAlignParent(node, orientation = '', bias = false) {
-            const map = MAP_LAYOUT.constraint;
-            [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
-                if (!node.constraint[value] && (orientation === '' ||
-                    value === orientation)) {
-                    node.app(map[index === 0 ? 'left' : 'top'], 'parent');
-                    node.app(map[index === 0 ? 'right' : 'bottom'], 'parent');
-                    node.constraint[value] = true;
-                    if (bias) {
-                        node.app(`layout_constraint${value.charAt(0).toUpperCase() + value.substring(1)}_bias`, node[`${value}Bias`]);
-                    }
-                }
-            });
-        }
-        partitionChain(node, nodes, orientation, validate) {
-            const map = MAP_LAYOUT.constraint;
-            const mapParent = [];
-            const coordinate = [];
-            const connected = [];
-            switch (orientation) {
-                case AXIS_ANDROID.HORIZONTAL:
-                    mapParent.push(map['left'], map['right']);
-                    coordinate.push('linear.top', 'linear.bottom');
-                    connected.push(map['leftRight'], map['rightLeft']);
-                    break;
-                case AXIS_ANDROID.VERTICAL:
-                    mapParent.push(map['top'], map['bottom']);
-                    coordinate.push('linear.left', 'linear.right');
-                    connected.push(map['topBottom'], map['bottomTop']);
-                    break;
-            }
-            const result = coordinate.map(value => {
-                const sameXY = $util$2.sortAsc(nodes.list.filter(item => $util$2.sameValue(node, item, value)), coordinate[0]);
-                if (sameXY.length > 1) {
-                    if (!validate || (!sameXY.some(item => item.floating) && sameXY[0].app(mapParent[0]) === 'parent' && sameXY[sameXY.length - 1].app(mapParent[1]) === 'parent')) {
-                        return sameXY;
-                    }
-                    else {
-                        const chained = new Set([node]);
-                        let valid;
-                        do {
-                            valid = false;
-                            Array.from(chained).some(item => sameXY.some(adjacent => {
-                                if (!chained.has(adjacent) && (adjacent.app(connected[0]) === item.stringId ||
-                                    adjacent.app(connected[1]) === item.stringId)) {
-                                    chained.add(adjacent);
-                                    valid = true;
-                                }
-                                return valid;
-                            }));
-                        } while (valid);
-                        return Array.from(chained);
-                    }
-                }
-                return [];
-            })
-                .reduce((a, b) => a.length >= b.length ? a : b);
-            return result;
-        }
         addGuideline(node, orientation = '', percent, opposite) {
             const map = MAP_LAYOUT.constraint;
+            if (!node) {
+                console.log(node);
+            }
             if (node.pageflow) {
                 if (opposite == null) {
                     opposite = (node.float === 'right' ||
@@ -5450,58 +5786,31 @@ var android = (function () {
                 }
             }
         }
-        checkSingleLine(node, nowrap = false, flexParent = false) {
-            if (node && node.textElement && (nowrap ||
-                flexParent ||
-                (!node.hasWidth && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1))) {
-                node.android('singleLine', 'true');
-            }
-        }
-        adjustLineHeight(nodes, parent) {
-            const lineHeight = Math.max.apply(null, nodes.map(node => node.toInt('lineHeight')));
-            if (lineHeight > 0) {
-                let minHeight = Number.MAX_VALUE;
-                let offsetTop = 0;
-                const valid = nodes.every(node => {
-                    const offset = lineHeight - node.bounds.height;
-                    if (offset > 0) {
-                        minHeight = Math.min(offset, minHeight);
-                        if (lineHeight === node.toInt('lineHeight')) {
-                            offsetTop = Math.max(node.toInt('top') < 0 ? Math.abs(node.toInt('top')) : 0, offsetTop);
-                        }
-                        return true;
-                    }
-                    return false;
-                });
-                if (valid) {
-                    parent.modifyBox($enum$2.BOX_STANDARD.PADDING_TOP, Math.floor(minHeight / 2));
-                    parent.modifyBox($enum$2.BOX_STANDARD.PADDING_BOTTOM, Math.ceil(minHeight / 2) + offsetTop);
-                }
-            }
-        }
         findByStringId(id) {
             return this.cache.find('stringId', id);
         }
         get baseTemplate() {
             return BASE_TMPL;
         }
-        get supportInline() {
-            return WEBVIEW_ANDROID;
-        }
-        get supportInclude() {
-            return true;
-        }
         get settingsInternal() {
             return {
+                includes: true,
                 layout: {
-                    pathname: 'res/layout',
+                    pathName: 'res/layout',
                     fileExtension: 'xml'
+                },
+                inline: {
+                    always: ['BR'],
+                    tagName: WEBVIEW_ANDROID,
+                },
+                unsupported: {
+                    tagName: ['OPTION', 'MAP', 'AREA']
                 }
             };
         }
     }
 
-    const template$2 = [
+    const template$3 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
@@ -5512,9 +5821,9 @@ var android = (function () {
         '<!-- filename: res/values/strings.xml -->',
         '!0'
     ];
-    var STRING_TMPL = template$2.join('\n');
+    var STRING_TMPL = template$3.join('\n');
 
-    const template$3 = [
+    const template$4 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
@@ -5529,9 +5838,9 @@ var android = (function () {
         '<!-- filename: res/values/string_arrays.xml -->',
         '!0'
     ];
-    var STRINGARRAY_TMPL = template$3.join('\n');
+    var STRINGARRAY_TMPL = template$4.join('\n');
 
-    const template$4 = [
+    const template$5 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<font-family xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="{#app=http://schemas.android.com/apk/res-auto}">',
@@ -5542,9 +5851,9 @@ var android = (function () {
         '<!-- filename: res/font/{name}.xml -->',
         '!0'
     ];
-    var FONT_TMPL = template$4.join('\n');
+    var FONT_TMPL = template$5.join('\n');
 
-    const template$5 = [
+    const template$6 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
@@ -5555,9 +5864,9 @@ var android = (function () {
         '<!-- filename: res/values/colors.xml -->',
         '!0'
     ];
-    var COLOR_TMPL = template$5.join('\n');
+    var COLOR_TMPL = template$6.join('\n');
 
-    const template$6 = [
+    const template$7 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
@@ -5572,9 +5881,9 @@ var android = (function () {
         '<!-- filename: res/values/styles.xml -->',
         '!0'
     ];
-    var STYLE_TMPL = template$6.join('\n');
+    var STYLE_TMPL = template$7.join('\n');
 
-    const template$7 = [
+    const template$8 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
@@ -5585,15 +5894,15 @@ var android = (function () {
         '<!-- filename: res/values/dimens.xml -->',
         '!0'
     ];
-    var DIMEN_TMPL = template$7.join('\n');
+    var DIMEN_TMPL = template$8.join('\n');
 
-    const template$8 = [
+    const template$9 = [
         '!0',
         '{value}',
         '<!-- filename: {name} -->',
         '!0'
     ];
-    var DRAWABLE_TMPL = template$8.join('\n');
+    var DRAWABLE_TMPL = template$9.join('\n');
 
     var $util$3 = androme.lib.util;
     var $xml$2 = androme.lib.xml;
@@ -5605,21 +5914,57 @@ var android = (function () {
             super();
             this.settings = settings;
         }
+        static parseImageDetails(xml) {
+            const result = [];
+            const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
+            let match;
+            while ((match = pattern.exec(xml)) != null) {
+                result.push({
+                    uri: match[1],
+                    pathname: match[2],
+                    filename: match[3],
+                    content: ''
+                });
+                xml = xml.replace(match[0], '');
+            }
+            return result;
+        }
+        static parseFileDetails(xml) {
+            const result = [];
+            const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
+            let match;
+            while ((match = pattern.exec(xml)) != null) {
+                result.push({
+                    content: match[0].replace(match[1], '').trim(),
+                    pathname: match[2],
+                    filename: match[3]
+                });
+                xml = xml.replace(match[0], '');
+            }
+            return result;
+        }
+        static createPlainFile(pathname, filename, content) {
+            return {
+                pathname,
+                filename,
+                content
+            };
+        }
         saveAllToDisk(data) {
             const files = [];
             const views = [...data.views, ...data.includes];
             for (let i = 0; i < views.length; i++) {
                 const view = views[i];
-                files.push(this.createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
+                files.push(FileHandler.createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
             }
             const xml = this.resourceDrawableToXml();
-            files.push(...this.parseFileDetails(this.resourceStringToXml()));
-            files.push(...this.parseFileDetails(this.resourceStringArrayToXml()));
-            files.push(...this.parseFileDetails(this.resourceFontToXml()));
-            files.push(...this.parseFileDetails(this.resourceColorToXml()));
-            files.push(...this.parseFileDetails(this.resourceStyleToXml()));
-            files.push(...this.parseFileDetails(this.resourceDimenToXml()));
-            files.push(...this.parseImageDetails(xml), ...this.parseFileDetails(xml));
+            files.push(...FileHandler.parseFileDetails(this.resourceStringToXml()));
+            files.push(...FileHandler.parseFileDetails(this.resourceStringArrayToXml()));
+            files.push(...FileHandler.parseFileDetails(this.resourceFontToXml()));
+            files.push(...FileHandler.parseFileDetails(this.resourceColorToXml()));
+            files.push(...FileHandler.parseFileDetails(this.resourceStyleToXml()));
+            files.push(...FileHandler.parseFileDetails(this.resourceDimenToXml()));
+            files.push(...FileHandler.parseImageDetails(xml), ...FileHandler.parseFileDetails(xml));
             this.saveToDisk(files);
         }
         layoutAllToXml(data, saveToDisk = false) {
@@ -5630,7 +5975,7 @@ var android = (function () {
                 const view = views[i];
                 result[view.filename] = view.content;
                 if (saveToDisk) {
-                    files.push(this.createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
+                    files.push(FileHandler.createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
                 }
             }
             if (saveToDisk) {
@@ -5657,16 +6002,15 @@ var android = (function () {
                 const files = [];
                 for (const resource in result) {
                     if (resource === 'drawable') {
-                        files.push(...this.parseImageDetails(result[resource]));
+                        files.push(...FileHandler.parseImageDetails(result[resource]));
                     }
-                    files.push(...this.parseFileDetails(result[resource]));
+                    files.push(...FileHandler.parseFileDetails(result[resource]));
                 }
                 this.saveToDisk(files);
             }
             return result;
         }
         resourceStringToXml(saveToDisk = false) {
-            let xml = '';
             this.stored.strings = new Map([...this.stored.strings.entries()].sort(caseInsensitive));
             const template = $xml$2.parseTemplate(STRING_TMPL);
             const data = {
@@ -5681,10 +6025,10 @@ var android = (function () {
             for (const [name, value] of this.stored.strings.entries()) {
                 root['1'].push({ name, value });
             }
-            xml = $xml$2.createTemplate(template, data);
+            let xml = $xml$2.createTemplate(template, data);
             xml = $xml$2.replaceTab(xml, this.settings, true);
             if (saveToDisk) {
-                this.saveToDisk(this.parseFileDetails(xml));
+                this.saveToDisk(FileHandler.parseFileDetails(xml));
             }
             return xml;
         }
@@ -5713,7 +6057,7 @@ var android = (function () {
                 xml = $xml$2.createTemplate(template, data);
                 xml = $xml$2.replaceTab(xml, this.settings, true);
                 if (saveToDisk) {
-                    this.saveToDisk(this.parseFileDetails(xml));
+                    this.saveToDisk(FileHandler.parseFileDetails(xml));
                 }
             }
             return xml;
@@ -5746,7 +6090,7 @@ var android = (function () {
                 }
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
-                    this.saveToDisk(this.parseFileDetails(xml));
+                    this.saveToDisk(FileHandler.parseFileDetails(xml));
                 }
             }
             return xml.trim();
@@ -5768,7 +6112,7 @@ var android = (function () {
                 xml = $xml$2.createTemplate(template, data);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
-                    this.saveToDisk(this.parseFileDetails(xml));
+                    this.saveToDisk(FileHandler.parseFileDetails(xml));
                 }
             }
             return xml;
@@ -5800,7 +6144,7 @@ var android = (function () {
                 xml = replaceUnit(xml, this.settings, true);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
-                    this.saveToDisk(this.parseFileDetails(xml));
+                    this.saveToDisk(FileHandler.parseFileDetails(xml));
                 }
             }
             return xml;
@@ -5823,7 +6167,7 @@ var android = (function () {
                 xml = replaceUnit(xml, this.settings);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
-                    this.saveToDisk(this.parseFileDetails(xml));
+                    this.saveToDisk(FileHandler.parseFileDetails(xml));
                 }
             }
             return xml;
@@ -5862,120 +6206,12 @@ var android = (function () {
                 xml = replaceUnit(xml, this.settings);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
-                    this.saveToDisk([...this.parseImageDetails(xml), ...this.parseFileDetails(xml)]);
+                    this.saveToDisk([...FileHandler.parseImageDetails(xml), ...FileHandler.parseFileDetails(xml)]);
                 }
             }
             return xml;
         }
-        parseImageDetails(xml) {
-            const result = [];
-            const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
-            let match = null;
-            while ((match = pattern.exec(xml)) != null) {
-                result.push({
-                    uri: match[1],
-                    pathname: match[2],
-                    filename: match[3],
-                    content: ''
-                });
-                xml = xml.replace(match[0], '');
-            }
-            return result;
-        }
-        parseFileDetails(xml) {
-            const result = [];
-            const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
-            let match = null;
-            while ((match = pattern.exec(xml)) != null) {
-                result.push({
-                    content: match[0].replace(match[1], '').trim(),
-                    pathname: match[2],
-                    filename: match[3]
-                });
-                xml = xml.replace(match[0], '');
-            }
-            return result;
-        }
-        createPlainFile(pathname, filename, content) {
-            return {
-                pathname,
-                filename,
-                content
-            };
-        }
     }
-
-    const settings = {
-        builtInExtensions: [
-            'androme.external',
-            'androme.origin',
-            'androme.custom',
-            'androme.accessibility',
-            'androme.list',
-            'androme.table',
-            'androme.grid',
-            'androme.widget'
-        ],
-        targetAPI: BUILD_ANDROID.OREO,
-        density: DENSITY_ANDROID.MDPI,
-        supportRTL: true,
-        dimensResourceValue: true,
-        numberResourceValue: false,
-        fontAliasResourceValue: true,
-        alwaysReevaluateResources: true,
-        renderInlineText: true,
-        ellipsisOnTextOverflow: true,
-        preloadImages: true,
-        autoSizeBackgroundImage: true,
-        autoSizePaddingAndBorderWidth: true,
-        whitespaceHorizontalOffset: 3.5,
-        whitespaceVerticalOffset: 16,
-        constraintChainDisabled: false,
-        constraintChainPackedHorizontalOffset: 3.5,
-        constraintChainPackedVerticalOffset: 16,
-        constraintCirclePositionAbsolute: false,
-        constraintPercentAccuracy: 4,
-        supportNegativeLeftTop: true,
-        floatOverlapDisabled: false,
-        collapseUnattributedElements: true,
-        customizationsOverwritePrivilege: false,
-        showAttributes: true,
-        insertSpaces: 4,
-        convertPixels: 'dp',
-        autoCloseOnWrite: true,
-        outputDirectory: 'app/src/main',
-        outputMainFileName: 'activity_main.xml',
-        outputArchiveFileType: 'zip',
-        outputMaxProcessingTime: 30
-    };
-
-    const WIDGET_NAME = {
-        FAB: 'androme.widget.floatingactionbutton',
-        MENU: 'androme.widget.menu',
-        COORDINATOR: 'androme.widget.coordinator',
-        TOOLBAR: 'androme.widget.toolbar',
-        DRAWER: 'androme.widget.drawer',
-        BOTTOM_NAVIGATION: 'androme.widget.bottomnavigation'
-    };
-    const VIEW_SUPPORT = {
-        DRAWER: 'android.support.v4.widget.DrawerLayout',
-        NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',
-        COORDINATOR: 'android.support.design.widget.CoordinatorLayout',
-        APPBAR: 'android.support.design.widget.AppBarLayout',
-        COLLAPSING_TOOLBAR: 'android.support.design.widget.CollapsingToolbarLayout',
-        TOOLBAR: 'android.support.v7.widget.Toolbar',
-        FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton',
-        BOTTOM_NAVIGATION: 'android.support.design.widget.BottomNavigationView'
-    };
-    const VIEW_NAVIGATION = {
-        MENU: 'menu',
-        ITEM: 'item',
-        GROUP: 'group'
-    };
-    const DRAWABLE_PREFIX = {
-        MENU: 'ic_menu_',
-        DIALOG: 'ic_dialog_'
-    };
 
     class External extends androme.lib.base.extensions.External {
     }
@@ -6182,10 +6418,9 @@ var android = (function () {
             const node = this.node;
             if (node.is($enum$4.NODE_STANDARD.GRID)) {
                 const columnCount = node.android('columnCount');
-                const children = node.renderChildren;
-                for (let i = 0; i < children.length; i++) {
-                    const current = children[i];
-                    const previous = children[i - 1];
+                for (let i = 0; i < node.renderChildren.length; i++) {
+                    const current = node.renderChildren[i];
+                    const previous = node.renderChildren[i - 1];
                     let spaceHeight = 0;
                     if (previous) {
                         const marginBottom = $util$5.convertInt(previous.android('layout_marginBottom'));
@@ -6367,802 +6602,15 @@ var android = (function () {
         }
     }
 
-    var $enum$6 = androme.lib.enumeration;
-    var $util$8 = androme.lib.util;
-    var $color$1 = androme.lib.color;
-    class FloatingActionButton extends androme.lib.base.extensions.Button {
-        processNode() {
-            const node = this.node;
-            const parent = this.parent;
-            const target = $util$8.hasValue(node.dataset.target);
-            const element = node.element;
-            const options = Object.assign({}, this.options[element.id]);
-            const backgroundColor = $color$1.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-            $util$8.overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceHandler.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent');
-            if (node.hasBit('excludeProcedure', $enum$6.NODE_PROCEDURE.ACCESSIBILITY)) {
-                $util$8.overwriteDefault(options, 'android', 'focusable', 'false');
-            }
-            let src = '';
-            switch (element.tagName) {
-                case 'IMG':
-                    src = ResourceHandler.addImageSrcSet(element, DRAWABLE_PREFIX.DIALOG);
-                    break;
-                case 'INPUT':
-                    if (element.type === 'image') {
-                        src = ResourceHandler.addImage({ 'mdpi': element.src }, DRAWABLE_PREFIX.DIALOG);
-                    }
-                    else {
-                        src = ResourceHandler.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
-                    }
-                    break;
-                case 'BUTTON':
-                    src = ResourceHandler.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
-                    break;
-            }
-            if (src !== '') {
-                $util$8.overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
-            }
-            const output = this.application.viewController.renderNodeStatic(VIEW_SUPPORT.FLOATING_ACTION_BUTTON, target ? -1 : parent.renderDepth + 1, options, 'wrap_content', 'wrap_content', node);
-            node.nodeType = $enum$6.NODE_STANDARD.BUTTON;
-            node.excludeResource |= $enum$6.NODE_RESOURCE.BOX_STYLE | $enum$6.NODE_RESOURCE.ASSET;
-            if (!node.pageflow || target) {
-                node.auto = false;
-                this.setFrameGravity(node);
-                if (target) {
-                    let anchor = parent.stringId;
-                    if (parent.controlName === VIEW_SUPPORT.TOOLBAR) {
-                        const outerParent = parent.data(WIDGET_NAME.TOOLBAR, 'outerParent');
-                        if (outerParent) {
-                            anchor = outerParent;
-                        }
-                    }
-                    node.app('layout_anchor', anchor);
-                    node.app('layout_anchorGravity', node.android('layout_gravity'));
-                    node.delete('android', 'layout_gravity');
-                    node.excludeProcedure |= $enum$6.NODE_PROCEDURE.ALIGNMENT;
-                    node.render(node);
-                }
-                else {
-                    node.render(parent);
-                }
-            }
-            else {
-                node.render(parent);
-            }
-            return { output, complete: true };
-        }
-        afterInsert() {
-            const node = this.node;
-            node.android('layout_width', 'wrap_content');
-            node.android('layout_height', 'wrap_content');
-        }
-        setFrameGravity(node) {
-            const settings = this.application.settings;
-            const parent = node.documentParent;
-            const horizontalBias = node.horizontalBias(settings);
-            const verticalBias = node.verticalBias(settings);
-            const gravity = [];
-            if (horizontalBias < 0.5) {
-                gravity.push(parseRTL('left', settings));
-            }
-            else if (horizontalBias > 0.5) {
-                gravity.push(parseRTL('right', settings));
-            }
-            else {
-                gravity.push('center_horizontal');
-            }
-            if (verticalBias < 0.5) {
-                gravity.push('top');
-                node.app('layout_dodgeInsetEdges', 'top');
-            }
-            else if (verticalBias > 0.5) {
-                gravity.push('bottom');
-            }
-            else {
-                gravity.push('center_vertical');
-            }
-            node.android('layout_gravity', gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|'));
-            if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
-                if (horizontalBias < 0.5) {
-                    node.css('marginLeft', $util$8.formatPX(Math.floor(node.bounds.left - parent.box.left)));
-                }
-                else {
-                    node.css('marginRight', $util$8.formatPX(Math.floor(parent.box.right - node.bounds.right)));
-                }
-            }
-            if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
-                if (verticalBias < 0.5) {
-                    node.css('marginTop', $util$8.formatPX(Math.floor(node.bounds.top - parent.box.top)));
-                }
-                else {
-                    node.css('marginBottom', $util$8.formatPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
-                }
-            }
-        }
-    }
-
-    var $enum$7 = androme.lib.enumeration;
-    const VALIDATE_ITEM = {
-        id: /^@\+id\/\w+$/,
-        title: /^.+$/,
-        titleCondensed: /^.+$/,
-        icon: /^@drawable\/.+$/,
-        onClick: /^.+$/,
-        showAsAction: /^(ifRoom|never|withText|always|collapseActionView)$/,
-        actionLayout: /^@layout\/.+$/,
-        actionViewClass: /^.+$/,
-        actionProviderClass: /^.+$/,
-        alphabeticShortcut: /^[a-zA-Z]+$/,
-        alphabeticModifiers: /(META|CTRL|ALT|SHIFT|SYM|FUNCTION)+/g,
-        numericShortcut: /^[0-9]+$/,
-        numericModifiers: /(META|CTRL|ALT|SHIFT|SYM|FUNCTION)+/g,
-        checkable: /^(true|false)$/,
-        visible: /^(true|false)$/,
-        enabled: /^(true|false)$/,
-        menuCategory: /^(container|system|secondary|alternative)$/,
-        orderInCategory: /^[0-9]+$/
+    const lib = {
+        base: {
+            View,
+            Resource: ResourceHandler
+        },
+        enumeration,
+        constant,
+        util
     };
-    const VALIDATE_GROUP = {
-        id: /^@\+id\/\w+$/,
-        checkableBehavior: /^(none|all|single)$/,
-        visible: /^(true|false)$/,
-        enabled: /^(true|false)$/,
-        menuCategory: /^(container|system|secondary|alternative)$/,
-        orderInCategory: /^[0-9]+$/
-    };
-    const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
-    class Menu extends androme.lib.base.extensions.Nav {
-        condition() {
-            return this.included();
-        }
-        processNode() {
-            const node = this.node;
-            const output = this.application.viewController.renderNodeStatic(VIEW_NAVIGATION.MENU, 0, {}, '', '', node, true);
-            node.documentRoot = true;
-            node.nodeType = $enum$7.NODE_STANDARD.BLOCK;
-            node.excludeResource |= $enum$7.NODE_RESOURCE.ALL;
-            node.excludeProcedure |= $enum$7.NODE_PROCEDURE.ALL;
-            node.rendered = true;
-            node.cascade().forEach(item => this.subscribersChild.add(item));
-            return { output, complete: true };
-        }
-        processChild() {
-            const node = this.node;
-            const parent = this.parent;
-            if (node.plainText) {
-                node.hide();
-                return { output: '', complete: true, next: true };
-            }
-            const element = node.element;
-            const options = { android: {}, app: {} };
-            let nodeName = VIEW_NAVIGATION.ITEM;
-            let title = '';
-            let next = false;
-            let layout = false;
-            if (node.children.some(item => (!item.inlineElement || !item.blockStatic) && item.children.length > 0)) {
-                if (node.children.some(item => item.tagName === 'NAV')) {
-                    if (element.title !== '') {
-                        title = element.title;
-                    }
-                    else {
-                        Array.from(node.element.childNodes).some((item) => {
-                            if (item.nodeName === '#text') {
-                                if (item.textContent) {
-                                    title = item.textContent.trim();
-                                    if (title !== '') {
-                                        return true;
-                                    }
-                                }
-                                return false;
-                            }
-                            else if (item.tagName !== 'NAV') {
-                                title = item.innerText.trim();
-                                return true;
-                            }
-                            return false;
-                        });
-                    }
-                    node.each(item => item.tagName !== 'NAV' && item.hide());
-                }
-                else if (node.tagName === 'NAV') {
-                    nodeName = VIEW_NAVIGATION.MENU;
-                    next = true;
-                }
-                else {
-                    nodeName = VIEW_NAVIGATION.GROUP;
-                    let checkable = '';
-                    if (node.children.every((item) => this.hasInputType(item, 'radio'))) {
-                        checkable = 'single';
-                    }
-                    else if (node.children.every((item) => this.hasInputType(item, 'checkbox'))) {
-                        checkable = 'all';
-                    }
-                    options.android.checkableBehavior = checkable;
-                }
-                layout = true;
-            }
-            else {
-                if (parent.android('checkableBehavior') === '') {
-                    if (this.hasInputType(node, 'checkbox')) {
-                        options.android.checkable = 'true';
-                    }
-                }
-                title = (element.title || element.innerText).trim();
-            }
-            switch (nodeName) {
-                case VIEW_NAVIGATION.ITEM:
-                    this.parseDataSet(VALIDATE_ITEM, element, options);
-                    if (node.android('icon') === '') {
-                        let src = ResourceHandler.addImageURL(element.style.backgroundImage, DRAWABLE_PREFIX.MENU);
-                        if (src !== '') {
-                            options.android.icon = `@drawable/${src}`;
-                        }
-                        else {
-                            const image = node.children.find(item => item.imageElement);
-                            if (image) {
-                                src = ResourceHandler.addImageSrcSet(image.element, DRAWABLE_PREFIX.MENU);
-                                if (src !== '') {
-                                    options.android.icon = `@drawable/${src}`;
-                                }
-                            }
-                        }
-                    }
-                    break;
-                case VIEW_NAVIGATION.GROUP:
-                    this.parseDataSet(VALIDATE_GROUP, element, options);
-                    break;
-            }
-            if (node.android('title') === '') {
-                if (title !== '') {
-                    const name = ResourceHandler.addString(title, '', this.application.settings);
-                    if (name !== '') {
-                        title = `@string/${name}`;
-                    }
-                    options.android.title = title;
-                }
-            }
-            if (!options.android.id) {
-                node.setNodeType(nodeName);
-            }
-            else {
-                node.controlName = nodeName;
-            }
-            const output = this.application.viewController.renderNodeStatic(nodeName, parent.renderDepth + 1, options, '', '', node, layout);
-            node.excludeResource |= $enum$7.NODE_RESOURCE.ALL;
-            node.excludeProcedure |= $enum$7.NODE_PROCEDURE.ALL;
-            node.rendered = true;
-            return { output, complete: true, next };
-        }
-        afterRender() {
-            super.afterRender();
-            if (this.included(this.node.element)) {
-                this.application.layoutProcessing.pathname = 'res/menu';
-            }
-        }
-        parseDataSet(validator, element, options) {
-            for (const attr in element.dataset) {
-                const value = element.dataset[attr];
-                if (value && validator[attr]) {
-                    const match = value.match(validator[attr]);
-                    if (match) {
-                        const namespace = (this.options.appCompat == null || this.options.appCompat === true) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
-                        options[namespace][attr] = Array.from(new Set(match)).join('|');
-                    }
-                }
-            }
-        }
-        hasInputType(node, value) {
-            return node.children.length > 0 && node.children.some(item => item.element.type === value);
-        }
-    }
-
-    var $enum$8 = androme.lib.enumeration;
-    var $dom$5 = androme.lib.dom;
-    class Coordinator extends androme.lib.base.Extension {
-        processNode() {
-            const node = this.node;
-            const parent = this.parent;
-            const output = this.application.viewController.renderGroup(node, parent, VIEW_SUPPORT.COORDINATOR);
-            node.apply(this.options[node.element.id]);
-            node.nodeType = $enum$8.NODE_STANDARD.BLOCK;
-            node.excludeResource |= $enum$8.NODE_RESOURCE.ASSET;
-            const toolbar = $dom$5.getNodeFromElement($dom$5.findNestedExtension(node.element, WIDGET_NAME.TOOLBAR));
-            if (toolbar) {
-                const ext = this.application.getExtension(WIDGET_NAME.TOOLBAR);
-                if (ext) {
-                    if (ext.options[toolbar.element.id] && ext.options[toolbar.element.id].collapsingToolbar) {
-                        node.android('fitsSystemWindows', 'true');
-                    }
-                }
-            }
-            return { output, complete: false };
-        }
-        afterInsert() {
-            const node = this.node;
-            if (node.documentRoot) {
-                node.android('layout_width', 'match_parent');
-                node.android('layout_height', 'match_parent');
-            }
-        }
-    }
-
-    const template$9 = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
-        '<resources>',
-        '	<style name="{@appTheme}" parent="{@parentTheme}">',
-        '!1',
-        '		<item name="{name}">{value}</item>',
-        '!1',
-        '	</style>',
-        '	<style name="{@appTheme}.NoActionBar">',
-        '		<item name="windowActionBar">false</item>',
-        '		<item name="windowNoTitle">true</item>',
-        '	</style>',
-        '	<style name="AppTheme.AppBarOverlay" parent="{@appBarOverlay}" />',
-        '	<style name="AppTheme.PopupOverlay" parent="{@popupOverlay}" />',
-        '</resources>',
-        '!0'
-    ];
-    var EXTENSION_APPBAR_TMPL = template$9.join('\n');
-
-    var $enum$9 = androme.lib.enumeration;
-    var $const$4 = androme.lib.constant;
-    var $util$9 = androme.lib.util;
-    var $dom$6 = androme.lib.dom;
-    var $xml$3 = androme.lib.xml;
-    class Toolbar extends androme.lib.base.Extension {
-        constructor(name, framework, tagNames, options) {
-            super(name, framework, tagNames, options);
-            this.require(WIDGET_NAME.MENU);
-        }
-        init(element) {
-            if (this.included(element)) {
-                Array.from(element.children).some((item) => {
-                    if (item.tagName === 'NAV' && !$util$9.includes(item.dataset.ext, $const$4.EXT_NAME.EXTERNAL)) {
-                        item.dataset.ext = ($util$9.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const$4.EXT_NAME.EXTERNAL;
-                        return true;
-                    }
-                    return false;
-                });
-                if (element.dataset.target) {
-                    const target = document.getElementById(element.dataset.target);
-                    if (target &&
-                        element.parentElement !== target &&
-                        !$util$9.includes(target.dataset.ext, WIDGET_NAME.COORDINATOR)) {
-                        this.application.elements.add(element);
-                    }
-                }
-            }
-            return false;
-        }
-        processNode() {
-            const controller = this.application.viewController;
-            const node = this.node;
-            const parent = this.parent;
-            const target = $util$9.hasValue(node.dataset.target);
-            const options = Object.assign({}, this.options[node.element.id]);
-            const optionsToolbar = Object.assign({}, options.toolbar);
-            const optionsAppBar = Object.assign({}, options.appBar);
-            const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
-            const hasMenu = $dom$6.findNestedExtension(node.element, WIDGET_NAME.MENU) != null;
-            const backgroundImage = node.has('backgroundImage');
-            const appBarChildren = [];
-            const collapsingToolbarChildren = [];
-            let output = '';
-            let depth = target ? 0 : node.depth;
-            let children = node.children.filter(item => item.auto).length;
-            Array.from(node.element.children).forEach((element) => {
-                if (element.tagName === 'IMG') {
-                    if ($util$9.hasValue(element.dataset.navigationIcon)) {
-                        const result = ResourceHandler.addImageSrcSet(element, DRAWABLE_PREFIX.MENU);
-                        if (result !== '') {
-                            $util$9.overwriteDefault(toolbar, 'app', 'navigationIcon', `@drawable/${result}`);
-                            if ($dom$6.getStyle(element).display !== 'none') {
-                                children--;
-                            }
-                        }
-                    }
-                    if ($util$9.hasValue(element.dataset.collapseIcon)) {
-                        const result = ResourceHandler.addImageSrcSet(element, DRAWABLE_PREFIX.MENU);
-                        if (result !== '') {
-                            $util$9.overwriteDefault(toolbar, 'app', 'collapseIcon', `@drawable/${result}`);
-                            if ($dom$6.getStyle(element).display !== 'none') {
-                                children--;
-                            }
-                        }
-                    }
-                }
-                if ($util$9.hasValue(element.dataset.target)) {
-                    children--;
-                }
-                else {
-                    const targetNode = $dom$6.getNodeFromElement(element);
-                    if (targetNode) {
-                        switch (element.dataset.targetModule) {
-                            case 'appBar':
-                                appBarChildren.push(targetNode);
-                                children--;
-                                break;
-                            case 'collapsingToolbar':
-                                collapsingToolbarChildren.push(targetNode);
-                                children--;
-                                break;
-                        }
-                    }
-                }
-            });
-            const hasCollapsingToolbar = options.collapsingToolbar != null || collapsingToolbarChildren.length > 0;
-            const hasAppBar = options.appBar != null || appBarChildren.length > 0 || hasCollapsingToolbar;
-            let appBarOverlay = '';
-            let popupOverlay = '';
-            if (hasCollapsingToolbar) {
-                $util$9.overwriteDefault(optionsToolbar, 'app', 'layout_collapseMode', 'pin');
-            }
-            else {
-                if (!hasAppBar) {
-                    $util$9.overwriteDefault(optionsToolbar, 'android', 'fitsSystemWindows', 'true');
-                }
-                $util$9.overwriteDefault(optionsToolbar, 'app', 'popupTheme', '@style/ThemeOverlay.AppCompat.Light');
-                if (backgroundImage) {
-                    $util$9.overwriteDefault(appBarChildren.length > 0 ? optionsAppBar : optionsToolbar, 'android', 'background', `@drawable/${ResourceHandler.addImageURL(node.css('backgroundImage'))}`);
-                    node.excludeResource |= $enum$9.NODE_RESOURCE.IMAGE_SOURCE;
-                }
-                else {
-                    $util$9.overwriteDefault(optionsToolbar, 'app', 'layout_scrollFlags', 'scroll|enterAlways');
-                }
-            }
-            if (appBarChildren.length > 0) {
-                $util$9.overwriteDefault(optionsAppBar, 'android', 'layout_height', '?android:attr/actionBarSize');
-            }
-            else {
-                $util$9.overwriteDefault(optionsToolbar, 'android', 'layout_height', '?android:attr/actionBarSize');
-                node.excludeProcedure |= $enum$9.NODE_PROCEDURE.LAYOUT;
-            }
-            if (hasMenu) {
-                if (hasAppBar) {
-                    if (optionsToolbar.app.popupTheme) {
-                        popupOverlay = optionsToolbar.app.popupTheme.replace('@style/', '');
-                    }
-                    optionsToolbar.app.popupTheme = '@style/AppTheme.PopupOverlay';
-                }
-            }
-            const innerDepth = depth + (hasAppBar ? 1 : 0) + (hasCollapsingToolbar ? 1 : 0);
-            output = controller.renderNodeStatic(VIEW_SUPPORT.TOOLBAR, innerDepth, optionsToolbar, 'match_parent', 'wrap_content', node, children > 0);
-            if (hasCollapsingToolbar) {
-                if (backgroundImage) {
-                    const optionsBackgroundImage = Object.assign({}, options.backgroundImage);
-                    let scaleType = 'center';
-                    switch (node.css('backgroundSize')) {
-                        case 'cover':
-                        case '100% auto':
-                        case 'auto 100%':
-                            scaleType = 'centerCrop';
-                            break;
-                        case 'contain':
-                        case '100% 100%':
-                            scaleType = 'fitXY';
-                            break;
-                        case 'auto':
-                            scaleType = 'matrix';
-                            break;
-                    }
-                    $util$9.overwriteDefault(optionsBackgroundImage, 'android', 'id', `${node.stringId}_image`);
-                    $util$9.overwriteDefault(optionsBackgroundImage, 'android', 'src', `@drawable/${ResourceHandler.addImageURL(node.css('backgroundImage'))}`);
-                    $util$9.overwriteDefault(optionsBackgroundImage, 'android', 'scaleType', scaleType);
-                    $util$9.overwriteDefault(optionsBackgroundImage, 'android', 'fitsSystemWindows', 'true');
-                    $util$9.overwriteDefault(optionsBackgroundImage, 'app', 'layout_collapseMode', 'parallax');
-                    output = controller.renderNodeStatic(NODE_ANDROID.IMAGE, innerDepth, optionsBackgroundImage, 'match_parent', 'match_parent') + output;
-                    node.excludeResource |= $enum$9.NODE_RESOURCE.IMAGE_SOURCE;
-                }
-            }
-            let outer = '';
-            let appBarNode = null;
-            let collapsingToolbarNode = null;
-            if (hasAppBar) {
-                $util$9.overwriteDefault(optionsAppBar, 'android', 'id', `${node.stringId}_appbar`);
-                $util$9.overwriteDefault(optionsAppBar, 'android', 'layout_height', node.viewHeight > 0 ? delimitUnit('appbar', 'height', $util$9.formatPX(node.viewHeight), this.application.settings) : 'wrap_content');
-                $util$9.overwriteDefault(optionsAppBar, 'android', 'fitsSystemWindows', 'true');
-                if (hasMenu) {
-                    if (optionsAppBar.android.theme) {
-                        appBarOverlay = optionsAppBar.android.theme;
-                    }
-                    optionsAppBar.android.theme = '@style/AppTheme.AppBarOverlay';
-                    this.createResourceTheme(appBarOverlay, popupOverlay);
-                }
-                else {
-                    $util$9.overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
-                }
-                appBarNode = this.createPlaceholder(this.application.cache.nextId, node, appBarChildren);
-                appBarNode.parent = node.parent;
-                appBarNode.nodeId = stripId(optionsAppBar.android.id);
-                this.application.cache.append(appBarNode);
-                outer = controller.renderNodeStatic(VIEW_SUPPORT.APPBAR, target ? -1 : depth, optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
-                if (hasCollapsingToolbar) {
-                    depth++;
-                    $util$9.overwriteDefault(optionsCollapsingToolbar, 'android', 'id', `${node.stringId}_collapsingtoolbar`);
-                    $util$9.overwriteDefault(optionsCollapsingToolbar, 'android', 'fitsSystemWindows', 'true');
-                    if (!backgroundImage) {
-                        $util$9.overwriteDefault(optionsCollapsingToolbar, 'app', 'contentScrim', '?attr/colorPrimary');
-                    }
-                    $util$9.overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
-                    $util$9.overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
-                    collapsingToolbarNode = this.createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren);
-                    collapsingToolbarNode.parent = appBarNode;
-                    if (collapsingToolbarNode) {
-                        collapsingToolbarNode.each(item => item.dataset.target = collapsingToolbarNode.nodeId);
-                        this.application.cache.append(collapsingToolbarNode);
-                        const content = controller.renderNodeStatic(VIEW_SUPPORT.COLLAPSING_TOOLBAR, target && !hasAppBar ? -1 : depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true);
-                        outer = $xml$3.replacePlaceholder(outer, appBarNode.id, content);
-                    }
-                }
-            }
-            if (appBarNode) {
-                output = $xml$3.replacePlaceholder(outer, collapsingToolbarNode ? collapsingToolbarNode.id : appBarNode.id, output);
-                appBarNode.render(target ? appBarNode : parent);
-                if (!collapsingToolbarNode) {
-                    node.parent = appBarNode;
-                }
-                else {
-                    collapsingToolbarNode.parent = appBarNode;
-                    collapsingToolbarNode.render(appBarNode);
-                    node.parent = collapsingToolbarNode;
-                }
-                node.data(WIDGET_NAME.TOOLBAR, 'outerParent', appBarNode.stringId);
-                node.render(node.parent);
-            }
-            else if (collapsingToolbarNode) {
-                collapsingToolbarNode.render(target ? collapsingToolbarNode : parent);
-                node.parent = collapsingToolbarNode;
-                node.render(collapsingToolbarNode);
-            }
-            else {
-                node.render(target ? node : parent);
-            }
-            node.nodeType = $enum$9.NODE_STANDARD.BLOCK;
-            node.excludeResource |= $enum$9.NODE_RESOURCE.FONT_STYLE;
-            return { output, complete: false };
-        }
-        processChild() {
-            const node = this.node;
-            if (node.imageElement && ($util$9.hasValue(node.dataset.navigationIcon) ||
-                $util$9.hasValue(node.dataset.collapseIcon))) {
-                node.hide();
-                return { output: '', complete: true, next: true };
-            }
-            return { output: '', complete: false };
-        }
-        beforeInsert() {
-            const node = this.node;
-            const menu = $util$9.optional($dom$6.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
-            if (menu !== '') {
-                const options = Object.assign({}, this.options[node.element.id]);
-                const optionsToolbar = Object.assign({}, options.toolbar);
-                $util$9.overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/${menu}`);
-                node.app('menu', optionsToolbar.app.menu);
-            }
-        }
-        createResourceTheme(appBarOverlay, popupOverlay) {
-            const options = Object.assign({}, this.options.resource);
-            $util$9.overwriteDefault(options, '', 'appTheme', 'AppTheme');
-            $util$9.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
-            const data = {
-                '0': [{
-                        'appTheme': options.appTheme,
-                        'parentTheme': options.parentTheme,
-                        'appBarOverlay': appBarOverlay || 'ThemeOverlay.AppCompat.Dark.ActionBar',
-                        'popupOverlay': popupOverlay || 'ThemeOverlay.AppCompat.Light',
-                        '1': []
-                    }]
-            };
-            $util$9.overwriteDefault(options, 'output', 'path', 'res/values');
-            $util$9.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
-            this.application.resourceHandler.addTheme(EXTENSION_APPBAR_TMPL, data, options);
-        }
-        createPlaceholder(nextId, node, children = []) {
-            const placeholder = new View(nextId);
-            placeholder.init();
-            placeholder.api = node.api;
-            for (const item of children) {
-                item.parent = placeholder;
-            }
-            placeholder.inherit(node, 'dimensions');
-            placeholder.auto = false;
-            placeholder.excludeResource |= $enum$9.NODE_RESOURCE.ALL;
-            return placeholder;
-        }
-    }
-
-    const template$a = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
-        '<resources>',
-        '	<style name="{@appTheme}" parent="{@parentTheme}">',
-        '!1',
-        '		<item name="{name}">{value}</item>',
-        '!1',
-        '	</style>',
-        '</resources>',
-        '!0'
-    ];
-    var EXTENSION_GENERIC_TMPL = template$a.join('\n');
-
-    var $enum$a = androme.lib.enumeration;
-    var $util$a = androme.lib.util;
-    var $dom$7 = androme.lib.dom;
-    class BottomNavigation extends androme.lib.base.Extension {
-        constructor(name, framework, tagNames, options) {
-            super(name, framework, tagNames, options);
-            this.require(WIDGET_NAME.MENU);
-        }
-        processNode() {
-            const node = this.node;
-            const parent = this.parent;
-            const options = Object.assign({}, this.options[node.element.id]);
-            $util$a.overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
-            const output = this.application.viewController.renderNodeStatic(VIEW_SUPPORT.BOTTOM_NAVIGATION, node.depth, options, parent.is($enum$a.NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent', 'wrap_content', node);
-            for (let i = 5; i < node.children.length; i++) {
-                node.children[i].hide();
-                node.children[i].cascade().forEach(item => item.hide());
-            }
-            node.cascade().forEach(item => this.subscribersChild.add(item));
-            node.render(parent);
-            node.nodeType = $enum$a.NODE_STANDARD.BLOCK;
-            node.excludeResource |= $enum$a.NODE_RESOURCE.ASSET;
-            this.createResourceTheme();
-            return { output, complete: true };
-        }
-        beforeInsert() {
-            const node = this.node;
-            const menu = $util$a.optional($dom$7.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
-            if (menu !== '') {
-                const options = Object.assign({}, this.options[node.element.id]);
-                $util$a.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
-                node.app('menu', options.app.menu);
-            }
-        }
-        afterInsert() {
-            const node = this.node;
-            if (!node.renderParent.has('width')) {
-                node.renderParent.android('layout_width', 'match_parent');
-            }
-            if (!node.renderParent.has('height')) {
-                node.renderParent.android('layout_height', 'match_parent');
-            }
-        }
-        createResourceTheme() {
-            const options = Object.assign({}, this.options.resource);
-            $util$a.overwriteDefault(options, '', 'appTheme', 'AppTheme');
-            $util$a.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
-            const data = {
-                '0': [{
-                        'appTheme': options.appTheme,
-                        'parentTheme': options.parentTheme,
-                        '1': []
-                    }]
-            };
-            $util$a.overwriteDefault(options, 'output', 'path', 'res/values');
-            $util$a.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
-            this.application.resourceHandler.addTheme(EXTENSION_GENERIC_TMPL, data, options);
-        }
-    }
-
-    const template$b = [
-        '!0',
-        '<?xml version="1.0" encoding="utf-8"?>',
-        '<resources>',
-        '	<style name="{@appTheme}" parent="{@parentTheme}">',
-        '		<item name="android:windowDrawsSystemBarBackgrounds">true</item>',
-        '		<item name="android:statusBarColor">@android:color/transparent</item>',
-        '		<item name="android:windowTranslucentStatus">true</item>',
-        '!1',
-        '		<item name="{name}">{value}</item>',
-        '!1',
-        '	</style>',
-        '</resources>',
-        '!0'
-    ];
-    var EXTENSION_DRAWER_TMPL = template$b.join('\n');
-
-    var $enum$b = androme.lib.enumeration;
-    var $const$5 = androme.lib.constant;
-    var $util$b = androme.lib.util;
-    var $dom$8 = androme.lib.dom;
-    class Drawer extends androme.lib.base.Extension {
-        constructor(name, framework, tagNames, options) {
-            super(name, framework, tagNames, options);
-            this.documentRoot = true;
-            this.require($const$5.EXT_NAME.EXTERNAL, true);
-            this.require(WIDGET_NAME.MENU);
-            this.require(WIDGET_NAME.COORDINATOR);
-        }
-        init(element) {
-            if (this.included(element) && element.children.length > 0) {
-                Array.from(element.children).forEach((item) => {
-                    if (item.tagName === 'NAV' && !$util$b.includes(item.dataset.ext, $const$5.EXT_NAME.EXTERNAL)) {
-                        item.dataset.ext = ($util$b.hasValue(item.dataset.ext) ? `${item.dataset.ext}, ` : '') + $const$5.EXT_NAME.EXTERNAL;
-                    }
-                });
-                this.application.elements.add(element);
-                return true;
-            }
-            return false;
-        }
-        processNode() {
-            const node = this.node;
-            const options = Object.assign({}, this.options.self);
-            if ($dom$8.findNestedExtension(node.element, WIDGET_NAME.MENU)) {
-                $util$b.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-                this.createResourceTheme();
-            }
-            else {
-                const optionsNavigationView = Object.assign({}, this.options.navigationView);
-                $util$b.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
-                const navView = node.children[node.children.length - 1];
-                navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
-                navView.android('layout_height', 'match_parent');
-                navView.auto = false;
-            }
-            const output = this.application.viewController.renderNodeStatic(VIEW_SUPPORT.DRAWER, node.depth, options, 'match_parent', 'match_parent', node, true);
-            node.documentRoot = true;
-            node.rendered = true;
-            node.nodeType = $enum$b.NODE_STANDARD.BLOCK;
-            node.excludeResource |= $enum$b.NODE_RESOURCE.FONT_STYLE;
-            return { output, complete: true };
-        }
-        beforeInsert() {
-            const application = this.application;
-            const node = this.node;
-            if (application.renderQueue[node.nodeId]) {
-                const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
-                if (target) {
-                    application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
-                    delete application.renderQueue[node.nodeId];
-                }
-            }
-            const menu = $util$b.optional($dom$8.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
-            const headerLayout = $util$b.optional($dom$8.findNestedExtension(node.element, $const$5.EXT_NAME.EXTERNAL), 'dataset.layoutName');
-            const options = Object.assign({}, this.options.navigation);
-            if (menu !== '') {
-                $util$b.overwriteDefault(options, 'app', 'menu', `@menu/${menu}`);
-            }
-            if (headerLayout !== '') {
-                $util$b.overwriteDefault(options, 'app', 'headerLayout', `@layout/${headerLayout}`);
-            }
-            if (menu !== '' || headerLayout !== '') {
-                $util$b.overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
-                $util$b.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-                $util$b.overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
-                const output = application.viewController.renderNodeStatic(VIEW_SUPPORT.NAVIGATION_VIEW, node.depth + 1, options, 'wrap_content', 'match_parent');
-                application.addRenderQueue(node.id.toString(), [output]);
-            }
-        }
-        afterInsert() {
-            const element = $dom$8.findNestedExtension(this.node.element, $const$5.EXT_NAME.EXTERNAL);
-            if (element) {
-                const header = $dom$8.getNodeFromElement(element);
-                if (header && !header.hasHeight) {
-                    header.android('layout_height', 'wrap_content');
-                }
-            }
-        }
-        createResourceTheme() {
-            const options = Object.assign({}, this.options.resource);
-            $util$b.overwriteDefault(options, '', 'appTheme', 'AppTheme');
-            $util$b.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
-            const data = {
-                '0': [{
-                        'appTheme': options.appTheme,
-                        'parentTheme': options.parentTheme,
-                        '1': []
-                    }]
-            };
-            $util$b.overwriteDefault(options, 'output', 'path', 'res/values-v21');
-            $util$b.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-            this.application.resourceHandler.addTheme(EXTENSION_DRAWER_TMPL, data, options);
-        }
-    }
-
     function autoClose() {
         const main = viewController.application;
         if (main.settings.autoCloseOnWrite && !main.loading && !main.closed) {
@@ -7178,48 +6626,7 @@ var android = (function () {
     let settings$1;
     const framework = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
     const appBase = {
-        create() {
-            const EXT_NAME = androme.lib.constant.EXT_NAME;
-            settings$1 = Object.assign({}, settings);
-            const fileHandler = new FileHandler(settings$1);
-            application = new androme.lib.base.Application(framework);
-            viewController = new ViewController();
-            resourceHandler = new ResourceHandler(fileHandler);
-            application.registerController(viewController);
-            application.registerResource(resourceHandler);
-            application.nodeObject = View;
-            application.builtInExtensions = {
-                [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
-                [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
-                [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
-                [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
-                [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
-                [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
-                [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
-                [WIDGET_NAME.FAB]: new FloatingActionButton(WIDGET_NAME.FAB, framework, ['BUTTON', 'INPUT', 'IMG']),
-                [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, framework, ['NAV']),
-                [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR, framework),
-                [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR, framework),
-                [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, framework),
-                [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER, framework)
-            };
-            initialized = true;
-            return {
-                application,
-                framework,
-                settings: settings$1
-            };
-        },
-        cached() {
-            if (initialized) {
-                return {
-                    application,
-                    framework,
-                    settings: settings$1
-                };
-            }
-            return appBase.create();
-        },
+        lib,
         system: {
             customize(build, widget, options) {
                 if (API_ANDROID[build]) {
@@ -7314,6 +6721,42 @@ var android = (function () {
                 }
                 return '';
             }
+        },
+        create() {
+            const EXT_NAME = androme.lib.constant.EXT_NAME;
+            settings$1 = Object.assign({}, settings);
+            const fileHandler = new FileHandler(settings$1);
+            application = new androme.lib.base.Application(framework);
+            viewController = new ViewController();
+            resourceHandler = new ResourceHandler(fileHandler);
+            application.registerController(viewController);
+            application.registerResource(resourceHandler);
+            application.nodeObject = View;
+            application.builtInExtensions = {
+                [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
+                [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
+                [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
+                [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
+                [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
+                [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
+                [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN'])
+            };
+            initialized = true;
+            return {
+                application,
+                framework,
+                settings: settings$1
+            };
+        },
+        cached() {
+            if (initialized) {
+                return {
+                    application,
+                    framework,
+                    settings: settings$1
+                };
+            }
+            return appBase.create();
         }
     };
 

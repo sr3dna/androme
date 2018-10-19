@@ -1,4 +1,4 @@
-/* androme 2.0.1
+/* androme 2.0.2
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -6,6 +6,249 @@
     typeof define === 'function' && define.amd ? define(['exports'], factory) :
     (factory((global.androme = {})));
 }(this, (function (exports) { 'use strict';
+
+    var USER_AGENT;
+    (function (USER_AGENT) {
+        USER_AGENT[USER_AGENT["NONE"] = 0] = "NONE";
+        USER_AGENT[USER_AGENT["CHROME"] = 2] = "CHROME";
+        USER_AGENT[USER_AGENT["SAFARI"] = 4] = "SAFARI";
+        USER_AGENT[USER_AGENT["EDGE"] = 8] = "EDGE";
+    })(USER_AGENT || (USER_AGENT = {}));
+    var APP_FRAMEWORK;
+    (function (APP_FRAMEWORK) {
+        APP_FRAMEWORK[APP_FRAMEWORK["UNIVERSAL"] = 0] = "UNIVERSAL";
+        APP_FRAMEWORK[APP_FRAMEWORK["ANDROID"] = 2] = "ANDROID";
+    })(APP_FRAMEWORK || (APP_FRAMEWORK = {}));
+    var APP_SECTION;
+    (function (APP_SECTION) {
+        APP_SECTION[APP_SECTION["NONE"] = 0] = "NONE";
+        APP_SECTION[APP_SECTION["INCLUDE"] = 2] = "INCLUDE";
+        APP_SECTION[APP_SECTION["DOM_TRAVERSE"] = 4] = "DOM_TRAVERSE";
+        APP_SECTION[APP_SECTION["EXTENSION"] = 8] = "EXTENSION";
+        APP_SECTION[APP_SECTION["RENDER"] = 16] = "RENDER";
+        APP_SECTION[APP_SECTION["ALL"] = 30] = "ALL";
+    })(APP_SECTION || (APP_SECTION = {}));
+    var NODE_ALIGNMENT;
+    (function (NODE_ALIGNMENT) {
+        NODE_ALIGNMENT[NODE_ALIGNMENT["NONE"] = 0] = "NONE";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["EXTENDABLE"] = 2] = "EXTENDABLE";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["HORIZONTAL"] = 4] = "HORIZONTAL";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["VERTICAL"] = 8] = "VERTICAL";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["ABSOLUTE"] = 16] = "ABSOLUTE";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["FLOAT"] = 32] = "FLOAT";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["SEGMENTED"] = 64] = "SEGMENTED";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["PERCENT"] = 128] = "PERCENT";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["TOP"] = 256] = "TOP";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["RIGHT"] = 512] = "RIGHT";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["BOTTOM"] = 1024] = "BOTTOM";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["LEFT"] = 2048] = "LEFT";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["SINGLE"] = 4096] = "SINGLE";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["MULTILINE"] = 8192] = "MULTILINE";
+        NODE_ALIGNMENT[NODE_ALIGNMENT["SPACE"] = 16384] = "SPACE";
+    })(NODE_ALIGNMENT || (NODE_ALIGNMENT = {}));
+    var NODE_RESOURCE;
+    (function (NODE_RESOURCE) {
+        NODE_RESOURCE[NODE_RESOURCE["NONE"] = 0] = "NONE";
+        NODE_RESOURCE[NODE_RESOURCE["BOX_STYLE"] = 2] = "BOX_STYLE";
+        NODE_RESOURCE[NODE_RESOURCE["BOX_SPACING"] = 4] = "BOX_SPACING";
+        NODE_RESOURCE[NODE_RESOURCE["FONT_STYLE"] = 8] = "FONT_STYLE";
+        NODE_RESOURCE[NODE_RESOURCE["VALUE_STRING"] = 16] = "VALUE_STRING";
+        NODE_RESOURCE[NODE_RESOURCE["OPTION_ARRAY"] = 32] = "OPTION_ARRAY";
+        NODE_RESOURCE[NODE_RESOURCE["IMAGE_SOURCE"] = 64] = "IMAGE_SOURCE";
+        NODE_RESOURCE[NODE_RESOURCE["ASSET"] = 120] = "ASSET";
+        NODE_RESOURCE[NODE_RESOURCE["ALL"] = 126] = "ALL";
+    })(NODE_RESOURCE || (NODE_RESOURCE = {}));
+    var NODE_PROCEDURE;
+    (function (NODE_PROCEDURE) {
+        NODE_PROCEDURE[NODE_PROCEDURE["NONE"] = 0] = "NONE";
+        NODE_PROCEDURE[NODE_PROCEDURE["LAYOUT"] = 2] = "LAYOUT";
+        NODE_PROCEDURE[NODE_PROCEDURE["ALIGNMENT"] = 4] = "ALIGNMENT";
+        NODE_PROCEDURE[NODE_PROCEDURE["AUTOFIT"] = 8] = "AUTOFIT";
+        NODE_PROCEDURE[NODE_PROCEDURE["OPTIMIZATION"] = 16] = "OPTIMIZATION";
+        NODE_PROCEDURE[NODE_PROCEDURE["CUSTOMIZATION"] = 32] = "CUSTOMIZATION";
+        NODE_PROCEDURE[NODE_PROCEDURE["ACCESSIBILITY"] = 64] = "ACCESSIBILITY";
+        NODE_PROCEDURE[NODE_PROCEDURE["ALL"] = 126] = "ALL";
+    })(NODE_PROCEDURE || (NODE_PROCEDURE = {}));
+    var NODE_STANDARD;
+    (function (NODE_STANDARD) {
+        NODE_STANDARD[NODE_STANDARD["NONE"] = 0] = "NONE";
+        NODE_STANDARD[NODE_STANDARD["CHECKBOX"] = 1] = "CHECKBOX";
+        NODE_STANDARD[NODE_STANDARD["RADIO"] = 2] = "RADIO";
+        NODE_STANDARD[NODE_STANDARD["EDIT"] = 3] = "EDIT";
+        NODE_STANDARD[NODE_STANDARD["SELECT"] = 4] = "SELECT";
+        NODE_STANDARD[NODE_STANDARD["RANGE"] = 5] = "RANGE";
+        NODE_STANDARD[NODE_STANDARD["SVG"] = 6] = "SVG";
+        NODE_STANDARD[NODE_STANDARD["TEXT"] = 7] = "TEXT";
+        NODE_STANDARD[NODE_STANDARD["IMAGE"] = 8] = "IMAGE";
+        NODE_STANDARD[NODE_STANDARD["BUTTON"] = 9] = "BUTTON";
+        NODE_STANDARD[NODE_STANDARD["INLINE"] = 10] = "INLINE";
+        NODE_STANDARD[NODE_STANDARD["LINE"] = 11] = "LINE";
+        NODE_STANDARD[NODE_STANDARD["SPACE"] = 12] = "SPACE";
+        NODE_STANDARD[NODE_STANDARD["BLOCK"] = 13] = "BLOCK";
+        NODE_STANDARD[NODE_STANDARD["WEB_VIEW"] = 14] = "WEB_VIEW";
+        NODE_STANDARD[NODE_STANDARD["FRAME"] = 15] = "FRAME";
+        NODE_STANDARD[NODE_STANDARD["LINEAR"] = 16] = "LINEAR";
+        NODE_STANDARD[NODE_STANDARD["RADIO_GROUP"] = 17] = "RADIO_GROUP";
+        NODE_STANDARD[NODE_STANDARD["GRID"] = 18] = "GRID";
+        NODE_STANDARD[NODE_STANDARD["RELATIVE"] = 19] = "RELATIVE";
+        NODE_STANDARD[NODE_STANDARD["CONSTRAINT"] = 20] = "CONSTRAINT";
+        NODE_STANDARD[NODE_STANDARD["SCROLL_HORIZONTAL"] = 21] = "SCROLL_HORIZONTAL";
+        NODE_STANDARD[NODE_STANDARD["SCROLL_VERTICAL"] = 22] = "SCROLL_VERTICAL";
+    })(NODE_STANDARD || (NODE_STANDARD = {}));
+    var BOX_STANDARD;
+    (function (BOX_STANDARD) {
+        BOX_STANDARD[BOX_STANDARD["MARGIN_TOP"] = 2] = "MARGIN_TOP";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_RIGHT"] = 4] = "MARGIN_RIGHT";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_BOTTOM"] = 8] = "MARGIN_BOTTOM";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_LEFT"] = 16] = "MARGIN_LEFT";
+        BOX_STANDARD[BOX_STANDARD["PADDING_TOP"] = 32] = "PADDING_TOP";
+        BOX_STANDARD[BOX_STANDARD["PADDING_RIGHT"] = 64] = "PADDING_RIGHT";
+        BOX_STANDARD[BOX_STANDARD["PADDING_BOTTOM"] = 128] = "PADDING_BOTTOM";
+        BOX_STANDARD[BOX_STANDARD["PADDING_LEFT"] = 256] = "PADDING_LEFT";
+        BOX_STANDARD[BOX_STANDARD["MARGIN"] = 30] = "MARGIN";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_VERTICAL"] = 10] = "MARGIN_VERTICAL";
+        BOX_STANDARD[BOX_STANDARD["MARGIN_HORIZONTAL"] = 20] = "MARGIN_HORIZONTAL";
+        BOX_STANDARD[BOX_STANDARD["PADDING"] = 480] = "PADDING";
+        BOX_STANDARD[BOX_STANDARD["PADDING_VERTICAL"] = 160] = "PADDING_VERTICAL";
+        BOX_STANDARD[BOX_STANDARD["PADDING_HORIZONTAL"] = 320] = "PADDING_HORIZONTAL";
+    })(BOX_STANDARD || (BOX_STANDARD = {}));
+    var CSS_STANDARD;
+    (function (CSS_STANDARD) {
+        CSS_STANDARD[CSS_STANDARD["NONE"] = 0] = "NONE";
+        CSS_STANDARD[CSS_STANDARD["UNIT"] = 2] = "UNIT";
+        CSS_STANDARD[CSS_STANDARD["AUTO"] = 4] = "AUTO";
+        CSS_STANDARD[CSS_STANDARD["LEFT"] = 8] = "LEFT";
+        CSS_STANDARD[CSS_STANDARD["BASELINE"] = 16] = "BASELINE";
+        CSS_STANDARD[CSS_STANDARD["PERCENT"] = 32] = "PERCENT";
+        CSS_STANDARD[CSS_STANDARD["ZERO"] = 64] = "ZERO";
+    })(CSS_STANDARD || (CSS_STANDARD = {}));
+
+    var enumeration = /*#__PURE__*/Object.freeze({
+        get USER_AGENT () { return USER_AGENT; },
+        get APP_FRAMEWORK () { return APP_FRAMEWORK; },
+        get APP_SECTION () { return APP_SECTION; },
+        get NODE_ALIGNMENT () { return NODE_ALIGNMENT; },
+        get NODE_RESOURCE () { return NODE_RESOURCE; },
+        get NODE_PROCEDURE () { return NODE_PROCEDURE; },
+        get NODE_STANDARD () { return NODE_STANDARD; },
+        get BOX_STANDARD () { return BOX_STANDARD; },
+        get CSS_STANDARD () { return CSS_STANDARD; }
+    });
+
+    const MAP_ELEMENT = {
+        INPUT: NODE_STANDARD.NONE,
+        PLAINTEXT: NODE_STANDARD.TEXT,
+        HR: NODE_STANDARD.LINE,
+        SVG: NODE_STANDARD.SVG,
+        IMG: NODE_STANDARD.IMAGE,
+        SELECT: NODE_STANDARD.SELECT,
+        RANGE: NODE_STANDARD.RANGE,
+        TEXT: NODE_STANDARD.EDIT,
+        PASSWORD: NODE_STANDARD.EDIT,
+        NUMBER: NODE_STANDARD.EDIT,
+        EMAIL: NODE_STANDARD.EDIT,
+        SEARCH: NODE_STANDARD.EDIT,
+        URL: NODE_STANDARD.EDIT,
+        CHECKBOX: NODE_STANDARD.CHECKBOX,
+        RADIO: NODE_STANDARD.RADIO,
+        BUTTON: NODE_STANDARD.BUTTON,
+        SUBMIT: NODE_STANDARD.BUTTON,
+        RESET: NODE_STANDARD.BUTTON,
+        TEXTAREA: NODE_STANDARD.EDIT,
+        IFRAME: NODE_STANDARD.WEB_VIEW
+    };
+    const BLOCK_ELEMENT = [
+        'ADDRESS',
+        'ARTICLE',
+        'ASIDE',
+        'BLOCKQUOTE',
+        'CANVAS',
+        'DD',
+        'DIV',
+        'DL',
+        'DT',
+        'FIELDSET',
+        'FIGCAPTION',
+        'FIGURE',
+        'FOOTER',
+        'FORM',
+        'H1',
+        'H2',
+        'H3',
+        'H4',
+        'H5',
+        'H6',
+        'HEADER',
+        'LI',
+        'MAIN',
+        'NAV',
+        'OL',
+        'OUTPUT',
+        'P',
+        'PRE',
+        'SECTION',
+        'TFOOT',
+        'TH',
+        'THEAD',
+        'TR',
+        'UL',
+        'VIDEO'
+    ];
+    const INLINE_ELEMENT = [
+        'A',
+        'ABBR',
+        'ACRONYM',
+        'B',
+        'BDO',
+        'BIG',
+        'BR',
+        'BUTTON',
+        'CITE',
+        'CODE',
+        'DFN',
+        'EM',
+        'I',
+        'IFRAME',
+        'IMG',
+        'INPUT',
+        'KBD',
+        'LABEL',
+        'MAP',
+        'OBJECT',
+        'Q',
+        'S',
+        'SAMP',
+        'SCRIPT',
+        'SELECT',
+        'SMALL',
+        'SPAN',
+        'STRIKE',
+        'STRONG',
+        'SUB',
+        'SUP',
+        'TEXTAREA',
+        'TIME',
+        'TT',
+        'U',
+        'VAR',
+        'PLAINTEXT'
+    ];
+    const EXT_NAME = {
+        EXTERNAL: 'androme.external',
+        ORIGIN: 'androme.origin',
+        ACCESSIBILITY: 'androme.accessibility',
+        CUSTOM: 'androme.custom',
+        GRID: 'androme.grid',
+        LIST: 'androme.list',
+        TABLE: 'androme.table'
+    };
+
+    var constant = /*#__PURE__*/Object.freeze({
+        MAP_ELEMENT: MAP_ELEMENT,
+        BLOCK_ELEMENT: BLOCK_ELEMENT,
+        INLINE_ELEMENT: INLINE_ELEMENT,
+        EXT_NAME: EXT_NAME
+    });
 
     const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
     const NUMERALS = [
@@ -535,12 +778,12 @@
         }
         return '';
     }
-    function cssInherit(element, attr, tagName = '', exclude) {
+    function cssInherit(element, attr, exclude, tagNames) {
         let result = '';
         let current = element.parentElement;
-        while (current && current.tagName !== tagName) {
+        while (current && (tagNames == null || !tagNames.includes(current.tagName))) {
             result = getStyle(current)[attr] || '';
-            if (exclude && exclude.some(value => result.indexOf(value) !== -1)) {
+            if (result === 'inherit' || (exclude && exclude.some(value => result.indexOf(value) !== -1))) {
                 result = '';
             }
             if (current === document.body || result) {
@@ -570,6 +813,9 @@
                 !node.styleMap[attr]));
         }
         return false;
+    }
+    function cssAttribute(element, attr) {
+        return element.getAttribute(attr) || getStyle(element)[convertCamelCase(attr)] || '';
     }
     function hasFreeFormText(element, maxDepth = 0, whiteSpace = true) {
         let valid = false;
@@ -676,16 +922,12 @@
         }
         return [];
     }
+    function isStyleElement(element) {
+        return element instanceof HTMLElement || element instanceof SVGSVGElement;
+    }
     function isElementVisible(element) {
-        if (!getElementCache(element, 'supportInline')) {
-            if (element instanceof HTMLElement) {
-                switch (element.tagName) {
-                    case 'BR':
-                    case 'OPTION':
-                    case 'MAP':
-                    case 'AREA':
-                        return false;
-                }
+        if (!getElementCache(element, 'inlineSupport') && !(element.parentElement instanceof SVGSVGElement)) {
+            if (isStyleElement(element)) {
                 if (typeof element.getBoundingClientRect === 'function') {
                     const bounds = element.getBoundingClientRect();
                     if ((bounds.width !== 0 && bounds.height !== 0) ||
@@ -748,254 +990,15 @@
         cssInherit: cssInherit,
         cssParent: cssParent,
         cssFromParent: cssFromParent,
+        cssAttribute: cssAttribute,
         hasFreeFormText: hasFreeFormText,
         isPlainText: isPlainText,
         hasLineBreak: hasLineBreak,
         isLineBreak: isLineBreak,
         getElementsBetweenSiblings: getElementsBetweenSiblings,
+        isStyleElement: isStyleElement,
         isElementVisible: isElementVisible,
         findNestedExtension: findNestedExtension
-    });
-
-    var USER_AGENT;
-    (function (USER_AGENT) {
-        USER_AGENT[USER_AGENT["NONE"] = 0] = "NONE";
-        USER_AGENT[USER_AGENT["CHROME"] = 2] = "CHROME";
-        USER_AGENT[USER_AGENT["SAFARI"] = 4] = "SAFARI";
-        USER_AGENT[USER_AGENT["EDGE"] = 8] = "EDGE";
-    })(USER_AGENT || (USER_AGENT = {}));
-    var APP_FRAMEWORK;
-    (function (APP_FRAMEWORK) {
-        APP_FRAMEWORK[APP_FRAMEWORK["UNIVERSAL"] = 0] = "UNIVERSAL";
-        APP_FRAMEWORK[APP_FRAMEWORK["ANDROID"] = 2] = "ANDROID";
-    })(APP_FRAMEWORK || (APP_FRAMEWORK = {}));
-    var APP_SECTION;
-    (function (APP_SECTION) {
-        APP_SECTION[APP_SECTION["NONE"] = 0] = "NONE";
-        APP_SECTION[APP_SECTION["INCLUDE"] = 2] = "INCLUDE";
-        APP_SECTION[APP_SECTION["DOM_TRAVERSE"] = 4] = "DOM_TRAVERSE";
-        APP_SECTION[APP_SECTION["EXTENSION"] = 8] = "EXTENSION";
-        APP_SECTION[APP_SECTION["RENDER"] = 16] = "RENDER";
-        APP_SECTION[APP_SECTION["ALL"] = 30] = "ALL";
-    })(APP_SECTION || (APP_SECTION = {}));
-    var NODE_ALIGNMENT;
-    (function (NODE_ALIGNMENT) {
-        NODE_ALIGNMENT[NODE_ALIGNMENT["NONE"] = 0] = "NONE";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["EXTENDABLE"] = 2] = "EXTENDABLE";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["HORIZONTAL"] = 4] = "HORIZONTAL";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["VERTICAL"] = 8] = "VERTICAL";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["ABSOLUTE"] = 16] = "ABSOLUTE";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["FLOAT"] = 32] = "FLOAT";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["SEGMENTED"] = 64] = "SEGMENTED";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["PERCENT"] = 128] = "PERCENT";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["TOP"] = 256] = "TOP";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["RIGHT"] = 512] = "RIGHT";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["BOTTOM"] = 1024] = "BOTTOM";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["LEFT"] = 2048] = "LEFT";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["SINGLE"] = 4096] = "SINGLE";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["MULTILINE"] = 8192] = "MULTILINE";
-        NODE_ALIGNMENT[NODE_ALIGNMENT["SPACE"] = 16384] = "SPACE";
-    })(NODE_ALIGNMENT || (NODE_ALIGNMENT = {}));
-    var NODE_RESOURCE;
-    (function (NODE_RESOURCE) {
-        NODE_RESOURCE[NODE_RESOURCE["NONE"] = 0] = "NONE";
-        NODE_RESOURCE[NODE_RESOURCE["BOX_STYLE"] = 2] = "BOX_STYLE";
-        NODE_RESOURCE[NODE_RESOURCE["BOX_SPACING"] = 4] = "BOX_SPACING";
-        NODE_RESOURCE[NODE_RESOURCE["FONT_STYLE"] = 8] = "FONT_STYLE";
-        NODE_RESOURCE[NODE_RESOURCE["VALUE_STRING"] = 16] = "VALUE_STRING";
-        NODE_RESOURCE[NODE_RESOURCE["OPTION_ARRAY"] = 32] = "OPTION_ARRAY";
-        NODE_RESOURCE[NODE_RESOURCE["IMAGE_SOURCE"] = 64] = "IMAGE_SOURCE";
-        NODE_RESOURCE[NODE_RESOURCE["ASSET"] = 120] = "ASSET";
-        NODE_RESOURCE[NODE_RESOURCE["ALL"] = 126] = "ALL";
-    })(NODE_RESOURCE || (NODE_RESOURCE = {}));
-    var NODE_PROCEDURE;
-    (function (NODE_PROCEDURE) {
-        NODE_PROCEDURE[NODE_PROCEDURE["NONE"] = 0] = "NONE";
-        NODE_PROCEDURE[NODE_PROCEDURE["LAYOUT"] = 2] = "LAYOUT";
-        NODE_PROCEDURE[NODE_PROCEDURE["ALIGNMENT"] = 4] = "ALIGNMENT";
-        NODE_PROCEDURE[NODE_PROCEDURE["AUTOFIT"] = 8] = "AUTOFIT";
-        NODE_PROCEDURE[NODE_PROCEDURE["OPTIMIZATION"] = 16] = "OPTIMIZATION";
-        NODE_PROCEDURE[NODE_PROCEDURE["CUSTOMIZATION"] = 32] = "CUSTOMIZATION";
-        NODE_PROCEDURE[NODE_PROCEDURE["ACCESSIBILITY"] = 64] = "ACCESSIBILITY";
-        NODE_PROCEDURE[NODE_PROCEDURE["ALL"] = 126] = "ALL";
-    })(NODE_PROCEDURE || (NODE_PROCEDURE = {}));
-    var NODE_STANDARD;
-    (function (NODE_STANDARD) {
-        NODE_STANDARD[NODE_STANDARD["NONE"] = 0] = "NONE";
-        NODE_STANDARD[NODE_STANDARD["CHECKBOX"] = 1] = "CHECKBOX";
-        NODE_STANDARD[NODE_STANDARD["RADIO"] = 2] = "RADIO";
-        NODE_STANDARD[NODE_STANDARD["EDIT"] = 3] = "EDIT";
-        NODE_STANDARD[NODE_STANDARD["SELECT"] = 4] = "SELECT";
-        NODE_STANDARD[NODE_STANDARD["RANGE"] = 5] = "RANGE";
-        NODE_STANDARD[NODE_STANDARD["TEXT"] = 6] = "TEXT";
-        NODE_STANDARD[NODE_STANDARD["IMAGE"] = 7] = "IMAGE";
-        NODE_STANDARD[NODE_STANDARD["BUTTON"] = 8] = "BUTTON";
-        NODE_STANDARD[NODE_STANDARD["INLINE"] = 9] = "INLINE";
-        NODE_STANDARD[NODE_STANDARD["LINE"] = 10] = "LINE";
-        NODE_STANDARD[NODE_STANDARD["SPACE"] = 11] = "SPACE";
-        NODE_STANDARD[NODE_STANDARD["BLOCK"] = 12] = "BLOCK";
-        NODE_STANDARD[NODE_STANDARD["WEB_VIEW"] = 13] = "WEB_VIEW";
-        NODE_STANDARD[NODE_STANDARD["FRAME"] = 14] = "FRAME";
-        NODE_STANDARD[NODE_STANDARD["LINEAR"] = 15] = "LINEAR";
-        NODE_STANDARD[NODE_STANDARD["RADIO_GROUP"] = 16] = "RADIO_GROUP";
-        NODE_STANDARD[NODE_STANDARD["GRID"] = 17] = "GRID";
-        NODE_STANDARD[NODE_STANDARD["RELATIVE"] = 18] = "RELATIVE";
-        NODE_STANDARD[NODE_STANDARD["CONSTRAINT"] = 19] = "CONSTRAINT";
-        NODE_STANDARD[NODE_STANDARD["SCROLL_HORIZONTAL"] = 20] = "SCROLL_HORIZONTAL";
-        NODE_STANDARD[NODE_STANDARD["SCROLL_VERTICAL"] = 21] = "SCROLL_VERTICAL";
-    })(NODE_STANDARD || (NODE_STANDARD = {}));
-    var BOX_STANDARD;
-    (function (BOX_STANDARD) {
-        BOX_STANDARD[BOX_STANDARD["MARGIN_TOP"] = 2] = "MARGIN_TOP";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_RIGHT"] = 4] = "MARGIN_RIGHT";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_BOTTOM"] = 8] = "MARGIN_BOTTOM";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_LEFT"] = 16] = "MARGIN_LEFT";
-        BOX_STANDARD[BOX_STANDARD["PADDING_TOP"] = 32] = "PADDING_TOP";
-        BOX_STANDARD[BOX_STANDARD["PADDING_RIGHT"] = 64] = "PADDING_RIGHT";
-        BOX_STANDARD[BOX_STANDARD["PADDING_BOTTOM"] = 128] = "PADDING_BOTTOM";
-        BOX_STANDARD[BOX_STANDARD["PADDING_LEFT"] = 256] = "PADDING_LEFT";
-        BOX_STANDARD[BOX_STANDARD["MARGIN"] = 30] = "MARGIN";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_VERTICAL"] = 10] = "MARGIN_VERTICAL";
-        BOX_STANDARD[BOX_STANDARD["MARGIN_HORIZONTAL"] = 20] = "MARGIN_HORIZONTAL";
-        BOX_STANDARD[BOX_STANDARD["PADDING"] = 480] = "PADDING";
-        BOX_STANDARD[BOX_STANDARD["PADDING_VERTICAL"] = 160] = "PADDING_VERTICAL";
-        BOX_STANDARD[BOX_STANDARD["PADDING_HORIZONTAL"] = 320] = "PADDING_HORIZONTAL";
-    })(BOX_STANDARD || (BOX_STANDARD = {}));
-    var CSS_STANDARD;
-    (function (CSS_STANDARD) {
-        CSS_STANDARD[CSS_STANDARD["NONE"] = 0] = "NONE";
-        CSS_STANDARD[CSS_STANDARD["UNIT"] = 2] = "UNIT";
-        CSS_STANDARD[CSS_STANDARD["AUTO"] = 4] = "AUTO";
-        CSS_STANDARD[CSS_STANDARD["LEFT"] = 8] = "LEFT";
-        CSS_STANDARD[CSS_STANDARD["BASELINE"] = 16] = "BASELINE";
-        CSS_STANDARD[CSS_STANDARD["PERCENT"] = 32] = "PERCENT";
-        CSS_STANDARD[CSS_STANDARD["ZERO"] = 64] = "ZERO";
-    })(CSS_STANDARD || (CSS_STANDARD = {}));
-
-    var enumeration = /*#__PURE__*/Object.freeze({
-        get USER_AGENT () { return USER_AGENT; },
-        get APP_FRAMEWORK () { return APP_FRAMEWORK; },
-        get APP_SECTION () { return APP_SECTION; },
-        get NODE_ALIGNMENT () { return NODE_ALIGNMENT; },
-        get NODE_RESOURCE () { return NODE_RESOURCE; },
-        get NODE_PROCEDURE () { return NODE_PROCEDURE; },
-        get NODE_STANDARD () { return NODE_STANDARD; },
-        get BOX_STANDARD () { return BOX_STANDARD; },
-        get CSS_STANDARD () { return CSS_STANDARD; }
-    });
-
-    const MAP_ELEMENT = {
-        INPUT: NODE_STANDARD.NONE,
-        PLAINTEXT: NODE_STANDARD.TEXT,
-        HR: NODE_STANDARD.LINE,
-        IMG: NODE_STANDARD.IMAGE,
-        SELECT: NODE_STANDARD.SELECT,
-        RANGE: NODE_STANDARD.RANGE,
-        TEXT: NODE_STANDARD.EDIT,
-        PASSWORD: NODE_STANDARD.EDIT,
-        NUMBER: NODE_STANDARD.EDIT,
-        EMAIL: NODE_STANDARD.EDIT,
-        SEARCH: NODE_STANDARD.EDIT,
-        URL: NODE_STANDARD.EDIT,
-        CHECKBOX: NODE_STANDARD.CHECKBOX,
-        RADIO: NODE_STANDARD.RADIO,
-        BUTTON: NODE_STANDARD.BUTTON,
-        SUBMIT: NODE_STANDARD.BUTTON,
-        RESET: NODE_STANDARD.BUTTON,
-        TEXTAREA: NODE_STANDARD.EDIT,
-        IFRAME: NODE_STANDARD.WEB_VIEW
-    };
-    const BLOCK_ELEMENT = [
-        'ADDRESS',
-        'ARTICLE',
-        'ASIDE',
-        'BLOCKQUOTE',
-        'CANVAS',
-        'DD',
-        'DIV',
-        'DL',
-        'DT',
-        'FIELDSET',
-        'FIGCAPTION',
-        'FIGURE',
-        'FOOTER',
-        'FORM',
-        'H1',
-        'H2',
-        'H3',
-        'H4',
-        'H5',
-        'H6',
-        'HEADER',
-        'LI',
-        'MAIN',
-        'NAV',
-        'OL',
-        'OUTPUT',
-        'P',
-        'PRE',
-        'SECTION',
-        'TFOOT',
-        'TH',
-        'THEAD',
-        'TR',
-        'UL',
-        'VIDEO'
-    ];
-    const INLINE_ELEMENT = [
-        'A',
-        'ABBR',
-        'ACRONYM',
-        'B',
-        'BDO',
-        'BIG',
-        'BR',
-        'BUTTON',
-        'CITE',
-        'CODE',
-        'DFN',
-        'EM',
-        'I',
-        'IFRAME',
-        'IMG',
-        'INPUT',
-        'KBD',
-        'LABEL',
-        'MAP',
-        'OBJECT',
-        'Q',
-        'S',
-        'SAMP',
-        'SCRIPT',
-        'SELECT',
-        'SMALL',
-        'SPAN',
-        'STRIKE',
-        'STRONG',
-        'SUB',
-        'SUP',
-        'TEXTAREA',
-        'TIME',
-        'TT',
-        'U',
-        'VAR',
-        'PLAINTEXT'
-    ];
-    const EXT_NAME = {
-        EXTERNAL: 'androme.external',
-        ORIGIN: 'androme.origin',
-        ACCESSIBILITY: 'androme.accessibility',
-        CUSTOM: 'androme.custom',
-        GRID: 'androme.grid',
-        LIST: 'androme.list',
-        TABLE: 'androme.table'
-    };
-
-    var constant = /*#__PURE__*/Object.freeze({
-        MAP_ELEMENT: MAP_ELEMENT,
-        BLOCK_ELEMENT: BLOCK_ELEMENT,
-        INLINE_ELEMENT: INLINE_ELEMENT,
-        EXT_NAME: EXT_NAME
     });
 
     class Node {
@@ -1032,8 +1035,8 @@
         }
         init() {
             if (!this._initialized) {
-                const element = this._element;
-                if (element instanceof HTMLElement) {
+                if (this.styleElement) {
+                    const element = this._element;
                     const styleMap = getElementCache(element, 'styleMap') || {};
                     for (const inline of Array.from(element.style)) {
                         styleMap[convertCamelCase(inline)] = element.style[inline];
@@ -1043,7 +1046,7 @@
                     Object.assign(this.initial.styleMap, styleMap);
                 }
                 if (this.id !== 0) {
-                    setElementCache(element, 'node', this);
+                    setElementCache(this._element, 'node', this);
                 }
                 this._initialized = true;
             }
@@ -1163,8 +1166,7 @@
                 function copyMap(source, destination) {
                     for (const attr in source) {
                         if (source[attr] == null) {
-                            const value = source[attr];
-                            destination[attr] = value;
+                            destination[attr] = source[attr];
                         }
                     }
                 }
@@ -1260,35 +1262,42 @@
             return false;
         }
         intersect(rect, dimension = 'linear') {
-            const top = rect.top > this[dimension].top && rect.top < this[dimension].bottom;
-            const right = Math.floor(rect.right) > Math.ceil(this[dimension].left) && rect.right < this[dimension].right;
-            const bottom = Math.floor(rect.bottom) > Math.ceil(this[dimension].top) && rect.bottom < this[dimension].bottom;
-            const left = rect.left > this[dimension].left && rect.left < this[dimension].right;
+            const bounds = this[dimension] || this.linear;
+            const top = rect.top > bounds.top && rect.top < bounds.bottom;
+            const right = Math.floor(rect.right) > Math.ceil(bounds.left) && rect.right < bounds.right;
+            const bottom = Math.floor(rect.bottom) > Math.ceil(bounds.top) && rect.bottom < bounds.bottom;
+            const left = rect.left > bounds.left && rect.left < bounds.right;
             return (top && (left || right)) || (bottom && (left || right));
         }
         intersectX(rect, dimension = 'linear') {
-            return ((rect.top >= this[dimension].top && rect.top < this[dimension].bottom) ||
-                (rect.bottom > this[dimension].top && rect.bottom <= this[dimension].bottom) ||
-                (this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom) ||
-                (rect.top >= this[dimension].top && rect.bottom <= this[dimension].bottom));
+            const bounds = this[dimension] || this.linear;
+            return ((rect.top >= bounds.top && rect.top < bounds.bottom) ||
+                (rect.bottom > bounds.top && rect.bottom <= bounds.bottom) ||
+                (bounds.top >= rect.top && this[dimension].bottom <= rect.bottom) ||
+                (rect.top >= bounds.top && rect.bottom <= bounds.bottom));
         }
         intersectY(rect, dimension = 'linear') {
-            return ((rect.left >= this[dimension].left && rect.left < this[dimension].right) ||
-                (rect.right > this[dimension].left && rect.right <= this[dimension].right) ||
-                (this[dimension].left >= rect.left && this[dimension].right <= rect.right) ||
-                (rect.left >= this[dimension].left && rect.right <= this[dimension].right));
+            const bounds = this[dimension] || this.linear;
+            return ((rect.left >= bounds.left && rect.left < bounds.right) ||
+                (rect.right > bounds.left && rect.right <= bounds.right) ||
+                (bounds.left >= rect.left && bounds.right <= rect.right) ||
+                (rect.left >= bounds.left && rect.right <= bounds.right));
         }
         withinX(rect, dimension = 'linear') {
-            return this[dimension].top >= rect.top && this[dimension].bottom <= rect.bottom;
+            const bounds = this[dimension] || this.linear;
+            return bounds.top >= rect.top && bounds.bottom <= rect.bottom;
         }
         withinY(rect, dimension = 'linear') {
-            return this[dimension].left >= rect.left && this[dimension].right <= rect.right;
+            const bounds = this[dimension] || this.linear;
+            return bounds.left >= rect.left && bounds.right <= rect.right;
         }
         outsideX(rect, dimension = 'linear') {
-            return this[dimension].right < rect.left || this[dimension].left > rect.right;
+            const bounds = this[dimension] || this.linear;
+            return bounds.right < rect.left || bounds.left > rect.right;
         }
         outsideY(rect, dimension = 'linear') {
-            return this[dimension].bottom < rect.top || this[dimension].top > rect.bottom;
+            const bounds = this[dimension] || this.linear;
+            return bounds.bottom < rect.top || bounds.top > rect.bottom;
         }
         css(attr, value = '') {
             if (typeof attr === 'object') {
@@ -1397,7 +1406,7 @@
             return hasBit(this.alignmentType, value);
         }
         setExclusions() {
-            if (this.hasElement) {
+            if (this.styleElement) {
                 [['excludeSection', APP_SECTION], ['excludeProcedure', NODE_PROCEDURE], ['excludeResource', NODE_RESOURCE]].forEach((item) => {
                     let exclude = this.dataset[item[0]] || '';
                     if (this._element.parentElement) {
@@ -1414,7 +1423,7 @@
         setBounds(calibrate = false) {
             if (this._element) {
                 if (!calibrate) {
-                    if (this.hasElement) {
+                    if (this.styleElement) {
                         this.bounds = assignBounds(this._element.getBoundingClientRect());
                     }
                     else {
@@ -1563,7 +1572,12 @@
             return null;
         }
         remove(node) {
-            this.children = this.children.filter(child => child !== node);
+            for (let i = 0; i < this.children.length; i++) {
+                if (node === this.children[i]) {
+                    this.children.splice(i, 1);
+                    break;
+                }
+            }
         }
         appendRendered(node) {
             if (this.renderChildren.indexOf(node) === -1) {
@@ -1648,7 +1662,7 @@
         }
         boxAttribute(region, direction) {
             const attr = region + direction;
-            if (this.hasElement) {
+            if (this.styleElement) {
                 const value = this.css(attr);
                 if (isPercent(value)) {
                     return this.style[attr] && this.style[attr] !== value ? convertInt(this.style[attr]) : this.documentParent.box[(direction === 'Left' || direction === 'Right' ? 'width' : 'height')] * (convertInt(value) / 100);
@@ -1664,7 +1678,7 @@
         getOverflow() {
             if (this._overflow == null) {
                 this._overflow = 0;
-                if (this.hasElement) {
+                if (this.styleElement) {
                     const [overflow, overflowX, overflowY] = [this.css('overflow'), this.css('overflowX'), this.css('overflowY')];
                     if (this.toInt('width') > 0 && (overflow === 'scroll' ||
                         overflowX === 'scroll' ||
@@ -1683,14 +1697,14 @@
         set parent(value) {
             if (value !== this._parent) {
                 if (this._parent) {
-                    this._parent.children = this._parent.children.filter(node => node !== this);
+                    this._parent.remove(this);
                 }
                 this._parent = value;
             }
             if (value) {
                 if (!value.children.includes(this)) {
                     value.children.push(this);
-                    if (!value.hasElement && this.siblingIndex !== -1) {
+                    if (!value.styleElement && this.siblingIndex !== -1) {
                         value.siblingIndex = Math.min(this.siblingIndex, value.siblingIndex);
                     }
                 }
@@ -1711,7 +1725,7 @@
         }
         get nodeName() {
             return (this._nodeName ||
-                (this.hasElement ? (this.tagName === 'INPUT' ? this._element.type.toUpperCase() : this.tagName) : ''));
+                (this.styleElement ? (this.tagName === 'INPUT' ? this._element.type : this.tagName).toUpperCase() : ''));
         }
         set element(value) {
             this._element = value;
@@ -1723,13 +1737,16 @@
             return this._baseElement || this.element;
         }
         get tagName() {
-            return this._tagName || (this._element && this._element.tagName) || '';
+            return (this._tagName || (this._element && this._element.tagName) || '').toUpperCase();
         }
-        get hasElement() {
+        get htmlElement() {
             return this._element instanceof HTMLElement;
         }
         get domElement() {
-            return this.hasElement || this.plainText;
+            return this.styleElement || this.plainText;
+        }
+        get styleElement() {
+            return this._element instanceof HTMLElement || this.svgElement;
         }
         get documentBody() {
             return this._element === document.body;
@@ -1906,9 +1923,9 @@
                         this._inlineText = false;
                         break;
                     default:
-                        this._inlineText = (this.hasElement &&
+                        this._inlineText = (this.htmlElement &&
                             hasFreeFormText(this._element) &&
-                            (this.children.length === 0 || this.children.every(node => !!getElementCache(node.element, 'supportInline'))) &&
+                            (this.children.length === 0 || this.children.every(node => !!getElementCache(node.element, 'inlineSupport'))) &&
                             (this._element.childNodes.length === 0 || !Array.from(this._element.childNodes).some((element) => {
                                 const node = getNodeFromElement(element);
                                 return !!node && !node.lineBreak && (!node.excluded || !node.visible);
@@ -1923,6 +1940,12 @@
         }
         get imageElement() {
             return this.tagName === 'IMG';
+        }
+        get svgElement() {
+            return this.tagName === 'SVG';
+        }
+        get imageOrSvgElement() {
+            return this.imageElement || this.svgElement;
         }
         get lineBreak() {
             return this.tagName === 'BR';
@@ -2100,9 +2123,6 @@
                 this._list = nodes;
             }
         }
-        static siblingIndex(a, b) {
-            return a.siblingIndex <= b.siblingIndex ? -1 : 1;
-        }
         static outerRegion(list, dimension = 'linear') {
             let top = [];
             let right = [];
@@ -2197,7 +2217,7 @@
                 const boundsHeight = Math.max.apply(null, list.map(node => node.bounds.height));
                 if (lineHeight > boundsHeight) {
                     const result = list.filter(node => node.lineHeight === lineHeight);
-                    return (result.length === list.length ? result.filter(node => node.hasElement) : result).filter(node => node.baseline);
+                    return (result.length === list.length ? result.filter(node => node.htmlElement) : result).filter(node => node.baseline);
                 }
                 baseline = list.filter(node => node.baselineInside).sort((a, b) => {
                     let heightA = a.bounds.height;
@@ -2218,7 +2238,7 @@
                                 return a.lineHeight >= b.lineHeight ? -1 : 1;
                             }
                             else if (fontSizeA === fontSizeB) {
-                                return a.hasElement || !b.hasElement ? -1 : 1;
+                                return a.htmlElement || !b.htmlElement ? -1 : 1;
                             }
                         }
                         if (a.nodeType !== b.nodeType && (a.nodeType < NODE_STANDARD.TEXT || b.nodeType < NODE_STANDARD.TEXT)) {
@@ -2238,10 +2258,10 @@
                         }
                         else {
                             if (fontSizeA === fontSizeB && heightA === heightB) {
-                                if (a.hasElement && !b.hasElement) {
+                                if (a.htmlElement && !b.htmlElement) {
                                     return -1;
                                 }
-                                else if (!a.hasElement && b.hasElement) {
+                                else if (!a.htmlElement && b.htmlElement) {
                                     return 1;
                                 }
                                 else {
@@ -2305,14 +2325,7 @@
                         }
                     }
                     if (horizontal || !traverse) {
-                        return nodes.every(node => !nodes.some(sibling => {
-                            if (sibling !== node &&
-                                node.linear.top >= sibling.linear.bottom &&
-                                node.intersectY(sibling.linear)) {
-                                return true;
-                            }
-                            return false;
-                        }));
+                        return nodes.every(node => !nodes.some(sibling => sibling !== node && node.linear.top >= sibling.linear.bottom && node.intersectY(sibling.linear)));
                     }
                     return false;
             }
@@ -2343,6 +2356,9 @@
                     }
                     return false;
             }
+        }
+        static siblingIndex(a, b) {
+            return a.siblingIndex <= b.siblingIndex ? -1 : 1;
         }
         static clearedSiblings(parent) {
             return NodeList.cleared(Array.from(parent.baseElement.children).map(element => getNodeFromElement(element)).filter(node => node));
@@ -2435,7 +2451,7 @@
             return this._list.filter(node => node.visible);
         }
         get elements() {
-            return this._list.filter(node => node.visible && node.hasElement);
+            return this._list.filter(node => node.visible && node.styleElement);
         }
         get nextId() {
             return ++this._currentId;
@@ -2531,7 +2547,7 @@
             function cascade(nodes) {
                 for (let i = 0; i < nodes.length; i++) {
                     const item = nodes[i];
-                    if (item.hasElement || item.plainText) {
+                    if (item.styleElement || item.plainText) {
                         return item.element;
                     }
                     else if (item.length > 0) {
@@ -2676,7 +2692,7 @@
         }
         for (const i in data) {
             let value = '';
-            if (data[i] === false) {
+            if (data[i] === false || (Array.isArray(data[i]) && data[i].length === 0)) {
                 output = output.replace(`{%${i}}`, '');
                 continue;
             }
@@ -2801,7 +2817,7 @@
         }
         reset() {
             for (const node of this.cacheSession) {
-                deleteElementCache(node.element, 'node', 'style', 'styleMap', 'supportInline', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
+                deleteElementCache(node.element, 'node', 'style', 'styleMap', 'inlineSupport', 'boxSpacing', 'boxStyle', 'fontStyle', 'imageSource', 'optionArray', 'valueString');
             }
             for (const element of this._cacheRoot) {
                 delete element.dataset.iteration;
@@ -2854,7 +2870,7 @@
                 if (typeof element === 'string') {
                     element = document.getElementById(element);
                 }
-                if (element instanceof HTMLElement) {
+                if (element instanceof HTMLElement || element instanceof SVGElement) {
                     this.elements.add(element);
                 }
             }
@@ -2988,21 +3004,20 @@
             else {
                 return false;
             }
-            const supportInline = this.settings.renderInlineText ? ['BR'] : this.viewController.supportInline;
+            const inlineAlways = this.viewController.settingsInternal.inline.always;
+            const inlineSupport = this.settings.renderInlineText ? [] : this.viewController.settingsInternal.inline.tagName;
             function inlineElement(element) {
                 const styleMap = getElementCache(element, 'styleMap');
                 return ((!styleMap || Object.keys(styleMap).length === 0) &&
                     element.children.length === 0 &&
-                    supportInline.includes(element.tagName));
+                    inlineSupport.includes(element.tagName));
             }
             for (const element of Array.from(elements)) {
                 if (!this.elements.has(element)) {
                     this.prioritizeExtensions(this.extensions, element).some(item => item.init(element));
                     if (!this.elements.has(element)) {
-                        if (inlineElement(element) &&
-                            element.parentElement &&
-                            Array.from(element.parentElement.children).every(item => inlineElement(item))) {
-                            setElementCache(element, 'supportInline', true);
+                        if (inlineAlways.includes(element.tagName) || (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item)))) {
+                            setElementCache(element, 'inlineSupport', true);
                         }
                         let valid = true;
                         let current = element.parentElement;
@@ -3046,7 +3061,7 @@
                         }
                         else if (element.tagName !== 'BR') {
                             const elementNode = getNodeFromElement(element);
-                            if (!supportInline.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
+                            if (!inlineSupport.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
                                 valid = true;
                             }
                         }
@@ -3058,7 +3073,7 @@
                 const preAlignment = {};
                 const direction = [];
                 for (const node of this.cache) {
-                    if (node.hasElement) {
+                    if (node.styleElement) {
                         const element = node.element;
                         const textAlign = node.css('textAlign');
                         preAlignment[node.id] = {};
@@ -3108,7 +3123,7 @@
                     node.setMultiLine();
                 }
                 for (const node of this.cache) {
-                    if (node.hasElement) {
+                    if (node.styleElement) {
                         const element = node.element;
                         const attrs = preAlignment[node.id];
                         if (attrs) {
@@ -3147,15 +3162,17 @@
                     }
                 }
                 for (const node of this.cache.elements) {
-                    let i = 0;
-                    Array.from(node.element.childNodes).forEach((element) => {
-                        const item = getNodeFromElement(element);
-                        if (item && !item.excluded && item.pageflow) {
-                            item.siblingIndex = i++;
-                        }
-                    });
-                    node.children.sort(NodeList.siblingIndex);
-                    node.initial.children.push(...node.children.slice());
+                    if (node.htmlElement) {
+                        let i = 0;
+                        Array.from(node.element.childNodes).forEach((element) => {
+                            const item = getNodeFromElement(element);
+                            if (item && !item.excluded && item.pageflow) {
+                                item.siblingIndex = i++;
+                            }
+                        });
+                        node.children.sort(NodeList.siblingIndex);
+                        node.initial.children.push(...node.children.slice());
+                    }
                 }
                 this.cache.sortAsc('depth', 'id');
                 for (const ext of this.extensions) {
@@ -3321,7 +3338,8 @@
                         }
                         let parentY = nodeY.parent;
                         let currentY = '';
-                        if (this.viewController.supportInclude) {
+                        const includeSupport = this.viewController.settingsInternal.includes;
+                        if (includeSupport) {
                             if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
                                 const filename = trimNull(nodeY.dataset.include);
                                 if (filename !== '' && includes$$1.indexOf(filename) === -1) {
@@ -3576,7 +3594,7 @@
                             if (next) {
                                 continue;
                             }
-                            if (nodeY.element instanceof HTMLElement) {
+                            if (nodeY.styleElement) {
                                 const processed = [];
                                 this.prioritizeExtensions(this.extensions, nodeY.element).some(item => {
                                     if (item.is(nodeY)) {
@@ -3747,10 +3765,7 @@
                                                     if (linearY ||
                                                         (!relativeWrap && children.some(node => {
                                                             const previous = node.previousSibling();
-                                                            if (previous && node.alignedVertically(previous, clearedInside)) {
-                                                                return true;
-                                                            }
-                                                            return false;
+                                                            return (previous != null && node.alignedVertically(previous, clearedInside));
                                                         }))) {
                                                         output = this.writeLinearLayout(nodeY, parentY, false);
                                                         if (linearY && !nodeY.documentRoot) {
@@ -3784,7 +3799,7 @@
                             }
                             renderNode(nodeY, parentY, output, currentY);
                         }
-                        if (this.viewController.supportInclude && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
+                        if (includeSupport && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
                             if (includes$$1.length > 0 && nodeY.dataset.includeEnd === 'true') {
                                 includes$$1.pop();
                             }
@@ -3822,7 +3837,7 @@
                         }
                     }
                 }
-                if (this.viewController.supportInclude) {
+                if (this.viewController.settingsInternal.includes) {
                     for (const [filename, templates] of external.entries()) {
                         const content = Array.from(templates.values());
                         if (content.length > 0) {
@@ -4460,7 +4475,7 @@
             return this.viewController.renderColumnSpace(depth, width, height, columnSpan);
         }
         createLayoutFile(pathname, filename, content, documentRoot = false) {
-            pathname = pathname || this.viewController.settingsInternal.layout.pathname;
+            pathname = pathname || this.viewController.settingsInternal.layout.pathName;
             const layout = {
                 pathname,
                 filename,
@@ -4476,7 +4491,7 @@
         }
         createIncludeFile(filename, content) {
             this._includes.push({
-                pathname: this.viewController.settingsInternal.layout.pathname,
+                pathname: this.viewController.settingsInternal.layout.pathName,
                 filename,
                 content
             });
@@ -4574,13 +4589,7 @@
                     }
                 }
             }
-            else if (element instanceof HTMLElement) {
-                switch (element.tagName) {
-                    case 'OPTION':
-                    case 'MAP':
-                    case 'AREA':
-                        return null;
-                }
+            else if (isStyleElement(element)) {
                 const elementNode = new this.nodeObject(this.cache.nextId, element);
                 this.viewController.initNode(elementNode);
                 if (isElementVisible(element)) {
@@ -4751,10 +4760,7 @@
                 return false;
             }
             if (floated.size === 1 && floating.length === nodes.length) {
-                if (linearX && cleared.size === 0) {
-                    return false;
-                }
-                return true;
+                return !(linearX && cleared.size === 0);
             }
             return (cleared.size === 0 &&
                 !floated.has('right') &&
@@ -4763,7 +4769,7 @@
                     const verticalAlign = node.css('verticalAlign');
                     return (node.toInt('top') >= 0 &&
                         (['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(verticalAlign) || (isUnit(verticalAlign) && parseInt(verticalAlign) >= 0)));
-                }) && (visible.some(node => ((node.textElement || node.imageElement) && node.baseline) || (node.plainText && node.multiLine)) ||
+                }) && (visible.some(node => ((node.textElement || node.imageElement || node.svgElement) && node.baseline) || (node.plainText && node.multiLine)) ||
                 (!linearX && nodes.every(node => node.pageflow && node.inlineElement))));
         }
         set appName(value) {
@@ -5103,9 +5109,18 @@
     }
     function parseRGBA(value, opacity = '1') {
         if (value !== '') {
-            const color = getColorByName(value);
-            if (color) {
-                return [color.hex, formatRGB(color.rgb), opacity];
+            if (value === 'initial') {
+                value = '#000000';
+            }
+            else if (value === 'transparent') {
+                value = '#000000';
+                opacity = '0';
+            }
+            else {
+                const color = getColorByName(value);
+                if (color) {
+                    return [color.hex, formatRGB(color.rgb), opacity];
+                }
             }
             const rgb = convertToRGB(value);
             if (rgb) {
@@ -5251,46 +5266,120 @@
             this.cache.elements.forEach(node => {
                 if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (!getElementCache(node.element, 'boxStyle') ||
                     this.settings.alwaysReevaluateResources)) {
-                    const boxModel = {
-                        borderTop: this.parseBorderStyle,
-                        borderRight: this.parseBorderStyle,
-                        borderBottom: this.parseBorderStyle,
-                        borderLeft: this.parseBorderStyle,
-                        borderRadius: this.parseBorderRadius,
-                        backgroundColor: this.parseBackgroundColor,
-                        backgroundImage: !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE),
-                        backgroundSize: this.parseBoxDimensions,
-                        backgroundRepeat: true,
-                        backgroundPositionX: true,
-                        backgroundPositionY: true
+                    const boxStyle = {
+                        borderTop: null,
+                        borderRight: null,
+                        borderBottom: null,
+                        borderLeft: null,
+                        borderRadius: null,
+                        backgroundColor: null,
+                        backgroundSize: null,
+                        backgroundImage: null,
+                        backgroundRepeat: null,
+                        backgroundPositionX: null,
+                        backgroundPositionY: null
                     };
-                    const result = {};
-                    for (const attr in boxModel) {
+                    for (const attr in boxStyle) {
                         const value = node.css(attr);
-                        if (typeof boxModel[attr] === 'function') {
-                            result[attr] = boxModel[attr](value, node, attr);
-                        }
-                        else if (boxModel[attr] === true) {
-                            result[attr] = value;
-                        }
-                        else {
-                            result[attr] = '';
+                        switch (attr) {
+                            case 'borderTop':
+                            case 'borderRight':
+                            case 'borderBottom':
+                            case 'borderLeft': {
+                                let cssColor = node.css(`${attr}Color`);
+                                switch (cssColor) {
+                                    case 'initial':
+                                        cssColor = value;
+                                        break;
+                                    case 'inherit':
+                                    case 'currentColor':
+                                        cssColor = cssInherit(node.element, `${attr}Color`);
+                                        break;
+                                }
+                                const style = node.css(`${attr}Style`) || 'none';
+                                let width = node.css(`${attr}Width`) || '1px';
+                                const color = style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : [];
+                                if (style === 'inset' && width === '0px') {
+                                    width = '1px';
+                                }
+                                boxStyle[attr] = {
+                                    style,
+                                    width,
+                                    color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0']
+                                };
+                                break;
+                            }
+                            case 'borderRadius': {
+                                const [top, right, bottom, left] = [
+                                    node.css('borderTopLeftRadius'),
+                                    node.css('borderTopRightRadius'),
+                                    node.css('borderBottomLeftRadius'),
+                                    node.css('borderBottomRightRadius')
+                                ];
+                                if (top === right && right === bottom && bottom === left) {
+                                    boxStyle[attr] = top === '' || top === '0px' ? [] : [top];
+                                }
+                                else {
+                                    boxStyle[attr] = [top, right, bottom, left];
+                                }
+                                break;
+                            }
+                            case 'backgroundColor': {
+                                boxStyle[attr] = parseRGBA(value, node.css('opacity'));
+                                break;
+                            }
+                            case 'backgroundSize': {
+                                const fontSize = node.css('fontSize');
+                                let result = [];
+                                if (value !== 'auto' && value !== 'auto auto' && value !== 'initial' && value !== '0px') {
+                                    const match = value.match(/^([0-9\.]+(?:px|pt|em|%)|auto)(?: ([0-9\.]+(?:px|pt|em|%)|auto))?(?: ([0-9\.]+(?:px|pt|em)))?(?: ([0-9\.]+(?:px|pt|em)))?$/);
+                                    if (match) {
+                                        if (match[1] === 'auto' || match[2] === 'auto') {
+                                            result = [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
+                                        }
+                                        else if (isPercent(match[1]) && match[3] == null) {
+                                            result = [match[1], match[2]];
+                                        }
+                                        else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
+                                            result = [convertPX(match[1], fontSize)];
+                                        }
+                                        else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
+                                            result = [convertPX(match[1], fontSize), convertPX(match[2], fontSize)];
+                                        }
+                                        else {
+                                            result = [convertPX(match[1], fontSize), convertPX(match[2], fontSize), convertPX(match[3], fontSize), convertPX(match[4], fontSize)];
+                                        }
+                                    }
+                                }
+                                boxStyle[attr] = result;
+                                break;
+                            }
+                            case 'backgroundImage': {
+                                boxStyle[attr] = !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE) ? value : '';
+                                break;
+                            }
+                            case 'backgroundRepeat':
+                            case 'backgroundPositionX':
+                            case 'backgroundPositionY': {
+                                boxStyle[attr] = value;
+                                break;
+                            }
                         }
                     }
-                    if (Array.isArray(result.backgroundColor) &&
-                        !node.has('backgroundColor') && (node.cssParent('backgroundColor', false, true) === result.backgroundColor[1] ||
+                    if (Array.isArray(boxStyle.backgroundColor) &&
+                        !node.has('backgroundColor') && (node.cssParent('backgroundColor', false, true) === boxStyle.backgroundColor[1] ||
                         (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')))) {
-                        result.backgroundColor.length = 0;
+                        boxStyle.backgroundColor.length = 0;
                     }
-                    if (result.borderTop.style !== 'none') {
-                        const borderTop = JSON.stringify(result.borderTop);
-                        if (borderTop === JSON.stringify(result.borderRight) &&
-                            borderTop === JSON.stringify(result.borderBottom) &&
-                            borderTop === JSON.stringify(result.borderLeft)) {
-                            result.border = result.borderTop;
+                    if (boxStyle.borderTop.style !== 'none') {
+                        const borderTop = JSON.stringify(boxStyle.borderTop);
+                        if (borderTop === JSON.stringify(boxStyle.borderRight) &&
+                            borderTop === JSON.stringify(boxStyle.borderBottom) &&
+                            borderTop === JSON.stringify(boxStyle.borderLeft)) {
+                            boxStyle.border = boxStyle.borderTop;
                         }
                     }
-                    setElementCache(node.element, 'boxStyle', result);
+                    setElementCache(node.element, 'boxStyle', boxStyle);
                 }
             });
         }
@@ -5555,73 +5644,6 @@
                 object.borderRadius.length > 0 ||
                 (object.backgroundImage !== '' && object.backgroundImage !== 'none')));
         }
-        parseBorderStyle(value, node, attr) {
-            let cssColor = node.css(`${attr}Color`);
-            switch (cssColor) {
-                case 'initial':
-                    cssColor = value;
-                    break;
-                case 'inherit':
-                case 'currentColor':
-                    cssColor = node.documentParent.css(`${attr}Color`);
-                    break;
-            }
-            const style = node.css(`${attr}Style`) || 'none';
-            let width = node.css(`${attr}Width`) || '1px';
-            const color = style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : [];
-            if (style === 'inset' && width === '0px') {
-                width = '1px';
-            }
-            return {
-                style,
-                width,
-                color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0']
-            };
-        }
-        parseBorderRadius(value, node) {
-            const [top, right, bottom, left] = [
-                node.css('borderTopLeftRadius'),
-                node.css('borderTopRightRadius'),
-                node.css('borderBottomLeftRadius'),
-                node.css('borderBottomRightRadius')
-            ];
-            if (top === right && right === bottom && bottom === left) {
-                return top === '' || top === '0px' ? [] : [top];
-            }
-            else {
-                return [top, right, bottom, left];
-            }
-        }
-        parseBackgroundColor(value, node) {
-            return parseRGBA(value, node.css('opacity'));
-        }
-        parseBoxDimensions(value, node) {
-            const fontSize = node.css('fontSize');
-            if (value !== 'auto' && value !== 'initial') {
-                const match = value.match(/^([0-9\.]+(?:px|pt|em|%)|auto)(?: ([0-9\.]+(?:px|pt|em|%)|auto))?(?: ([0-9\.]+(?:px|pt|em)))?(?: ([0-9\.]+(?:px|pt|em)))?$/);
-                if (match) {
-                    if ((match[1] === '0px' && match[2] == null) || (match[1] === 'auto' && match[2] === 'auto')) {
-                        return [];
-                    }
-                    if (match[1] === 'auto' || match[2] === 'auto') {
-                        return [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
-                    }
-                    else if (isPercent(match[1]) && match[3] == null) {
-                        return [match[1], match[2]];
-                    }
-                    else if (match[2] == null || (match[1] === match[2] && match[1] === match[3] && match[1] === match[4])) {
-                        return [convertPX(match[1], fontSize)];
-                    }
-                    else if (match[3] == null || (match[1] === match[3] && match[2] === match[4])) {
-                        return [convertPX(match[1], fontSize), convertPX(match[2], fontSize)];
-                    }
-                    else {
-                        return [convertPX(match[1], fontSize), convertPX(match[2], fontSize), convertPX(match[3], fontSize), convertPX(match[4], fontSize)];
-                    }
-                }
-            }
-            return [];
-        }
     }
     Resource.STORED = {
         strings: new Map(),
@@ -5730,7 +5752,7 @@
             this._element = element || (node && node.element);
         }
         is(node) {
-            return node.hasElement && (this.tagNames.length === 0 || this.tagNames.includes(node.tagName));
+            return node.styleElement && (this.tagNames.length === 0 || this.tagNames.includes(node.tagName));
         }
         require(value, init = false) {
             this.dependencies.push({ name: value, init });
@@ -5888,7 +5910,7 @@
             }
             if (data.tagChild) {
                 node.each(item => {
-                    if (item.hasElement) {
+                    if (item.styleElement) {
                         item.dataset.ext = this.name;
                         item.dataset.andromeCustomTag = data.tagChild;
                     }
@@ -5968,12 +5990,11 @@
             if (columnBalance) {
                 const dimensions = [];
                 node.each((item, index) => {
-                    const children = item.children;
                     dimensions[index] = [];
-                    for (let l = 0; l < children.length; l++) {
-                        dimensions[index].push(children[l].bounds.width);
+                    for (let l = 0; l < item.children.length; l++) {
+                        dimensions[index].push(item.children[l].bounds.width);
                     }
-                    columns.push(children);
+                    columns.push(item.children.slice());
                 });
                 const base = columns[dimensions.findIndex(item => {
                     const column = dimensions.reduce((a, b) => {
@@ -6146,13 +6167,15 @@
             if (columns.length > 1 && columns[0].length === node.children.length) {
                 mainData.columnCount = columnBalance ? columns[0].length : columns.length;
                 output = this.application.writeGridLayout(node, parent, mainData.columnCount);
-                node.children.length = 0;
+                node.children.slice().forEach(item => {
+                    node.remove(item);
+                    item.hide();
+                });
                 for (let l = 0, count = 0; l < columns.length; l++) {
                     let spacer = 0;
                     for (let m = 0, start = 0; m < columns[l].length; m++) {
                         const item = columns[l][m];
                         if (!item.spacer) {
-                            item.parent.hide();
                             item.parent = node;
                             const data = {
                                 inherit: true,
@@ -6576,12 +6599,12 @@
                             }
                         }
                         else {
-                            let value = cssInherit(item, 'background', 'TABLE', ['rgba(0, 0, 0, 0)', 'transparent']);
+                            let value = cssInherit(item, 'background', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
                             if (value !== '') {
                                 item.style.background = value;
                             }
                             else {
-                                value = cssInherit(item, 'backgroundColor', 'TABLE', ['rgba(0, 0, 0, 0)', 'transparent']);
+                                value = cssInherit(item, 'backgroundColor', ['rgba(0, 0, 0, 0)', 'transparent'], ['TABLE']);
                                 if (value !== '') {
                                     item.style.backgroundColor = value;
                                 }

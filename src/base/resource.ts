@@ -66,7 +66,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public abstract setImageSource(): void;
-    public abstract addTheme(template: string, data: {}, options: {}): void;
     public abstract finalize(viewData: ViewData<NodeList<T>>): void;
 
     public addFile(pathname: string, filename: string, content = '', uri = '') {

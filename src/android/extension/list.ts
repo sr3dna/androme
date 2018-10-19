@@ -1,4 +1,4 @@
-import { SettingsAndroid } from '../lib/types';
+import { SettingsAndroid } from '../types/local';
 import { ListData } from '../../extension/types/data';
 
 import { NODE_ANDROID } from '../lib/constant';

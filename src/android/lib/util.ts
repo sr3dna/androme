@@ -1,4 +1,4 @@
-import { BUILD_ANDROID } from './constant';
+import { BUILD_ANDROID } from './enumeration';
 
 let MAP_ID: ObjectMap<string[]>;
 
@@ -39,7 +39,7 @@ export function stripId(value: Null<string>) {
     return value ? value.replace(/@\+?id\//, '') : '';
 }
 
-export function convertDP(value: any, dpi = 160, font = false) {
+export function convertUnit(value: any, dpi = 160, font = false) {
     if (value) {
         value = parseFloat(value);
         if (!isNaN(value)) {
@@ -58,7 +58,7 @@ export function delimitUnit(nodeName: string, attr: string, size: string, { dime
 export function replaceUnit(value: string, { density = 160, convertPixels = 'dp' }, font = false) {
     switch (convertPixels) {
         case 'dp':
-            return value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertDP(capture[2], density, font) + capture[3]);
+            return value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], density, font) + capture[3]);
         default:
             return value;
     }

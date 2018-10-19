@@ -1,31 +1,4 @@
-export enum BUILD_ANDROID {
-    PIE = 28,
-    OREO_1 = 27,
-    OREO = 26,
-    NOUGAT_1 = 25,
-    NOUGAT = 24,
-    MARSHMALLOW = 23,
-    LOLLIPOP_1 = 22,
-    LOLLIPOP = 21,
-    KITKAT_1 = 20,
-    KITKAT = 19,
-    JELLYBEAN_2 = 18,
-    JELLYBEAN_1 = 17,
-    JELLYBEAN = 16,
-    ICE_CREAM_SANDWICH_1 = 15,
-    ICE_CREAM_SANDWICH = 14,
-    ALL = 0,
-    LATEST = 28
-}
-
-export enum DENSITY_ANDROID {
-    LDPI = 120,
-    MDPI = 160,
-    HDPI = 240,
-    XHDPI = 320,
-    XXHDPI = 480,
-    XXXHDPI = 640
-}
+import { BUILD_ANDROID } from './enumeration';
 
 export const NODE_ANDROID = {
     CHECKBOX: 'CheckBox',
@@ -49,6 +22,17 @@ export const NODE_ANDROID = {
     SCROLL_HORIZONTAL: 'HorizontalScrollView',
     SCROLL_VERTICAL: 'android.support.v4.widget.NestedScrollView',
     GUIDELINE: 'android.support.constraint.Guideline'
+};
+
+export const VIEW_SUPPORT = {
+    DRAWER: 'android.support.v4.widget.DrawerLayout',
+    NAVIGATION_VIEW: 'android.support.design.widget.NavigationView',
+    COORDINATOR: 'android.support.design.widget.CoordinatorLayout',
+    APPBAR: 'android.support.design.widget.AppBarLayout',
+    COLLAPSING_TOOLBAR: 'android.support.design.widget.CollapsingToolbarLayout',
+    TOOLBAR: 'android.support.v7.widget.Toolbar',
+    FLOATING_ACTION_BUTTON: 'android.support.design.widget.FloatingActionButton',
+    BOTTOM_NAVIGATION: 'android.support.design.widget.BottomNavigationView'
 };
 
 export const BOX_ANDROID = {
@@ -216,3 +200,8 @@ export const RESERVED_JAVA = [
     'volatile',
     'while'
 ];
+
+export const DRAWABLE_PREFIX = {
+    MENU: 'ic_menu_',
+    DIALOG: 'ic_dialog_'
+};

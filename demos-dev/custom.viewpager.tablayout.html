@@ -89,30 +89,38 @@
         System.import('/build/main.js').then(result => {
             androme = result;
             System.import('/build/android/main.js').then(result => {
-                androme.setFramework(result['default']);
-                androme.ext('androme.widget.toolbar', {
-                    toolbar_demo: {
-                        appBar: {}
-                    }
-                });
-                androme.ext('androme.custom', {
-                    viewpager_demo: {
-                        android: {
-                            layout_height: 'match_parent'
-                        },
-                        app: {
-                            layout_behavior: '@string/appbar_scrolling_view_behavior'
+                android = result['default'];
+                androme.setFramework(android);
+                Promise.all([
+                    System.import('/build/android/extension/widget/coordinator/main.js'),
+                    System.import('/build/android/extension/widget/floatingactionbutton/main.js'),
+                    System.import('/build/android/extension/widget/menu/main.js'),
+                    System.import('/build/android/extension/widget/toolbar/main.js')
+                ]).then(result => {
+                    androme.ext('android.widget.toolbar', {
+                        toolbar_demo: {
+                            appBar: {}
                         }
-                    }
-                });
-                androme.parseDocument('androme_ui').then(function() {
-                    androme.close();
+                    });
+                    androme.ext('androme.custom', {
+                        viewpager_demo: {
+                            android: {
+                                layout_height: 'match_parent'
+                            },
+                            app: {
+                                layout_behavior: '@string/appbar_scrolling_view_behavior'
+                            }
+                        }
+                    });
+                    androme.parseDocument('androme_ui').then(function() {
+                        androme.close();
 
-                    var views = androme.system.writeLayoutAllXml();
-                    document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+                        var views = androme.system.writeLayoutAllXml();
+                        document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
 
-                    var resource = androme.system.writeResourceAllXml();
-                    document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                        var resource = androme.system.writeResourceAllXml();
+                        document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                    });
                 });
             });
         });
@@ -120,9 +128,9 @@
 </head>
 <body>
     <!-- START: DEMO -->
-    <div id="androme_ui" data-ext="androme.widget.coordinator">
-        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-exclude-section="DOM_TRAVERSE">
-            <nav id="toolbar_menu" data-ext="androme.widget.menu">
+    <div id="androme_ui" data-ext="android.widget.coordinator">
+        <div id="toolbar_demo" data-ext="android.widget.toolbar" data-exclude-section="DOM_TRAVERSE">
+            <nav id="toolbar_menu" data-ext="android.widget.menu">
                 <div
                     data-show-as-action="always"
                     title="Web">
@@ -160,7 +168,7 @@
                 </div>
             </div>
         </div>
-        <button id="fab_browse_page" data-ext="androme.widget.floatingactionbutton" data-exclude-procedure="ACCESSIBILITY"></button>
+        <button id="fab_browse_page" data-ext="android.widget.floatingactionbutton" data-exclude-procedure="ACCESSIBILITY"></button>
     </div>
     <!-- END: DEMO -->
 

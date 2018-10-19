@@ -81,52 +81,61 @@
         System.import('/build/main.js').then(result => {
             androme = result;
             System.import('/build/android/main.js').then(result => {
-                androme.setFramework(result['default']);
-                androme.ext('androme.widget.drawer', {
-                    self: {
-                        android: {
-                            fitsSystemWindows: 'true'
-                        }
-                    },
-                    navigationView: {
-                        android: {
-                            fitsSystemWindows: 'true'
-                        }
-                    },
-                    resource: {
-                        output: {
-                            path: 'res/values-v21',
-                            file: 'androme.widget.drawer.xml'
-                        },
-                        appTheme: 'AppTheme',
-                        parentTheme: 'Theme.AppCompat.Light.NoActionBar',
-                        item: {
-                            colorPrimary: '@color/slate_blue'
-                        }
-                    }
-                });
-                androme.ext('androme.widget.toolbar', {
-                    toolbar_demo: {
-                        appBar: {
+                android = result['default'];
+                androme.setFramework(android);
+                Promise.all([
+                    System.import('/build/android/extension/widget/coordinator/main.js'),
+                    System.import('/build/android/extension/widget/floatingactionbutton/main.js'),
+                    System.import('/build/android/extension/widget/menu/main.js'),
+                    System.import('/build/android/extension/widget/toolbar/main.js'),
+                    System.import('/build/android/extension/widget/drawer/main.js')
+                ]).then(result => {
+                    androme.ext('android.widget.drawer', {
+                        self: {
                             android: {
-                                theme: '@style/ThemeOverlay.AppCompat.Dark.ActionBar'
+                                fitsSystemWindows: 'true'
                             }
                         },
-                        toolbar: {
-                            app: {
-                                titleTextColor: '@color/white'
+                        navigationView: {
+                            android: {
+                                fitsSystemWindows: 'true'
+                            }
+                        },
+                        resource: {
+                            output: {
+                                path: 'res/values-v21',
+                                file: 'android.widget.drawer.xml'
+                            },
+                            appTheme: 'AppTheme',
+                            parentTheme: 'Theme.AppCompat.Light.NoActionBar',
+                            item: {
+                                colorPrimary: '@color/slate_blue'
                             }
                         }
-                    }
-                });
-                androme.parseDocument('androme_ui').then(function() {
-                    androme.close();
+                    });
+                    androme.ext('android.widget.toolbar', {
+                        toolbar_demo: {
+                            appBar: {
+                                android: {
+                                    theme: '@style/ThemeOverlay.AppCompat.Dark.ActionBar'
+                                }
+                            },
+                            toolbar: {
+                                app: {
+                                    titleTextColor: '@color/white'
+                                }
+                            }
+                        }
+                    });
+                    androme.parseDocument('androme_ui').then(function() {
+                        androme.close();
 
-                    var views = androme.system.writeLayoutAllXml();
-                    document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+                        var views = androme.system.writeLayoutAllXml();
+                        document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
 
-                    var resource = androme.system.writeResourceAllXml();
-                    document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                        var resource = androme.system.writeResourceAllXml();
+                        document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                    });
                 });
             });
         });
@@ -140,10 +149,10 @@
 <body>
     <!-- START: DEMO -->
     <div id="androme_ui" style="width: 200px;">
-        <div id="toolbar_demo" data-ext="androme.widget.toolbar" data-target="drawer_content">
+        <div id="toolbar_demo" data-ext="android.widget.toolbar" data-target="drawer_content">
             <img src="../demos/images/icons8-menu-24.png" data-navigation-icon="true" onclick="toggleDrawer(this, true);" />
             <img src="../demos/images/icons8-left-24.png" data-collapse-icon="true" onclick="toggleDrawer(this, false);" style="display: none;" />
-            <nav id="toolbar_menu" data-ext="androme.widget.menu">
+            <nav id="toolbar_menu" data-ext="android.widget.menu">
                 <div
                     data-show-as-action="always"
                     title="Web">
@@ -156,12 +165,12 @@
                 </div>
             </nav>
         </div>
-        <div id="drawer_demo" data-ext="androme.widget.drawer">
-            <div id="drawer_content" data-ext="androme.widget.coordinator" data-include="drawer_content" data-include-end="true"></div>
+        <div id="drawer_demo" data-ext="android.widget.drawer">
+            <div id="drawer_content" data-ext="android.widget.coordinator" data-include="drawer_content" data-include-end="true"></div>
             <div id="drawer_header" data-ext="androme.external">
                 <span style="margin-top: 100px; display: block;">android@user.com</span>
             </div>
-            <nav id="drawer_menu" data-ext="androme.widget.menu">
+            <nav id="drawer_menu" data-ext="android.widget.menu">
                 <div>
                     <img src="../demos/images/icons8-chrome.png" />
                     <label>Chrome</label>

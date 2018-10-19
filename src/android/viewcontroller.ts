@@ -1,4 +1,4 @@
-import { SettingsAndroid, ViewAttribute } from './lib/types';
+import { SettingsAndroid, ViewAttribute } from './types/local';
 
 import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
 
@@ -7,6 +7,7 @@ import BASE_TMPL from './template/base';
 import View from './view';
 import ViewGroup from './viewgroup';
 import ResourceHandler from './resourcehandler';
+import NodeList = androme.lib.base.NodeList;
 
 import { delimitUnit, generateId, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
 
@@ -14,7 +15,6 @@ import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 import $xml = androme.lib.xml;
-import NodeList = androme.lib.base.NodeList;
 
 const MAP_LAYOUT = {
     relativeParent: {
@@ -300,6 +300,9 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             const flex = node.flex;
             if (relative || constraint || flex.enabled) {
                 const nodes = new NodeList(node.renderChildren.filter(item => item.auto) as T[], node);
+                if (nodes.length === 0) {
+                    return;
+                }
                 const cleared = NodeList.cleared(node.initial.children);
                 if (relative) {
                     mapLayout = MAP_LAYOUT.relative;
@@ -2219,6 +2222,9 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     private addGuideline(node: T, orientation = '', percent?: boolean, opposite?: boolean) {
         const map = MAP_LAYOUT.constraint;
+        if (!node) {
+            console.log(node);
+        }
         if (node.pageflow) {
             if (opposite == null) {
                 opposite = (

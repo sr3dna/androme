@@ -75,11 +75,17 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script src="../dist/android.framework.min.js"></script>
-    <script src="common/prod.js"></script>
+    <script async src="../dist/extensions/android.widget.menu.min.js"></script>
+    <script async src="../dist/extensions/android.widget.bottomnavigation.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            androme.ext('androme.widget.bottomnavigation', { // optional: default configuration is provided
+            //  <script> WITHOUT ASYNC: manual registerExtension required
+            //
+            //  androme.registerExtension(android.widget.menu);
+            //  androme.registerExtension(android.widget.bottomnavigation);
+            //
+            androme.ext('android.widget.bottomnavigation', { // optional: default configuration is provided
                 bottomnavigation_demo: {
                     android: {
                         background: '?android:attr/windowBackground'
@@ -104,6 +110,7 @@
             });
         });
     </script>
+    <script src="common/prod.js"></script>
 </head>
 <body>
     <!-- START: DEMO -->
@@ -127,8 +134,8 @@
         <br />
         <br />
         <br />
-        <div id="bottomnavigation_demo" data-ext="androme.widget.bottomnavigation">
-            <nav id="bottomnavigation_menu" data-ext="androme.widget.menu">
+        <div id="bottomnavigation_demo" data-ext="android.widget.bottomnavigation">
+            <nav id="bottomnavigation_menu" data-ext="android.widget.menu">
                 <div>
                     <img src="images/icons8-chrome.png" /><br />
                     <label>Chrome</label>

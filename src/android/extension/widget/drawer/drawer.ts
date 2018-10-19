@@ -1,14 +1,14 @@
-import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
+import WIDGET_NAME from '../namespace';
 
-import EXTENSION_DRAWER_TMPL from '../../template/extension/drawer';
+import EXTENSION_DRAWER_TMPL from '../__template/drawer';
 
-import View from '../../view';
-
-import { parseRTL } from '../../lib/util';
+import View = android.lib.base.View;
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
+import $const_android = android.lib.constant;
 import $util = androme.lib.util;
+import $util_android = android.lib.util;
 import $dom = androme.lib.dom;
 
 export default class Drawer<T extends View> extends androme.lib.base.Extension<T> {
@@ -47,14 +47,14 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         }
         else {
             const optionsNavigationView = Object.assign({}, this.options.navigationView);
-            $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
-            const navView = node.children[node.children.length - 1];
+            $util.overwriteDefault(optionsNavigationView, 'android', 'layout_gravity', $util_android.parseRTL('left', this.application.settings));
+            const navView = node.children[node.children.length - 1] as T;
             navView.android('layout_gravity', optionsNavigationView.android.layout_gravity);
             navView.android('layout_height', 'match_parent');
             navView.auto = false;
         }
         const output = this.application.viewController.renderNodeStatic(
-            VIEW_SUPPORT.DRAWER,
+            $const_android.VIEW_SUPPORT.DRAWER,
             node.depth,
             options,
             'match_parent',
@@ -73,7 +73,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         const application = this.application;
         const node = this.node;
         if (application.renderQueue[node.nodeId]) {
-            const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === VIEW_SUPPORT.COORDINATOR);
+            const target = application.cacheSession.find(item => item.parent === node.parent && item.controlName === $const_android.VIEW_SUPPORT.COORDINATOR);
             if (target) {
                 application.renderQueue[target.nodeId] = application.renderQueue[node.nodeId];
                 delete application.renderQueue[node.nodeId];
@@ -91,9 +91,9 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         if (menu !== '' || headerLayout !== '') {
             $util.overwriteDefault(options, 'android', 'id', `${node.stringId}_navigation`);
             $util.overwriteDefault(options, 'android', 'fitsSystemWindows', 'true');
-            $util.overwriteDefault(options, 'android', 'layout_gravity', parseRTL('left', this.application.settings));
+            $util.overwriteDefault(options, 'android', 'layout_gravity', $util_android.parseRTL('left', this.application.settings));
             const output = application.viewController.renderNodeStatic(
-                VIEW_SUPPORT.NAVIGATION_VIEW,
+                $const_android.VIEW_SUPPORT.NAVIGATION_VIEW,
                 node.depth + 1,
                 options,
                 'wrap_content',
@@ -126,6 +126,6 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         };
         $util.overwriteDefault(options, 'output', 'path', 'res/values-v21');
         $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);
-        this.application.resourceHandler.addTheme(EXTENSION_DRAWER_TMPL, data, options);
+        (<android.lib.base.Resource<T>> this.application.resourceHandler).addTheme(EXTENSION_DRAWER_TMPL, data, options);
     }
 }

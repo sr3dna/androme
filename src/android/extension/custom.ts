@@ -1,4 +1,4 @@
-import { SettingsAndroid } from '../lib/types';
+import { SettingsAndroid } from '../types/local';
 
 import View from '../view';
 import ResourceHandler from '../resourcehandler';

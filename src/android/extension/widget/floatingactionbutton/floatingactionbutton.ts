@@ -1,15 +1,15 @@
-import { SettingsAndroid } from '../../lib/types';
+import { SettingsAndroid } from '../../../types/local';
 
-import { DRAWABLE_PREFIX, VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
+import WIDGET_NAME from '../namespace';
 
-import View from '../../view';
-import ResourceHandler from '../../resourcehandler';
-
-import { parseRTL } from '../../lib/util';
+import View = android.lib.base.View;
 
 import $enum = androme.lib.enumeration;
+import $const_android = android.lib.constant;
 import $util = androme.lib.util;
+import $util_android = android.lib.util;
 import $color = androme.lib.color;
+import $resource_android = android.lib.base.Resource;
 
 export default class FloatingActionButton<T extends View> extends androme.lib.base.extensions.Button<T> {
     public processNode(): ExtensionResult {
@@ -19,32 +19,32 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
         const element = node.element;
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = $color.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-        $util.overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${ResourceHandler.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent');
+        $util.overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${$resource_android.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent');
         if (node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
             $util.overwriteDefault(options, 'android', 'focusable', 'false');
         }
         let src = '';
         switch (element.tagName) {
             case 'IMG':
-                src = ResourceHandler.addImageSrcSet(<HTMLImageElement> element, DRAWABLE_PREFIX.DIALOG);
+                src = $resource_android.addImageSrcSet(<HTMLImageElement> element, $const_android.DRAWABLE_PREFIX.DIALOG);
                 break;
             case 'INPUT':
                 if ((<HTMLInputElement> element).type === 'image') {
-                    src = ResourceHandler.addImage({ 'mdpi': (<HTMLInputElement> element).src }, DRAWABLE_PREFIX.DIALOG);
+                    src = $resource_android.addImage({ 'mdpi': (<HTMLInputElement> element).src }, $const_android.DRAWABLE_PREFIX.DIALOG);
                 }
                 else {
-                    src = ResourceHandler.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
+                    src = $resource_android.addImageURL(node.css('backgroundImage'), $const_android.DRAWABLE_PREFIX.DIALOG);
                 }
                 break;
             case 'BUTTON':
-                src = ResourceHandler.addImageURL(node.css('backgroundImage'), DRAWABLE_PREFIX.DIALOG);
+                src = $resource_android.addImageURL(node.css('backgroundImage'), $const_android.DRAWABLE_PREFIX.DIALOG);
                 break;
         }
         if (src !== '') {
             $util.overwriteDefault(options, 'app', 'srcCompat', `@drawable/${src}`);
         }
         const output = this.application.viewController.renderNodeStatic(
-            VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
+            $const_android.VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
             target ? -1 : parent.renderDepth + 1,
             options,
             'wrap_content',
@@ -58,7 +58,7 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
             this.setFrameGravity(node);
             if (target) {
                 let anchor = parent.stringId;
-                if (parent.controlName === VIEW_SUPPORT.TOOLBAR) {
+                if (parent.controlName === $const_android.VIEW_SUPPORT.TOOLBAR) {
                     const outerParent: string = parent.data(WIDGET_NAME.TOOLBAR, 'outerParent');
                     if (outerParent) {
                         anchor = outerParent;
@@ -93,10 +93,10 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
         const verticalBias = node.verticalBias(settings);
         const gravity: string[] = [];
         if (horizontalBias < 0.5) {
-            gravity.push(parseRTL('left', settings));
+            gravity.push($util_android.parseRTL('left', settings));
         }
         else if (horizontalBias > 0.5) {
-            gravity.push(parseRTL('right', settings));
+            gravity.push($util_android.parseRTL('right', settings));
         }
         else {
             gravity.push('center_horizontal');

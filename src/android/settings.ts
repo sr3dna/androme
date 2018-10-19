@@ -1,6 +1,6 @@
-import { SettingsAndroid } from './lib/types';
+import { SettingsAndroid } from './types/local';
 
-import { BUILD_ANDROID, DENSITY_ANDROID } from './lib/constant';
+import { BUILD_ANDROID, DENSITY_ANDROID } from './lib/enumeration';
 
 const settings: SettingsAndroid = {
     builtInExtensions: [
@@ -10,8 +10,7 @@ const settings: SettingsAndroid = {
         'androme.accessibility',
         'androme.list',
         'androme.table',
-        'androme.grid',
-        'androme.widget'
+        'androme.grid'
     ],
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,

@@ -1,10 +1,11 @@
-import { VIEW_SUPPORT, WIDGET_NAME } from '../lib/constant';
+import WIDGET_NAME from '../namespace';
 
-import EXTENSION_GENERIC_TMPL from '../../template/extension/generic';
+import EXTENSION_GENERIC_TMPL from '../__template/generic';
 
-import View from '../../view';
+import View = android.lib.base.View;
 
 import $enum = androme.lib.enumeration;
+import $const_android = android.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
 
@@ -25,7 +26,7 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
         const options = Object.assign({}, this.options[node.element.id]);
         $util.overwriteDefault(options, 'android', 'background', `?android:attr/windowBackground`);
         const output = this.application.viewController.renderNodeStatic(
-            VIEW_SUPPORT.BOTTOM_NAVIGATION,
+            $const_android.VIEW_SUPPORT.BOTTOM_NAVIGATION,
             node.depth,
             options,
             parent.is($enum.NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent',
@@ -56,11 +57,12 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
 
     public afterInsert() {
         const node = this.node;
-        if (!node.renderParent.has('width')) {
-            node.renderParent.android('layout_width', 'match_parent');
+        const renderParent = node.renderParent as T;
+        if (!renderParent.has('width')) {
+            renderParent.android('layout_width', 'match_parent');
         }
-        if (!node.renderParent.has('height')) {
-            node.renderParent.android('layout_height', 'match_parent');
+        if (!renderParent.has('height')) {
+            renderParent.android('layout_height', 'match_parent');
         }
     }
 
@@ -77,6 +79,6 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
         };
         $util.overwriteDefault(options, 'output', 'path', 'res/values');
         $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);
-        this.application.resourceHandler.addTheme(EXTENSION_GENERIC_TMPL, data, options);
+        (<android.lib.base.Resource<T>> this.application.resourceHandler).addTheme(EXTENSION_GENERIC_TMPL, data, options);
     }
 }

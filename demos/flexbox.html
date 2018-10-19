@@ -110,7 +110,6 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script src="../dist/android.framework.min.js"></script>
-    <script src="common/prod.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
@@ -124,6 +123,7 @@
             document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
         });
     </script>
+    <script src="common/prod.js"></script>
 </head>
 <body>
     <!-- START: DEMO -->

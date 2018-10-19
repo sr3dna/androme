@@ -1,12 +1,12 @@
 {
   "name": "androme",
   "version": "2.0.2",
-  "description": "Converts and optimizes HTML pages with JavaScript into the various standard Android layouts in XML. iOS will be supported through Flutter integration. Compatible with Chrome and Safari.",
+  "description": "Converts and optimizes HTML pages with JavaScript into the various standard Android layouts in XML. iOS could possibly be supported with Swift. Compatible with Chrome and Safari.",
   "main": "dist/androme.min.js",
   "scripts": {
     "express": "node app.js",
     "dev": "tsc -w",
-    "prod": "npm run clean && tslint -c tslint.json 'src/**/*.ts' && tsc --inlineSourceMap false && rollup -c rollup.config.js",
+    "prod": "npm run clean && tslint -c tslint.json 'src/**/*.ts' && tsc --inlineSourceMap false && rollup -c rollup.config.js && cd ./src/android/extension/widget && rollup -c rollup.config.js",
     "clean": "rimraf build/* && rimraf dist/* && rimraf temp/*"
   },
   "repository": {

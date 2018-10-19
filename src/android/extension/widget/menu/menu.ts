@@ -1,11 +1,16 @@
-import { SettingsAndroid, ViewAttribute } from '../../lib/types';
+import { SettingsAndroid, ViewAttribute } from '../../../types/local';
 
-import { DRAWABLE_PREFIX, VIEW_NAVIGATION } from '../lib/constant';
-
-import View from '../../view';
-import ResourceHandler from '../../resourcehandler';
+import View = android.lib.base.View;
 
 import $enum = androme.lib.enumeration;
+import $const_android = android.lib.constant;
+import $resource_android = android.lib.base.Resource;
+
+const VIEW_NAVIGATION = {
+    MENU: 'menu',
+    ITEM: 'item',
+    GROUP: 'group'
+};
 
 const VALIDATE_ITEM = {
     id: /^@\+id\/\w+$/,
@@ -131,14 +136,14 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
             case VIEW_NAVIGATION.ITEM:
                 this.parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') === '') {
-                    let src = ResourceHandler.addImageURL(element.style.backgroundImage as string, DRAWABLE_PREFIX.MENU);
+                    let src = $resource_android.addImageURL(element.style.backgroundImage as string, $const_android.DRAWABLE_PREFIX.MENU);
                     if (src !== '') {
                         options.android.icon = `@drawable/${src}`;
                     }
                     else {
                         const image = node.children.find(item => item.imageElement);
                         if (image) {
-                            src = ResourceHandler.addImageSrcSet(<HTMLImageElement> image.element, DRAWABLE_PREFIX.MENU);
+                            src = $resource_android.addImageSrcSet(<HTMLImageElement> image.element, $const_android.DRAWABLE_PREFIX.MENU);
                             if (src !== '') {
                                 options.android.icon = `@drawable/${src}`;
                             }
@@ -152,7 +157,7 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
         }
         if (node.android('title') === '') {
             if (title !== '') {
-                const name = ResourceHandler.addString(title, '', <SettingsAndroid> this.application.settings);
+                const name = $resource_android.addString(title, '', <SettingsAndroid> this.application.settings);
                 if (name !== '') {
                     title = `@string/${name}`;
                 }

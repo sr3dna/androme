@@ -1,7 +1,6 @@
-import { SettingsAndroid } from './lib/types';
+import { SettingsAndroid } from './types/local';
 
 import { XMLNS_ANDROID } from './lib/constant';
-import { WIDGET_NAME } from './extension/lib/constant';
 import SETTINGS from './settings';
 import API_ANDROID from './customizations';
 
@@ -17,12 +16,20 @@ import Accessibility from './extension/accessibility';
 import List from './extension/list';
 import Grid from './extension/grid';
 import Table from './extension/table';
-import Button from './extension/widget/floatingactionbutton';
-import Menu from './extension/widget/menu';
-import Coordinator from './extension/widget/coodinator';
-import Toolbar from './extension/widget/toolbar';
-import BottomNavigation from './extension/widget/bottomnavigation';
-import Drawer from './extension/widget/drawer';
+
+import * as enumeration from './lib/enumeration';
+import * as constant from './lib/constant';
+import * as util from './lib/util';
+
+const lib = {
+    base: {
+        View,
+        Resource: ResourceHandler
+    },
+    enumeration,
+    constant,
+    util
+};
 
 function autoClose() {
     const main = viewController.application;
@@ -45,48 +52,7 @@ let settings: SettingsAndroid;
 const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
 
 const appBase: AppFramework<T> = {
-    create() {
-        const EXT_NAME = androme.lib.constant.EXT_NAME;
-        settings = Object.assign({}, SETTINGS);
-        const fileHandler = new FileHandler<T>(settings);
-        application = new androme.lib.base.Application(framework);
-        viewController = new ViewController<T>();
-        resourceHandler = new ResourceHandler<T>(fileHandler);
-        application.registerController(viewController);
-        application.registerResource(resourceHandler);
-        application.nodeObject = View;
-        application.builtInExtensions = {
-            [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
-            [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
-            [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
-            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
-            [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
-            [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
-            [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
-            [WIDGET_NAME.FAB]: new Button(WIDGET_NAME.FAB, framework, ['BUTTON', 'INPUT', 'IMG']),
-            [WIDGET_NAME.MENU]: new Menu(WIDGET_NAME.MENU, framework, ['NAV']),
-            [WIDGET_NAME.COORDINATOR]: new Coordinator(WIDGET_NAME.COORDINATOR, framework),
-            [WIDGET_NAME.TOOLBAR]: new Toolbar(WIDGET_NAME.TOOLBAR, framework),
-            [WIDGET_NAME.BOTTOM_NAVIGATION]: new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, framework),
-            [WIDGET_NAME.DRAWER]: new Drawer(WIDGET_NAME.DRAWER, framework)
-        };
-        initialized = true;
-        return {
-            application,
-            framework,
-            settings
-        };
-    },
-    cached() {
-        if (initialized) {
-            return {
-                application,
-                framework,
-                settings
-            };
-        }
-        return appBase.create();
-    },
+    lib,
     system: {
         customize(build: number, widget: string, options: {}) {
             if (API_ANDROID[build]) {
@@ -181,6 +147,42 @@ const appBase: AppFramework<T> = {
             }
             return '';
         }
+    },
+    create() {
+        const EXT_NAME = androme.lib.constant.EXT_NAME;
+        settings = Object.assign({}, SETTINGS);
+        const fileHandler = new FileHandler<T>(settings);
+        application = new androme.lib.base.Application(framework);
+        viewController = new ViewController<T>();
+        resourceHandler = new ResourceHandler<T>(fileHandler);
+        application.registerController(viewController);
+        application.registerResource(resourceHandler);
+        application.nodeObject = View;
+        application.builtInExtensions = {
+            [EXT_NAME.EXTERNAL]: new External(EXT_NAME.EXTERNAL, framework),
+            [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
+            [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
+            [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
+            [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
+            [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
+            [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN'])
+        };
+        initialized = true;
+        return {
+            application,
+            framework,
+            settings
+        };
+    },
+    cached() {
+        if (initialized) {
+            return {
+                application,
+                framework,
+                settings
+            };
+        }
+        return appBase.create();
     }
 };
 
