@@ -7,8 +7,8 @@ import NodeList from './nodelist';
 import Application from './application';
 import File from './file';
 
-import { convertInt, convertPX, hasValue, isNumber, isPercent, hasBit } from '../lib/util';
-import { cssAttribute, cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isLineBreak, setElementCache } from '../lib/dom';
+import { convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
+import { cssAttribute, cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isUserAgent, isLineBreak, setElementCache } from '../lib/dom';
 import { replaceEntity } from '../lib/xml';
 import { parseHex, parseRGBA } from '../lib/color';
 
@@ -58,6 +58,23 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         return '';
     }
 
+    public static isBorderVisible(border?: BorderAttribute) {
+        return border != null && !(border.style === 'none' || border.width === '0px' || (Array.isArray(border.color) && (border.color.length === 0 || border.color[2] === '0')));
+    }
+
+    public static hasDrawableBackground(object?: BoxStyle) {
+        return (
+            object != null && (
+                this.isBorderVisible(object.borderTop) ||
+                this.isBorderVisible(object.borderRight) ||
+                this.isBorderVisible(object.borderBottom) ||
+                this.isBorderVisible(object.borderLeft) ||
+                object.borderRadius.length > 0 ||
+                (object.backgroundImage !== '' && object.backgroundImage !== 'none')
+            )
+        );
+    }
+
     public abstract settings: Settings;
     public cache: NodeList<T>;
     public application: Application<T>;
@@ -90,11 +107,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 const result = getBoxSpacing(node.element);
                 const formatted = {};
                 for (const attr in result) {
-                    if (node.inlineStatic && (
-                          attr === 'marginTop' ||
-                          attr === 'marginBottom'
-                       ))
-                    {
+                    if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
                         formatted[attr] = '0px';
                     }
                     else {
@@ -242,7 +255,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     this.settings.alwaysReevaluateResources
                ))
             {
-                const backgroundImage = this.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
+                const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
                 if (node.length > 0 ||
                     node.imageElement ||
                     node.tagName === 'HR' ||
@@ -264,7 +277,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     let fontFamily = node.css('fontFamily');
                     let fontSize = node.css('fontSize');
                     let fontWeight = node.css('fontWeight');
-                    if (hasBit(this.application.userAgent, USER_AGENT.EDGE) && !node.has('fontFamily')) {
+                    if (isUserAgent(USER_AGENT.EDGE) && !node.has('fontFamily')) {
                         switch (node.tagName) {
                             case 'TT':
                             case 'CODE':
@@ -619,7 +632,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                     else if (
                         element.innerText.trim() === '' &&
-                        this.hasDrawableBackground(<BoxStyle> getElementCache(element, 'boxStyle')))
+                        Resource.hasDrawableBackground(<BoxStyle> getElementCache(element, 'boxStyle')))
                     {
                         value = replaceEntity(element.innerText);
                         performTrim = false;
@@ -718,22 +731,5 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 });
             }
         });
-    }
-
-    public borderVisible(border?: BorderAttribute) {
-        return border != null && !(border.style === 'none' || border.width === '0px');
-    }
-
-    public hasDrawableBackground(object?: BoxStyle) {
-        return (
-            object != null && (
-                this.borderVisible(object.borderTop) ||
-                this.borderVisible(object.borderRight) ||
-                this.borderVisible(object.borderBottom) ||
-                this.borderVisible(object.borderLeft) ||
-                object.borderRadius.length > 0 ||
-                (object.backgroundImage !== '' && object.backgroundImage !== 'none')
-            )
-        );
     }
 }

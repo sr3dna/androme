@@ -5,6 +5,8 @@ declare global {
         export class Resource<T extends Node> implements AppCurrent<T> {
             public static STORED: ResourceMap;
             public static insertStoredAsset(asset: string, name: string, value: any): string;
+            public static isBorderVisible(border?: BorderAttribute): boolean;
+            public static hasDrawableBackground(object?: BoxStyle): boolean;
             public settings: Settings;
             public cache: NodeList<T>;
             public application: Application<T>;
@@ -20,8 +22,6 @@ declare global {
             public setFontStyle(): void;
             public setValueString(): void;
             public setOptionArray(): void;
-            public borderVisible(border?: BorderAttribute): boolean;
-            public hasDrawableBackground(object?: BoxStyle): boolean;
         }
     }
 }

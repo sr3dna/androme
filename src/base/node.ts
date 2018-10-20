@@ -78,7 +78,7 @@ export default abstract class Node implements androme.lib.base.Node {
     public abstract setLayout(width?: number, height?: number): void;
     public abstract setAlignment(settings: Settings): void;
     public abstract setBoxSpacing(settings: Settings): void;
-    public abstract applyOptimizations(settings: Settings, userAgent: number): void;
+    public abstract applyOptimizations(settings: Settings): void;
     public abstract applyCustomizations(settings: Settings): void;
     public abstract modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
     public abstract valueBox(region: number): string[];
@@ -607,9 +607,9 @@ export default abstract class Node implements androme.lib.base.Node {
                         }
                         else {
                             if (!this.hasWidth && (
-                                  this.blockStatic ||
-                                  this.display === 'table-cell' ||
-                                  hasLineBreak(this._element)
+                                    this.blockStatic ||
+                                    this.display === 'table-cell' ||
+                                    hasLineBreak(this._element)
                                ))
                             {
                                 this.multiLine = multiLine;

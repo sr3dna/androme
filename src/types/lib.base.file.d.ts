@@ -3,6 +3,7 @@ import { ResourceMap } from './resource';
 declare global {
     namespace androme.lib.base {
         export class File<T extends Node> {
+            public static downloadToDisk(data: Blob, filename: string, mime?: string): void;
             public settings: Settings;
             public appName: string;
             public stored: ResourceMap;

@@ -122,7 +122,7 @@ declare global {
             public setLayout(): void;
             public setAlignment(settings: Settings): void;
             public setBoxSpacing(settings: Settings): void;
-            public applyOptimizations(settings: Settings, userAgent: number): void;
+            public applyOptimizations(settings: Settings): void;
             public applyCustomizations(settings: Settings): void;
             public modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
             public valueBox(region: number): string[];

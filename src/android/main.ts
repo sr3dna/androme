@@ -21,15 +21,7 @@ import * as enumeration from './lib/enumeration';
 import * as constant from './lib/constant';
 import * as util from './lib/util';
 
-const lib = {
-    base: {
-        View,
-        Resource: ResourceHandler
-    },
-    enumeration,
-    constant,
-    util
-};
+type T = View;
 
 function autoClose() {
     const main = viewController.application;
@@ -40,8 +32,6 @@ function autoClose() {
     return false;
 }
 
-type T = View;
-
 let initialized = false;
 
 let application: androme.lib.base.Application<T>;
@@ -50,6 +40,16 @@ let resourceHandler: ResourceHandler<T>;
 
 let settings: SettingsAndroid;
 const framework: number = androme.lib.enumeration.APP_FRAMEWORK.ANDROID;
+
+const lib = {
+    base: {
+        View,
+        Resource: ResourceHandler
+    },
+    enumeration,
+    constant,
+    util
+};
 
 const appBase: AppFramework<T> = {
     lib,

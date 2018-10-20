@@ -60,6 +60,7 @@ declare global {
             export function sortDesc<T>(list: T[], ...attrs: string[]): T[];
         }
         namespace dom {
+            export function isUserAgent(value: number): boolean;
             export function getBoxRect(): BoxRect;
             export function getClientRect(): BoxDimensions;
             export function getBoxModel(): BoxModel;

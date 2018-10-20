@@ -1,6 +1,7 @@
 declare global {
     namespace androme.lib.base {
         export class Application<T extends Node> {
+            public static sortByAlignment<T extends Node>(children: T[], parent?: T, alignmentType?: number): boolean;
             public settings: Settings;
             public viewController: Controller<T>;
             public resourceHandler: Resource<T>;
@@ -19,18 +20,16 @@ declare global {
             public readonly layouts: PlainFile[];
             public readonly viewData: ViewData<NodeList<T>>;
             public readonly size: number;
-            public readonly userAgent: number;
             constructor(framework: number);
             public registerController(controller: Controller<T>): void;
             public registerResource(resource: Resource<T>): void;
             public registerExtension(ext: Extension<Node>): void;
             public finalize(): void;
+            public saveAllToDisk(): void;
             public reset(): void;
             public parseDocument(...elements: Null<string | Element>[]): FunctionMap<void>;
             public setConstraints(): void;
-            public resetController(): void;
             public setResources(): void;
-            public resetResource(): void;
             public initCache(rootElement: HTMLElement): boolean;
             public createDocument(): void;
             public writeFrameLayout(node: T, parent: T, children?: boolean): string;
@@ -41,14 +40,12 @@ declare global {
             public writeNode(node: T, parent: T, nodeName: number | string): string;
             public writeFrameLayoutHorizontal(group: T, parent: T, nodes: T[], cleared: Map<T, string>): string;
             public writeFrameLayoutVertical(group: Null<T>, parent: T, nodes: T[], cleared: Map<T, string>): string;
-            public renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
             public createLayoutFile(pathname: string, filename: string, content: string, documentRoot?: boolean): void;
             public createIncludeFile(filename: string, content: string): void;
             public addRenderQueue(id: string, views: string[]): void;
-            public sortByAlignment(children: T[], parent?: T, alignmentType?: number, preserve?: boolean): T[];
             public saveSortOrder(id: string | number, nodes: T[]): void;
             public getExtension(name: string): Null<Extension<T>>;
-            public saveAllToDisk(): void;
+            public insertNode(element: Element, parent?: T): Null<T>;
             public toString(): string;
         }
     }

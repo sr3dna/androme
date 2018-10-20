@@ -1,6 +1,9 @@
+import View from '../android/view';
+
 declare global {
     namespace androme.lib.base {
         export class Controller<T extends Node> implements AppCurrent<T> {
+            public static getEnclosingTag(depth: number, controlName: string, id: number, xml?: string, preXml?: string, postXml?: string): string;
             public settings: Settings;
             public cache: NodeList<T>;
             public application: Application<T>;

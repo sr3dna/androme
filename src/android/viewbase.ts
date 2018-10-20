@@ -547,13 +547,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public setAlignment(settings: SettingsAndroid) {
-            const renderParent = this.renderParent;
-            const textAlignParent = this.cssParent('textAlign');
-            const left = parseRTL('left', settings);
-            const right = parseRTL('right', settings);
-            let textAlign = this.styleMap.textAlign || '';
-            let verticalAlign = '';
-            let floating = '';
             function mergeGravity(original?: Null<string>, ...alignment: string[]) {
                 const direction = [...$util.trimNull(original).split('|'), ...alignment].filter(value => value);
                 switch (direction.length) {
@@ -647,6 +640,13 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 }
                 return textAlign;
             }
+            const renderParent = this.renderParent;
+            const textAlignParent = this.cssParent('textAlign');
+            const left = parseRTL('left', settings);
+            const right = parseRTL('right', settings);
+            let textAlign = this.styleMap.textAlign || '';
+            let verticalAlign = '';
+            let floating = '';
             if (!(this.floating || renderParent.of($enum.NODE_STANDARD.RELATIVE, $enum.NODE_ALIGNMENT.MULTILINE))) {
                 switch (this.styleMap.verticalAlign) {
                     case 'top':
@@ -748,11 +748,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 this.android('layout_gravity', mergeGravity(this.android('layout_gravity'), verticalAlign));
                 verticalAlign = '';
             }
-            if (this.documentRoot && (
-                  this.blockWidth ||
-                  this.is($enum.NODE_STANDARD.FRAME)
-               ))
-            {
+            if (this.documentRoot && (this.blockWidth || this.is($enum.NODE_STANDARD.FRAME))) {
                 this.delete('android', 'layout_gravity');
             }
             this.android('gravity', mergeGravity(this.android('gravity'), convertHorizontal(textAlign), verticalAlign));
@@ -801,11 +797,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        public applyOptimizations(settings: SettingsAndroid, userAgent: number) {
+        public applyOptimizations(settings: SettingsAndroid) {
             this.setBlockSpacing();
             this.bindWhiteSpace(settings);
             this.autoSizeBoxModel(settings);
-            this.alignLinearLayout(settings, userAgent);
+            this.alignLinearLayout(settings);
             this.alignRelativePosition();
         }
 
@@ -1048,10 +1044,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     )
                     .filter(element => {
                         const item = $dom.getNodeFromElement<View>(element);
-                        return (item && (
-                            item.lineBreak ||
-                            (item.excluded && item.blockStatic)
-                        ));
+                        return item && (item.lineBreak || (item.excluded && item.blockStatic));
                     });
                     if (elements.length > 0) {
                         let bottom: number;
@@ -1081,7 +1074,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        private alignLinearLayout(settings: SettingsAndroid, userAgent: number) {
+        private alignLinearLayout(settings: SettingsAndroid) {
             if (this.linearHorizontal) {
                 const renderParent = this.renderParent;
                 const renderChildren = this.renderChildren;
@@ -1144,7 +1137,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         (renderChildren.some(node => node.nodeType < $enum.NODE_STANDARD.TEXT) && renderChildren.some(node => node.textElement && node.baseline)) ||
                         (renderParent.is($enum.NODE_STANDARD.GRID) && !renderChildren.some(node => node.textElement && node.baseline)))
                     {
-                        const baseline = NodeList.textBaseline(renderChildren, userAgent);
+                        const baseline = NodeList.textBaseline(renderChildren);
                         if (baseline.length > 0) {
                             this.android('baselineAlignedChildIndex', renderChildren.indexOf(baseline[0]).toString());
                         }

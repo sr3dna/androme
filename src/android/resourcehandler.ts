@@ -19,6 +19,28 @@ import $xml = androme.lib.xml;
 import $color = androme.lib.color;
 import $resource = androme.lib.base.Resource;
 
+type StyleTag = {
+    name: string;
+    attributes: string;
+    ids: number[];
+};
+
+type BackgroundImage = {
+    src: string;
+    top: string;
+    right: string;
+    bottom: string;
+    left: string;
+    gravity: string;
+    tileMode: string;
+    tileModeX: string;
+    tileModeY: string;
+    width: string;
+    height: string;
+};
+
+type StyleList = ArrayObject<ObjectMap<number[]>>;
+
 const METHOD_ANDROID = {
     'boxStyle': {
         'background': 'android:background="@drawable/{0}"',
@@ -43,30 +65,118 @@ const METHOD_ANDROID = {
     }
 };
 
-type StyleTag = {
-    name: string;
-    attributes: string;
-    ids: number[];
-};
+function getStoredDrawable(xml: string) {
+    for (const [name, value] of $resource.STORED.drawables.entries()) {
+        if (value === xml) {
+            return name;
+        }
+    }
+    return '';
+}
 
-type BackgroundImage = {
-    src: string;
-    top: string;
-    right: string;
-    bottom: string;
-    left: string;
-    gravity: string;
-    tileMode: string;
-    tileModeX: string;
-    tileModeY: string;
-    width: string;
-    height: string;
-};
-
-type StyleList = ArrayObject<ObjectMap<number[]>>;
+function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = false): StringMap {
+    const result = {
+        solid: `android:color="@color/${border.color}"`,
+        groove: '',
+        ridge: ''
+    };
+    Object.assign(result, {
+        double: result.solid,
+        inset: result.solid,
+        outset: result.solid,
+        dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
+        dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
+    });
+    const groove = border.style === 'groove';
+    if (parseInt(border.width) > 1 && (groove || border.style === 'ridge')) {
+        let colorName = $util.isString(border.color) ? border.color : '';
+        let hexValue = ResourceHandler.getColor(colorName);
+        if (hexValue !== '') {
+            let opacity = '1';
+            if (hexValue.length === 9) {
+                hexValue = `#${hexValue.substring(3)}`;
+                opacity = `0.${hexValue.substring(1, 3)}`;
+            }
+            const reduced = $color.parseRGBA($color.reduceToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
+            if (reduced.length > 0) {
+                colorName = ResourceHandler.addColor(reduced[0], opacity);
+            }
+        }
+        const colorReduced = `android:color="@color/${colorName}"`;
+        if (groove) {
+            if (halfSize) {
+                switch (direction) {
+                    case 0:
+                        result['groove'] = colorReduced;
+                        break;
+                    case 1:
+                        result['groove'] = colorReduced;
+                        break;
+                    case 2:
+                        result['groove'] = result.solid;
+                        break;
+                    case 3:
+                        result['groove'] = result.solid;
+                        break;
+                }
+            }
+            else {
+                switch (direction) {
+                    case 0:
+                        result['groove'] = result.solid;
+                        break;
+                    case 1:
+                        result['groove'] = result.solid;
+                        break;
+                    case 2:
+                        result['groove'] = colorReduced;
+                        break;
+                    case 3:
+                        result['groove'] = colorReduced;
+                        break;
+                }
+            }
+        }
+        else {
+            if (halfSize) {
+                switch (direction) {
+                    case 0:
+                        result['ridge'] = result.solid;
+                        break;
+                    case 1:
+                        result['ridge'] = result.solid;
+                        break;
+                    case 2:
+                        result['ridge'] = colorReduced;
+                        break;
+                    case 3:
+                        result['ridge'] = colorReduced;
+                        break;
+                }
+            }
+            else {
+                switch (direction) {
+                    case 0:
+                        result['ridge'] = colorReduced;
+                        break;
+                    case 1:
+                        result['ridge'] = colorReduced;
+                        break;
+                    case 2:
+                        result['ridge'] = result.solid;
+                        break;
+                    case 3:
+                        result['ridge'] = result.solid;
+                        break;
+                }
+            }
+        }
+    }
+    return result[border.style] || result.solid;
+}
 
 export default class ResourceHandler<T extends View> extends androme.lib.base.Resource<T> {
-    public static getStored(name: string) {
+    public static getStored(name: string): Map<string, any> {
         return $resource.STORED[name];
     }
 
@@ -82,7 +192,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 switch (attr) {
                                     case 'text':
                                         if (!value.startsWith('@string/')) {
-                                            value = ResourceHandler.addString(value, '', settings);
+                                            value = this.addString(value, '', settings);
                                             if (value !== '') {
                                                 obj[attr] = `@string/${value}`;
                                                 continue;
@@ -91,7 +201,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         break;
                                     case 'src':
                                         if (/^\w+:\/\//.test(value)) {
-                                            value = ResourceHandler.addImage({ 'mdpi': value });
+                                            value = this.addImage({ 'mdpi': value });
                                             if (value !== '') {
                                                 obj[attr] = `@drawable/${value}`;
                                                 continue;
@@ -103,7 +213,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                         const hex = $color.parseHex(value);
                         if (hex !== '') {
-                            obj[attr] = `@color/${ResourceHandler.addColor(hex)}`;
+                            obj[attr] = `@color/${this.addColor(hex)}`;
                         }
                     }
                 }
@@ -186,7 +296,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         if (images['mdpi'] == null) {
             images['mdpi'] = element.src;
         }
-        return ResourceHandler.addImage(images, prefix);
+        return this.addImage(images, prefix);
     }
 
     public static addImage(images: StringMap, prefix = '') {
@@ -215,27 +325,27 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     public static addImageURL(value: string, prefix = '') {
         const url = $dom.cssResolveUrl(value);
         if (url !== '') {
-            return ResourceHandler.addImage({ 'mdpi': url }, prefix);
+            return this.addImage({ 'mdpi': url }, prefix);
         }
         return '';
     }
 
     public static addColor(value: string, opacity = '1') {
         value = value.toUpperCase().trim();
-        const opaque = parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}` : value;
         if (value !== '') {
-            let colorName = $resource.STORED.colors.get(opaque) || '';
+            const hex = parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}` : value;
+            let colorName = $resource.STORED.colors.get(hex) || '';
             if (colorName === '') {
                 const color = $color.getColorNearest(value);
                 if (color) {
                     color.name = $util.camelToLowerCase(color.name);
-                    if (value === color.hex && value === opaque) {
+                    if (hex === color.hex) {
                         colorName = color.name;
                     }
                     else {
                         colorName = generateId('color', `${color.name}_1`);
                     }
-                    $resource.STORED.colors.set(opaque, colorName);
+                    $resource.STORED.colors.set(hex, colorName);
                 }
             }
             return colorName;
@@ -258,183 +368,6 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             return [$util.convertPX(match[1], fontSize), $util.convertPX(match[2], fontSize)];
         }
         return ['', ''];
-    }
-
-    private static deleteStyleAttribute(sorted: ObjectMap<number[]>[], attrs: string, ids: number[]) {
-        attrs.split(';').forEach(value => {
-            for (let i = 0; i < sorted.length; i++) {
-                if (sorted[i]) {
-                    let index = -1;
-                    let key = '';
-                    for (const j in sorted[i]) {
-                        if (j === value) {
-                            index = i;
-                            key = j;
-                            i = sorted.length;
-                            break;
-                        }
-                    }
-                    if (index !== -1) {
-                        sorted[index][key] = sorted[index][key].filter(id => !ids.includes(id));
-                        if (sorted[index][key].length === 0) {
-                            delete sorted[index][key];
-                        }
-                        break;
-                    }
-                }
-            }
-        });
-    }
-
-    private static getStoredDrawable(xml: string) {
-        for (const [name, value] of $resource.STORED.drawables.entries()) {
-            if (value === xml) {
-                return name;
-            }
-        }
-        return '';
-    }
-
-    private static getShapeAttribute(stored: BoxStyle, name: string, direction = -1, hasInset = false, isInset = false): any[] | boolean {
-        switch (name) {
-            case 'stroke':
-                if (stored.border && stored.border.width !== '0px') {
-                    if (!hasInset || isInset) {
-                        return [{
-                            width: stored.border.width,
-                            borderStyle: ResourceHandler.getBorderStyle(stored.border, isInset ? direction : -1)
-                        }];
-                    }
-                    else if (hasInset) {
-                        return [{
-                            width: $util.formatPX(Math.ceil(parseInt(stored.border.width) / 2)),
-                            borderStyle: ResourceHandler.getBorderStyle(stored.border, direction, true)
-                        }];
-                    }
-                }
-                return false;
-            case 'backgroundColor':
-                return stored.backgroundColor.length !== 0 && stored.backgroundColor !== '' ? [{ color: stored.backgroundColor }] : false;
-            case 'radius':
-                if (stored.borderRadius.length === 1) {
-                    if (stored.borderRadius[0] !== '0px') {
-                        return [{ radius: stored.borderRadius[0] }];
-                    }
-                }
-                else if (stored.borderRadius.length > 1) {
-                    const result = {};
-                    stored.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
-                    return [result];
-                }
-                return false;
-
-        }
-        return false;
-    }
-
-    private static getBorderStyle(border: BorderAttribute, direction = -1, halfSize = false): StringMap {
-        const result = {
-            solid: `android:color="@color/${border.color}"`,
-            groove: '',
-            ridge: ''
-        };
-        Object.assign(result, {
-            double: result.solid,
-            inset: result.solid,
-            outset: result.solid,
-            dotted: `${result.solid} android:dashWidth="3px" android:dashGap="1px"`,
-            dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
-        });
-        const groove = border.style === 'groove';
-        if (parseInt(border.width) > 1 && (
-                groove ||
-                border.style === 'ridge'
-           ))
-        {
-            let colorName = $util.isString(border.color) ? border.color : '';
-            let hexValue = ResourceHandler.getColor(colorName);
-            if (hexValue !== '') {
-                let opacity = '1';
-                if (hexValue.length === 9) {
-                    hexValue = `#${hexValue.substring(3)}`;
-                    opacity = `0.${hexValue.substring(1, 3)}`;
-                }
-                const reduced = $color.parseRGBA($color.reduceToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
-                if (reduced.length > 0) {
-                    colorName = ResourceHandler.addColor(reduced[0], opacity);
-                }
-            }
-            const colorReduced = `android:color="@color/${colorName}"`;
-            if (groove) {
-                if (halfSize) {
-                    switch (direction) {
-                        case 0:
-                            result['groove'] = colorReduced;
-                            break;
-                        case 1:
-                            result['groove'] = colorReduced;
-                            break;
-                        case 2:
-                            result['groove'] = result.solid;
-                            break;
-                        case 3:
-                            result['groove'] = result.solid;
-                            break;
-                    }
-                }
-                else {
-                    switch (direction) {
-                        case 0:
-                            result['groove'] = result.solid;
-                            break;
-                        case 1:
-                            result['groove'] = result.solid;
-                            break;
-                        case 2:
-                            result['groove'] = colorReduced;
-                            break;
-                        case 3:
-                            result['groove'] = colorReduced;
-                            break;
-                    }
-                }
-            }
-            else {
-                if (halfSize) {
-                    switch (direction) {
-                        case 0:
-                            result['ridge'] = result.solid;
-                            break;
-                        case 1:
-                            result['ridge'] = result.solid;
-                            break;
-                        case 2:
-                            result['ridge'] = colorReduced;
-                            break;
-                        case 3:
-                            result['ridge'] = colorReduced;
-                            break;
-                    }
-                }
-                else {
-                    switch (direction) {
-                        case 0:
-                            result['ridge'] = colorReduced;
-                            break;
-                        case 1:
-                            result['ridge'] = colorReduced;
-                            break;
-                        case 2:
-                            result['ridge'] = result.solid;
-                            break;
-                        case 3:
-                            result['ridge'] = result.solid;
-                            break;
-                    }
-                }
-            }
-        }
-        return result[border.style] || result.solid;
     }
 
     public settings: SettingsAndroid;
@@ -593,13 +526,83 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                 }
                 const hasBorder = (
-                    this.borderVisible(stored.borderTop) ||
-                    this.borderVisible(stored.borderRight) ||
-                    this.borderVisible(stored.borderBottom) ||
-                    this.borderVisible(stored.borderLeft) ||
+                    $resource.isBorderVisible(stored.borderTop) ||
+                    $resource.isBorderVisible(stored.borderRight) ||
+                    $resource.isBorderVisible(stored.borderBottom) ||
+                    $resource.isBorderVisible(stored.borderLeft) ||
                     stored.borderRadius.length > 0
                 );
                 if (hasBorder || backgroundImage.length > 0) {
+                    function createDoubleBorder(templateData: {}, border: BorderAttribute, top: boolean, right: boolean, bottom: boolean, left: boolean) {
+                        const width = parseInt(border.width);
+                        const baseWidth = Math.floor(width / 3);
+                        const remainder = width % 3;
+                        const leftWidth = baseWidth + (remainder === 2 ? 1 : 0);
+                        const rightWidth = baseWidth + (remainder === 2 ? 1 : 0);
+                        let leftTop = `-${$util.formatPX(leftWidth + 1)}`;
+                        let rightBottom = `-${$util.formatPX(leftWidth)}`;
+                        templateData['4'].push({
+                            'top': top ? '' :  rightBottom,
+                            'right': right ? '' :  leftTop,
+                            'bottom': bottom ? '' :  rightBottom,
+                            'left': left ? '' :  leftTop,
+                            '5': [{
+                                width: $util.formatPX(leftWidth),
+                                borderStyle: getBorderStyle(border)
+                            }],
+                            '6': borderRadius
+                        });
+                        leftTop = `-${$util.formatPX(width + 1)}`;
+                        rightBottom = `-${$util.formatPX(width)}`;
+                        const indentWidth = `${$util.formatPX(width - baseWidth)}`;
+                        templateData['4'].push({
+                            'top': top ? indentWidth : leftTop,
+                            'right': right ? indentWidth : rightBottom,
+                            'bottom': bottom ? indentWidth : rightBottom,
+                            'left': left ? indentWidth : leftTop,
+                            '5': [{
+                                width: $util.formatPX(rightWidth),
+                                borderStyle: getBorderStyle(border)
+                            }],
+                            '6': borderRadius
+                        });
+                    }
+                    function getShapeAttribute(boxStyle: BoxStyle, name: string, direction = -1, hasInset = false, isInset = false): any[] | boolean {
+                        switch (name) {
+                            case 'stroke':
+                                if (boxStyle.border && $resource.isBorderVisible(boxStyle.border)) {
+                                    if (!hasInset || isInset) {
+                                        return [{
+                                            width: boxStyle.border.width,
+                                            borderStyle: getBorderStyle(boxStyle.border, isInset ? direction : -1)
+                                        }];
+                                    }
+                                    else if (hasInset) {
+                                        return [{
+                                            width: $util.formatPX(Math.ceil(parseInt(boxStyle.border.width) / 2)),
+                                            borderStyle: getBorderStyle(boxStyle.border, direction, true)
+                                        }];
+                                    }
+                                }
+                                return false;
+                            case 'backgroundColor':
+                                return boxStyle.backgroundColor.length !== 0 && boxStyle.backgroundColor !== '' ? [{ color: boxStyle.backgroundColor }] : false;
+                            case 'radius':
+                                if (boxStyle.borderRadius.length === 1) {
+                                    if (boxStyle.borderRadius[0] !== '0px') {
+                                        return [{ radius: boxStyle.borderRadius[0] }];
+                                    }
+                                }
+                                else if (boxStyle.borderRadius.length > 1) {
+                                    const result = {};
+                                    boxStyle.borderRadius.forEach((value, index) => result[`${['topLeft', 'topRight', 'bottomRight', 'bottomLeft'][index]}Radius`] = value);
+                                    return [result];
+                                }
+                                return false;
+
+                        }
+                        return false;
+                    }
                     const borders: BorderAttribute[] = [
                         stored.borderTop,
                         stored.borderRight,
@@ -910,44 +913,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             }
                         }
                     });
-                    const backgroundColor = ResourceHandler.getShapeAttribute(stored, 'backgroundColor');
-                    const borderRadius = ResourceHandler.getShapeAttribute(stored, 'radius');
-                    function createDoubleBorder(templateData: {}, border: BorderAttribute, top: boolean, right: boolean, bottom: boolean, left: boolean) {
-                        const width = parseInt(border.width);
-                        const baseWidth = Math.floor(width / 3);
-                        const remainder = width % 3;
-                        const leftWidth = baseWidth + (remainder === 2 ? 1 : 0);
-                        const rightWidth = baseWidth + (remainder === 2 ? 1 : 0);
-                        let leftTop = `-${$util.formatPX(leftWidth + 1)}`;
-                        let rightBottom = `-${$util.formatPX(leftWidth)}`;
-                        templateData['4'].push({
-                            'top': top ? '' :  rightBottom,
-                            'right': right ? '' :  leftTop,
-                            'bottom': bottom ? '' :  rightBottom,
-                            'left': left ? '' :  leftTop,
-                            '5': [{
-                                width: $util.formatPX(leftWidth),
-                                borderStyle: ResourceHandler.getBorderStyle(border)
-                            }],
-                            '6': borderRadius
-                        });
-                        leftTop = `-${$util.formatPX(width + 1)}`;
-                        rightBottom = `-${$util.formatPX(width)}`;
-                        const indentWidth = `${$util.formatPX(width - baseWidth)}`;
-                        templateData['4'].push({
-                            'top': top ? indentWidth : leftTop,
-                            'right': right ? indentWidth : rightBottom,
-                            'bottom': bottom ? indentWidth : rightBottom,
-                            'left': left ? indentWidth : leftTop,
-                            '5': [{
-                                width: $util.formatPX(rightWidth),
-                                borderStyle: ResourceHandler.getBorderStyle(border)
-                            }],
-                            '6': borderRadius
-                        });
-                    }
+                    const backgroundColor = getShapeAttribute(stored, 'backgroundColor');
+                    const borderRadius = getShapeAttribute(stored, 'radius');
                     if (stored.border &&
-                        this.borderVisible(stored.border) && !(
+                        $resource.isBorderVisible(stored.border) && !(
                             (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
                             (parseInt(stored.border.width) > 2 && stored.border.style === 'double')
                        ))
@@ -956,7 +925,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             template = $xml.parseTemplate(SHAPERECTANGLE_TMPL);
                             data = {
                                 '0': [{
-                                    '1': ResourceHandler.getShapeAttribute(stored, 'stroke'),
+                                    '1': getShapeAttribute(stored, 'stroke'),
                                     '2': backgroundColor,
                                     '3': borderRadius
                                 }]
@@ -970,7 +939,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     '2': image2.length > 0 ? image2 : false,
                                     '3': image3.length > 0 ? image3 : false,
                                     '4': [{
-                                        '5': ResourceHandler.getShapeAttribute(stored, 'stroke'),
+                                        '5': getShapeAttribute(stored, 'stroke'),
                                         '6': borderRadius
                                     }],
                                     '7': false
@@ -990,9 +959,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             }]
                         };
                         const root = $xml.getTemplateLevel(data, '0');
-                        const borderVisible = borders.filter(item => this.borderVisible(item));
+                        const borderVisible = borders.filter(item => $resource.isBorderVisible(item));
                         const borderWidth = new Set(borderVisible.map(item => item.width));
-                        const borderStyle = new Set(borderVisible.map(item => ResourceHandler.getBorderStyle(item)));
+                        const borderStyle = new Set(borderVisible.map(item => getBorderStyle(item)));
                         const borderData = borderVisible[0];
                         if (borderWidth.size === 1 &&
                             borderStyle.size === 1 &&
@@ -1003,21 +972,21 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 createDoubleBorder.apply(this, [
                                     root,
                                     borderData,
-                                    this.borderVisible(stored.borderTop),
-                                    this.borderVisible(stored.borderRight),
-                                    this.borderVisible(stored.borderBottom),
-                                    this.borderVisible(stored.borderLeft)
+                                    $resource.isBorderVisible(stored.borderTop),
+                                    $resource.isBorderVisible(stored.borderRight),
+                                    $resource.isBorderVisible(stored.borderBottom),
+                                    $resource.isBorderVisible(stored.borderLeft)
                                 ]);
                             }
                             else {
                                 const leftTop = `-${$util.formatPX(width + 1)}`;
                                 const rightBottom = `-${$util.formatPX(width)}`;
                                 root['4'].push({
-                                    'top': this.borderVisible(stored.borderTop) ? '' : leftTop,
-                                    'right': this.borderVisible(stored.borderRight) ? '' : rightBottom,
-                                    'bottom': this.borderVisible(stored.borderBottom) ? '' : rightBottom,
-                                    'left': this.borderVisible(stored.borderLeft) ? '' : leftTop,
-                                    '5': ResourceHandler.getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
+                                    'top': $resource.isBorderVisible(stored.borderTop) ? '' : leftTop,
+                                    'right': $resource.isBorderVisible(stored.borderRight) ? '' : rightBottom,
+                                    'bottom': $resource.isBorderVisible(stored.borderBottom) ? '' : rightBottom,
+                                    'left': $resource.isBorderVisible(stored.borderLeft) ? '' : leftTop,
+                                    '5': getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
                                     '6': borderRadius
                                 });
                             }
@@ -1025,7 +994,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         else {
                             for (let i = 0; i < borders.length; i++) {
                                 const border = borders[i];
-                                if (this.borderVisible(border)) {
+                                if ($resource.isBorderVisible(border)) {
                                     const width = parseInt(border.width);
                                     if (width > 2 && border.style === 'double') {
                                         createDoubleBorder.apply(this, [
@@ -1047,7 +1016,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                             'right': i === 1 ? '' : rightBottom,
                                             'bottom': i === 2 ? '' : rightBottom,
                                             'left': i === 3 ? '' : leftTop,
-                                            '5': ResourceHandler.getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
+                                            '5': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
                                             '6': borderRadius
                                         });
                                         if (hasInset) {
@@ -1058,7 +1027,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                                 'right': i === 1 ? '' : rightBottom,
                                                 'bottom': i === 2 ? '' : rightBottom,
                                                 'left': i === 3 ? '' : leftTop,
-                                                '8': ResourceHandler.getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true)
+                                                '8': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true)
                                             });
                                         }
                                     }
@@ -1068,7 +1037,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     if (template) {
                         const xml = $xml.createTemplate(template, data);
-                        resourceName = ResourceHandler.getStoredDrawable(xml);
+                        resourceName = getStoredDrawable(xml);
                         if (resourceName === '') {
                             resourceName = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
                             $resource.STORED.drawables.set(resourceName, xml);
@@ -1170,11 +1139,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 let system = false;
                 const nodeId = node.id;
                 const companion = node.companion;
-                if (companion && !companion.visible && (
-                        companion.textElement ||
-                        companion.tagName === 'LABEL'
-                   ))
-                {
+                if (companion && !companion.visible && (companion.textElement || companion.tagName === 'LABEL')) {
                     node = companion as T;
                 }
                 const element = node.element;
@@ -1329,7 +1294,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         root['1'].push(group);
                     });
                     const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), data);
-                    result = ResourceHandler.getStoredDrawable(xml);
+                    result = getStoredDrawable(xml);
                     if (result === '') {
                         result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
                         $resource.STORED.drawables.set(result, xml);
@@ -1462,6 +1427,31 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     private processFontStyle(viewData: ViewData<NodeList<T>>) {
+        function deleteStyleAttribute(sorted: ObjectMap<number[]>[], attrs: string, ids: number[]) {
+            attrs.split(';').forEach(value => {
+                for (let i = 0; i < sorted.length; i++) {
+                    if (sorted[i]) {
+                        let index = -1;
+                        let key = '';
+                        for (const j in sorted[i]) {
+                            if (j === value) {
+                                index = i;
+                                key = j;
+                                i = sorted.length;
+                                break;
+                            }
+                        }
+                        if (index !== -1) {
+                            sorted[index][key] = sorted[index][key].filter(id => !ids.includes(id));
+                            if (sorted[index][key].length === 0) {
+                                delete sorted[index][key];
+                            }
+                            break;
+                        }
+                    }
+                }
+            });
+        }
         const style: ObjectMapNested<number[]> = {};
         const layout: ObjectMapNested<number[]> = {};
         const resource: ObjectMap<StyleTag[]> = {};
@@ -1579,13 +1569,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                         deleteKeys.forEach(value => delete filtered[value]);
                         for (const attrs in filtered) {
-                            ResourceHandler.deleteStyleAttribute(sorted, attrs, filtered[attrs]);
+                            deleteStyleAttribute(sorted, attrs, filtered[attrs]);
                             style[tag][attrs] = filtered[attrs];
                         }
                         for (const index in combined) {
                             const attrs = Array.from(combined[index]).sort().join(';');
                             const ids = index.split(',').map(value => parseInt(value));
-                            ResourceHandler.deleteStyleAttribute(sorted, attrs, ids);
+                            deleteStyleAttribute(sorted, attrs, ids);
                             style[tag][attrs] = ids;
                         }
                     }

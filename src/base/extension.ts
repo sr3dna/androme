@@ -118,11 +118,12 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
 
     public getData(): StringMap {
         const result = {};
-        if (this.element instanceof HTMLElement) {
+        if (this.node && this.node.styleElement) {
+            const element = <HTMLElement> this.node.element;
             const prefix = convertCamelCase(this.name, '\\.');
-            for (const attr in this.element.dataset) {
+            for (const attr in element.dataset) {
                 if (attr.length > prefix.length && attr.startsWith(prefix)) {
-                    result[capitalize(attr.substring(prefix.length), false)] = this.element.dataset[attr];
+                    result[capitalize(attr.substring(prefix.length), false)] = element.dataset[attr];
                 }
             }
         }

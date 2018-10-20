@@ -5,11 +5,7 @@ import { deleteElementCache, getElementCache, getStyle, setElementCache } from '
 
 export default class External<T extends Node> extends Extension<T> {
     public beforeInit(init = false) {
-        if (this.element && (
-                init ||
-                this.included()
-           ))
-        {
+        if (this.element && (init || this.included())) {
             if (!getElementCache(this.element, 'andromeExternalDisplay')) {
                 const display: string[] = [];
                 let current: Null<HTMLElement> = <HTMLElement> this.element;
@@ -31,11 +27,7 @@ export default class External<T extends Node> extends Extension<T> {
     }
 
     public afterInit(internal = false) {
-        if (this.element && (
-                internal ||
-                this.included()
-           ))
-        {
+        if (this.element && (internal || this.included())) {
             const data = getElementCache(this.element, 'andromeExternalDisplay');
             if (data) {
                 const display: string[] = data;

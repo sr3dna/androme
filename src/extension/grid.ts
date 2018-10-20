@@ -118,6 +118,9 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             }
         }
         else {
+            function getRowIndex(current: T) {
+                return columns[0].findIndex(item => withinFraction(item.linear.top, current.linear.top) || (current.linear.top >= item.linear.top && current.linear.bottom <= item.linear.bottom));
+            }
             const nextMapX: ObjectIndex<T[]> = mapX[node.depth + 2];
             const nextCoordsX = nextMapX ? Object.keys(nextMapX) : [];
             const columnEnd: number[] = [];
@@ -147,9 +150,6 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                             }
                             nextX.element.style.cssFloat = 'right';
                         }
-                        function getRowIndex() {
-                            return columns[0].findIndex(item => withinFraction(item.linear.top, nextX.linear.top) || (nextX.linear.top >= item.linear.top && nextX.linear.bottom <= item.linear.bottom));
-                        }
                         if (index === 0 || left >= columnRight[index - 1]) {
                             if (columns[index] == null) {
                                 columns[index] = [];
@@ -158,7 +158,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                                 columns[index][m] = nextX;
                             }
                             else {
-                                const row = getRowIndex();
+                                const row = getRowIndex(nextX);
                                 if (row !== -1) {
                                     columns[index][row] = nextX;
                                 }
@@ -171,7 +171,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                                 const maxRight = columns[current].reduce((a: number, b) => Math.max(a, b.linear.right), 0);
                                 if (left > minLeft && right > maxRight) {
                                     const filtered = columns.filter(item => item);
-                                    const rowIndex = getRowIndex();
+                                    const rowIndex = getRowIndex(nextX);
                                     if (rowIndex !== -1 && filtered[filtered.length - 1][rowIndex] == null) {
                                         columns[current].length = 0;
                                     }

@@ -44,6 +44,10 @@ const VALIDATE_GROUP = {
 
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
+function hasInputType<T extends View>(node: T, value: string) {
+    return node.children.length > 0 && node.children.some(item => (<HTMLInputElement> item.element).type === value);
+}
+
 export default class Menu<T extends View> extends androme.lib.base.extensions.Nav<T> {
     public condition() {
         return this.included();
@@ -114,10 +118,10 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
             else {
                 nodeName = VIEW_NAVIGATION.GROUP;
                 let checkable = '';
-                if (node.children.every((item: T) => this.hasInputType(item, 'radio'))) {
+                if (node.children.every((item: T) => hasInputType(item, 'radio'))) {
                     checkable = 'single';
                 }
-                else if (node.children.every((item: T) => this.hasInputType(item, 'checkbox'))) {
+                else if (node.children.every((item: T) => hasInputType(item, 'checkbox'))) {
                     checkable = 'all';
                 }
                 options.android.checkableBehavior = checkable;
@@ -126,7 +130,7 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
         }
         else {
             if (parent.android('checkableBehavior') === '') {
-                if (this.hasInputType(node, 'checkbox')) {
+                if (hasInputType(node, 'checkbox')) {
                     options.android.checkable = 'true';
                 }
             }
@@ -203,9 +207,5 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
                 }
             }
         }
-    }
-
-    private hasInputType(node: T, value: string) {
-        return node.children.length > 0 && node.children.some(item => (<HTMLInputElement> item.element).type === value);
     }
 }

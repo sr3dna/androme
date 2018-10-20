@@ -57,8 +57,47 @@ this.android.widget.floatingactionbutton = (function () {
             node.nodeType = $enum.NODE_STANDARD.BUTTON;
             node.excludeResource |= $enum.NODE_RESOURCE.BOX_STYLE | $enum.NODE_RESOURCE.ASSET;
             if (!node.pageflow || target) {
-                node.auto = false;
-                this.setFrameGravity(node);
+                const settings = this.application.settings;
+                const horizontalBias = node.horizontalBias(settings);
+                const verticalBias = node.verticalBias(settings);
+                const documentParent = node.documentParent;
+                const gravity = [];
+                if (horizontalBias < 0.5) {
+                    gravity.push($util_android.parseRTL('left', settings));
+                }
+                else if (horizontalBias > 0.5) {
+                    gravity.push($util_android.parseRTL('right', settings));
+                }
+                else {
+                    gravity.push('center_horizontal');
+                }
+                if (verticalBias < 0.5) {
+                    gravity.push('top');
+                    node.app('layout_dodgeInsetEdges', 'top');
+                }
+                else if (verticalBias > 0.5) {
+                    gravity.push('bottom');
+                }
+                else {
+                    gravity.push('center_vertical');
+                }
+                node.android('layout_gravity', gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|'));
+                if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
+                    if (horizontalBias < 0.5) {
+                        node.css('marginLeft', $util.formatPX(Math.floor(node.bounds.left - documentParent.box.left)));
+                    }
+                    else {
+                        node.css('marginRight', $util.formatPX(Math.floor(documentParent.box.right - node.bounds.right)));
+                    }
+                }
+                if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
+                    if (verticalBias < 0.5) {
+                        node.css('marginTop', $util.formatPX(Math.floor(node.bounds.top - documentParent.box.top)));
+                    }
+                    else {
+                        node.css('marginBottom', $util.formatPX(Math.floor(documentParent.box.bottom - node.bounds.bottom)));
+                    }
+                }
                 if (target) {
                     let anchor = parent.stringId;
                     if (parent.controlName === $const_android.VIEW_SUPPORT.TOOLBAR) {
@@ -76,6 +115,7 @@ this.android.widget.floatingactionbutton = (function () {
                 else {
                     node.render(parent);
                 }
+                node.auto = false;
             }
             else {
                 node.render(parent);
@@ -86,49 +126,6 @@ this.android.widget.floatingactionbutton = (function () {
             const node = this.node;
             node.android('layout_width', 'wrap_content');
             node.android('layout_height', 'wrap_content');
-        }
-        setFrameGravity(node) {
-            const settings = this.application.settings;
-            const parent = node.documentParent;
-            const horizontalBias = node.horizontalBias(settings);
-            const verticalBias = node.verticalBias(settings);
-            const gravity = [];
-            if (horizontalBias < 0.5) {
-                gravity.push($util_android.parseRTL('left', settings));
-            }
-            else if (horizontalBias > 0.5) {
-                gravity.push($util_android.parseRTL('right', settings));
-            }
-            else {
-                gravity.push('center_horizontal');
-            }
-            if (verticalBias < 0.5) {
-                gravity.push('top');
-                node.app('layout_dodgeInsetEdges', 'top');
-            }
-            else if (verticalBias > 0.5) {
-                gravity.push('bottom');
-            }
-            else {
-                gravity.push('center_vertical');
-            }
-            node.android('layout_gravity', gravity.filter(value => value.indexOf('center') !== -1).length === 2 ? 'center' : gravity.join('|'));
-            if (horizontalBias > 0 && horizontalBias < 1 && horizontalBias !== 0.5) {
-                if (horizontalBias < 0.5) {
-                    node.css('marginLeft', $util.formatPX(Math.floor(node.bounds.left - parent.box.left)));
-                }
-                else {
-                    node.css('marginRight', $util.formatPX(Math.floor(parent.box.right - node.bounds.right)));
-                }
-            }
-            if (verticalBias > 0 && verticalBias < 1 && verticalBias !== 0.5) {
-                if (verticalBias < 0.5) {
-                    node.css('marginTop', $util.formatPX(Math.floor(node.bounds.top - parent.box.top)));
-                }
-                else {
-                    node.css('marginBottom', $util.formatPX(Math.floor(parent.box.bottom - node.bounds.bottom)));
-                }
-            }
         }
     }
 

@@ -7,6 +7,12 @@ import { convertInt, formatPX } from '../lib/util';
 
 export default class Origin<T extends Node> extends Extension<T> {
     public afterInit() {
+        function modifyMarginLeft<T extends Node>(node: T, offset: number, parent = false) {
+            node.bounds.left -= offset;
+            node.bounds.width += Math.max(node.marginLeft < 0 ? node.marginLeft + offset : offset, 0);
+            node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))));
+            node.setBounds(true);
+        }
         Array.from(this.application.cache.elements).forEach(node => {
             if (node.children.some(current => {
                     if (current.pageflow) {
@@ -75,26 +81,19 @@ export default class Origin<T extends Node> extends Extension<T> {
                             current.css('left', formatPX(Math.max(left, 0)));
                             if (left < 0) {
                                 current.css('marginLeft', formatPX(current.marginLeft + left));
-                                this.modifyMarginLeft(current, left);
+                                modifyMarginLeft(current, left);
                             }
                         }
                         else if (marginLeftType === 2 || (current.pageflow && !current.plainText && marginLeft.includes(1))) {
-                            this.modifyMarginLeft(current, node.marginLeft);
+                            modifyMarginLeft(current, node.marginLeft);
                         }
                     });
                     if (node.has('width', CSS_STANDARD.UNIT)) {
                         node.css('width', formatPX(node.toInt('width') + node.marginLeft));
                     }
-                    this.modifyMarginLeft(node, node.marginLeft, true);
+                    modifyMarginLeft(node, node.marginLeft, true);
                 }
             }
         });
-    }
-
-    private modifyMarginLeft(node: T, offset: number, parent = false) {
-        node.bounds.left -= offset;
-        node.bounds.width += Math.max(node.marginLeft < 0 ? node.marginLeft + offset : offset, 0);
-        node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))));
-        node.setBounds(true);
     }
 }

@@ -2,8 +2,17 @@ import { NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
 import Node from './node';
 
-import { convertInt, hasBit, partition, sortAsc, sortDesc } from '../lib/util';
-import { getNodeFromElement } from '../lib/dom';
+import { convertInt, partition, sortAsc, sortDesc } from '../lib/util';
+import { getNodeFromElement, isUserAgent } from '../lib/dom';
+
+function getDocumentParent<T extends Node>(nodes: T[]) {
+    for (const node of nodes) {
+        if (!node.companion && node.domElement) {
+            return node.documentParent;
+        }
+    }
+    return nodes[0].documentParent;
+}
 
 export default class NodeList<T extends Node> implements androme.lib.base.NodeList<T> {
     public static outerRegion<T extends Node>(list: T[], dimension = 'linear') {
@@ -83,7 +92,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         return nodes;
     }
 
-    public static textBaseline<T extends Node>(list: T[], userAgent: number) {
+    public static textBaseline<T extends Node>(list: T[]) {
         let baseline: T[] = [];
         if (!list.some(node => (node.textElement || node.imageElement) && node.baseline)) {
             baseline = list.filter(node => node.baseline).sort((a, b) => {
@@ -108,7 +117,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
             baseline = list.filter(node => node.baselineInside).sort((a, b) => {
                 let heightA = a.bounds.height;
                 let heightB = b.bounds.height;
-                if (hasBit(userAgent, USER_AGENT.EDGE)) {
+                if (isUserAgent(USER_AGENT.EDGE)) {
                     if (a.textElement) {
                         heightA = Math.max(Math.floor(heightA), a.lineHeight);
                     }
@@ -198,7 +207,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
             case 1:
                 return true;
             default:
-                const parent = this.documentParent(nodes);
+                const parent = getDocumentParent(nodes);
                 let horizontal = false;
                 if (traverse) {
                     if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
@@ -232,7 +241,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
             case 1:
                 return true;
             default:
-                const parent = this.documentParent(nodes);
+                const parent = getDocumentParent(nodes);
                 if (nodes.every(node => node.documentParent === parent || (node.companion && node.companion.documentParent === parent))) {
                     const result = NodeList.clearedSiblings(parent);
                     return nodes.slice().sort(NodeList.siblingIndex).every((node, index) => {
@@ -257,16 +266,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
     }
 
     private static clearedSiblings<T extends Node>(parent: T): Map<T, string> {
-        return NodeList.cleared(Array.from(parent.baseElement.children).map(element => getNodeFromElement(element) as T).filter(node => node));
-    }
-
-    private static documentParent<T extends Node>(nodes: T[]) {
-        for (const node of nodes) {
-            if (!node.companion && node.domElement) {
-                return node.documentParent;
-            }
-        }
-        return nodes[0].documentParent;
+        return this.cleared(Array.from(parent.baseElement.children).map(element => getNodeFromElement(element) as T).filter(node => node));
     }
 
     public delegateAppend?: (nodes: T[]) => void;

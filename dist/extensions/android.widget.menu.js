@@ -52,6 +52,21 @@ this.android.widget.menu = (function () {
         orderInCategory: /^[0-9]+$/
     };
     const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
+    function parseDataSet(validator, element, options) {
+        for (const attr in element.dataset) {
+            const value = element.dataset[attr];
+            if (value && validator[attr]) {
+                const match = value.match(validator[attr]);
+                if (match) {
+                    const namespace = (this.options.appCompat == null || this.options.appCompat === true) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
+                    options[namespace][attr] = Array.from(new Set(match)).join('|');
+                }
+            }
+        }
+    }
+    function hasInputType(node, value) {
+        return node.children.length > 0 && node.children.some(item => item.element.type === value);
+    }
     class Menu extends androme.lib.base.extensions.Nav {
         condition() {
             return this.included();
@@ -112,10 +127,10 @@ this.android.widget.menu = (function () {
                 else {
                     nodeName = VIEW_NAVIGATION.GROUP;
                     let checkable = '';
-                    if (node.children.every((item) => this.hasInputType(item, 'radio'))) {
+                    if (node.children.every((item) => hasInputType(item, 'radio'))) {
                         checkable = 'single';
                     }
-                    else if (node.children.every((item) => this.hasInputType(item, 'checkbox'))) {
+                    else if (node.children.every((item) => hasInputType(item, 'checkbox'))) {
                         checkable = 'all';
                     }
                     options.android.checkableBehavior = checkable;
@@ -124,7 +139,7 @@ this.android.widget.menu = (function () {
             }
             else {
                 if (parent.android('checkableBehavior') === '') {
-                    if (this.hasInputType(node, 'checkbox')) {
+                    if (hasInputType(node, 'checkbox')) {
                         options.android.checkable = 'true';
                     }
                 }
@@ -132,7 +147,7 @@ this.android.widget.menu = (function () {
             }
             switch (nodeName) {
                 case VIEW_NAVIGATION.ITEM:
-                    this.parseDataSet(VALIDATE_ITEM, element, options);
+                    parseDataSet(VALIDATE_ITEM, element, options);
                     if (node.android('icon') === '') {
                         let src = $resource_android.addImageURL(element.style.backgroundImage, $const_android.DRAWABLE_PREFIX.MENU);
                         if (src !== '') {
@@ -150,7 +165,7 @@ this.android.widget.menu = (function () {
                     }
                     break;
                 case VIEW_NAVIGATION.GROUP:
-                    this.parseDataSet(VALIDATE_GROUP, element, options);
+                    parseDataSet(VALIDATE_GROUP, element, options);
                     break;
             }
             if (node.android('title') === '') {
@@ -179,21 +194,6 @@ this.android.widget.menu = (function () {
             if (this.included(this.node.element)) {
                 this.application.layoutProcessing.pathname = 'res/menu';
             }
-        }
-        parseDataSet(validator, element, options) {
-            for (const attr in element.dataset) {
-                const value = element.dataset[attr];
-                if (value && validator[attr]) {
-                    const match = value.match(validator[attr]);
-                    if (match) {
-                        const namespace = (this.options.appCompat == null || this.options.appCompat === true) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
-                        options[namespace][attr] = Array.from(new Set(match)).join('|');
-                    }
-                }
-            }
-        }
-        hasInputType(node, value) {
-            return node.children.length > 0 && node.children.some(item => item.element.type === value);
         }
     }
 

@@ -9,6 +9,13 @@ import { cssInherit, getStyle } from '../lib/dom';
 
 export default abstract class Table<T extends Node> extends Extension<T> {
     public processNode(): ExtensionResult {
+        function setAutoWidth(td: T) {
+            td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
+            td.data(EXT_NAME.TABLE, 'expand', true);
+        }
+        function setBoundsWidth(td: T) {
+            td.css('width', formatPX(td.bounds.width));
+        }
         const node = this.node;
         const parent = this.parent as T;
         const table: T[] = [];
@@ -200,13 +207,6 @@ export default abstract class Table<T extends Node> extends Extension<T> {
             rowCount++;
             caption.data(EXT_NAME.TABLE, 'colSpan', columnCount);
             caption.parent = node;
-        }
-        function setAutoWidth(td: T) {
-            td.data(EXT_NAME.TABLE, 'percent', `${Math.round((td.bounds.width / node.bounds.width) * 100)}%`);
-            td.data(EXT_NAME.TABLE, 'expand', true);
-        }
-        function setBoundsWidth(td: T) {
-            td.css('width', formatPX(td.bounds.width));
         }
         columnIndex = new Array(table.length).fill(0);
         let borderInside = 0;

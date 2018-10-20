@@ -1,4 +1,17 @@
-import { convertCamelCase, convertInt, hasValue, includes, resolvePath, withinFraction } from './util';
+import { USER_AGENT } from './enumeration';
+
+import { convertCamelCase, convertInt, hasBit, hasValue, includes, resolvePath, withinFraction } from './util';
+
+export function isUserAgent(value: number) {
+    let client = USER_AGENT.CHROME;
+    if (navigator.appVersion.indexOf('Edge') !== -1) {
+        client = USER_AGENT.EDGE;
+    }
+    else if (navigator.appVersion.indexOf('Chrome') === -1 && navigator.appVersion.indexOf('Safari') !== -1) {
+        client = USER_AGENT.SAFARI;
+    }
+    return hasBit(client, value);
+}
 
 export function getBoxRect(): BoxRect {
     return {

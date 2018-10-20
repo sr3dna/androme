@@ -70,6 +70,18 @@ this.android.widget.toolbar = (function () {
             return false;
         }
         processNode() {
+            function createPlaceholder(nextId, container, nodes) {
+                const placeholder = new View(nextId);
+                placeholder.init();
+                placeholder.api = container.api;
+                for (const item of nodes) {
+                    item.parent = placeholder;
+                }
+                placeholder.inherit(container, 'dimensions');
+                placeholder.auto = false;
+                placeholder.excludeResource |= $enum.NODE_RESOURCE.ALL;
+                return placeholder;
+            }
             const controller = this.application.viewController;
             const node = this.node;
             const parent = this.parent;
@@ -206,7 +218,7 @@ this.android.widget.toolbar = (function () {
                 else {
                     $util.overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
                 }
-                appBarNode = this.createPlaceholder(this.application.cache.nextId, node, appBarChildren);
+                appBarNode = createPlaceholder(this.application.cache.nextId, node, appBarChildren);
                 appBarNode.parent = node.parent;
                 appBarNode.nodeId = $util_android.stripId(optionsAppBar.android.id);
                 this.application.cache.append(appBarNode);
@@ -220,7 +232,7 @@ this.android.widget.toolbar = (function () {
                     }
                     $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                     $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
-                    collapsingToolbarNode = this.createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren);
+                    collapsingToolbarNode = createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren);
                     collapsingToolbarNode.parent = appBarNode;
                     if (collapsingToolbarNode) {
                         collapsingToolbarNode.each(item => item.dataset.target = collapsingToolbarNode.nodeId);
@@ -258,8 +270,7 @@ this.android.widget.toolbar = (function () {
         }
         processChild() {
             const node = this.node;
-            if (node.imageElement && ($util.hasValue(node.dataset.navigationIcon) ||
-                $util.hasValue(node.dataset.collapseIcon))) {
+            if (node.imageElement && ($util.hasValue(node.dataset.navigationIcon) || $util.hasValue(node.dataset.collapseIcon))) {
                 node.hide();
                 return { output: '', complete: true, next: true };
             }
@@ -291,18 +302,6 @@ this.android.widget.toolbar = (function () {
             $util.overwriteDefault(options, 'output', 'path', 'res/values');
             $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);
             this.application.resourceHandler.addTheme(EXTENSION_APPBAR_TMPL, data, options);
-        }
-        createPlaceholder(nextId, node, children = []) {
-            const placeholder = new View(nextId);
-            placeholder.init();
-            placeholder.api = node.api;
-            for (const item of children) {
-                item.parent = placeholder;
-            }
-            placeholder.inherit(node, 'dimensions');
-            placeholder.auto = false;
-            placeholder.excludeResource |= $enum.NODE_RESOURCE.ALL;
-            return placeholder;
         }
     }
 

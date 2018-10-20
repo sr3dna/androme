@@ -18,50 +18,50 @@ import { replaceUnit } from './lib/util';
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
+function parseImageDetails(xml: string) {
+    const result: PlainFile[] = [];
+    const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
+    let match: Null<RegExpExecArray>;
+    while ((match = pattern.exec(xml)) != null) {
+        result.push({
+            uri: match[1],
+            pathname: match[2],
+            filename: match[3],
+            content: ''
+        });
+        xml = xml.replace(match[0], '');
+    }
+    return result;
+}
+
+function parseFileDetails(xml: string) {
+    const result: PlainFile[] = [];
+    const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
+    let match: Null<RegExpExecArray>;
+    while ((match = pattern.exec(xml)) != null) {
+        result.push({
+            content: match[0].replace(match[1], '').trim(),
+            pathname: match[2],
+            filename: match[3]
+        });
+        xml = xml.replace(match[0], '');
+    }
+    return result;
+}
+
+function createPlainFile(pathname: string, filename: string, content: string): PlainFile {
+    return {
+        pathname,
+        filename,
+        content
+    };
+}
+
 function caseInsensitive(a: string | string[], b: string | string[]) {
     return a.toString().toLowerCase() >= b.toString().toLowerCase() ? 1 : -1;
 }
 
 export default class FileHandler<T extends View> extends androme.lib.base.File<T> {
-    private static parseImageDetails(xml: string) {
-        const result: PlainFile[] = [];
-        const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
-        let match: Null<RegExpExecArray>;
-        while ((match = pattern.exec(xml)) != null) {
-            result.push({
-                uri: match[1],
-                pathname: match[2],
-                filename: match[3],
-                content: ''
-            });
-            xml = xml.replace(match[0], '');
-        }
-        return result;
-    }
-
-    private static parseFileDetails(xml: string) {
-        const result: PlainFile[] = [];
-        const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
-        let match: Null<RegExpExecArray>;
-        while ((match = pattern.exec(xml)) != null) {
-            result.push({
-                content: match[0].replace(match[1], '').trim(),
-                pathname: match[2],
-                filename: match[3]
-            });
-            xml = xml.replace(match[0], '');
-        }
-        return result;
-    }
-
-    private static createPlainFile(pathname: string, filename: string, content: string): PlainFile {
-        return {
-            pathname,
-            filename,
-            content
-        };
-    }
-
     constructor(public settings: SettingsAndroid) {
         super();
     }
@@ -71,16 +71,16 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
             const view = views[i];
-            files.push(FileHandler.createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
+            files.push(createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
         }
         const xml = this.resourceDrawableToXml();
-        files.push(...FileHandler.parseFileDetails(this.resourceStringToXml()));
-        files.push(...FileHandler.parseFileDetails(this.resourceStringArrayToXml()));
-        files.push(...FileHandler.parseFileDetails(this.resourceFontToXml()));
-        files.push(...FileHandler.parseFileDetails(this.resourceColorToXml()));
-        files.push(...FileHandler.parseFileDetails(this.resourceStyleToXml()));
-        files.push(...FileHandler.parseFileDetails(this.resourceDimenToXml()));
-        files.push(...FileHandler.parseImageDetails(xml), ...FileHandler.parseFileDetails(xml));
+        files.push(...parseFileDetails(this.resourceStringToXml()));
+        files.push(...parseFileDetails(this.resourceStringArrayToXml()));
+        files.push(...parseFileDetails(this.resourceFontToXml()));
+        files.push(...parseFileDetails(this.resourceColorToXml()));
+        files.push(...parseFileDetails(this.resourceStyleToXml()));
+        files.push(...parseFileDetails(this.resourceDimenToXml()));
+        files.push(...parseImageDetails(xml), ...parseFileDetails(xml));
         this.saveToDisk(files);
     }
 
@@ -92,7 +92,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             const view = views[i];
             result[view.filename] = view.content;
             if (saveToDisk) {
-                files.push(FileHandler.createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
+                files.push(createPlainFile(view.pathname, i === 0 ? this.settings.outputMainFileName : `${view.filename}.xml`, view.content));
             }
         }
         if (saveToDisk) {
@@ -120,9 +120,9 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             const files: PlainFile[] = [];
             for (const resource in result) {
                 if (resource === 'drawable') {
-                    files.push(...FileHandler.parseImageDetails(result[resource]));
+                    files.push(...parseImageDetails(result[resource]));
                 }
-                files.push(...FileHandler.parseFileDetails(result[resource]));
+                files.push(...parseFileDetails(result[resource]));
             }
             this.saveToDisk(files);
         }
@@ -147,7 +147,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
         let xml = $xml.createTemplate(template, data);
         xml = $xml.replaceTab(xml, this.settings, true);
         if (saveToDisk) {
-            this.saveToDisk(FileHandler.parseFileDetails(xml));
+            this.saveToDisk(parseFileDetails(xml));
         }
         return xml;
     }
@@ -177,7 +177,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             xml = $xml.createTemplate(template, data);
             xml = $xml.replaceTab(xml, this.settings, true);
             if (saveToDisk) {
-                this.saveToDisk(FileHandler.parseFileDetails(xml));
+                this.saveToDisk(parseFileDetails(xml));
             }
         }
         return xml;
@@ -211,7 +211,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             }
             xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
-                this.saveToDisk(FileHandler.parseFileDetails(xml));
+                this.saveToDisk(parseFileDetails(xml));
             }
         }
         return xml.trim();
@@ -234,7 +234,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             xml = $xml.createTemplate(template, data);
             xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
-                this.saveToDisk(FileHandler.parseFileDetails(xml));
+                this.saveToDisk(parseFileDetails(xml));
             }
         }
         return xml;
@@ -267,7 +267,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             xml = replaceUnit(xml, this.settings, true);
             xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
-                this.saveToDisk(FileHandler.parseFileDetails(xml));
+                this.saveToDisk(parseFileDetails(xml));
             }
         }
         return xml;
@@ -291,7 +291,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             xml = replaceUnit(xml, this.settings);
             xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
-                this.saveToDisk(FileHandler.parseFileDetails(xml));
+                this.saveToDisk(parseFileDetails(xml));
             }
         }
         return xml;
@@ -331,7 +331,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             xml = replaceUnit(xml, this.settings);
             xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
-                this.saveToDisk([...FileHandler.parseImageDetails(xml), ...FileHandler.parseFileDetails(xml)]);
+                this.saveToDisk([...parseImageDetails(xml), ...parseFileDetails(xml)]);
             }
         }
         return xml;
