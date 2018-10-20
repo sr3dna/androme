@@ -2877,8 +2877,7 @@ var android = (function () {
                     let system = false;
                     const nodeId = node.id;
                     const companion = node.companion;
-                    if (companion &&
-                        !companion.visible && (companion.textElement ||
+                    if (companion && !companion.visible && (companion.textElement ||
                         companion.tagName === 'LABEL')) {
                         node = companion;
                     }
@@ -2964,206 +2963,86 @@ var android = (function () {
             }
         }
         setImageSource() {
-            this.cache.list.filter(node => node.visible &&
-                (node.imageOrSvgElement || (node.tagName === 'INPUT' && node.element.type === 'image')) &&
-                !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.IMAGE_SOURCE))
-                .forEach(node => {
-                if (!$dom$1.getElementCache(node.element, 'imageSource') || this.settings.alwaysReevaluateResources) {
-                    let result = '';
-                    if (node.svgElement) {
-                        const element = node.element;
-                        if (element.children.length > 0) {
-                            const opacity = node.css('opacity');
-                            const data = {
-                                '0': [{
-                                        width: $util$1.formatPX(element.width.baseVal.value),
-                                        height: $util$1.formatPX(element.height.baseVal.value),
-                                        viewportWidth: element.viewBox.baseVal.width > 0 ? element.viewBox.baseVal.width.toString() : false,
-                                        viewportHeight: element.viewBox.baseVal.height > 0 ? element.viewBox.baseVal.height.toString() : false,
-                                        alpha: parseFloat(opacity) < 1 ? opacity : false,
-                                        '1': []
-                                    }]
+            super.setImageSource();
+            this.cache.visible.forEach(node => {
+                let result = '';
+                if (node.svgElement) {
+                    const stored = $dom$1.getElementCache(node.element, 'imageSource');
+                    if (stored) {
+                        const data = {
+                            '0': [{
+                                    width: $util$1.formatPX(stored.width),
+                                    height: $util$1.formatPX(stored.height),
+                                    viewportWidth: stored.viewBoxWidth > 0 ? stored.viewBoxWidth.toString() : false,
+                                    viewportHeight: stored.viewBoxHeight > 0 ? stored.viewBoxHeight.toString() : false,
+                                    alpha: stored.opacity < 1 ? stored.opacity : false,
+                                    '1': []
+                                }]
+                        };
+                        const root = $xml.getTemplateLevel(data, '0');
+                        stored.children.forEach(svg => {
+                            const group = {
+                                name: svg.name,
+                                '2': [],
+                                '3': []
                             };
-                            function getPath(item, d, clipped) {
-                                if (d === '') {
-                                    d = $dom$1.cssAttribute(item, 'd');
+                            if (!svg.nestedSVG) {
+                                if (svg.scaleX !== 1) {
+                                    group.scaleX = svg.scaleX.toString();
                                 }
-                                if (d && d !== 'none' && $dom$1.cssAttribute(item, 'display') !== 'none' && !['hidden', 'collpase'].includes($dom$1.cssAttribute(item, 'visibility'))) {
-                                    let fillColor = $dom$1.cssAttribute(item, 'fill');
-                                    let strokeColor = $dom$1.cssAttribute(item, 'stroke');
-                                    const color = $color.parseHex($dom$1.cssAttribute(item, 'color'));
-                                    if (fillColor === 'currentColor') {
-                                        fillColor = color || $color.parseHex($dom$1.cssInherit(item, 'color'));
-                                    }
-                                    else {
-                                        fillColor = $color.parseHex(fillColor || '#000000');
-                                    }
-                                    if (strokeColor === 'currentColor') {
-                                        strokeColor = color || $color.parseHex($dom$1.cssInherit(item, 'color'));
-                                    }
-                                    else {
-                                        strokeColor = $color.parseHex(strokeColor || '');
-                                    }
-                                    if (clipped) {
-                                        return {
-                                            name: item.id,
-                                            d
-                                        };
-                                    }
-                                    else {
-                                        const fillAlpha = $dom$1.cssAttribute(item, 'fill-opacity');
-                                        const strokeAlpha = $dom$1.cssAttribute(item, 'stroke-opacity');
-                                        return {
-                                            name: item.id,
-                                            fillColor,
-                                            strokeColor,
-                                            strokeWidth: ($util$1.convertInt($dom$1.cssAttribute(item, 'stroke-width'))).toString() || '',
-                                            fillAlpha: parseFloat(fillAlpha) < 1 ? fillAlpha : '',
-                                            strokeAlpha: parseFloat(strokeAlpha) < 1 ? strokeAlpha : '',
-                                            strokeLineCap: $dom$1.cssAttribute(item, 'stroke-linecap'),
-                                            strokeLineJoin: $dom$1.cssAttribute(item, 'stroke-linejoin'),
-                                            strokeMiterLimit: $dom$1.cssAttribute(item, 'stroke-miterlimit'),
-                                            d
-                                        };
-                                    }
+                                if (svg.scaleY !== 1) {
+                                    group.scaleY = svg.scaleY.toString();
                                 }
-                                return null;
+                                if (svg.rotation !== 0) {
+                                    group.rotation = svg.rotation.toString();
+                                }
+                                if (svg.skewX !== 1) {
+                                    group.pivotX = svg.skewX.toString();
+                                }
+                                if (svg.skewY !== 1) {
+                                    group.pivotY = svg.skewY.toString();
+                                }
+                                if (svg.translateX !== 0) {
+                                    group.translateX = svg.translateX.toString();
+                                }
+                                if (svg.translateY !== 0) {
+                                    group.translateY = svg.translateY.toString();
+                                }
                             }
-                            const root = $xml.getTemplateLevel(data, '0');
-                            const gOrSvg = Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'g');
-                            [element, ...gOrSvg].forEach((svg, index) => {
-                                const group = {
-                                    name: `group_${index}`,
-                                    '2': [],
-                                    '3': []
-                                };
-                                if (svg.tagName === 'g') {
-                                    const g = svg;
-                                    for (let i = 0; i < g.transform.baseVal.numberOfItems; i++) {
-                                        const transform = g.transform.baseVal.getItem(i);
-                                        switch (transform.type) {
-                                            case SVGTransform.SVG_TRANSFORM_TRANSLATE:
-                                                group.translateX = transform.matrix.e.toString();
-                                                group.translateY = transform.matrix.f.toString();
-                                                break;
-                                            case SVGTransform.SVG_TRANSFORM_SCALE:
-                                                group.scaleX = transform.matrix.a.toString();
-                                                group.scaleY = transform.matrix.d.toString();
-                                                break;
-                                            case SVGTransform.SVG_TRANSFORM_ROTATE:
-                                                group.rotation = transform.angle.toString();
-                                                break;
-                                            case SVGTransform.SVG_TRANSFORM_SKEWX:
-                                                group.pivotX = transform.angle.toString();
-                                                break;
-                                            case SVGTransform.SVG_TRANSFORM_SKEWY:
-                                                group.pivotY = transform.angle.toString();
-                                                break;
-                                        }
-                                    }
+                            else {
+                                if (svg.x && svg.x !== 0) {
+                                    group.translateX = svg.x.toString();
+                                }
+                                if (svg.y && svg.y !== 0) {
+                                    group.translateY = svg.y.toString();
+                                }
+                            }
+                            svg.children.forEach(path => {
+                                if (path.clipPath) {
+                                    group['2'].push({
+                                        name: path.name,
+                                        d: path.d
+                                    });
                                 }
                                 else {
-                                    group.translateX = index > 0 ? svg.x.baseVal.value.toString() : false;
-                                    group.translateY = index > 0 ? svg.y.baseVal.value.toString() : false;
-                                }
-                                const clipPath = Array.from(svg.children).filter(item => item.tagName === 'clipPath');
-                                [svg, ...clipPath].forEach((shapes, layerIndex) => {
-                                    for (let i = 0; i < shapes.children.length; i++) {
-                                        const tagName = shapes.children[i].tagName;
-                                        const clipped = layerIndex > 0;
-                                        const dataIndex = clipped ? '2' : '3';
-                                        switch (tagName) {
-                                            case 'path': {
-                                                const item = shapes.children[i];
-                                                const path = getPath(item, '', clipped);
-                                                if (path) {
-                                                    group[dataIndex].push(path);
-                                                }
-                                                break;
-                                            }
-                                            case 'line': {
-                                                const item = shapes.children[i];
-                                                if (item.x1.baseVal.value !== 0 || item.y1.baseVal.value !== 0 || item.x2.baseVal.value !== 0 || item.y2.baseVal.value !== 0) {
-                                                    const path = getPath(item, `M${item.x1.baseVal.value},${item.y1.baseVal.value} L${item.x2.baseVal.value},${item.y2.baseVal.value}`, clipped);
-                                                    if (path && path.strokeColor) {
-                                                        if (!clipped) {
-                                                            path.fillAlpha = '';
-                                                            path.fillColor = '';
-                                                        }
-                                                        group[dataIndex].push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'rect': {
-                                                const item = shapes.children[i];
-                                                if (item.width.baseVal.value > 0 && item.height.baseVal.value > 0) {
-                                                    const x = item.x.baseVal.value;
-                                                    const y = item.y.baseVal.value;
-                                                    const path = getPath(item, `M${x},${y} H${x + item.width.baseVal.value} V${y + item.height.baseVal.value} H${x} L${x},${y}`, clipped);
-                                                    if (path) {
-                                                        group[dataIndex].push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'polyline':
-                                            case 'polygon': {
-                                                const item = shapes.children[i];
-                                                if (item.points.numberOfItems > 0) {
-                                                    const d = [];
-                                                    for (let j = 0; j < item.points.numberOfItems; j++) {
-                                                        const point = item.points.getItem(j);
-                                                        d.push(`${point.x},${point.y}`);
-                                                    }
-                                                    const path = getPath(item, `M${d.join(' ') + (tagName === 'polygon' ? 'z' : '')}`, clipped);
-                                                    if (path) {
-                                                        group[dataIndex].push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'circle': {
-                                                const item = shapes.children[i];
-                                                const r = item.r.baseVal.value;
-                                                if (r > 0) {
-                                                    const path = getPath(item, `M${item.cx.baseVal.value},${item.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`, clipped);
-                                                    if (path) {
-                                                        group[dataIndex].push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'ellipse': {
-                                                const item = shapes.children[i];
-                                                const rx = item.rx.baseVal.value;
-                                                const ry = item.ry.baseVal.value;
-                                                if (rx > 0 && ry > 0) {
-                                                    const path = getPath(item, `M${item.cx.baseVal.value - rx},${item.cy.baseVal.value}a${rx},${ry} 0 1,0 ${rx * 2},0a${rx},${ry} 0 1,0 -${rx * 2},0`, clipped);
-                                                    if (path) {
-                                                        group[dataIndex].push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                        }
-                                    }
-                                });
-                                if (group['3'].length > 0) {
-                                    root['1'].push(group);
+                                    group['3'].push(path);
                                 }
                             });
-                            const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), data);
-                            result = ResourceHandler.getStoredDrawable(xml);
-                            if (result === '') {
-                                result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
-                                $resource.STORED.drawables.set(result, xml);
-                            }
+                            root['1'].push(group);
+                        });
+                        const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), data);
+                        result = ResourceHandler.getStoredDrawable(xml);
+                        if (result === '') {
+                            result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
+                            $resource.STORED.drawables.set(result, xml);
                         }
                     }
                     else {
-                        const element = node.element;
-                        result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
+                        if ((node.imageElement || (node.tagName === 'INPUT' && node.element.type === 'image')) &&
+                            !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.IMAGE_SOURCE)) {
+                            const element = node.element;
+                            result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
+                        }
                     }
                     if (result !== '') {
                         const method = METHOD_ANDROID['imageSource'];
@@ -3173,49 +3052,11 @@ var android = (function () {
                 }
             });
         }
-        setOptionArray() {
-            super.setOptionArray();
-            this.cache.visible.forEach(node => {
-                const stored = $dom$1.getElementCache(node.element, 'optionArray');
-                if (stored && !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.OPTION_ARRAY)) {
-                    const method = METHOD_ANDROID['optionArray'];
-                    let result = [];
-                    if (stored.numberArray) {
-                        if (!this.settings.numberResourceValue) {
-                            result = stored.numberArray;
-                        }
-                        else {
-                            stored.stringArray = stored.numberArray;
-                        }
-                    }
-                    if (stored.stringArray) {
-                        result = stored.stringArray.map(value => {
-                            const name = ResourceHandler.addString(value, '', this.settings);
-                            return name !== '' ? `@string/${name}` : '';
-                        })
-                            .filter(name => name);
-                    }
-                    const arrayValue = result.join('-');
-                    let arrayName = '';
-                    for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
-                        if (arrayValue === storedResult.join('-')) {
-                            arrayName = storedName;
-                            break;
-                        }
-                    }
-                    if (arrayName === '') {
-                        arrayName = `${node.nodeId}_array`;
-                        $resource.STORED.arrays.set(arrayName, result);
-                    }
-                    node.formatted($util$1.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
-                }
-            });
-        }
         setValueString() {
             super.setValueString();
             this.cache.visible.forEach(node => {
                 const stored = $dom$1.getElementCache(node.element, 'valueString');
-                if (stored && !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.VALUE_STRING)) {
+                if (stored) {
                     if (node.renderParent.is($enum$1.NODE_STANDARD.RELATIVE)) {
                         if (node.alignParent('left', this.settings) && !$dom$1.cssParent(node.element, 'whiteSpace', 'pre', 'pre-wrap')) {
                             const value = node.textContent;
@@ -3260,6 +3101,44 @@ var android = (function () {
                             node.formatted($util$1.formatString(method['text'], isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name), node.renderExtension.size === 0);
                         }
                     }
+                }
+            });
+        }
+        setOptionArray() {
+            super.setOptionArray();
+            this.cache.visible.forEach(node => {
+                const stored = $dom$1.getElementCache(node.element, 'optionArray');
+                if (stored) {
+                    const method = METHOD_ANDROID['optionArray'];
+                    let result = [];
+                    if (stored.numberArray) {
+                        if (!this.settings.numberResourceValue) {
+                            result = stored.numberArray;
+                        }
+                        else {
+                            stored.stringArray = stored.numberArray;
+                        }
+                    }
+                    if (stored.stringArray) {
+                        result = stored.stringArray.map(value => {
+                            const name = ResourceHandler.addString(value, '', this.settings);
+                            return name !== '' ? `@string/${name}` : '';
+                        })
+                            .filter(name => name);
+                    }
+                    const arrayValue = result.join('-');
+                    let arrayName = '';
+                    for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
+                        if (arrayValue === storedResult.join('-')) {
+                            arrayName = storedName;
+                            break;
+                        }
+                    }
+                    if (arrayName === '') {
+                        arrayName = `${node.nodeId}_array`;
+                        $resource.STORED.arrays.set(arrayName, result);
+                    }
+                    node.formatted($util$1.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
                 }
             });
         }
@@ -5582,9 +5461,6 @@ var android = (function () {
         }
         addGuideline(node, orientation = '', percent, opposite) {
             const map = MAP_LAYOUT.constraint;
-            if (!node) {
-                console.log(node);
-            }
             if (node.pageflow) {
                 if (opposite == null) {
                     opposite = (node.float === 'right' ||

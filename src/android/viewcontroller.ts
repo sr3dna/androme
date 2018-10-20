@@ -2222,9 +2222,6 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     private addGuideline(node: T, orientation = '', percent?: boolean, opposite?: boolean) {
         const map = MAP_LAYOUT.constraint;
-        if (!node) {
-            console.log(node);
-        }
         if (node.pageflow) {
             if (opposite == null) {
                 opposite = (

@@ -5469,6 +5469,215 @@
                 }
             });
         }
+        setImageSource() {
+            this.cache.visible.forEach(node => {
+                if (!node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE) && (!getElementCache(node.element, 'imageSource') ||
+                    this.settings.alwaysReevaluateResources)) {
+                    if (node.svgElement) {
+                        const element = node.element;
+                        if (element.children.length > 0) {
+                            function getPath(item, d, clipPath) {
+                                if (d === '') {
+                                    d = cssAttribute(item, 'd');
+                                }
+                                if (d && d !== 'none' && cssAttribute(item, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(item, 'visibility'))) {
+                                    let fillColor = cssAttribute(item, 'fill');
+                                    let strokeColor = cssAttribute(item, 'stroke');
+                                    const color = parseHex(cssAttribute(item, 'color'));
+                                    if (fillColor !== '') {
+                                        switch (fillColor) {
+                                            case 'none':
+                                            case 'transparent':
+                                                fillColor = '';
+                                                break;
+                                            case 'currentColor':
+                                                fillColor = color || parseHex(cssInherit(item, 'color'));
+                                                break;
+                                            default:
+                                                fillColor = parseHex(fillColor);
+                                                break;
+                                        }
+                                    }
+                                    if (strokeColor !== '') {
+                                        switch (strokeColor) {
+                                            case 'none':
+                                            case 'transparent':
+                                                strokeColor = '';
+                                                break;
+                                            case 'currentColor':
+                                                strokeColor = color || parseHex(cssInherit(item, 'color'));
+                                                break;
+                                            default:
+                                                strokeColor = parseHex(strokeColor);
+                                                break;
+                                        }
+                                    }
+                                    const fillAlpha = parseFloat(cssAttribute(item, 'fill-opacity'));
+                                    const strokeAlpha = parseFloat(cssAttribute(item, 'stroke-opacity'));
+                                    return {
+                                        name: item.id,
+                                        color,
+                                        fillColor,
+                                        strokeColor,
+                                        strokeWidth: convertInt(cssAttribute(item, 'stroke-width')).toString(),
+                                        fillAlpha: !isNaN(fillAlpha) && fillAlpha < 1 ? fillAlpha : 1,
+                                        strokeAlpha: !isNaN(strokeAlpha) && strokeAlpha < 1 ? strokeAlpha : 1,
+                                        strokeLineCap: cssAttribute(item, 'stroke-linecap'),
+                                        strokeLineJoin: cssAttribute(item, 'stroke-linejoin'),
+                                        strokeMiterLimit: cssAttribute(item, 'stroke-miterlimit'),
+                                        clipPath,
+                                        d
+                                    };
+                                }
+                                return null;
+                            }
+                            const opacity = parseFloat(node.css('opacity'));
+                            const svg = {
+                                element,
+                                name: element.id,
+                                width: element.width.baseVal.value,
+                                height: element.height.baseVal.value,
+                                viewBoxWidth: element.viewBox.baseVal.width,
+                                viewBoxHeight: element.viewBox.baseVal.height,
+                                opacity: !isNaN(opacity) && opacity < 1 ? opacity : 1,
+                                children: []
+                            };
+                            const gOrSvg = Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'g');
+                            [element, ...gOrSvg].forEach((item, index) => {
+                                const group = {
+                                    element: item,
+                                    name: element.id || `group_${index}`,
+                                    translateX: 0,
+                                    translateY: 0,
+                                    scaleX: 1,
+                                    scaleY: 1,
+                                    rotation: 0,
+                                    skewX: 0,
+                                    skewY: 0,
+                                    nestedSVG: false,
+                                    children: []
+                                };
+                                if (item.tagName === 'g') {
+                                    const g = item;
+                                    for (let i = 0; i < g.transform.baseVal.numberOfItems; i++) {
+                                        const transform = g.transform.baseVal.getItem(i);
+                                        switch (transform.type) {
+                                            case SVGTransform.SVG_TRANSFORM_TRANSLATE:
+                                                group.translateX = transform.matrix.e;
+                                                group.translateY = transform.matrix.f;
+                                                break;
+                                            case SVGTransform.SVG_TRANSFORM_SCALE:
+                                                group.scaleX = transform.matrix.a;
+                                                group.scaleY = transform.matrix.d;
+                                                break;
+                                            case SVGTransform.SVG_TRANSFORM_ROTATE:
+                                                group.rotation = transform.angle;
+                                                break;
+                                            case SVGTransform.SVG_TRANSFORM_SKEWX:
+                                                group.skewX = transform.angle;
+                                                break;
+                                            case SVGTransform.SVG_TRANSFORM_SKEWY:
+                                                group.skewY = transform.angle;
+                                                break;
+                                        }
+                                    }
+                                }
+                                else {
+                                    if (index > 0) {
+                                        group.x = item.x.baseVal.value;
+                                        group.y = item.y.baseVal.value;
+                                        group.nestedSVG = true;
+                                    }
+                                }
+                                const clipPath = Array.from(item.children).filter(path => path.tagName === 'clipPath');
+                                [item, ...clipPath].forEach((shape, layerIndex) => {
+                                    for (let i = 0; i < shape.children.length; i++) {
+                                        const tagName = shape.children[i].tagName;
+                                        const clipped = layerIndex > 0;
+                                        switch (tagName) {
+                                            case 'path': {
+                                                const subitem = shape.children[i];
+                                                const path = getPath(subitem, '', clipped);
+                                                if (path) {
+                                                    group.children.push(path);
+                                                }
+                                                break;
+                                            }
+                                            case 'line': {
+                                                const subitem = shape.children[i];
+                                                if (subitem.x1.baseVal.value !== 0 || subitem.y1.baseVal.value !== 0 || subitem.x2.baseVal.value !== 0 || subitem.y2.baseVal.value !== 0) {
+                                                    const path = getPath(subitem, `M${subitem.x1.baseVal.value},${subitem.y1.baseVal.value} L${subitem.x2.baseVal.value},${subitem.y2.baseVal.value}`, clipped);
+                                                    if (path && path.strokeColor) {
+                                                        path.fillColor = '';
+                                                        group.children.push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            case 'rect': {
+                                                const subitem = shape.children[i];
+                                                if (subitem.width.baseVal.value > 0 && subitem.height.baseVal.value > 0) {
+                                                    const x = subitem.x.baseVal.value;
+                                                    const y = subitem.y.baseVal.value;
+                                                    const path = getPath(subitem, `M${x},${y} H${x + subitem.width.baseVal.value} V${y + subitem.height.baseVal.value} H${x} L${x},${y}`, clipped);
+                                                    if (path) {
+                                                        group.children.push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            case 'polyline':
+                                            case 'polygon': {
+                                                const subitem = shape.children[i];
+                                                if (subitem.points.numberOfItems > 0) {
+                                                    const d = [];
+                                                    for (let j = 0; j < subitem.points.numberOfItems; j++) {
+                                                        const point = subitem.points.getItem(j);
+                                                        d.push(`${point.x},${point.y}`);
+                                                    }
+                                                    const path = getPath(subitem, `M${d.join(' ') + (tagName === 'polygon' ? 'z' : '')}`, clipped);
+                                                    if (path) {
+                                                        group.children.push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            case 'circle': {
+                                                const subitem = shape.children[i];
+                                                const r = subitem.r.baseVal.value;
+                                                if (r > 0) {
+                                                    const path = getPath(subitem, `M${subitem.cx.baseVal.value},${subitem.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`, clipped);
+                                                    if (path) {
+                                                        group.children.push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            case 'ellipse': {
+                                                const subitem = shape.children[i];
+                                                const rx = subitem.rx.baseVal.value;
+                                                const ry = subitem.ry.baseVal.value;
+                                                if (rx > 0 && ry > 0) {
+                                                    const path = getPath(subitem, `M${subitem.cx.baseVal.value - rx},${subitem.cy.baseVal.value}a${rx},${ry} 0 1,0 ${rx * 2},0a${rx},${ry} 0 1,0 -${rx * 2},0`, clipped);
+                                                    if (path) {
+                                                        group.children.push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                        }
+                                    }
+                                });
+                                svg.children.push(group);
+                            });
+                            if (svg.children.length > 0) {
+                                setElementCache(element, 'imageSource', svg);
+                            }
+                        }
+                    }
+                }
+            });
+        }
         setValueString() {
             function parseWhiteSpace(node, value) {
                 if (node.multiLine && !node.renderParent.linearVertical) {

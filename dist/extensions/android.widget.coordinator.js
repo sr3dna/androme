@@ -46,11 +46,11 @@ this.android.widget.coordinator = (function () {
         }
     }
 
-    const coodinator = new Coordinator(WIDGET_NAME.COORDINATOR, 2);
+    const coordinator = new Coordinator(WIDGET_NAME.COORDINATOR, 2);
     if (androme) {
-        androme.registerExtension(coodinator);
+        androme.registerExtension(coordinator);
     }
 
-    return coodinator;
+    return coordinator;
 
 }());

@@ -59,6 +59,7 @@ Library files are in the /dist folder. A minimum of *two* files are required to 
 
 1. androme
 2. framework (e.g. android)
+3. extensions (e.g. android.widget) - *optional*
 
 There are babel minified versions for production (ES5) and non-babel versions for development (ES6). The primary function "parseDocument" can be called on multiple elements and multiple times per session. The application will continuously and progressively build into a single entity with combined shared resources.
 

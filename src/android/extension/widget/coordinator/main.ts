@@ -2,10 +2,10 @@ import WIDGET_NAME from '../namespace';
 
 import Coordinator from './coodinator';
 
-const coodinator = new Coordinator(WIDGET_NAME.COORDINATOR, 2);
+const coordinator = new Coordinator(WIDGET_NAME.COORDINATOR, 2);
 
 if (androme) {
-    androme.registerExtension(coodinator);
+    androme.registerExtension(coordinator);
 }
 
-export default coodinator;
+export default coordinator;
