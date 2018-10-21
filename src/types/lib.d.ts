@@ -93,7 +93,7 @@ declare global {
             export function replaceTab(value: string, settings?: {}, preserve?: boolean): string;
             export function replaceEntity(value: string): string;
             export function parseTemplate(template: string): ObjectMap<string>;
-            export function getTemplateLevel(data: {}, ...levels: string[]): {};
+            export function getTemplateBranch(data: {}, ...levels: string[]): {};
             export function createTemplate(template: ObjectMap<string>, data: {}, index?: string, include?: {}, exclude?: {}): string;
         }
         namespace color {

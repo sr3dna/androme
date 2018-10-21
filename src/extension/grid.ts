@@ -314,7 +314,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             else {
                 const columnEnd = mainData.columnEnd[Math.min(cellData.index + (cellData.columnSpan - 1), mainData.columnEnd.length - 1)];
                 siblings = Array.from(node.documentParent.element.children).map(element => {
-                    const item = getNodeFromElement<T>(element);
+                    const item = getNodeFromElement(element) as T;
                     return (
                         item &&
                         item.visible &&

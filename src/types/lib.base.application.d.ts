@@ -1,7 +1,6 @@
 declare global {
     namespace androme.lib.base {
         export class Application<T extends Node> {
-            public static sortByAlignment<T extends Node>(children: T[], parent?: T, alignmentType?: number): boolean;
             public settings: Settings;
             public viewController: Controller<T>;
             public resourceHandler: Resource<T>;

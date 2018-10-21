@@ -1,8 +1,8 @@
-import { NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
+import { NODE_ALIGNMENT, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
 import Node from './node';
 
-import { convertInt, partition, sortAsc, sortDesc } from '../lib/util';
+import { convertInt, hasBit, partition, sortAsc, sortDesc } from '../lib/util';
 import { getNodeFromElement, isUserAgent } from '../lib/dom';
 
 function getDocumentParent<T extends Node>(nodes: T[]) {
@@ -259,6 +259,53 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                 }
                 return false;
         }
+    }
+
+    public static sortByAlignment<T extends Node>(list: T[], alignmentType = NODE_ALIGNMENT.NONE, parent?: T) {
+        let sorted = false;
+        if (parent && alignmentType === NODE_ALIGNMENT.NONE) {
+            if (parent.linearHorizontal) {
+                alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+            }
+            else if (parent.is(NODE_STANDARD.CONSTRAINT) && list.some(node => !node.pageflow)) {
+                alignmentType |= NODE_ALIGNMENT.ABSOLUTE;
+            }
+        }
+        if (hasBit(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
+            if (list.some(node => node.floating)) {
+                list.sort((a, b) => {
+                    if (a.floating && !b.floating) {
+                        return a.float === 'left' ? -1 : 1;
+                    }
+                    else if (!a.floating && b.floating) {
+                        return b.float === 'left' ? 1 : -1;
+                    }
+                    else if (a.floating && b.floating) {
+                        if (a.float !== b.float) {
+                            return a.float === 'left' ? -1 : 1;
+                        }
+                    }
+                    return a.linear.left <= b.linear.left ? -1 : 1;
+                });
+                sorted = true;
+            }
+        }
+        if (hasBit(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
+            if (list.some(node => node.toInt('zIndex') !== 0)) {
+                list.sort((a, b) => {
+                    const indexA = convertInt(a.css('zIndex'));
+                    const indexB = convertInt(b.css('zIndex'));
+                    if (indexA === 0 && indexB === 0) {
+                        return a.siblingIndex <= b.siblingIndex ? -1 : 1;
+                    }
+                    else {
+                        return indexA <= indexB ? -1 : 1;
+                    }
+                });
+                sorted = true;
+            }
+        }
+        return sorted;
     }
 
     public static siblingIndex<T extends Node>(a: T, b: T) {

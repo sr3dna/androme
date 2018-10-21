@@ -1,9 +1,9 @@
 const template = [
 '!0',
 '<?xml version="1.0" encoding="utf-8"?>',
-'<font-family xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="{#app=http://schemas.android.com/apk/res-auto}">',
+'<font-family {namespace}>',
 '!1',
-'	<font android:fontStyle="{style}" android:fontWeight="{weight}" android:font="{font}" app:fontStyle="{#app=style}" app:fontWeight="{#app=weight}" app:font="{#app=font}" />',
+'	<font android:fontStyle="{style}" android:fontWeight="{weight}" android:font="{font}" />',
 '!1',
 '</font-family>',
 '<!-- filename: res/font/{name}.xml -->',

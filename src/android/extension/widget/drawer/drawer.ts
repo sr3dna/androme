@@ -106,7 +106,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
     public afterInsert() {
         const element = $dom.findNestedExtension(this.node.element, $const.EXT_NAME.EXTERNAL);
         if (element) {
-            const header = $dom.getNodeFromElement<T>(element);
+            const header = $dom.getNodeFromElement(element) as T;
             if (header && !header.hasHeight) {
                 header.android('layout_height', 'wrap_content');
             }

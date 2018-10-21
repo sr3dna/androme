@@ -750,11 +750,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         const right = $util.convertInt(this.android(parseRTL(`${value}Right`, settings)));
                         const bottom = $util.convertInt(this.android(`${value}Bottom`));
                         const left = $util.convertInt(this.android(parseRTL(`${value}Left`, settings)));
-                        if (top !== 0 &&
-                            top === bottom &&
-                            bottom === left &&
-                            left === right)
-                        {
+                        if (top !== 0 && top === bottom && bottom === left && left === right) {
                             this.delete('android', `${value}*`);
                             this.android(value, $util.formatPX(top));
                         }
@@ -917,10 +913,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     this.android('layout_height', $util.formatPX(this.bounds.height + (this.css('borderStyle') === 'outset' ? $util.convertInt(this.css('borderWidth')) : 0)));
                 }
                 else if (this.is($enum.NODE_STANDARD.LINE)) {
-                    if (layoutHeight > 0 &&
-                        this.has('height', 0, { map: 'initial' }) &&
-                        this.tagName !== 'HR')
-                    {
+                    if (layoutHeight > 0 && this.has('height', 0, { map: 'initial' }) && this.tagName !== 'HR') {
                         this.android('layout_height', $util.formatPX(layoutHeight + this.borderTopWidth + this.borderBottomWidth));
                     }
                 }

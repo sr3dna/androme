@@ -6,7 +6,7 @@ import Controller from './controller';
 import Resource from './resource';
 import Extension from './extension';
 
-import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isUnit, sortAsc, trimString, trimNull } from '../lib/util';
+import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isUnit, sortAsc, trimNull, trimString } from '../lib/util';
 import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isStyleElement, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
@@ -43,53 +43,6 @@ function prioritizeExtensions<T extends Node>(extensions: Extension<T>[], elemen
 }
 
 export default class Application<T extends Node> implements androme.lib.base.Application<T> {
-    public static sortByAlignment<T extends Node>(children: T[], parent?: T, alignmentType = NODE_ALIGNMENT.NONE) {
-        let sorted = false;
-        if (parent && alignmentType === NODE_ALIGNMENT.NONE) {
-            if (parent.linearHorizontal) {
-                alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-            }
-            else if (parent.is(NODE_STANDARD.CONSTRAINT) && children.some(node => !node.pageflow)) {
-                alignmentType |= NODE_ALIGNMENT.ABSOLUTE;
-            }
-        }
-        if (hasBit(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
-            if (children.some(node => node.floating)) {
-                children.sort((a, b) => {
-                    if (a.floating && !b.floating) {
-                        return a.float === 'left' ? -1 : 1;
-                    }
-                    else if (!a.floating && b.floating) {
-                        return b.float === 'left' ? 1 : -1;
-                    }
-                    else if (a.floating && b.floating) {
-                        if (a.float !== b.float) {
-                            return a.float === 'left' ? -1 : 1;
-                        }
-                    }
-                    return a.linear.left <= b.linear.left ? -1 : 1;
-                });
-                sorted = true;
-            }
-        }
-        if (hasBit(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
-            if (children.some(node => node.toInt('zIndex') !== 0)) {
-                children.sort((a, b) => {
-                    const indexA = convertInt(a.css('zIndex'));
-                    const indexB = convertInt(b.css('zIndex'));
-                    if (indexA === 0 && indexB === 0) {
-                        return a.siblingIndex <= b.siblingIndex ? -1 : 1;
-                    }
-                    else {
-                        return indexA <= indexB ? -1 : 1;
-                    }
-                });
-                sorted = true;
-            }
-        }
-        return sorted;
-    }
-
     public static isFrameHorizontal<T extends Node>(nodes: T[], cleared: Map<T, string>, lineBreak = false) {
         const floated = NodeList.floated(nodes);
         const margin = nodes.filter(node => node.autoMargin);
@@ -263,12 +216,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public setImageCache(element: HTMLImageElement) {
         if (element && hasValue(element.src)) {
-            const image: Image = {
+            this._cacheImage.set(element.src, {
                 width: element.naturalWidth,
                 height: element.naturalHeight,
                 url: element.src
-            };
-            this._cacheImage.set(element.src, image);
+            });
         }
     }
 
@@ -737,7 +689,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                     }
                 }
-                Application.sortByAlignment(middle, parent);
+                NodeList.sortByAlignment(middle, NODE_ALIGNMENT.NONE, parent);
                 axisY.push(...sortAsc(below, 'style.zIndex', 'id'));
                 axisY.push(...middle);
                 axisY.push(...sortAsc(above, 'style.zIndex', 'id'));

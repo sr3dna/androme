@@ -615,7 +615,6 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     const image2: BackgroundImage[] = [];
                     const image3: BackgroundImage[] = [];
                     let data: {};
-                    let template: Null<ObjectMap<string>> = null;
                     let resourceName = '';
                     for (let i = 0; i < backgroundImage.length; i++) {
                         let gravity = '';
@@ -641,10 +640,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 tileMode = 'disabled';
                                 break;
                             case 'repeat':
-                                if (image == null ||
-                                    image.width < node.bounds.width ||
-                                    image.height < node.bounds.height)
-                                {
+                                if (image == null || image.width < node.bounds.width || image.height < node.bounds.height) {
                                     tileMode = 'repeat';
                                 }
                                 break;
@@ -913,6 +909,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     });
                     const backgroundColor = getShapeAttribute(stored, 'backgroundColor');
                     const borderRadius = getShapeAttribute(stored, 'radius');
+                    let template: ObjectMap<string>;
                     if (stored.border && $resource.isBorderVisible(stored.border) && !(
                             (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
                             (parseInt(stored.border.width) > 2 && stored.border.style === 'double')
@@ -955,7 +952,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 '7': []
                             }]
                         };
-                        const root = $xml.getTemplateLevel(data, '0');
+                        const root = $xml.getTemplateBranch(data, '0');
                         const borderVisible = borders.filter(item => $resource.isBorderVisible(item));
                         const borderWidth = new Set(borderVisible.map(item => item.width));
                         const borderStyle = new Set(borderVisible.map(item => getBorderStyle(item)));
@@ -1239,7 +1236,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             '1': []
                         }]
                     };
-                    const root = $xml.getTemplateLevel(data, '0');
+                    const root = $xml.getTemplateBranch(data, '0');
                     stored.children.forEach(svg => {
                         const group: ObjectMap<any> = {
                             name: svg.name,
@@ -1372,44 +1369,47 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         this.cache.visible.forEach(node => {
             const stored: ObjectMap<string[]> = $dom.getElementCache(node.element, 'optionArray');
             if (stored) {
-                const method = METHOD_ANDROID['optionArray'];
-                let result: string[] = [];
+                const result: string[] = [];
                 if (stored.numberArray) {
                     if (!this.settings.numberResourceValue) {
-                        result = stored.numberArray;
+                        result.push(...stored.numberArray);
                     }
                     else {
                         stored.stringArray = stored.numberArray;
                     }
                 }
                 if (stored.stringArray) {
-                    result = stored.stringArray.map(value => {
-                        const name = ResourceHandler.addString(value, '', this.settings);
-                        return name !== '' ? `@string/${name}` : '';
-                    })
-                    .filter(name => name);
+                    result.push(
+                        ...stored.stringArray.map(value => {
+                            const name = ResourceHandler.addString(value, '', this.settings);
+                            return name !== '' ? `@string/${name}` : '';
+                        })
+                        .filter(name => name)
+                    );
                 }
-                const arrayValue = result.join('-');
-                let arrayName = '';
-                for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
-                    if (arrayValue === storedResult.join('-')) {
-                        arrayName = storedName;
-                        break;
+                if (result.length > 0) {
+                    const arrayValue = result.join('-');
+                    let arrayName = '';
+                    for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
+                        if (arrayValue === storedResult.join('-')) {
+                            arrayName = storedName;
+                            break;
+                        }
                     }
+                    if (arrayName === '') {
+                        arrayName = `${node.nodeId}_array`;
+                        $resource.STORED.arrays.set(arrayName, result);
+                    }
+                    const method = METHOD_ANDROID['optionArray'];
+                    node.formatted($util.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
                 }
-                if (arrayName === '') {
-                    arrayName = `${node.nodeId}_array`;
-                    $resource.STORED.arrays.set(arrayName, result);
-                }
-                node.formatted($util.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
             }
         });
     }
 
     public addTheme(template: string, data: {}, options: ObjectMap<any>) {
-        const map: ObjectMap<string> = $xml.parseTemplate(template);
         if (options.item) {
-            const root = $xml.getTemplateLevel(data, '0');
+            const root = $xml.getTemplateBranch(data, '0');
             for (const name in options.item) {
                 let value = options.item[name];
                 const hex = $color.parseHex(value);
@@ -1422,7 +1422,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 });
             }
         }
-        const xml = $xml.createTemplate(map, data);
+        const xml = $xml.createTemplate($xml.parseTemplate(template), data);
         this.addFile(options.output.path, options.output.file, xml);
     }
 

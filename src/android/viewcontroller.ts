@@ -428,11 +428,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     item.anchor(relativeParent['top'], 'true');
                                     break;
                                 case 'middle':
-                                    rows[0].forEach(sibling => {
-                                        if (sibling.bounds.height <= item.bounds.height) {
-                                            sibling.anchor('layout_centerVertical', 'true');
-                                        }
-                                    });
+                                    rows[0].forEach(sibling => sibling.bounds.height <= item.bounds.height && sibling.anchor('layout_centerVertical', 'true'));
                                     break;
                             }
                         });
@@ -1710,8 +1706,6 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     public renderGroup(node: T, parent: T, viewName: number | string, options?: ObjectMap<any>) {
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
-        let preXml = '';
-        let postXml = '';
         if (typeof viewName === 'number') {
             viewName = View.getControlName(viewName);
         }
@@ -1734,6 +1728,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 break;
         }
         node.setNodeType(viewName);
+        let preXml = '';
+        let postXml = '';
         if (node.overflowX || node.overflowY) {
             const overflow: string[] = [];
             if (node.overflowX && node.overflowY) {
@@ -2152,6 +2148,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     }
 
     public setDimensions(data: ViewData<NodeList<T>>) {
+        const groups: ObjectMapNested<T[]> = {};
         function addToGroup(nodeName: string, node: T, dimen: string, attr?: string, value?: string) {
             const group: ObjectMap<T[]> = groups[nodeName];
             let name = dimen;
@@ -2176,7 +2173,6 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             }
             return ['', '0px'];
         }
-        const groups: ObjectMapNested<T[]> = {};
         data.cache.visible.forEach(node => {
             if (this.settings.dimensResourceValue) {
                 const nodeName = node.nodeName.toLowerCase();

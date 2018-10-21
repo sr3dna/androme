@@ -1,13 +1,14 @@
 declare global {
     namespace androme.lib.base {
         export class NodeList<T extends Node> implements Iterable<T> {
-            public static siblingIndex(): number;
             public static outerRegion<T>(list: T[], dimension?: string): ObjectMap<T>;
             public static floated<T>(list: T[]): Set<string>;
             public static cleared<T>(list: T[]): Map<T, string>;
             public static textBaseline<T>(list: T[]): T[];
             public static linearX<T>(list: T[], traverse?: boolean): boolean;
             public static linearY<T>(list: T[]): boolean;
+            public static sortByAlignment<T extends Node>(list: T[], alignmentType?: number, parent?: T): boolean;
+            public static siblingIndex(): number;
             public parent?: T;
             public delegateAppend?: (nodes: T[]) => void;
             public readonly length: number;

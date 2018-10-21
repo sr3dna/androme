@@ -5,7 +5,7 @@ export function formatPlaceholder(id: string | number, symbol = ':') {
 }
 
 export function removePlaceholderAll(value: string) {
-    return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
+    return value.replace(/{[<:@>][0-9]+(:[0-9]+)?}/g, '').trim();
 }
 
 export function replacePlaceholder(value: string, id: string | number, content: string, before = false) {
@@ -93,7 +93,7 @@ export function parseTemplate(template: string) {
     return result;
 }
 
-export function getTemplateLevel(data: {}, ...levels: string[]) {
+export function getTemplateBranch(data: {}, ...levels: string[]) {
     let current = data;
     for (const level of levels) {
         const [index, array = '0'] = level.split('-');
@@ -102,16 +102,8 @@ export function getTemplateLevel(data: {}, ...levels: string[]) {
     return current;
 }
 
-export function createTemplate(template: ObjectMap<string>, data: {}, index?: string, include?: {}, exclude?: {}) {
+export function createTemplate(template: ObjectMap<string>, data: {}, index?: string) {
     let output = index ? template[index] : '';
-    if (data['#include']) {
-        include = data['#include'];
-        delete data['#include'];
-    }
-    if (data['#exclude']) {
-        exclude = data['#exclude'];
-        delete data['#exclude'];
-    }
     for (const i in data) {
         let value: any = '';
         if (data[i] === false || (Array.isArray(data[i]) && data[i].length === 0)) {
@@ -120,7 +112,7 @@ export function createTemplate(template: ObjectMap<string>, data: {}, index?: st
         }
         else if (Array.isArray(data[i])) {
             for (const j in data[i]) {
-                value += createTemplate(template, data[i][j], i, include, exclude);
+                value += createTemplate(template, data[i][j], i);
             }
         }
         else {
@@ -134,19 +126,6 @@ export function createTemplate(template: ObjectMap<string>, data: {}, index?: st
         }
         else if (new RegExp(`{&${i}}`).test(output)) {
             output = '';
-        }
-        if (include || exclude) {
-            const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
-            let match: Null<RegExpExecArray>;
-            while ((match = pattern.exec(output)) != null) {
-                if (include && include[match[1]]) {
-                    const attr = `{#${match[1]}=${match[2]}}`;
-                    output = output.replace(attr, data[match[2]] || match[2]);
-                }
-                else if (exclude && exclude[match[1]]) {
-                    output = output.replace(match[0], '');
-                }
-            }
         }
     }
     return output.replace(/\s+[\w:]+="{@\w+}"/g, '');

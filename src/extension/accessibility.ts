@@ -16,8 +16,8 @@ export default abstract class Accessibility<T extends Node> extends Extension<T>
                         case 'radio':
                         case 'checkbox':
                             [node.nextElementSibling, node.previousElementSibling].some((sibling: HTMLLabelElement) => {
-                                const label = getNodeFromElement<T>(sibling);
-                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement<T>(sibling.parentElement) : null;
+                                const label = getNodeFromElement(sibling) as T;
+                                const labelParent = sibling && sibling.parentElement && sibling.parentElement.tagName === 'LABEL' ? getNodeFromElement(sibling.parentElement) as T : null;
                                 if (label && label.visible && label.pageflow) {
                                     if (hasValue(sibling.htmlFor) && sibling.htmlFor === element.id) {
                                         node.companion = label;

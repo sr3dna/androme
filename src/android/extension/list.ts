@@ -143,7 +143,9 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                         });
                     }
                     else {
-                        Object.assign(options.android, { text: mainData.ordinal });
+                        Object.assign(options.android, {
+                            text: mainData.ordinal
+                        });
                     }
                     const companion = new View(this.application.cache.nextId, document.createElement('SPAN')) as T;
                     companion.api = node.api;

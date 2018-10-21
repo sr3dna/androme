@@ -101,7 +101,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
                 children--;
             }
             else {
-                const targetNode = $dom.getNodeFromElement<T>(element);
+                const targetNode = $dom.getNodeFromElement(element) as T;
                 if (targetNode) {
                     switch (element.dataset.targetModule) {
                         case 'appBar':
