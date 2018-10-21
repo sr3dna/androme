@@ -3,7 +3,7 @@ export type ResourceMap = {
     arrays: Map<string, string[]>;
     fonts: Map<string, ObjectMap<boolean>>;
     colors: Map<string, string>;
-    styles: Map<string, any>;
+    styles: Map<string, StyleStored>;
     dimens: Map<string, string>;
     drawables: Map<string, string>;
     images: Map<string, StringMap>;
@@ -48,6 +48,13 @@ export type SVGPath = {
     strokeLineCap: string;
     strokeLineJoin: string;
     strokeMiterLimit: string;
-    d: string;
     clipPath: boolean;
+    d: string;
+};
+
+export type StyleStored = {
+    name: string;
+    parent?: string;
+    attrs: string;
+    ids: number[];
 };

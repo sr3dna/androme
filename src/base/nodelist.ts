@@ -338,7 +338,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         this._list.forEach(predicate);
     }
 
-    public find(attr: string | FindPredicate<T>, value?: any) {
+    public find(attr: string | IteratorPredicate<T>, value?: any) {
         if (typeof attr === 'string') {
             return this._list.find(node => node[attr] === value);
         }

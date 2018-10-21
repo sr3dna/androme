@@ -196,7 +196,7 @@ export function cssParent(element: Element, attr: string, ...styles: string[]) {
 }
 
 export function cssFromParent(element: Element, attr: string) {
-    if (element instanceof HTMLElement && element.parentElement) {
+    if (isStyleElement(element) && element.parentElement) {
         const node = getNodeFromElement(element);
         const style = getStyle(element);
         return (
@@ -245,10 +245,7 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
 }
 
 export function isPlainText(element: Null<Element>, whiteSpace = false) {
-    if (element &&
-        element.nodeName === '#text' &&
-        element.textContent)
-    {
+    if (element && element.nodeName === '#text' && element.textContent) {
         if (whiteSpace) {
             const value = element.textContent;
             let valid = false;
@@ -342,10 +339,7 @@ export function isElementVisible(element: Element) {
         if (isStyleElement(element)) {
             if (typeof element.getBoundingClientRect === 'function') {
                 const bounds = element.getBoundingClientRect();
-                if ((bounds.width !== 0 && bounds.height !== 0) ||
-                    hasValue(element.dataset.ext) ||
-                    getStyle(element).clear !== 'none')
-                {
+                if ((bounds.width !== 0 && bounds.height !== 0) || hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
                     return true;
                 }
                 else {
@@ -384,7 +378,7 @@ export function isElementVisible(element: Element) {
 }
 
 export function findNestedExtension(element: Element, name: string): Null<HTMLElement> {
-    if (element instanceof HTMLElement) {
+    if (isStyleElement(element)) {
         return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement;
     }
     return null;

@@ -75,15 +75,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
         if (hasBit(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
             if (children.some(node => node.toInt('zIndex') !== 0)) {
                 children.sort((a, b) => {
-                    const indexA = a.css('zIndex');
-                    const indexB = b.css('zIndex');
-                    if ((indexA === 'auto' || indexA === '' || indexA === '0') &&
-                        (indexB === 'auto' || indexB === '' || indexB === '0'))
-                    {
+                    const indexA = convertInt(a.css('zIndex'));
+                    const indexB = convertInt(b.css('zIndex'));
+                    if (indexA === 0 && indexB === 0) {
                         return a.siblingIndex <= b.siblingIndex ? -1 : 1;
                     }
                     else {
-                        return convertInt(indexA) <= convertInt(indexB) ? -1 : 1;
+                        return indexA <= indexB ? -1 : 1;
                     }
                 });
                 sorted = true;
@@ -274,7 +272,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
     }
 
-    public parseDocument(...elements: Null<string | Element>[]): FunctionMap<void> {
+    public parseDocument(...elements: any[]): FunctionMap<void> {
         let __THEN: () => void;
         this.elements.clear();
         this.loading = false;
@@ -282,22 +280,20 @@ export default class Application<T extends Node> implements androme.lib.base.App
         if (this.appName === '' && elements.length === 0) {
             elements.push(document.body);
         }
-        for (let element of elements) {
-            if (typeof element === 'string') {
-                element = document.getElementById(element);
-            }
-            if (element instanceof HTMLElement || element instanceof SVGElement) {
+        for (const item of elements) {
+            const element = typeof item === 'string' ? document.getElementById(item) : item;
+            if (element && isStyleElement(element)) {
                 this.elements.add(element);
             }
         }
         const rootElement = this.elements.values().next().value;
-        function parseResume() {
+        const parseResume = () => {
             this.loading = false;
             if (this.settings.preloadImages && rootElement) {
                 Array.from(rootElement.getElementsByClassName('androme.preload')).forEach(element => rootElement.removeChild(element));
             }
             this.resourceHandler.imageDimensions = this._cacheImage;
-            for (const element of this.elements) {
+            for (const element of this.elements as Set<HTMLElement>) {
                 if (this.appName === '') {
                     if (element.id === '') {
                         element.id = 'untitled';
@@ -324,7 +320,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             if (typeof __THEN === 'function') {
                 __THEN.call(this);
             }
-        }
+        };
         if (this.settings.preloadImages && rootElement) {
             for (const image of this._cacheImage.values()) {
                 if (image.width === 0 && image.height === 0 && image.url) {
@@ -356,7 +352,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         })
         .reduce((a, b) => a.concat(b), []);
         if (images.length === 0) {
-            parseResume.call(this);
+            parseResume();
         }
         else {
             this.loading = true;
@@ -376,12 +372,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                     });
                 }
-                parseResume.call(this);
+                parseResume();
             })
             .catch((error: Event) => {
                 const message = error.srcElement ? (<HTMLImageElement> error.srcElement).src : '';
                 if (!hasValue(message) || confirm(`FAIL: ${message}`)) {
-                    parseResume.call(this);
+                    parseResume();
                 }
             });
         }
@@ -434,7 +430,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
             if (!this.elements.has(element)) {
                 prioritizeExtensions(this.extensions, element).some(item => item.init(element));
                 if (!this.elements.has(element)) {
-                    if (inlineAlways.includes(element.tagName) || (inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item))))
+                    if ((inlineElement(element) && element.parentElement && Array.from(element.parentElement.children).every(item => inlineElement(item))) ||
+                        inlineAlways.includes(element.tagName))
                     {
                         setElementCache(element, 'inlineSupport', true);
                     }
@@ -479,7 +476,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                     }
                     else if (element.tagName !== 'BR') {
-                        const elementNode = getNodeFromElement<T>(element);
+                        const elementNode = getNodeFromElement(element);
                         if (!inlineSupport.includes(element.tagName) || (elementNode && !elementNode.excluded)) {
                             valid = true;
                         }
@@ -605,7 +602,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public createDocument() {
-        const application = this;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
         let baseTemplate = this.viewController.baseTemplate;
@@ -669,7 +665,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             const partial = new Map<string, Map<number, string>>();
             const external = new Map<string, Map<number, string>>();
-            function renderNode(node: T, parent: T, output: string, current = '', group = false) {
+            const renderNode = (node: T, parent: T, output: string, current = '', group = false) => {
                 if (output !== '') {
                     if (group) {
                         node.each((item: T) => {
@@ -695,11 +691,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         insertNodeTemplate(external, node, current, output, current);
                     }
                     else {
-                        if (!application.elements.has(node.element)) {
+                        if (!this.elements.has(node.element)) {
                             if (node.dataset.target) {
                                 const target = document.getElementById(node.dataset.target);
                                 if (target && target !== parent.element) {
-                                    application.addRenderQueue(node.dataset.target, [output]);
+                                    this.addRenderQueue(node.dataset.target, [output]);
                                     node.auto = false;
                                     return;
                                 }
@@ -707,7 +703,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             else if (parent.dataset.target) {
                                 const target = document.getElementById(parent.dataset.target);
                                 if (target) {
-                                    application.addRenderQueue(parent.nodeId, [output]);
+                                    this.addRenderQueue(parent.nodeId, [output]);
                                     node.dataset.target = parent.nodeId;
                                     return;
                                 }
@@ -716,7 +712,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         insertNodeTemplate(partial, node, parent.id.toString(), output, current);
                     }
                 }
-            }
+            };
             for (const parent of depth.values()) {
                 if (parent.children.length === 0 || parent.renderAs) {
                     continue;
@@ -747,11 +743,11 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
                 const cleared = NodeList.cleared(axisY);
                 const includes: string[] = [];
+                let current = '';
+                let k = -1;
                 function getCurrent() {
                     return includes.length > 0 ? includes[includes.length - 1] : '';
                 }
-                let current = '';
-                let k = -1;
                 while (++k < axisY.length) {
                     let nodeY = axisY[k];
                     if (!nodeY.visible || (!nodeY.documentRoot && this.elements.has(nodeY.element))) {
@@ -785,10 +781,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         nodeY.hide();
                         nodeY = nodeY.renderAs as T;
                     }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE) &&
-                        axisY.length > 1 &&
-                        k < axisY.length - 1)
-                    {
+                    if (!nodeY.hasBit('excludeSection', APP_SECTION.DOM_TRAVERSE) && axisY.length > 1 && k < axisY.length - 1) {
                         const linearVertical = parentY.linearVertical;
                         if (nodeY.pageflow &&
                             current === '' &&
@@ -865,10 +858,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                             if (clearedPartial.has(adjacent)) {
                                                                 const clear = clearedPartial.has(adjacent) ? clearedPartial.get(adjacent) : 'none';
                                                                 if (clear !== 'none') {
-                                                                    if (floatedOpen.size < 2 &&
-                                                                        floated.size === 2 &&
-                                                                        !adjacent.floating)
-                                                                    {
+                                                                    if (floatedOpen.size < 2 && floated.size === 2 && !adjacent.floating) {
                                                                         adjacent.alignmentType |= NODE_ALIGNMENT.EXTENDABLE;
                                                                         verticalExtended = true;
                                                                         horizontal.push(adjacent);
@@ -1071,8 +1061,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.RENDER) && !nodeY.rendered) {
                         let output = '';
                         if (nodeY.alignmentType === NODE_ALIGNMENT.NONE &&
-                            nodeY.has('width', CSS_STANDARD.PERCENT, { not: '100%' }) &&
-                            !nodeY.imageElement && (
+                            !nodeY.imageElement &&
+                            nodeY.has('width', CSS_STANDARD.PERCENT, { not: '100%' }) && (
                                 parentY.linearVertical ||
                                 (parentY.is(NODE_STANDARD.FRAME) && nodeY.singleChild)
                            ))
@@ -1129,10 +1119,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 }
                             }
                             else {
-                                if (nodeY.flex.enabled ||
-                                    nodeY.children.some(node => !node.pageflow) ||
-                                    nodeY.has('columnCount'))
-                                {
+                                if (nodeY.flex.enabled || nodeY.children.some(node => !node.pageflow) || nodeY.has('columnCount')) {
                                     output = this.writeConstraintLayout(nodeY, parentY);
                                 }
                                 else {
@@ -1257,9 +1244,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 }
             }
-            for (let [id, templates] of partial.entries()) {
+            for (const [key, templates] of partial.entries()) {
                 const content: string[] = [];
-                const [parentId, position] = id.split(':');
+                const [parentId, position] = key.split(':');
                 const views = Array.from(templates.values());
                 if (views.length > 0) {
                     if (this._sorted[parentId]) {
@@ -1277,7 +1264,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     if (content.length === 0) {
                         content.push(...views);
                     }
-                    id = parentId + (position ? `:${position}` : '');
+                    const id = parentId + (position ? `:${position}` : '');
                     const placeholder = formatPlaceholder(id);
                     if (baseTemplate.indexOf(placeholder) !== -1) {
                         baseTemplate = replacePlaceholder(baseTemplate, placeholder, content.join(''));
@@ -1328,16 +1315,16 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
             else {
                 if (!a.domElement) {
-                    const nodeA = getNodeFromElement<T>(a.baseElement);
+                    const nodeA = getNodeFromElement(a.baseElement);
                     if (nodeA) {
-                        a = nodeA;
+                        a = nodeA as T;
                     }
                     else {
                         return 1;
                     }
                 }
                 if (!b.domElement) {
-                    const nodeB = getNodeFromElement<T>(a.baseElement);
+                    const nodeB = getNodeFromElement(a.baseElement);
                     if (nodeB) {
                         b = nodeB as T;
                     }
@@ -1882,7 +1869,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 ext.beforeInsert();
             }
         }
-        const template = {};
+        const template: StringMap = {};
         for (const id in this.renderQueue) {
             const [originalId] = id.split(':');
             let replaceId = originalId;

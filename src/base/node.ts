@@ -4,7 +4,7 @@ import { BLOCK_ELEMENT, INLINE_ELEMENT } from '../lib/constant';
 import Extension from './extension';
 
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
-import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, setElementCache, hasLineBreak } from '../lib/dom';
+import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, isStyleElement, setElementCache, hasLineBreak } from '../lib/dom';
 
 type T = Node;
 
@@ -1257,7 +1257,7 @@ export default abstract class Node implements androme.lib.base.Node {
     get previousElementSibling() {
         let element = <Element> this.baseElement.previousSibling;
         while (element) {
-            if (isPlainText(element) || element instanceof HTMLElement || element.tagName === 'BR') {
+            if (isPlainText(element) || isStyleElement(element) || element.tagName === 'BR') {
                 return element;
             }
             element = <Element> element.previousSibling;
@@ -1267,7 +1267,7 @@ export default abstract class Node implements androme.lib.base.Node {
     get nextElementSibling() {
         let element = <Element> this.baseElement.nextSibling;
         while (element) {
-            if (isPlainText(element) || element instanceof HTMLElement || element.tagName === 'BR') {
+            if (isPlainText(element) || isStyleElement(element) || element.tagName === 'BR') {
                 return element;
             }
             element = <Element> element.nextSibling;
@@ -1275,9 +1275,9 @@ export default abstract class Node implements androme.lib.base.Node {
         return null;
     }
 
-    get firstElementChild(): Element | null {
+    get firstElementChild() {
         const element = this.baseElement;
-        if (element instanceof HTMLElement) {
+        if (isStyleElement(element)) {
             for (let i = 0; i < element.childNodes.length; i++) {
                 const childElement = <Element> element.childNodes[i];
                 if (childElement instanceof Element) {
@@ -1291,9 +1291,9 @@ export default abstract class Node implements androme.lib.base.Node {
         return null;
     }
 
-    get lastElementChild(): Element | null {
+    get lastElementChild() {
         const element = this.baseElement;
-        if (element instanceof HTMLElement) {
+        if (isStyleElement(element)) {
             for (let i = element.childNodes.length - 1; i >= 0; i--) {
                 const childElement = <Element> element.childNodes[i];
                 if (childElement instanceof Element) {

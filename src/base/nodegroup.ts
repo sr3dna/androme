@@ -3,7 +3,7 @@ import { NODE_ALIGNMENT, NODE_STANDARD } from '../lib/enumeration';
 import Node from './node';
 import NodeList from './nodelist';
 
-import { assignBounds, getClientRect, getNodeFromElement } from '../lib/dom';
+import { assignBounds, getClientRect, getNodeFromElement, isStyleElement } from '../lib/dom';
 
 export default abstract class NodeGroup<T extends Node> extends Node {
     public init() {
@@ -120,7 +120,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
 
     get firstElementChild() {
         const element = this.documentParent.element;
-        if (element instanceof HTMLElement) {
+        if (isStyleElement(element)) {
             for (let i = 0; i < element.childNodes.length; i++) {
                 const childElement = <Element> element.childNodes[i];
                 if (this.nodes.includes(getNodeFromElement(childElement) as T)) {
@@ -133,7 +133,7 @@ export default abstract class NodeGroup<T extends Node> extends Node {
 
     get lastElementChild() {
         const element = this.baseElement;
-        if (element instanceof HTMLElement) {
+        if (isStyleElement(element)) {
             for (let i = element.childNodes.length - 1; i >= 0; i--) {
                 const childElement = <Element> element.childNodes[i];
                 if (this.nodes.includes(getNodeFromElement(childElement) as T)) {

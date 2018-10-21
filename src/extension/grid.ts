@@ -8,7 +8,7 @@ import NodeList from '../base/nodelist';
 import Extension from '../base/extension';
 
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
-import { getBoxRect, getNodeFromElement } from '../lib/dom';
+import { getBoxRect, getNodeFromElement, isStyleElement } from '../lib/dom';
 
 export default abstract class Grid<T extends Node> extends Extension<T> {
     public condition() {
@@ -136,7 +136,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                         const nextX = nextAxisX[m];
                         let [left, right] = [nextX.linear.left, nextX.linear.right];
                         let index = l;
-                        if (index > 0 && nextX.element instanceof HTMLElement && nextX.float === 'right') {
+                        if (index > 0 && isStyleElement(nextX.element) && nextX.float === 'right') {
                             nextX.element.style.cssFloat = 'left';
                             const bounds = nextX.element.getBoundingClientRect();
                             if (bounds.left - nextX.marginLeft !== left) {

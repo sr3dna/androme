@@ -2,6 +2,7 @@ import Node from './node';
 import Application from './application';
 
 import { capitalize, convertCamelCase, includes } from '../lib/util';
+import { isStyleElement } from '../lib/dom';
 
 export default abstract class Extension<T extends Node> implements androme.lib.base.Extension<T> {
     public application: Application<T>;
@@ -66,8 +67,8 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         return false;
     }
 
-    public afterInit(internal = false) {
-        if (!internal && this.included()) {
+    public afterInit(init = false) {
+        if (!init && this.included()) {
             this.dependencies.filter(item => item.init).forEach(item => {
                 const ext = this.application.getExtension(item.name);
                 if (ext) {
@@ -80,7 +81,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
 
     public condition() {
         const node = this.node;
-        if (node && node.element instanceof HTMLElement) {
+        if (node && isStyleElement(node.element)) {
             const ext = node.dataset.ext;
             if (!ext) {
                 return this.tagNames.length > 0;

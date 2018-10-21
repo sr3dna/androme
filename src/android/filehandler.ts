@@ -243,7 +243,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     public resourceStyleToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.styles.size > 0) {
-            this.stored.styles = new Map([...this.stored.styles.entries()].sort(caseInsensitive));
+            const styles = Array.from(this.stored.styles.values()).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
             const template = $xml.parseTemplate(STYLE_TMPL);
             const data: {} = {
                 '0': [{
@@ -251,15 +251,18 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                 }]
             };
             const root = $xml.getTemplateLevel(data, '0');
-            for (const [name1, style] of this.stored.styles.entries()) {
+            for (const style of styles) {
                 const styleItem: {} = {
-                    name1,
+                    name1: style.name,
                     parent: style.parent || '',
                     '2': []
                 };
-                style.attributes.split(';').sort().forEach((attr: string) => {
+                style.attrs.split(';').sort().forEach((attr: string) => {
                     const [name2, value] = attr.split('=');
-                    styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
+                    styleItem['2'].push({
+                        name2,
+                        value: value.replace(/"/g, '')
+                    });
                 });
                 root['1'].push(styleItem);
             }
@@ -285,7 +288,10 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             };
             const root = $xml.getTemplateLevel(data, '0');
             for (const [name, value] of this.stored.dimens.entries()) {
-                root['1'].push({ name, value });
+                root['1'].push({
+                    name,
+                    value
+                });
             }
             xml = $xml.createTemplate(template, data);
             xml = replaceUnit(xml, this.settings);

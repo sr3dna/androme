@@ -29,7 +29,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
         document.body.appendChild(element);
         element.click();
         document.body.removeChild(element);
-        setTimeout(() => window.URL.revokeObjectURL(url), 100);
+        setTimeout(() => window.URL.revokeObjectURL(url), 1);
     }
 
     public abstract settings: Settings;
@@ -56,7 +56,12 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
                 this.queue[index].uri = uri || '';
             }
             else {
-                this.queue.push({ pathname, filename, content, uri });
+                this.queue.push({
+                    pathname,
+                    filename,
+                    content,
+                    uri
+                });
             }
         }
     }

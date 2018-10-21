@@ -630,10 +630,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
-                    else if (
-                        element.innerText.trim() === '' &&
-                        Resource.hasDrawableBackground(<BoxStyle> getElementCache(element, 'boxStyle')))
-                    {
+                    else if (element.innerText.trim() === '' && Resource.hasDrawableBackground(<BoxStyle> getElementCache(element, 'boxStyle'))) {
                         value = replaceEntity(element.innerText);
                         performTrim = false;
                     }
@@ -641,7 +638,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 else if (node.plainText) {
                     name = node.textContent.trim();
                     value = replaceEntity(node.textContent);
-                    value = value.replace(/&[A-Za-z]+;/g, (match => match.replace('&', '&amp;')));
+                    value = value.replace(/&[A-Za-z]+;/g, match => match.replace('&', '&amp;'));
                     [value, inlineTrim] = parseWhiteSpace(node, value);
                 }
                 if (value !== '') {

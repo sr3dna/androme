@@ -7,29 +7,29 @@ import { convertInt, formatPX } from '../lib/util';
 
 export default class Origin<T extends Node> extends Extension<T> {
     public afterInit() {
-        function modifyMarginLeft<T extends Node>(node: T, offset: number, parent = false) {
+        function modifyMarginLeft(node: T, offset: number, parent = false) {
             node.bounds.left -= offset;
             node.bounds.width += Math.max(node.marginLeft < 0 ? node.marginLeft + offset : offset, 0);
             node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))));
             node.setBounds(true);
         }
         Array.from(this.application.cache.elements).forEach(node => {
-            if (node.children.some(current => {
-                    if (current.pageflow) {
-                        return (
-                            current.float !== 'right' &&
-                            current.marginLeft < 0 &&
-                            node.marginLeft >= Math.abs(current.marginLeft) &&
-                            (Math.abs(current.marginLeft) >= current.bounds.width || node.documentRoot)
-                        );
-                    }
-                    else {
-                        const left = current.toInt('left');
-                        const right = current.toInt('right');
-                        return (left < 0 && node.marginLeft >= Math.abs(left)) || (right < 0 && Math.abs(right) >= current.bounds.width);
-                    }
-                }))
-            {
+            const outside = node.children.some(current => {
+                if (current.pageflow) {
+                    return (
+                        current.float !== 'right' &&
+                        current.marginLeft < 0 &&
+                        node.marginLeft >= Math.abs(current.marginLeft) &&
+                        (Math.abs(current.marginLeft) >= current.bounds.width || node.documentRoot)
+                    );
+                }
+                else {
+                    const left = current.toInt('left');
+                    const right = current.toInt('right');
+                    return (left < 0 && node.marginLeft >= Math.abs(left)) || (right < 0 && Math.abs(right) >= current.bounds.width);
+                }
+            });
+            if (outside) {
                 const marginLeft: number[] = [];
                 const marginRight: T[] = [];
                 node.each((current: T) => {

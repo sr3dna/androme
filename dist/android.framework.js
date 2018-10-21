@@ -442,7 +442,7 @@ var android = (function () {
     function replaceUnit(value, { density = 160, convertPixels = 'dp' }, font = false) {
         switch (convertPixels) {
             case 'dp':
-                return value.replace(/("|>)(-)?([0-9]+(?:\.[0-9]+)?px)("|<)/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], density, font) + capture[3]);
+                return value.replace(/([">])(-)?([0-9]+(?:\.[0-9]+)?px)(["<])/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], density, font) + capture[3]);
             default:
                 return value;
         }
@@ -597,8 +597,7 @@ var android = (function () {
             }
             modifyBox(region, offset, negative = false) {
                 const name = typeof region === 'number' ? $util.convertEnum(region, $enum.BOX_STANDARD, BOX_ANDROID) : '';
-                if (offset !== 0 && (name !== '' ||
-                    $util.isString(region))) {
+                if (offset !== 0 && (name !== '' || $util.isString(region))) {
                     const attr = $util.isString(region) ? region : name.replace('layout_', '');
                     if (this._boxReset[attr] != null) {
                         if (offset == null) {
@@ -767,9 +766,7 @@ var android = (function () {
                     const constraint = this.constraint;
                     const tableElement = this.tagName === 'TABLE';
                     if (this.documentBody || (this.documentRoot && !this.flex.enabled && this.is($enum.NODE_STANDARD.FRAME, $enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE))) {
-                        if (!this.hasWidth &&
-                            this.block &&
-                            !constraint.layoutHorizontal) {
+                        if (!this.hasWidth && this.block && !constraint.layoutHorizontal) {
                             this.android('layout_width', 'match_parent', false);
                         }
                         if (!this.hasHeight &&
@@ -816,9 +813,7 @@ var android = (function () {
                                 this.android('layout_width', 'wrap_content', false);
                                 this.android('minWidth', styleMap.minWidth, false);
                             }
-                            if (!this.documentBody &&
-                                this.has('maxWidth', $enum.CSS_STANDARD.UNIT) &&
-                                this.layoutVertical) {
+                            if (!this.documentBody && this.has('maxWidth', $enum.CSS_STANDARD.UNIT) && this.layoutVertical) {
                                 const maxWidth = this.css('maxWidth');
                                 for (const node of renderChildren) {
                                     if (node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
@@ -872,8 +867,7 @@ var android = (function () {
                         }
                     }
                     if (this.android('layout_height') !== '0px') {
-                        if (this.toInt('height') > 0 && (!this.inlineStatic ||
-                            !this.has('height', 0, { map: 'initial' }))) {
+                        if (this.toInt('height') > 0 && (!this.inlineStatic || !this.has('height', 0, { map: 'initial' }))) {
                             if (this.has('height', $enum.CSS_STANDARD.PERCENT)) {
                                 if (styleMap.height === '100%') {
                                     this.android('layout_height', 'match_parent', false);
@@ -906,9 +900,7 @@ var android = (function () {
                             this.android('layout_height', 'wrap_content', false);
                             this.android('minHeight', styleMap.minHeight, false);
                         }
-                        if (!this.documentBody &&
-                            this.has('maxHeight', $enum.CSS_STANDARD.UNIT) &&
-                            this.layoutHorizontal) {
+                        if (!this.documentBody && this.has('maxHeight', $enum.CSS_STANDARD.UNIT) && this.layoutHorizontal) {
                             const maxHeight = this.css('maxHeight');
                             for (const node of renderChildren) {
                                 if (node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
@@ -928,9 +920,7 @@ var android = (function () {
                             this.android('layout_height', 'match_parent');
                         }
                         else {
-                            if (this.lineHeight > 0 &&
-                                !this.plainText &&
-                                !renderParent.linearHorizontal) {
+                            if (this.lineHeight > 0 && !this.plainText && !renderParent.linearHorizontal) {
                                 const boundsHeight = this.actualHeight + renderParent.paddingTop + renderParent.paddingBottom;
                                 if (this.inlineElement && boundsHeight > 0 && this.lineHeight >= boundsHeight) {
                                     this.android('layout_height', $util.formatPX(boundsHeight));
@@ -1077,9 +1067,7 @@ var android = (function () {
                             break;
                     }
                 }
-                if (verticalAlign === '' &&
-                    this.lineHeight > 0 &&
-                    !this.blockHeight) {
+                if (verticalAlign === '' && this.lineHeight > 0 && !this.blockHeight) {
                     verticalAlign = 'center_vertical';
                 }
                 if (renderParent.linearVertical || (this.documentRoot && this.linearVertical)) {
@@ -1228,9 +1216,8 @@ var android = (function () {
                     if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
                         [['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]].forEach((item, index) => {
                             const node = $dom.getNodeFromElement(renderParent[item[0]]);
-                            if (node &&
-                                !node.lineBreak &&
-                                (node === this || node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1])) {
+                            if (node && !node.lineBreak && (node === this ||
+                                node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1])) {
                                 const marginOffset = renderParent[`margin${item[1]}`];
                                 if (marginOffset > 0 &&
                                     renderParent[`padding${item[1]}`] === 0 &&
@@ -1363,14 +1350,12 @@ var android = (function () {
                                 const minHeight = $util.convertInt(this.android('minHeight'));
                                 const paddedWidth = this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
                                 const paddedHeight = View.getPaddedHeight(this);
-                                if (layoutWidth > 0 &&
-                                    this.toInt('width', 0, { map: 'initial' }) > 0 &&
-                                    paddedWidth > 0) {
+                                if (layoutWidth > 0 && paddedWidth > 0 && this.toInt('width', 0, { map: 'initial' }) > 0) {
                                     this.android('layout_width', $util.formatPX(layoutWidth + paddedWidth));
                                 }
                                 if (layoutHeight > 0 &&
-                                    this.toInt('height', 0, { map: 'initial' }) > 0 &&
-                                    paddedHeight > 0 && (this.lineHeight === 0 ||
+                                    paddedHeight > 0 &&
+                                    this.toInt('height', 0, { map: 'initial' }) > 0 && (this.lineHeight === 0 ||
                                     this.lineHeight < this.box.height ||
                                     this.lineHeight === this.toInt('height'))) {
                                     this.android('layout_height', $util.formatPX(layoutHeight + paddedHeight));
@@ -1826,14 +1811,14 @@ var android = (function () {
         const groove = border.style === 'groove';
         if (parseInt(border.width) > 1 && (groove || border.style === 'ridge')) {
             let colorName = $util$1.isString(border.color) ? border.color : '';
-            let hexValue = ResourceHandler.getColor(colorName);
-            if (hexValue !== '') {
+            let hex = ResourceHandler.getColor(colorName);
+            if (hex !== '') {
                 let opacity = '1';
-                if (hexValue.length === 9) {
-                    hexValue = `#${hexValue.substring(3)}`;
-                    opacity = `0.${hexValue.substring(1, 3)}`;
+                if (hex.length === 9) {
+                    hex = `#${hex.substring(3)}`;
+                    opacity = `0.${hex.substring(1, 3)}`;
                 }
-                const reduced = $color.parseRGBA($color.reduceToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
+                const reduced = $color.parseRGBA($color.reduceToRGB(hex, groove || hex === '#000000' ? 0.3 : -0.3));
                 if (reduced.length > 0) {
                     colorName = ResourceHandler.addColor(reduced[0], opacity);
                 }
@@ -2180,7 +2165,11 @@ var android = (function () {
                 }
             });
             for (const name in styles) {
-                $resource.STORED.styles.set(name, { attributes: styles[name].join(';') });
+                $resource.STORED.styles.set(name, {
+                    name,
+                    attrs: styles[name].join(';'),
+                    ids: []
+                });
             }
         }
         setBoxSpacing() {
@@ -2332,9 +2321,9 @@ var android = (function () {
                                 item.color = ResourceHandler.addColor(item.color[0], item.color[2]);
                             }
                         });
-                        let data;
                         const image2 = [];
                         const image3 = [];
+                        let data;
                         let template = null;
                         let resourceName = '';
                         for (let i = 0; i < backgroundImage.length; i++) {
@@ -2631,8 +2620,7 @@ var android = (function () {
                         });
                         const backgroundColor = getShapeAttribute(stored, 'backgroundColor');
                         const borderRadius = getShapeAttribute(stored, 'radius');
-                        if (stored.border &&
-                            $resource.isBorderVisible(stored.border) && !((parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
+                        if (stored.border && $resource.isBorderVisible(stored.border) && !((parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
                             (parseInt(stored.border.width) > 2 && stored.border.style === 'double'))) {
                             if (backgroundImage.length === 0 && (borderRadius === false || borderRadius[0].radius)) {
                                 template = $xml.parseTemplate(SHAPERECTANGLE_TMPL);
@@ -2846,9 +2834,9 @@ var android = (function () {
                 const sorted = [];
                 const nodes = new NodeList$1(nodeName[tag]);
                 nodes.each(node => {
-                    let system = false;
                     const nodeId = node.id;
                     const companion = node.companion;
+                    let system = false;
                     if (companion && !companion.visible && (companion.textElement || companion.tagName === 'LABEL')) {
                         node = companion;
                     }
@@ -3008,18 +2996,18 @@ var android = (function () {
                             $resource.STORED.drawables.set(result, xml);
                         }
                     }
-                    else {
-                        if ((node.imageElement || (node.tagName === 'INPUT' && node.element.type === 'image')) &&
-                            !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.IMAGE_SOURCE)) {
-                            const element = node.element;
-                            result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
-                        }
+                }
+                else {
+                    if ((node.imageElement || (node.tagName === 'INPUT' && node.element.type === 'image')) &&
+                        !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.IMAGE_SOURCE)) {
+                        const element = node.element;
+                        result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
                     }
-                    if (result !== '') {
-                        const method = METHOD_ANDROID['imageSource'];
-                        node.formatted($util$1.formatString(method['src'], result), node.renderExtension.size === 0);
-                        $dom$1.setElementCache(node.element, 'imageSource', result);
-                    }
+                }
+                if (result !== '') {
+                    const method = METHOD_ANDROID['imageSource'];
+                    node.formatted($util$1.formatString(method['src'], result), node.renderExtension.size === 0);
+                    $dom$1.setElementCache(node.element, 'imageSource', result);
                 }
             });
         }
@@ -3123,7 +3111,10 @@ var android = (function () {
                     if (hex !== '') {
                         value = `@color/${ResourceHandler.addColor(hex)}`;
                     }
-                    root['1'].push({ name, value });
+                    root['1'].push({
+                        name,
+                        value
+                    });
                 }
             }
             const xml = $xml.createTemplate(map, data);
@@ -3315,17 +3306,17 @@ var android = (function () {
             for (const tagName in style) {
                 const tag = style[tagName];
                 const tagData = [];
-                for (const attributes in tag) {
+                for (const attrs in tag) {
                     tagData.push({
                         name: '',
-                        attributes,
-                        ids: tag[attributes]
+                        attrs,
+                        ids: tag[attrs]
                     });
                 }
                 tagData.sort((a, b) => {
                     let [c, d] = [a.ids.length, b.ids.length];
                     if (c === d) {
-                        [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
+                        [c, d] = [a.attrs.split(';').length, b.attrs.split(';').length];
                     }
                     return c >= d ? -1 : 1;
                 });
@@ -3336,7 +3327,7 @@ var android = (function () {
                 for (const group of resource[tagName]) {
                     for (const id of group.ids) {
                         if (mapNode[id] == null) {
-                            mapNode[id] = { styles: [], attributes: [] };
+                            mapNode[id] = { styles: [], attrs: [] };
                         }
                         mapNode[id].styles.push(group.name);
                     }
@@ -3346,9 +3337,9 @@ var android = (function () {
                     for (const attr in tagData) {
                         for (const id of tagData[attr]) {
                             if (mapNode[id] == null) {
-                                mapNode[id] = { styles: [], attributes: [] };
+                                mapNode[id] = { styles: [], attrs: [] };
                             }
-                            mapNode[id].attributes.push(attr);
+                            mapNode[id].attrs.push(attr);
                         }
                     }
                 }
@@ -3357,7 +3348,7 @@ var android = (function () {
                 const node = viewData.cache.find('id', parseInt(id));
                 if (node) {
                     const styles = mapNode[id].styles;
-                    const attrs = mapNode[id].attributes;
+                    const attrs = mapNode[id].attrs;
                     if (styles.length > 0) {
                         inherit.add(styles.join('.'));
                         node.attr('_', 'style', `@style/${styles.pop()}`);
@@ -3373,7 +3364,9 @@ var android = (function () {
                     const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                     if (match) {
                         const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
-                        $resource.STORED.styles.set(value, { parent, attributes: tagData.attributes });
+                        tagData.name = value;
+                        tagData.parent = parent;
+                        $resource.STORED.styles.set(value, tagData);
                         parent = value;
                     }
                 });
@@ -3900,21 +3893,17 @@ var android = (function () {
                                         setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                     }
                                     else {
-                                        if (current.linear.left <= parent.box.left ||
-                                            $util$2.withinFraction(current.linear.left, parent.box.left)) {
+                                        if (current.linear.left <= parent.box.left || $util$2.withinFraction(current.linear.left, parent.box.left)) {
                                             current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
                                         }
-                                        if (current.linear.right >= parent.box.right ||
-                                            $util$2.withinFraction(current.linear.right, parent.box.right)) {
+                                        if (current.linear.right >= parent.box.right || $util$2.withinFraction(current.linear.right, parent.box.right)) {
                                             current.anchor(mapLayout['right'], 'parent', parent.hasWidth || current.float === 'right' || current.autoMarginLeft ? AXIS_ANDROID.HORIZONTAL : '');
                                         }
                                     }
-                                    if (current.linear.top <= parent.box.top ||
-                                        $util$2.withinFraction(current.linear.top, parent.box.top)) {
+                                    if (current.linear.top <= parent.box.top || $util$2.withinFraction(current.linear.top, parent.box.top)) {
                                         current.anchor(mapLayout['top'], 'parent', AXIS_ANDROID.VERTICAL);
                                     }
-                                    else if (current.linear.bottom >= parent.box.bottom ||
-                                        $util$2.withinFraction(current.linear.bottom, parent.box.bottom)) {
+                                    else if (current.linear.bottom >= parent.box.bottom || $util$2.withinFraction(current.linear.bottom, parent.box.bottom)) {
                                         current.anchor(mapLayout['bottom'], 'parent', parent.hasHeight ? AXIS_ANDROID.VERTICAL : '');
                                     }
                                     pageflow.each(adjacent => {
@@ -5569,8 +5558,12 @@ var android = (function () {
                         }
                         else {
                             const options = {
-                                android: { orientation: index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL },
-                                app: { [beginPercent]: location.toString() }
+                                android: {
+                                    orientation: index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL
+                                },
+                                app: {
+                                    [beginPercent]: location.toString()
+                                }
                             };
                             const anchors = $util$2.optional(guideline, `${value}.${beginPercent}.${LT}`, 'object');
                             if (anchors) {
@@ -5985,7 +5978,7 @@ var android = (function () {
         resourceStyleToXml(saveToDisk = false) {
             let xml = '';
             if (this.stored.styles.size > 0) {
-                this.stored.styles = new Map([...this.stored.styles.entries()].sort(caseInsensitive));
+                const styles = Array.from(this.stored.styles.values()).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
                 const template = $xml$2.parseTemplate(STYLE_TMPL);
                 const data = {
                     '0': [{
@@ -5993,15 +5986,18 @@ var android = (function () {
                         }]
                 };
                 const root = $xml$2.getTemplateLevel(data, '0');
-                for (const [name1, style] of this.stored.styles.entries()) {
+                for (const style of styles) {
                     const styleItem = {
-                        name1,
+                        name1: style.name,
                         parent: style.parent || '',
                         '2': []
                     };
-                    style.attributes.split(';').sort().forEach((attr) => {
+                    style.attrs.split(';').sort().forEach((attr) => {
                         const [name2, value] = attr.split('=');
-                        styleItem['2'].push({ name2, value: value.replace(/"/g, '') });
+                        styleItem['2'].push({
+                            name2,
+                            value: value.replace(/"/g, '')
+                        });
                     });
                     root['1'].push(styleItem);
                 }
@@ -6026,7 +6022,10 @@ var android = (function () {
                 };
                 const root = $xml$2.getTemplateLevel(data, '0');
                 for (const [name, value] of this.stored.dimens.entries()) {
-                    root['1'].push({ name, value });
+                    root['1'].push({
+                        name,
+                        value
+                    });
                 }
                 xml = $xml$2.createTemplate(template, data);
                 xml = replaceUnit(xml, this.settings);

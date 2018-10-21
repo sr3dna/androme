@@ -563,26 +563,17 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                 }
                                 else {
-                                    if (current.linear.left <= parent.box.left ||
-                                        $util.withinFraction(current.linear.left, parent.box.left))
-                                    {
+                                    if (current.linear.left <= parent.box.left || $util.withinFraction(current.linear.left, parent.box.left)) {
                                         current.anchor(mapLayout['left'], 'parent', AXIS_ANDROID.HORIZONTAL);
                                     }
-                                    if (current.linear.right >= parent.box.right ||
-                                        $util.withinFraction(current.linear.right, parent.box.right))
-                                    {
+                                    if (current.linear.right >= parent.box.right || $util.withinFraction(current.linear.right, parent.box.right)) {
                                         current.anchor(mapLayout['right'], 'parent', parent.hasWidth || current.float === 'right' || current.autoMarginLeft ? AXIS_ANDROID.HORIZONTAL : '');
                                     }
                                 }
-                                if (current.linear.top <= parent.box.top ||
-                                    $util.withinFraction(current.linear.top, parent.box.top))
-                                {
+                                if (current.linear.top <= parent.box.top || $util.withinFraction(current.linear.top, parent.box.top)) {
                                     current.anchor(mapLayout['top'], 'parent', AXIS_ANDROID.VERTICAL);
                                 }
-                                else if (
-                                    current.linear.bottom >= parent.box.bottom ||
-                                    $util.withinFraction(current.linear.bottom, parent.box.bottom))
-                                {
+                                else if (current.linear.bottom >= parent.box.bottom || $util.withinFraction(current.linear.bottom, parent.box.bottom)) {
                                     current.anchor(mapLayout['bottom'], 'parent', parent.hasHeight ? AXIS_ANDROID.VERTICAL : '');
                                 }
                                 pageflow.each(adjacent => {
@@ -2338,8 +2329,12 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                     }
                     else {
                         const options: ViewAttribute = {
-                            android: { orientation: index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL },
-                            app: { [beginPercent]: location.toString() }
+                            android: {
+                                orientation: index === 0 ? AXIS_ANDROID.VERTICAL : AXIS_ANDROID.HORIZONTAL
+                            },
+                            app: {
+                                [beginPercent]: location.toString()
+                            }
                         };
                         const anchors: {} = $util.optional(guideline, `${value}.${beginPercent}.${LT}`, 'object');
                         if (anchors) {

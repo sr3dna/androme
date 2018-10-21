@@ -26,8 +26,8 @@ export default class External<T extends Node> extends Extension<T> {
         return false;
     }
 
-    public afterInit(internal = false) {
-        if (this.element && (internal || this.included())) {
+    public afterInit(init = false) {
+        if (this.element && (init || this.included())) {
             const data = getElementCache(this.element, 'andromeExternalDisplay');
             if (data) {
                 const display: string[] = data;

@@ -19,9 +19,9 @@ declare global {
             public is(node: T): boolean;
             public require(value: string, init?: boolean): void;
             public included(element?: Element): boolean;
-            public beforeInit(internal?: boolean): void;
+            public beforeInit(init?: boolean): void;
             public init(element: HTMLElement): boolean;
-            public afterInit(internal?: boolean): void;
+            public afterInit(init?: boolean): void;
             public condition(): boolean;
             public processNode(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;
             public processChild(mapX?: LayoutMapX<T>, mapY?: LayoutMapY<T>): ExtensionResult;

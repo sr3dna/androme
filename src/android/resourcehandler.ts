@@ -1,4 +1,4 @@
-import { SVG } from '../types/resource';
+import { StyleStored, SVG } from '../types/resource';
 import { SettingsAndroid } from './types/local';
 
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
@@ -18,12 +18,6 @@ import $dom = androme.lib.dom;
 import $xml = androme.lib.xml;
 import $color = androme.lib.color;
 import $resource = androme.lib.base.Resource;
-
-type StyleTag = {
-    name: string;
-    attributes: string;
-    ids: number[];
-};
 
 type BackgroundImage = {
     src: string;
@@ -90,14 +84,14 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
     const groove = border.style === 'groove';
     if (parseInt(border.width) > 1 && (groove || border.style === 'ridge')) {
         let colorName = $util.isString(border.color) ? border.color : '';
-        let hexValue = ResourceHandler.getColor(colorName);
-        if (hexValue !== '') {
+        let hex = ResourceHandler.getColor(colorName);
+        if (hex !== '') {
             let opacity = '1';
-            if (hexValue.length === 9) {
-                hexValue = `#${hexValue.substring(3)}`;
-                opacity = `0.${hexValue.substring(1, 3)}`;
+            if (hex.length === 9) {
+                hex = `#${hex.substring(3)}`;
+                opacity = `0.${hex.substring(1, 3)}`;
             }
-            const reduced = $color.parseRGBA($color.reduceToRGB(hexValue, groove || hexValue === '#000000' ? 0.3 : -0.3));
+            const reduced = $color.parseRGBA($color.reduceToRGB(hex, groove || hex === '#000000' ? 0.3 : -0.3));
             if (reduced.length > 0) {
                 colorName = ResourceHandler.addColor(reduced[0], opacity);
             }
@@ -455,7 +449,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             }
         });
         for (const name in styles) {
-            $resource.STORED.styles.set(name, { attributes: styles[name].join(';') });
+            $resource.STORED.styles.set(name, {
+                name,
+                attrs: styles[name].join(';'),
+                ids: []
+            });
         }
     }
 
@@ -614,9 +612,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             item.color = ResourceHandler.addColor(item.color[0], item.color[2]);
                         }
                     });
-                    let data: {};
                     const image2: BackgroundImage[] = [];
                     const image3: BackgroundImage[] = [];
+                    let data: {};
                     let template: Null<ObjectMap<string>> = null;
                     let resourceName = '';
                     for (let i = 0; i < backgroundImage.length; i++) {
@@ -915,8 +913,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     });
                     const backgroundColor = getShapeAttribute(stored, 'backgroundColor');
                     const borderRadius = getShapeAttribute(stored, 'radius');
-                    if (stored.border &&
-                        $resource.isBorderVisible(stored.border) && !(
+                    if (stored.border && $resource.isBorderVisible(stored.border) && !(
                             (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
                             (parseInt(stored.border.width) > 2 && stored.border.style === 'double')
                        ))
@@ -1136,9 +1133,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             const sorted: StyleList = [];
             const nodes = new NodeList(nodeName[tag]);
             nodes.each(node => {
-                let system = false;
                 const nodeId = node.id;
                 const companion = node.companion;
+                let system = false;
                 if (companion && !companion.visible && (companion.textElement || companion.tagName === 'LABEL')) {
                     node = companion as T;
                 }
@@ -1300,19 +1297,19 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         $resource.STORED.drawables.set(result, xml);
                     }
                 }
-                else {
-                    if ((node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
-                        !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE))
-                    {
-                        const element = <HTMLImageElement> node.element;
-                        result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
-                    }
+            }
+            else {
+                if ((node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
+                    !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE))
+                {
+                    const element = <HTMLImageElement> node.element;
+                    result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
                 }
-                if (result !== '') {
-                    const method = METHOD_ANDROID['imageSource'];
-                    node.formatted($util.formatString(method['src'], result), node.renderExtension.size === 0);
-                    $dom.setElementCache(node.element, 'imageSource', result);
-                }
+            }
+            if (result !== '') {
+                const method = METHOD_ANDROID['imageSource'];
+                node.formatted($util.formatString(method['src'], result), node.renderExtension.size === 0);
+                $dom.setElementCache(node.element, 'imageSource', result);
             }
         });
     }
@@ -1419,7 +1416,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 if (hex !== '') {
                     value = `@color/${ResourceHandler.addColor(hex)}`;
                 }
-                root['1'].push({ name, value });
+                root['1'].push({
+                    name,
+                    value
+                });
             }
         }
         const xml = $xml.createTemplate(map, data);
@@ -1454,7 +1454,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         }
         const style: ObjectMapNested<number[]> = {};
         const layout: ObjectMapNested<number[]> = {};
-        const resource: ObjectMap<StyleTag[]> = {};
+        const resource: ObjectMap<StyleStored[]> = {};
         const mapNode: ObjectMapNested<string[]> = {};
         const inherit = new Set<string>();
         for (const tag in this._tagStyle) {
@@ -1612,18 +1612,18 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         }
         for (const tagName in style) {
             const tag = style[tagName];
-            const tagData: StyleTag[] = [];
-            for (const attributes in tag) {
+            const tagData: StyleStored[] = [];
+            for (const attrs in tag) {
                 tagData.push({
                     name: '',
-                    attributes,
-                    ids: tag[attributes]
+                    attrs,
+                    ids: tag[attrs]
                 });
             }
             tagData.sort((a, b) => {
                 let [c, d] = [a.ids.length, b.ids.length];
                 if (c === d) {
-                    [c, d] = [a.attributes.split(';').length, b.attributes.split(';').length];
+                    [c, d] = [a.attrs.split(';').length, b.attrs.split(';').length];
                 }
                 return c >= d ? -1 : 1;
             });
@@ -1634,7 +1634,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             for (const group of resource[tagName]) {
                 for (const id of group.ids) {
                     if (mapNode[id] == null) {
-                        mapNode[id] = { styles: [], attributes: [] };
+                        mapNode[id] = { styles: [], attrs: [] };
                     }
                     mapNode[id].styles.push(group.name);
                 }
@@ -1644,9 +1644,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 for (const attr in tagData) {
                     for (const id of tagData[attr]) {
                         if (mapNode[id] == null) {
-                            mapNode[id] = { styles: [], attributes: [] };
+                            mapNode[id] = { styles: [], attrs: [] };
                         }
-                        mapNode[id].attributes.push(attr);
+                        mapNode[id].attrs.push(attr);
                     }
                 }
             }
@@ -1655,7 +1655,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             const node = viewData.cache.find('id', parseInt(id));
             if (node) {
                 const styles = mapNode[id].styles;
-                const attrs = mapNode[id].attributes;
+                const attrs = mapNode[id].attrs;
                 if (styles.length > 0) {
                     inherit.add(styles.join('.'));
                     node.attr('_', 'style', `@style/${styles.pop()}`);
@@ -1671,7 +1671,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
                 if (match) {
                     const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
-                    $resource.STORED.styles.set(value, { parent, attributes: tagData.attributes });
+                    tagData.name = value;
+                    tagData.parent = parent;
+                    $resource.STORED.styles.set(value, tagData);
                     parent = value;
                 }
             });

@@ -156,11 +156,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         public modifyBox(region: number | string, offset: number | null, negative = false) {
             const name = typeof region === 'number' ? $util.convertEnum(region, $enum.BOX_STANDARD, BOX_ANDROID) : '';
-            if (offset !== 0 && (
-                    name !== '' ||
-                    $util.isString(region)
-               ))
-            {
+            if (offset !== 0 && (name !== '' || $util.isString(region))) {
                 const attr = $util.isString(region) ? region : name.replace('layout_', '');
                 if (this._boxReset[attr] != null) {
                     if (offset == null) {
@@ -335,10 +331,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const constraint = this.constraint;
                 const tableElement = this.tagName === 'TABLE';
                 if (this.documentBody || (this.documentRoot && !this.flex.enabled && this.is($enum.NODE_STANDARD.FRAME, $enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE))) {
-                    if (!this.hasWidth &&
-                        this.block &&
-                        !constraint.layoutHorizontal)
-                    {
+                    if (!this.hasWidth && this.block && !constraint.layoutHorizontal) {
                         this.android('layout_width', 'match_parent', false);
                     }
                     if (!this.hasHeight &&
@@ -389,10 +382,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             this.android('layout_width', 'wrap_content', false);
                             this.android('minWidth', styleMap.minWidth, false);
                         }
-                        if (!this.documentBody &&
-                            this.has('maxWidth', $enum.CSS_STANDARD.UNIT) &&
-                            this.layoutVertical)
-                        {
+                        if (!this.documentBody && this.has('maxWidth', $enum.CSS_STANDARD.UNIT) && this.layoutVertical) {
                             const maxWidth = this.css('maxWidth');
                             for (const node of renderChildren) {
                                 if (node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
@@ -455,11 +445,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 }
                 if (this.android('layout_height') !== '0px') {
-                    if (this.toInt('height') > 0 && (
-                            !this.inlineStatic ||
-                            !this.has('height', 0, { map: 'initial' })
-                       ))
-                    {
+                    if (this.toInt('height') > 0 && (!this.inlineStatic || !this.has('height', 0, { map: 'initial' }))) {
                         if (this.has('height', $enum.CSS_STANDARD.PERCENT)) {
                             if (styleMap.height === '100%') {
                                 this.android('layout_height', 'match_parent', false);
@@ -492,10 +478,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         this.android('layout_height', 'wrap_content', false);
                         this.android('minHeight', styleMap.minHeight, false);
                     }
-                    if (!this.documentBody &&
-                        this.has('maxHeight', $enum.CSS_STANDARD.UNIT) &&
-                        this.layoutHorizontal)
-                    {
+                    if (!this.documentBody && this.has('maxHeight', $enum.CSS_STANDARD.UNIT) && this.layoutHorizontal) {
                         const maxHeight = this.css('maxHeight');
                         for (const node of renderChildren) {
                             if (node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
@@ -508,7 +491,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     if (this.svgElement) {
                         this.android('layout_height', 'wrap_content');
                     }
-                    else if (height >= heightParent &&
+                    else if (
+                        height >= heightParent &&
                         parent.hasHeight &&
                         !(this.inlineElement && this.nodeType < $enum.NODE_STANDARD.INLINE) &&
                         !(renderParent.is($enum.NODE_STANDARD.RELATIVE) && renderParent.inlineHeight))
@@ -516,10 +500,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         this.android('layout_height', 'match_parent');
                     }
                     else {
-                        if (this.lineHeight > 0 &&
-                            !this.plainText &&
-                            !renderParent.linearHorizontal)
-                        {
+                        if (this.lineHeight > 0 && !this.plainText && !renderParent.linearHorizontal) {
                             const boundsHeight = this.actualHeight + renderParent.paddingTop + renderParent.paddingBottom;
                             if (this.inlineElement && boundsHeight > 0 && this.lineHeight >= boundsHeight) {
                                 this.android('layout_height', $util.formatPX(boundsHeight));
@@ -670,10 +651,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         break;
                 }
             }
-            if (verticalAlign === '' &&
-                this.lineHeight > 0 &&
-                !this.blockHeight)
-            {
+            if (verticalAlign === '' && this.lineHeight > 0 && !this.blockHeight) {
                 verticalAlign = 'center_vertical';
             }
             if (renderParent.linearVertical || (this.documentRoot && this.linearVertical)) {
@@ -828,9 +806,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
                     [['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, number, number], index: number) => {
                         const node = $dom.getNodeFromElement<View>(renderParent[item[0]]);
-                        if (node &&
-                            !node.lineBreak &&
-                            (node === this || node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1]))
+                        if (node && !node.lineBreak && (
+                                node === this ||
+                                node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1]
+                           ))
                         {
                             const marginOffset = renderParent[`margin${item[1]}`];
                             if (marginOffset > 0 &&
@@ -967,15 +946,12 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             const minHeight = $util.convertInt(this.android('minHeight'));
                             const paddedWidth = this.paddingLeft + this.paddingRight + this.borderLeftWidth + this.borderRightWidth;
                             const paddedHeight = View.getPaddedHeight(this);
-                            if (layoutWidth > 0 &&
-                                this.toInt('width', 0, { map: 'initial' }) > 0 &&
-                                paddedWidth > 0)
-                            {
+                            if (layoutWidth > 0 && paddedWidth > 0 && this.toInt('width', 0, { map: 'initial' }) > 0) {
                                 this.android('layout_width', $util.formatPX(layoutWidth + paddedWidth));
                             }
                             if (layoutHeight > 0 &&
-                                this.toInt('height', 0, { map: 'initial' }) > 0 &&
-                                paddedHeight > 0 && (
+                                paddedHeight > 0 &&
+                                this.toInt('height', 0, { map: 'initial' }) > 0 && (
                                     this.lineHeight === 0 ||
                                     this.lineHeight < this.box.height ||
                                     this.lineHeight === this.toInt('height')

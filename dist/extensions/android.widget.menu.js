@@ -52,18 +52,6 @@ this.android.widget.menu = (function () {
         orderInCategory: /^[0-9]+$/
     };
     const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
-    function parseDataSet(validator, element, options) {
-        for (const attr in element.dataset) {
-            const value = element.dataset[attr];
-            if (value && validator[attr]) {
-                const match = value.match(validator[attr]);
-                if (match) {
-                    const namespace = (this.options.appCompat == null || this.options.appCompat === true) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
-                    options[namespace][attr] = Array.from(new Set(match)).join('|');
-                }
-            }
-        }
-    }
     function hasInputType(node, value) {
         return node.children.length > 0 && node.children.some(item => item.element.type === value);
     }
@@ -147,7 +135,7 @@ this.android.widget.menu = (function () {
             }
             switch (nodeName) {
                 case VIEW_NAVIGATION.ITEM:
-                    parseDataSet(VALIDATE_ITEM, element, options);
+                    this.parseDataSet(VALIDATE_ITEM, element, options);
                     if (node.android('icon') === '') {
                         let src = $resource_android.addImageURL(element.style.backgroundImage, $const_android.DRAWABLE_PREFIX.MENU);
                         if (src !== '') {
@@ -165,7 +153,7 @@ this.android.widget.menu = (function () {
                     }
                     break;
                 case VIEW_NAVIGATION.GROUP:
-                    parseDataSet(VALIDATE_GROUP, element, options);
+                    this.parseDataSet(VALIDATE_GROUP, element, options);
                     break;
             }
             if (node.android('title') === '') {
@@ -193,6 +181,18 @@ this.android.widget.menu = (function () {
             super.afterRender();
             if (this.included(this.node.element)) {
                 this.application.layoutProcessing.pathname = 'res/menu';
+            }
+        }
+        parseDataSet(validator, element, options) {
+            for (const attr in element.dataset) {
+                const value = element.dataset[attr];
+                if (value && validator[attr]) {
+                    const match = value.match(validator[attr]);
+                    if (match) {
+                        const namespace = (this.options.appCompat == null || this.options.appCompat === true) && NAMESPACE_APP.includes(attr) ? 'app' : 'android';
+                        options[namespace][attr] = Array.from(new Set(match)).join('|');
+                    }
+                }
             }
         }
     }

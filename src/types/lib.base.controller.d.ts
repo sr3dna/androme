@@ -1,5 +1,3 @@
-import View from '../android/view';
-
 declare global {
     namespace androme.lib.base {
         export class Controller<T extends Node> implements AppCurrent<T> {
