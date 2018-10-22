@@ -163,11 +163,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                                 return a.siblingIndex <= b.siblingIndex ? -1 : 1;
                             }
                         }
-                        else if (
-                            fontSizeA !== fontSizeB &&
-                            fontSizeA !== 0 &&
-                            fontSizeB !== 0)
-                        {
+                        else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
                             return fontSizeA > fontSizeB ? -1 : 1;
                         }
                     }
@@ -217,10 +213,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                                 if (node.companion && node.companion.documentParent === parent) {
                                     node = node.companion as T;
                                 }
-                                const previous = node.previousSibling();
-                                if (previous) {
-                                    return !node.alignedVertically(previous, result);
-                                }
+                                return !node.alignedVertically(node.previousSibling(), result);
                             }
                             return true;
                         });
@@ -249,10 +242,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                             if (node.companion && node.companion.documentParent === parent) {
                                 node = node.companion as T;
                             }
-                            const previous = node.previousSibling() as T;
-                            if (previous) {
-                                return node.alignedVertically(previous, result);
-                            }
+                            return node.alignedVertically(node.previousSibling(), result);
                         }
                         return true;
                     });
@@ -348,13 +338,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
     public reset() {
         this._currentId = 0;
         this.clear();
-    }
-
-    public get(index?: number): T {
-        if (index == null) {
-            return this._list[this._list.length - 1];
-        }
-        return this._list[index];
+        return this;
     }
 
     public append(...nodes: T[]) {
@@ -362,10 +346,44 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         if (typeof this.delegateAppend === 'function') {
             this.delegateAppend.call(this, nodes);
         }
+        return this;
     }
 
     public prepend(...nodes: T[]) {
         this._list.unshift(...nodes);
+        return this;
+    }
+
+    public each(predicate: (value: T, index?: number) => void) {
+        this._list.forEach(predicate);
+        return this;
+    }
+
+    public clear() {
+        this._list.length = 0;
+        return this;
+    }
+
+    public sort(predicate: (a: T, b: T) => number) {
+        this._list.sort(predicate);
+        return this;
+    }
+
+    public sortAsc(...attrs: string[]) {
+        sortAsc(this._list, ...attrs);
+        return this;
+    }
+
+    public sortDesc(...attrs: string[]) {
+        sortDesc(this._list, ...attrs);
+        return this;
+    }
+
+    public get(index?: number): T {
+        if (index == null) {
+            return this._list[this._list.length - 1];
+        }
+        return this._list[index];
     }
 
     public remove(start: number, deleteCount = 1) {
@@ -381,38 +399,15 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         return [new NodeList(valid), new NodeList(invalid)];
     }
 
-    public each(predicate: (value: T, index?: number) => void) {
-        this._list.forEach(predicate);
-    }
-
-    public find(attr: string | IteratorPredicate<T>, value?: any) {
+    public find(attr: string | IteratorPredicate<T, boolean>, value?: any) {
         if (typeof attr === 'string') {
             return this._list.find(node => node[attr] === value);
         }
         return this._list.find(attr);
     }
 
-    public clear() {
-        this._list.length = 0;
-    }
-
-    public sort(predicate: (a: T, b: T) => number) {
-        this._list.sort(predicate);
-        return this;
-    }
-
     public sliceSort(predicate: (a: T, b: T) => number) {
         return new NodeList(this._list.slice().sort(predicate));
-    }
-
-    public sortAsc(...attrs: string[]) {
-        sortAsc(this._list, ...attrs);
-        return this;
-    }
-
-    public sortDesc(...attrs: string[]) {
-        sortDesc(this._list, ...attrs);
-        return this;
     }
 
     get length() {

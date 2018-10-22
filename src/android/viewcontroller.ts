@@ -629,8 +629,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         }
                                     }
                                 });
-                            });
-                            pageflow.each(current => {
+                            })
+                            .each(current => {
                                 const leftRight = mapSibling(current, 'leftRight');
                                 if (leftRight) {
                                     if (!current.constraint.horizontal) {
@@ -1309,8 +1309,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                     adjacent = nodes.find('nodeId', stripId(topBottom));
                                                     if (adjacent && current.withinY(adjacent.linear)) {
                                                         chain.push(adjacent);
-                                                        valid = mapParent(adjacent, index === 0 ? 'top' : 'bottom');
-                                                        if (valid) {
+                                                        if (mapParent(adjacent, index === 0 ? 'top' : 'bottom')) {
+                                                            valid = true;
                                                             break;
                                                         }
                                                     }
@@ -2154,7 +2154,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             let name = dimen;
             if (arguments.length === 5) {
                 if (value && /(px|dp|sp)$/.test(value)) {
-                    name = `${dimen},${attr},${value}`;
+                    name += `,${attr},${value}`;
                 }
                 else {
                     return;

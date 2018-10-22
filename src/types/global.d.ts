@@ -24,7 +24,7 @@ interface ArrayObject<T> extends Array<T> {
 
 type FunctionMap<T> = ObjectMap<(...args: any[]) => T>;
 
-type IteratorPredicate<T> = (value: T, index?: number) => boolean;
+type IteratorPredicate<T, U> = (value: T, index?: number) => U;
 
 type BoxRect = {
     top: number;

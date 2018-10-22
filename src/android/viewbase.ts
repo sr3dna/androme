@@ -396,11 +396,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         if ($util.convertFloat(this.android('layout_columnWeight')) > 0) {
                             this.android('layout_width', '0px');
                         }
-                        else if (
-                            (widthDefined.length > 0 &&
-                            widthDefined.some(node => node.bounds.width >= this.box.width)) ||
-                            this.svgElement)
-                        {
+                        else if ((widthDefined.length > 0 && widthDefined.some(node => node.bounds.width >= this.box.width)) || this.svgElement) {
                             this.android('layout_width', 'wrap_content');
                         }
                         else if (
@@ -1145,9 +1141,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const left = this.toInt('left');
                 if (top !== 0) {
                     if (top < 0 &&
-                        renderParent.is($enum.NODE_STANDARD.RELATIVE, $enum.NODE_STANDARD.LINEAR) &&
                         this.floating &&
-                        !!this.data('RESOURCE', 'backgroundImage'))
+                        !!this.data('RESOURCE', 'backgroundImage') &&
+                        renderParent.is($enum.NODE_STANDARD.RELATIVE, $enum.NODE_STANDARD.LINEAR))
                     {
                         let found = false;
                         renderParent.renderChildren.some((node: View) => {

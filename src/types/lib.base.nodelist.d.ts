@@ -20,20 +20,20 @@ declare global {
             public readonly linearY: boolean;
             constructor(nodes?: T[], parent?: T);
             public [Symbol.iterator](): Iterator<T>;
-            public reset(): void;
-            public get(index?: number): T;
-            public append(...nodes: T[]): void;
-            public prepend(...nodes: T[]): void;
-            public remove(start: number, deleteCount?: number): T[];
-            public clone(): NodeList<T>;
+            public reset(): this;
+            public append(...nodes: T[]): this;
+            public prepend(...nodes: T[]): this;
+            public each(predicate: IteratorPredicate<T, void>): this;
             public sort(predicate: (a: T, b: T) => number): this;
-            public sliceSort(predicate: (a: T, b: T) => number): NodeList<T>;
-            public partition(predicate: (value: T) => boolean): NodeList<T>[];
-            public each(predicate: (value: T, index?: number) => void): void;
-            public find(attr: string | IteratorPredicate<T>, value?: any): T | undefined;
-            public clear(): void;
+            public clear(): this;
             public sortAsc(...attrs: string[]): this;
             public sortDesc(...attrs: string[]): this;
+            public get(index?: number): T;
+            public remove(start: number, deleteCount?: number): T[];
+            public clone(): NodeList<T>;
+            public sliceSort(predicate: (a: T, b: T) => number): NodeList<T>;
+            public partition(predicate: (value: T) => boolean): NodeList<T>[];
+            public find(attr: string | IteratorPredicate<T, boolean>, value?: any): T | undefined;
         }
     }
 }

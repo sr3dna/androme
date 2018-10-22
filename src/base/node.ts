@@ -10,7 +10,7 @@ type T = Node;
 
 export default abstract class Node implements androme.lib.base.Node {
     public abstract children: T[];
-    public abstract constraint: ObjectMap<any>;
+    public abstract constraint: {};
     public abstract readonly renderChildren: T[];
     public style: CSSStyleDeclaration;
     public styleMap: StringMap = {};
@@ -55,7 +55,7 @@ export default abstract class Node implements androme.lib.base.Node {
     private _lineHeight: number;
     private _overflow: number;
     private _inlineText: boolean;
-    private _data: ObjectMap<any> = {};
+    private _data = {};
     private _initialized = false;
 
     protected constructor(
@@ -323,8 +323,8 @@ export default abstract class Node implements androme.lib.base.Node {
         }
     }
 
-    public alignedVertically(previous: T, cleared = new Map<T, string>(), firstNode = false) {
-        if (this.documentParent.baseElement === previous.documentParent.baseElement) {
+    public alignedVertically(previous: Null<T>, cleared = new Map<T, string>(), firstNode = false) {
+        if (previous && this.documentParent.baseElement === previous.documentParent.baseElement) {
             const widthParent = this.documentParent.has('width', CSS_STANDARD.UNIT) ? this.documentParent.toInt('width') : this.documentParent.box.width;
             return (
                 this.lineBreak ||

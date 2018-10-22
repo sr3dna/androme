@@ -1,6 +1,5 @@
 declare global {
     namespace androme.lib.base {
-        type T = androme.lib.base.Node;
         export class Node implements BoxModel {
             public id: number;
             public style: CSSStyleDeclaration;
@@ -18,18 +17,18 @@ declare global {
             public excludeSection: number;
             public excludeProcedure: number;
             public excludeResource: number;
-            public renderExtension: Set<Extension<T>>;
+            public renderExtension: Set<Extension<Node>>;
             public documentRoot: boolean;
             public auto: boolean;
             public visible: boolean;
             public excluded: boolean;
             public rendered: boolean;
-            public children: T[];
-            public companion: T;
-            public constraint: ObjectMap<any>;
-            public readonly renderChildren: T[];
-            public readonly initial: InitialData<T>;
-            public readonly documentParent: T;
+            public children: Node[];
+            public companion: Node;
+            public constraint: {};
+            public readonly renderChildren: Node[];
+            public readonly initial: InitialData<Node>;
+            public readonly documentParent: Node;
             public readonly linearHorizontal: boolean;
             public readonly linearVertical: boolean;
             public readonly layoutHorizontal: boolean;
@@ -101,19 +100,19 @@ declare global {
             public readonly actualHeight: number;
             public readonly singleChild: boolean;
             public readonly dir: string;
-            public readonly nodes: T[];
+            public readonly nodes: Node[];
             public readonly length: number;
             public readonly previousElementSibling: Null<Element>;
             public readonly nextElementSibling: Null<Element>;
             public readonly firstElementChild: Null<Element>;
             public readonly lastElementChild: Null<Element>;
             public readonly center: Point;
-            public parent: T;
+            public parent: Node;
             public controlName: string;
-            public renderParent: T;
+            public renderParent: Node;
             public nodeName: string;
             public element: Element;
-            public renderAs: T;
+            public renderAs: Node;
             public renderDepth: number;
             public pageflow: boolean;
             public multiLine: boolean;
@@ -126,7 +125,7 @@ declare global {
             public applyCustomizations(settings: Settings): void;
             public modifyBox(region: number | string, offset: number | null, negative?: boolean): void;
             public valueBox(region: number): string[];
-            public clone(id?: number, children?: boolean): T;
+            public clone(id?: number, children?: boolean): Node;
             public init(): void;
             public is(...views: number[]): boolean;
             public of(nodeType: number, ...alignmentType: number[]): boolean;
@@ -134,14 +133,14 @@ declare global {
             public get(obj: string): StringMap;
             public delete(obj: string, ...attrs: string[]): void;
             public apply(options: {}): void;
-            public each(predicate: (value: T, index?: number) => void, rendered?: boolean): this;
-            public render(parent: T): void;
+            public each(predicate: IteratorPredicate<Node, void>, rendered?: boolean): this;
+            public render(parent: Node): void;
             public hide(): void;
             public data(obj: string, attr: string, value?: any, overwrite?: boolean): any;
-            public ascend(generated?: boolean, levels?: number): T[];
-            public cascade(): T[];
-            public inherit(node: T, ...props: string[]): void;
-            public alignedVertically(previous: T, cleared?: Map<T, string>, firstNode?: boolean): boolean;
+            public ascend(generated?: boolean, levels?: number): Node[];
+            public cascade(): Node[];
+            public inherit(node: Node, ...props: string[]): void;
+            public alignedVertically(previous: Null<Node>, cleared?: Map<Node, string>, firstNode?: boolean): boolean;
             public intersect(rect: BoxDimensions, dimension?: string): boolean;
             public intersectX(rect: BoxDimensions, dimension?: string): boolean;
             public intersectY(rect: BoxDimensions, dimension?: string): boolean;
@@ -152,7 +151,7 @@ declare global {
             public css(attr: string | object, value?: string): string;
             public cssInitial(attr: string, complete?: boolean): string;
             public cssParent(attr: string, startChild?: boolean, ignoreHidden?: boolean): string;
-            public has(attr: string, checkType?: number, options?: ObjectMap<any>): boolean;
+            public has(attr: string, checkType?: number, options?: {}): boolean;
             public isSet(obj: string, attr: string): boolean;
             public hasBit(attr: string, value: number): boolean;
             public toInt(attr: string, defaultValue?: number, options?: StringMap): number;
@@ -161,13 +160,13 @@ declare global {
             public setBounds(calibrate?: boolean): void;
             public setDimensions(region?: string[]): void;
             public setMultiLine(): void;
-            public getParentElementAsNode(negative?: boolean, containerDefault?: T): T | null;
-            public remove(node: T): void;
-            public appendRendered(node: T): void;
-            public resetBox(region: number, node?: T, negative?: boolean): void;
+            public getParentElementAsNode(negative?: boolean, containerDefault?: Node): Node | null;
+            public remove(node: Node): void;
+            public appendRendered(node: Node): void;
+            public resetBox(region: number, node?: Node, negative?: boolean): void;
             public removeElement(): void;
-            public previousSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): T | null;
-            public nextSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): T | null;
+            public previousSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | null;
+            public nextSibling(pageflow?: boolean, lineBreak?: boolean, excluded?: boolean): Node | null;
             public actualLeft(dimension?: string): number;
             public actualRight(dimension?: string): number;
         }

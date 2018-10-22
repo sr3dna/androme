@@ -18,7 +18,7 @@ Express server through Node.js is available with a provided default configuratio
 * Install androme: (choose one)
 
 NPM  
-&nbsp;&nbsp;&nbsp;&gt; npm i androme  
+&nbsp;&nbsp;&nbsp;&gt; npm install androme  
 &nbsp;&nbsp;&nbsp;&gt; cd node_modules/androme  
 &nbsp;&nbsp;&nbsp;&gt; node app.js  
 
@@ -77,7 +77,7 @@ NOTE: Calling "save" or "write" methods before the images have completely loaded
 ```
 ### User settings
 
-These settings are available in the global variable "androme" to customize your desired XML structure. Compatible attributes are generated based on the targetAPI setting. I have not validated every attribute in relation to the API version but the customization code can easily be modified to support your project.
+These settings are available in the global variable "androme" to customize your desired output structure. Each framework shares a common set of settings and also a subset of their own settings.
 
 ```javascript
 // android settings
@@ -239,9 +239,21 @@ system.writeResourceDrawableXml(saveToDisk: boolean)
 system.writeResourceFontXml(saveToDisk: boolean)
 system.writeResourceStringXml(saveToDisk: boolean)
 system.writeResourceStyleXml(saveToDisk: boolean)
-system.customize(build: number, widget: string, options: { android: {}, app: {} }) // global attributes applied to specific views (widget: 'Button' / 'Spinner' / 'namespace.thirdparty.control')
+system.customize(build: number, widget: string, options: {}) // global attributes applied to specific views (widget: 'Button' / 'Spinner' / 'namespace.thirdparty.control')
 system.addXmlNs(name: string, uri: string) // add global namespaces for third-party controls
 ```
+You can use the "system.customize" method to create default settings for the specific controls which are applied after a view is rendered.
+```javascript
+<script>
+    // targetAPI: 0 - ALL, 26 - OREO
+    androme.system.customize(androme.settings.targetAPI, 'Button', {
+        android: {
+            minWidth: '35px',
+            minHeight: '25px'
+        }
+    });
+</script>
+````
 ### Redirecting output location
 
 It is sometimes necessary to append elements into other containers when trying to design a UI which will look identical on the Android device. Redirection will fail if the target "location" is not a block/container element.

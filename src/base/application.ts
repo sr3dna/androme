@@ -77,8 +77,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
             visible.every(node => {
                 const verticalAlign = node.css('verticalAlign');
                 return (
-                    node.toInt('top') >= 0 &&
-                    (['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(verticalAlign) || (isUnit(verticalAlign) && parseInt(verticalAlign) >= 0))
+                    node.toInt('top') >= 0 && (
+                        ['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(verticalAlign) ||
+                        (isUnit(verticalAlign) && parseInt(verticalAlign) >= 0)
+                    )
                 );
             }) && (
                 visible.some(node => ((node.textElement || node.imageElement || node.svgElement) && node.baseline) || (node.plainText && node.multiLine)) ||
@@ -833,11 +835,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                                 horizontal.push(adjacent);
                                                                 continue;
                                                             }
-                                                            if (floated.size === 1 && (
-                                                                    !adjacent.floating ||
-                                                                    floatedOpen.has(adjacent.float)
-                                                               ))
-                                                            {
+                                                            if (floated.size === 1 && (!adjacent.floating || floatedOpen.has(adjacent.float))) {
                                                                 horizontal.push(adjacent);
                                                                 continue;
                                                             }
@@ -1150,12 +1148,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                 }
                                             }
                                             else {
-                                                if (linearY ||
-                                                    (!relativeWrap && children.some(node => {
-                                                        const previous = node.previousSibling();
-                                                        return (previous != null && node.alignedVertically(previous, clearedInside));
-                                                    })))
-                                                {
+                                                if (linearY || (!relativeWrap && children.some(node => node.alignedVertically(node.previousSibling(), clearedInside)))) {
                                                     output = this.writeLinearLayout(nodeY, parentY, false);
                                                     if (linearY && !nodeY.documentRoot) {
                                                         nodeY.alignmentType |= NODE_ALIGNMENT.VERTICAL;

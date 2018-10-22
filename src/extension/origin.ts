@@ -65,11 +65,7 @@ export default class Origin<T extends Node> extends Extension<T> {
                         node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                         const widthLeft: number = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : Math.max.apply(null, sectionRight.list.map(item => item.bounds.width));
                         const widthRight: number = Math.max.apply(null, sectionRight.list.map(item => Math.abs(item.toInt('right'))));
-                        sectionLeft.each(item => {
-                            if (item.pageflow && !item.hasWidth) {
-                                item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft));
-                            }
-                        });
+                        sectionLeft.each(item => item.pageflow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
                         node.css('width', formatPX(widthLeft + widthRight));
                     }
                 }
