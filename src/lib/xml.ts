@@ -119,7 +119,7 @@ export function createTemplate(template: ObjectMap<string>, data: {}, index?: st
             value = data[i];
         }
         if (isString(value)) {
-            output = index ? output.replace(new RegExp(`{[%@&]*${i}}`, 'g'), value) : value.trim();
+            output = index ? output.replace(new RegExp(`{[%@&]{0,1}${i}}`, 'g'), value) : value.trim();
         }
         else if (value === false || new RegExp(`{%${i}}`).test(output)) {
             output = output.replace(`{%${i}}`, '');
@@ -128,5 +128,5 @@ export function createTemplate(template: ObjectMap<string>, data: {}, index?: st
             output = '';
         }
     }
-    return output.replace(/\s+[\w:]+="{@\w+}"/g, '');
+    return output.replace(/\s+[\w:]+="[^"]*{@\w+}"/g, '');
 }

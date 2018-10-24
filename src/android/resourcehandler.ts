@@ -3,7 +3,7 @@ import { SettingsAndroid } from './types/local';
 
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
-import SHAPERECTANGLE_TMPL from './template/resource/shape-rectangle';
+import SHAPE_TMPL from './template/resource/shape';
 import LAYERLIST_TMPL from './template/resource/layer-list';
 import VECTOR_TMPL from './template/resource/vector';
 
@@ -31,6 +31,18 @@ type BackgroundImage = {
     tileModeY: string;
     width: string;
     height: string;
+};
+
+type BackgroundGradient = {
+    type: string;
+    startColor: string;
+    centerColor: string;
+    endColor: string;
+    angle: string;
+    centerX: string;
+    centerY: string;
+    gradientRadius: string;
+    useLevel: string;
 };
 
 type StyleList = ArrayObject<ObjectMap<number[]>>;
@@ -327,7 +339,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     public static addColor(value: string, opacity = '1') {
         value = value.toUpperCase().trim();
         if (value !== '') {
-            const hex = parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}` : value;
+            const hex = parseFloat(opacity) < 1 ? `#${$color.convertToHex('255', parseFloat(opacity)) + value.substring(1)}` : value;
             let colorName = $resource.STORED.colors.get(hex) || '';
             if (colorName === '') {
                 const color = $color.getColorNearest(value);
@@ -354,14 +366,6 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             }
         }
         return '';
-    }
-
-    public static parseBackgroundPosition(value: string, fontSize: string) {
-        const match = new RegExp(/([0-9]+[a-z]{2}) ([0-9]+[a-z]{2})/).exec(value);
-        if (match) {
-            return [$util.convertPX(match[1], fontSize), $util.convertPX(match[2], fontSize)];
-        }
-        return ['', ''];
     }
 
     public settings: SettingsAndroid;
@@ -486,31 +490,89 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         this.cache.elements.forEach(node => {
             const stored: BoxStyle = $dom.getElementCache(node.element, 'boxStyle');
             if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_STYLE)) {
-                if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
+                function checkPartialBackgroundPosition(current: string, adjacent: string, defaultPosition: string) {
+                    if (current.indexOf(' ') === -1 && adjacent.indexOf(' ') !== -1) {
+                        if (/^[a-z]+$/.test(current)) {
+                            return `${current === 'initial' ? defaultPosition : current} 0px`;
+                        }
+                        else {
+                            return `${defaultPosition} ${current}`;
+                        }
+                    }
+                    return current;
+                }
+                if (stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
-                let backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
-                let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
+                let backgroundImage: string[] = [];
+                const backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
+                const backgroundDimensions: Null<Image>[] = [];
+                const backgroundGradient: BackgroundGradient[] = [];
                 const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
                 const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
-                const backgroundDimensions: Null<Image>[] = [];
-                let backgroundPosition: string[] = [];
-                for (let i = 0; i < backgroundImage.length; i++) {
-                    if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
-                        const image = this.imageDimensions.get($dom.cssResolveUrl(backgroundImage[i]));
-                        backgroundDimensions.push(image);
-                        backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
-                        backgroundPosition[i] = `${backgroundPositionX[i] === 'initial' ? '0%' : backgroundPositionX[i]} ${backgroundPositionY[i] === 'initial' ? '0%' : backgroundPositionY[i]}`;
-                    }
-                    else {
-                        backgroundImage[i] = '';
-                        backgroundRepeat[i] = '';
-                        backgroundPosition[i] = '';
+                const backgroundPosition: string[] = [];
+                if (stored.backgroundImage) {
+                    backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
+                    for (let i = 0; i < backgroundImage.length; i++) {
+                        if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
+                            backgroundDimensions.push(this.imageDimensions.get($dom.cssResolveUrl(backgroundImage[i])));
+                            backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
+                            const x = checkPartialBackgroundPosition(backgroundPositionX[i], backgroundPositionY[i], 'left');
+                            const y = checkPartialBackgroundPosition(backgroundPositionY[i], backgroundPositionX[i], 'top');
+                            backgroundPosition[i] = `${x === 'initial' ? '0px' : x} ${y === 'initial' ? '0px' : y}`;
+                        }
+                        else {
+                            backgroundImage[i] = '';
+                            backgroundRepeat[i] = '';
+                            backgroundPosition[i] = '';
+                        }
                     }
                 }
-                backgroundImage = backgroundImage.filter(value => value !== '');
-                backgroundRepeat = backgroundRepeat.filter(value => value !== '');
-                backgroundPosition = backgroundPosition.filter(value => value !== '');
+                else if (stored.backgroundGradient) {
+                    for (let i = 0; i < stored.backgroundGradient.length; i++) {
+                        const shape = stored.backgroundGradient[i];
+                        const gradient = {
+                            type: shape.type,
+                            startColor: shape.startColor.length > 0 ? ResourceHandler.addColor(shape.startColor[0], shape.startColor[2]) : '',
+                            centerColor: '',
+                            endColor: shape.endColor.length > 0 ? ResourceHandler.addColor(shape.endColor[0], shape.endColor[2]) : '',
+                            angle: '',
+                            centerX: '',
+                            centerY: '',
+                            gradientRadius: '',
+                            useLevel: ''
+                        };
+                        switch (gradient.type) {
+                            case 'radial':
+                                const radial = <GradientRadial> shape;
+                                const boxPosition: Null<BoxPosition> = radial.shapePosition.length > 1 ? $resource.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), true) : null;
+                                if (radial.centerColor.length > 0) {
+                                    gradient.centerColor = ResourceHandler.addColor(radial.centerColor[0], radial.centerColor[2]);
+                                }
+                                gradient.gradientRadius = $util.formatPX(node.bounds.width);
+                                if (boxPosition) {
+                                    if (boxPosition.horizontal === 'right') {
+                                        gradient.centerX = `${100 - boxPosition.right}%`;
+                                    }
+                                    else {
+                                        gradient.centerX = `${boxPosition.left}%`;
+                                    }
+                                    if (boxPosition.vertical === 'bottom') {
+                                        gradient.centerY = `${100 - boxPosition.bottom}%`;
+                                    }
+                                    else {
+                                        gradient.centerY = `${boxPosition.top}%`;
+                                    }
+                                }
+                                break;
+                            case 'linear':
+                                const linear = <GradientLinear> shape;
+                                gradient.angle = (Math.floor(linear.angle / 45) * 45).toString();
+                                break;
+                        }
+                        backgroundGradient.push(gradient);
+                    }
+                }
                 const method = METHOD_ANDROID['boxStyle'];
                 const companion = node.companion;
                 if (companion &&
@@ -519,7 +581,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     !$dom.cssFromParent(companion.element, 'backgroundColor'))
                 {
                     const boxStyle: BoxStyle = $dom.getElementCache(companion.element, 'boxStyle');
-                    if (Array.isArray(boxStyle.backgroundColor) && boxStyle.backgroundColor.length > 0) {
+                    if (boxStyle.backgroundColor.length > 0) {
                         stored.backgroundColor = ResourceHandler.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
                     }
                 }
@@ -530,7 +592,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     $resource.isBorderVisible(stored.borderLeft) ||
                     stored.borderRadius.length > 0
                 );
-                if (hasBorder || backgroundImage.length > 0) {
+                const hasBackgroundImage = backgroundImage.filter(value => value !== '').length > 0;
+                if (hasBorder || hasBackgroundImage || backgroundGradient.length > 0) {
                     function createDoubleBorder(templateData: {}, border: BorderAttribute, top: boolean, right: boolean, bottom: boolean, left: boolean) {
                         const width = parseInt(border.width);
                         const baseWidth = Math.floor(width / 3);
@@ -544,10 +607,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             'right': right ? '' :  leftTop,
                             'bottom': bottom ? '' :  rightBottom,
                             'left': left ? '' :  leftTop,
-                            '5': [{
-                                width: $util.formatPX(leftWidth),
-                                borderStyle: getBorderStyle(border)
-                            }],
+                            '5': [{ width: $util.formatPX(leftWidth), borderStyle: getBorderStyle(border) }],
                             '6': borderRadius
                         });
                         leftTop = `-${$util.formatPX(width + 1)}`;
@@ -558,10 +618,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             'right': right ? indentWidth : rightBottom,
                             'bottom': bottom ? indentWidth : rightBottom,
                             'left': left ? indentWidth : leftTop,
-                            '5': [{
-                                width: $util.formatPX(rightWidth),
-                                borderStyle: getBorderStyle(border)
-                            }],
+                            '5': [{ width: $util.formatPX(rightWidth), borderStyle: getBorderStyle(border) }],
                             '6': borderRadius
                         });
                     }
@@ -608,7 +665,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         stored.borderLeft
                     ];
                     borders.forEach((item: BorderAttribute) => {
-                        if (Array.isArray(item.color) && item.color.length > 0) {
+                        if ($resource.isBorderVisible(item) && item.color.length > 0) {
                             item.color = ResourceHandler.addColor(item.color[0], item.color[2]);
                         }
                     });
@@ -617,121 +674,35 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     let data: {};
                     let resourceName = '';
                     for (let i = 0; i < backgroundImage.length; i++) {
-                        let gravity = '';
-                        let tileMode = '';
-                        let tileModeX = '';
-                        let tileModeY = '';
-                        let [left, top] = ResourceHandler.parseBackgroundPosition(backgroundPosition[i], node.css('fontSize'));
-                        let right = '';
-                        let bottom = '';
-                        const image = backgroundDimensions[i];
-                        switch (backgroundRepeat[i]) {
-                            case 'repeat-x':
-                                if (image == null || image.width < node.bounds.width) {
-                                    tileModeX = 'repeat';
+                        if (backgroundImage[i] !== '') {
+                            const boxPosition = $resource.parseBackgroundPosition(backgroundPosition[i], node.bounds, node.css('fontSize'));
+                            const image = backgroundDimensions[i];
+                            let gravity = (() => {
+                                if (boxPosition.horizontal === 'center' && boxPosition.vertical === 'center') {
+                                    return 'center';
                                 }
-                                break;
-                            case 'repeat-y':
-                                if (image == null || image.height < node.bounds.height) {
-                                    tileModeY = 'repeat';
-                                }
-                                break;
-                            case 'no-repeat':
-                                tileMode = 'disabled';
-                                break;
-                            case 'repeat':
-                                if (image == null || image.width < node.bounds.width || image.height < node.bounds.height) {
-                                    tileMode = 'repeat';
-                                }
-                                break;
-                        }
-                        if (left === '') {
-                            switch (backgroundPosition[i]) {
-                                case 'left top':
-                                case '0% 0%':
-                                    gravity = 'left|top';
+                                return `${boxPosition.horizontal === 'center' ? 'center_horizontal' : boxPosition.horizontal}|${boxPosition.vertical === 'center' ? 'center_vertical' : boxPosition.vertical}`;
+                            })();
+                            let tileMode = '';
+                            let tileModeX = '';
+                            let tileModeY = '';
+                            switch (backgroundRepeat[i]) {
+                                case 'repeat-x':
+                                    if (image == null || image.width < node.bounds.width) {
+                                        tileModeX = 'repeat';
+                                    }
                                     break;
-                                case 'left center':
-                                case '0% 50%':
-                                    gravity = 'left|center_vertical';
+                                case 'repeat-y':
+                                    if (image == null || image.height < node.bounds.height) {
+                                        tileModeY = 'repeat';
+                                    }
                                     break;
-                                case 'left bottom':
-                                case '0% 100%':
-                                    gravity = 'left|bottom';
+                                case 'no-repeat':
+                                    tileMode = 'disabled';
                                     break;
-                                case 'right top':
-                                case '100% 0%':
-                                    gravity = 'right|top';
-                                    break;
-                                case 'right center':
-                                case '100% 50%':
-                                    gravity = 'right|center_vertical';
-                                    break;
-                                case 'right bottom':
-                                case '100% 100%':
-                                    gravity = 'right|bottom';
-                                    break;
-                                case 'center top':
-                                case '50% 0%':
-                                    gravity = 'center_horizontal|top';
-                                    break;
-                                case 'center bottom':
-                                case '50% 100%':
-                                    gravity = 'center_horizontal|bottom';
-                                    break;
-                                case 'center center':
-                                case '50% 50%':
-                                    gravity = 'center';
-                                    break;
-                                default:
-                                    const position = backgroundPosition[i].trim().split(' ');
-                                    if (position.length === 2) {
-                                        function mergeGravity(original: string, alignment: string) {
-                                            return original + (original !== '' ? '|' : '') + alignment;
-                                        }
-                                        position.forEach((value, index) => {
-                                            if ($util.isPercent(value)) {
-                                                switch (index) {
-                                                    case 0:
-                                                        if (value === '0%') {
-                                                            gravity = mergeGravity(gravity, 'left');
-                                                        }
-                                                        else if (value === '100%') {
-                                                            gravity = mergeGravity(gravity, 'right');
-                                                        }
-                                                        else {
-                                                            left = $util.formatPX(node.bounds.width * ($util.convertInt(value) / 100));
-                                                        }
-                                                        break;
-                                                    case 1:
-                                                        if (value === '0%') {
-                                                            gravity = mergeGravity(gravity, 'top');
-                                                        }
-                                                        else if (value === '100%') {
-                                                            gravity = mergeGravity(gravity, 'bottom');
-                                                        }
-                                                        else {
-                                                            top = $util.formatPX(node.actualHeight * ($util.convertInt(value) / 100));
-                                                        }
-                                                        break;
-                                                }
-                                            }
-                                            else if (/^[a-z]+$/.test(value)) {
-                                                gravity = mergeGravity(gravity, value);
-                                            }
-                                            else {
-                                                const leftTop = $util.convertPX(value, node.css('fontSize'));
-                                                if (leftTop !== '0px') {
-                                                    if (index === 0) {
-                                                        left = leftTop;
-                                                    }
-                                                    else {
-                                                        top = leftTop;
-                                                    }
-                                                }
-                                                gravity = mergeGravity(gravity, index === 0 ? 'left' : 'top');
-                                            }
-                                        });
+                                case 'repeat':
+                                    if (image == null || image.width < node.bounds.width || image.height < node.bounds.height) {
+                                        tileMode = 'repeat';
                                     }
                                     break;
                             }
@@ -749,19 +720,19 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     if (image.width < backgroundWidth) {
                                         const layoutWidth = $util.convertInt(node.android('layout_width'));
                                         if (gravity.indexOf('left') !== -1) {
-                                            right = $util.formatPX(backgroundWidth - image.width);
+                                            boxPosition.right = backgroundWidth - image.width;
                                             if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
                                                 node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                         else if (gravity.indexOf('right') !== -1) {
-                                            left = $util.formatPX(backgroundWidth - image.width);
+                                            boxPosition.left = backgroundWidth - image.width;
                                             if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
                                                 node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
                                         }
                                         else if (gravity === 'center' || gravity.indexOf('center_horizontal') !== -1) {
-                                            right = $util.formatPX(Math.floor((backgroundWidth - image.width) / 2));
+                                            boxPosition.right = Math.floor((backgroundWidth - image.width) / 2);
                                             if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
                                                 node.android('layout_width', $util.formatPX(node.bounds.width));
                                             }
@@ -781,19 +752,19 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     if (image.height < backgroundHeight) {
                                         const layoutHeight = $util.convertInt(node.android('layout_height'));
                                         if (gravity.indexOf('top') !== -1) {
-                                            bottom = $util.formatPX(backgroundHeight - image.height);
+                                            boxPosition.bottom = backgroundHeight - image.height;
                                             if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
                                                 node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
                                         else if (gravity.indexOf('bottom') !== -1) {
-                                            top = $util.formatPX(backgroundHeight - image.height);
+                                            boxPosition.top = backgroundHeight - image.height;
                                             if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
                                                 node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
                                         }
                                         else if (gravity === 'center' || gravity.indexOf('center_vertical') !== -1) {
-                                            bottom = $util.formatPX(Math.floor((backgroundHeight - image.height) / 2));
+                                            boxPosition.bottom = Math.floor((backgroundHeight - image.height) / 2);
                                             if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
                                                 node.android('layout_height', $util.formatPX(node.bounds.height));
                                             }
@@ -801,9 +772,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     }
                                 }
                             }
-                        }
-                        if (stored.backgroundSize.length > 0) {
-                            if ($util.isPercent(stored.backgroundSize[0]) || $util.isPercent(stored.backgroundSize[1])) {
+                            if (stored.backgroundSize.length > 0 && ($util.isPercent(stored.backgroundSize[0]) || $util.isPercent(stored.backgroundSize[1]))) {
                                 if (stored.backgroundSize[0] === '100%' && stored.backgroundSize[1] === '100%') {
                                     tileMode = '';
                                     tileModeX = '';
@@ -818,73 +787,74 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 }
                                 stored.backgroundSize = [];
                             }
-                        }
-                        if (node.of($enum.NODE_STANDARD.IMAGE, $enum.NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
-                            node.android('src', `@drawable/${backgroundImage[0]}`);
-                            if ($util.convertInt(left) > 0) {
-                                node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, $util.convertInt(left));
-                            }
-                            if ($util.convertInt(top) > 0) {
-                                node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, $util.convertInt(top));
-                            }
-                            let scaleType = '';
-                            switch (gravity) {
-                                case 'left|top':
-                                case 'left|center_vertical':
-                                case 'left|bottom':
-                                    scaleType = 'fitStart';
-                                    break;
-                                case 'right|top':
-                                case 'right|center_vertical':
-                                case 'right|bottom':
-                                    scaleType = 'fitEnd';
-                                    break;
-                                case 'center':
-                                case 'center_horizontal|top':
-                                case 'center_horizontal|bottom':
-                                    scaleType = 'center';
-                                    break;
-                            }
-                            node.android('scaleType', scaleType);
-                            if (!hasBorder) {
-                                return;
-                            }
-                            backgroundImage.length = 0;
-                        }
-                        else {
-                            if (gravity !== '' ||
-                                tileMode !== '' ||
-                                tileModeX !== '' ||
-                                tileModeY !== '')
-                            {
-                                image3.push({
-                                    top,
-                                    right,
-                                    bottom,
-                                    left,
-                                    gravity,
-                                    tileMode,
-                                    tileModeX,
-                                    tileModeY,
-                                    width: '',
-                                    height: '',
-                                    src: backgroundImage[i]
-                                });
-                            }
-                            else {
-                                image2.push({
-                                    top,
-                                    right,
-                                    bottom,
-                                    left,
-                                    gravity,
-                                    tileMode,
-                                    tileModeX,
-                                    tileModeY,
-                                    width: stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : '',
-                                    height: stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '',
-                                    src: backgroundImage[i]
-                                });
+                            if (hasBackgroundImage) {
+                                if (node.of($enum.NODE_STANDARD.IMAGE, $enum.NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
+                                    node.android('src', `@drawable/${backgroundImage[0]}`);
+                                    if (boxPosition.left > 0) {
+                                        node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, boxPosition.left);
+                                    }
+                                    if (boxPosition.top > 0) {
+                                        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, boxPosition.top);
+                                    }
+                                    let scaleType = '';
+                                    switch (gravity) {
+                                        case 'left|top':
+                                        case 'left|center_vertical':
+                                        case 'left|bottom':
+                                            scaleType = 'fitStart';
+                                            break;
+                                        case 'right|top':
+                                        case 'right|center_vertical':
+                                        case 'right|bottom':
+                                            scaleType = 'fitEnd';
+                                            break;
+                                        case 'center':
+                                        case 'center_horizontal|top':
+                                        case 'center_horizontal|bottom':
+                                            scaleType = 'center';
+                                            break;
+                                    }
+                                    node.android('scaleType', scaleType);
+                                    if (!hasBorder) {
+                                        return;
+                                    }
+                                    backgroundImage.length = 0;
+                                }
+                                else {
+                                    if (gravity === 'left|top') {
+                                        gravity = '';
+                                    }
+                                    if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
+                                        image3.push({
+                                            top: boxPosition.top !== 0 ? $util.formatPX(boxPosition.top) : '',
+                                            right: boxPosition.right !== 0 ? $util.formatPX(boxPosition.right) : '',
+                                            bottom: boxPosition.bottom !== 0 ? $util.formatPX(boxPosition.bottom) : '',
+                                            left: boxPosition.left !== 0 ? $util.formatPX(boxPosition.left) : '',
+                                            gravity,
+                                            tileMode,
+                                            tileModeX,
+                                            tileModeY,
+                                            width: '',
+                                            height: '',
+                                            src: backgroundImage[i]
+                                        });
+                                    }
+                                    else {
+                                        image2.push({
+                                            top: boxPosition.top !== 0 ? $util.formatPX(boxPosition.top) : '',
+                                            right: boxPosition.right !== 0 ? $util.formatPX(boxPosition.right) : '',
+                                            bottom: boxPosition.bottom !== 0 ? $util.formatPX(boxPosition.bottom) : '',
+                                            left: boxPosition.left !== 0 ? $util.formatPX(boxPosition.left) : '',
+                                            gravity,
+                                            tileMode,
+                                            tileModeX,
+                                            tileModeY,
+                                            width: stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : '',
+                                            height: stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '',
+                                            src: backgroundImage[i]
+                                        });
+                                    }
+                                }
                             }
                         }
                     }
@@ -910,18 +880,22 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     const backgroundColor = getShapeAttribute(stored, 'backgroundColor');
                     const borderRadius = getShapeAttribute(stored, 'radius');
                     let template: ObjectMap<string>;
-                    if (stored.border && $resource.isBorderVisible(stored.border) && !(
+                    if (stored.border && !(
                             (parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
                             (parseInt(stored.border.width) > 2 && stored.border.style === 'double')
                        ))
                     {
-                        if (backgroundImage.length === 0 && (borderRadius  === false || borderRadius[0].radius)) {
-                            template = $xml.parseTemplate(SHAPERECTANGLE_TMPL);
+                        if (!hasBackgroundImage && backgroundGradient.length <= 1) {
+                            if (borderRadius && borderRadius['radius'] == null) {
+                                borderRadius['radius'] = '1px';
+                            }
+                            template = $xml.parseTemplate(SHAPE_TMPL);
                             data = {
                                 '0': [{
                                     '1': getShapeAttribute(stored, 'stroke'),
                                     '2': backgroundColor,
-                                    '3': borderRadius
+                                    '3': borderRadius,
+                                    '4': backgroundGradient.length > 0 ? backgroundGradient : false
                                 }]
                             };
                         }
@@ -930,13 +904,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             data = {
                                 '0': [{
                                     '1': backgroundColor,
-                                    '2': image2.length > 0 ? image2 : false,
-                                    '3': image3.length > 0 ? image3 : false,
-                                    '4': [{
-                                        '5': getShapeAttribute(stored, 'stroke'),
-                                        '6': borderRadius
-                                    }],
-                                    '7': false
+                                    '2': backgroundGradient.length > 0 ? backgroundGradient : false,
+                                    '3': image2.length > 0 ? image2 : false,
+                                    '4': image3.length > 0 ? image3 : false,
+                                    '5': borderRadius ? [{ '6': getShapeAttribute(stored, 'stroke'), '7': borderRadius }] : false,
+                                    '8': false
                                 }]
                             };
                         }
@@ -946,10 +918,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         data = {
                             '0': [{
                                 '1': backgroundColor,
-                                '2': image2.length > 0 ? image2 : false,
-                                '3': image3.length > 0 ? image3 : false,
-                                '4': [],
-                                '7': []
+                                '2': backgroundGradient.length > 0 ? backgroundGradient : false,
+                                '3': image2.length > 0 ? image2 : false,
+                                '4': image3.length > 0 ? image3 : false,
+                                '5': [],
+                                '8': []
                             }]
                         };
                         const root = $xml.getTemplateBranch(data, '0');
@@ -957,10 +930,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         const borderWidth = new Set(borderVisible.map(item => item.width));
                         const borderStyle = new Set(borderVisible.map(item => getBorderStyle(item)));
                         const borderData = borderVisible[0];
-                        if (borderWidth.size === 1 &&
-                            borderStyle.size === 1 &&
-                            !(borderData.style === 'groove' || borderData.style === 'ridge'))
-                        {
+                        if (borderWidth.size === 1 && borderStyle.size === 1 && !(borderData.style === 'groove' || borderData.style === 'ridge')) {
                             const width = parseInt(borderData.width);
                             if (width > 2 && borderData.style === 'double') {
                                 createDoubleBorder.apply(this, [
@@ -975,13 +945,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             else {
                                 const leftTop = `-${$util.formatPX(width + 1)}`;
                                 const rightBottom = `-${$util.formatPX(width)}`;
-                                root['4'].push({
+                                root['5'].push({
                                     'top': $resource.isBorderVisible(stored.borderTop) ? '' : leftTop,
                                     'right': $resource.isBorderVisible(stored.borderRight) ? '' : rightBottom,
                                     'bottom': $resource.isBorderVisible(stored.borderBottom) ? '' : rightBottom,
                                     'left': $resource.isBorderVisible(stored.borderLeft) ? '' : leftTop,
-                                    '5': getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
-                                    '6': borderRadius
+                                    '6': getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
+                                    '7': borderRadius
                                 });
                             }
                         }
@@ -1005,23 +975,23 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         const outsetWidth = hasInset ? Math.ceil(width / 2) : width;
                                         let leftTop = `-${$util.formatPX(outsetWidth + 1)}`;
                                         let rightBottom = `-${$util.formatPX(outsetWidth)}`;
-                                        root['4'].push({
+                                        root['5'].push({
                                             'top':  i === 0 ? '' : leftTop,
                                             'right': i === 1 ? '' : rightBottom,
                                             'bottom': i === 2 ? '' : rightBottom,
                                             'left': i === 3 ? '' : leftTop,
-                                            '5': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
-                                            '6': borderRadius
+                                            '6': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
+                                            '7': borderRadius
                                         });
                                         if (hasInset) {
                                             leftTop = `-${$util.formatPX(width + 1)}`;
                                             rightBottom = `-${$util.formatPX(width)}`;
-                                            root['7'].push({
+                                            root['8'].push({
                                                 'top':  i === 0 ? '' : leftTop,
                                                 'right': i === 1 ? '' : rightBottom,
                                                 'bottom': i === 2 ? '' : rightBottom,
                                                 'left': i === 3 ? '' : leftTop,
-                                                '8': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true)
+                                                '9': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true)
                                             });
                                         }
                                     }
@@ -1038,7 +1008,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         }
                     }
                     node.formatted($util.formatString(method['background'], resourceName), node.renderExtension.size === 0);
-                    if (backgroundImage.length > 0) {
+                    if (hasBackgroundImage) {
                         node.data('RESOURCE', 'backgroundImage', true);
                         if (this.settings.autoSizeBackgroundImage &&
                             !node.documentRoot &&
@@ -1109,7 +1079,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 const textShadow = node.css('textShadow');
                 if (textShadow !== 'none') {
-                    [/^(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})$/, /^([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) (.+)$/].some((value, index) => {
+                    [/^(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9.]+)?\)) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2})$/, /^([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) (.+)$/].some((value, index) => {
                         const match = textShadow.match(value);
                         if (match) {
                             const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
@@ -1138,7 +1108,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 const element = node.element;
                 const stored: FontAttribute = Object.assign({}, $dom.getElementCache(element, 'fontStyle'));
-                if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
+                if (stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
                 if (stored.fontFamily) {
@@ -1148,7 +1118,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         .trim();
                     let fontStyle = '';
                     let fontWeight = '';
-                    if (Array.isArray(stored.color) && stored.color.length > 0) {
+                    if (stored.color.length > 0) {
                         stored.color = ResourceHandler.addColor(stored.color[0], stored.color[2]);
                     }
                     if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily]) {

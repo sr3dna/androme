@@ -7,8 +7,8 @@ import NodeList from './nodelist';
 import Application from './application';
 import File from './file';
 
-import { convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
-import { cssAttribute, cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isUserAgent, isLineBreak, setElementCache } from '../lib/dom';
+import { convertFloat, convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
+import { convertClientPX, cssAttribute, cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isUserAgent, isLineBreak, setElementCache } from '../lib/dom';
 import { replaceEntity } from '../lib/xml';
 import { parseHex, parseRGBA } from '../lib/color';
 
@@ -23,6 +23,74 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         drawables: new Map(),
         images: new Map()
     };
+
+    public static parseBackgroundPosition(value: string, dimension: BoxDimensions, fontSize: string, percent = false) {
+        const result: BoxPosition = {
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            horizontal: 'left',
+            vertical: 'top'
+        };
+        const orientation = value.split(' ');
+        if (orientation.length === 4) {
+            orientation.forEach((position, index) => {
+                switch (index) {
+                    case 0:
+                        result.horizontal = position;
+                        break;
+                    case 2:
+                        result.vertical = position;
+                        break;
+                    case 1:
+                    case 3:
+                        const clientXY = convertClientPX(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
+                        result[position[index - 1]] = convertInt(clientXY);
+                        break;
+                }
+            });
+        }
+        else if (orientation.length === 2) {
+            orientation.forEach((position, index) => {
+                switch (position) {
+                    case '0%':
+                        break;
+                    case '50%':
+                        if (index === 0) {
+                            result.horizontal = 'center';
+                        }
+                        else {
+                            result.vertical = 'center';
+                        }
+                        break;
+                    case '100%':
+                        if (index === 0) {
+                            result.horizontal = 'right';
+                        }
+                        else {
+                            result.vertical = 'bottom';
+                        }
+                        break;
+                    default:
+                        if (/^[a-z]+$/.test(position)) {
+                            if (index === 0) {
+                                result.horizontal = position;
+                            }
+                            else {
+                                result.vertical = position;
+                            }
+                        }
+                        else {
+                            const clientXY = convertClientPX(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
+                            result[index === 0 ? 'top' : 'left'] = convertInt(clientXY);
+                        }
+                        break;
+                }
+            });
+        }
+        return result;
+    }
 
     public static insertStoredAsset(asset: string, name: string, value: any) {
         const stored: Map<string, any> = Resource.STORED[asset];
@@ -192,7 +260,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             const fontSize = node.css('fontSize');
                             let result: string[] = [];
                             if (value !== 'auto' && value !== 'auto auto' && value !== 'initial' && value !== '0px') {
-                                const match = value.match(/^([0-9\.]+(?:px|pt|em|%)|auto)(?: ([0-9\.]+(?:px|pt|em|%)|auto))?(?: ([0-9\.]+(?:px|pt|em)))?(?: ([0-9\.]+(?:px|pt|em)))?$/);
+                                const match = value.match(/^(?:([0-9.]+(?:px|pt|em|%)|auto)\s*)+$/);
                                 if (match) {
                                     if (match[1] === 'auto' || match[2] === 'auto') {
                                         result = [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
@@ -215,7 +283,85 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             break;
                         }
                         case 'backgroundImage': {
-                            boxStyle[attr] = !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE) ? value : '';
+                            if (!node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
+                                const colorStop = '(?:,?\\s*(rgba?\\([0-9]+,\\s*[0-9]+,\\s*[0-9]+(?:,\\s*[0-9.]+)?\\)|[a-z]+)\\s*([0-9]+[a-z%]+)?)';
+                                const gradients: Gradient[] = [];
+                                const pattern: Null<RegExp> = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?${colorStop}${colorStop}${colorStop}?\\)`, 'g');
+                                let match: Null<RegExpExecArray> = null;
+                                while ((match = pattern.exec(value)) != null) {
+                                    if (match[1] === 'linear') {
+                                        gradients.push(<GradientLinear> {
+                                            type: 'linear',
+                                            angle: (() => {
+                                                switch (match[2]) {
+                                                    case 'to top':
+                                                        return 0;
+                                                    case 'to right top':
+                                                        return 45;
+                                                    case 'to right':
+                                                        return 90;
+                                                    case 'to right bottom':
+                                                        return 135;
+                                                    case 'to bottom':
+                                                        return 180;
+                                                    case 'to left bottom':
+                                                        return 225;
+                                                    case 'to left':
+                                                        return 270;
+                                                    case 'to left top':
+                                                        return 305;
+                                                    default:
+                                                        return convertInt(match[2]);
+                                                }
+                                            })(),
+                                            startColor: parseRGBA(match[3]),
+                                            startColorStop: match[4],
+                                            endColor: parseRGBA(match[5]),
+                                            endColorStop: match[6]
+                                        });
+                                    }
+                                    else {
+                                        gradients.push(<GradientRadial> {
+                                            type: 'radial',
+                                            shapePosition: (() => {
+                                                const result = ['ellipse', 'center'];
+                                                if (match[2]) {
+                                                    const shape = match[2].split('at').map(item => item.trim());
+                                                    switch (shape[0]) {
+                                                        case 'ellipse':
+                                                        case 'circle':
+                                                        case 'closest-side':
+                                                        case 'closest-corner':
+                                                        case 'farthest-side':
+                                                        case 'farthest-corner':
+                                                            result[0] = shape[0];
+                                                            break;
+                                                        default:
+                                                            result[1] = shape[0];
+                                                            break;
+                                                    }
+                                                    if (shape[1]) {
+                                                        result[1] = shape[1];
+                                                    }
+                                                }
+                                                return result;
+                                            })(),
+                                            startColor: parseRGBA(match[3]),
+                                            startColorStop: match[4],
+                                            endColor: parseRGBA(match[7] || match[5]),
+                                            endColorStop: match[8] || match[6],
+                                            centerColor: match[7] ? parseRGBA(match[5]) : [],
+                                            centerColorStop: match[8] ? match[6] : undefined
+                                        });
+                                    }
+                                }
+                                if (gradients.length > 0) {
+                                    boxStyle['backgroundGradient'] = gradients.reverse();
+                                }
+                                else {
+                                    boxStyle[attr] = value;
+                                }
+                            }
                             break;
                         }
                         case 'backgroundRepeat':
@@ -226,22 +372,19 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         }
                     }
                 }
-                if (Array.isArray(boxStyle.backgroundColor) &&
-                    !node.has('backgroundColor') && (
+                if (Array.isArray(boxStyle.backgroundColor) && !node.has('backgroundColor') && (
                         node.cssParent('backgroundColor', false, true) === boxStyle.backgroundColor[1] ||
                         (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))
                    ))
                 {
                     boxStyle.backgroundColor.length = 0;
                 }
-                if (boxStyle.borderTop.style !== 'none') {
-                    const borderTop = JSON.stringify(boxStyle.borderTop);
-                    if (borderTop === JSON.stringify(boxStyle.borderRight) &&
-                        borderTop === JSON.stringify(boxStyle.borderBottom) &&
-                        borderTop === JSON.stringify(boxStyle.borderLeft))
-                    {
-                        boxStyle.border = boxStyle.borderTop;
-                    }
+                const borderTop = JSON.stringify(boxStyle.borderTop);
+                if (borderTop === JSON.stringify(boxStyle.borderRight) &&
+                    borderTop === JSON.stringify(boxStyle.borderBottom) &&
+                    borderTop === JSON.stringify(boxStyle.borderLeft))
+                {
+                    boxStyle.border = boxStyle.borderTop;
                 }
                 setElementCache(node.element, 'boxStyle', boxStyle);
             }
@@ -265,14 +408,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 }
                 else {
                     const color = parseRGBA(node.css('color'), node.css('opacity'));
-                    const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                    if (backgroundColor.length > 0 && (
-                            backgroundImage ||
-                            (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) ||
-                            (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor'))
-                       ))
+                    const backgroundColor: string[] = [];
+                    if (!(backgroundImage ||
+                        (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) ||
+                        (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor'))))
                     {
-                        backgroundColor.length = 0;
+                        backgroundColor.push(...parseRGBA(node.css('backgroundColor'), node.css('opacity')));
                     }
                     let fontFamily = node.css('fontFamily');
                     let fontSize = node.css('fontSize');
@@ -407,7 +548,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             }
                             return null;
                         }
-                        const opacity = parseFloat(node.css('opacity'));
+                        const opacity = convertFloat(node.css('opacity'));
                         const svg: SVG = {
                             element,
                             name: element.id,

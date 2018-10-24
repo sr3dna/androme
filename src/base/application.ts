@@ -221,7 +221,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             this._cacheImage.set(element.src, {
                 width: element.naturalWidth,
                 height: element.naturalHeight,
-                url: element.src
+                uri: element.src
             });
         }
     }
@@ -277,9 +277,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
         };
         if (this.settings.preloadImages && rootElement) {
             for (const image of this._cacheImage.values()) {
-                if (image.width === 0 && image.height === 0 && image.url) {
+                if (image.width === 0 && image.height === 0 && image.uri) {
                     const imageElement = <HTMLImageElement> document.createElement('IMG');
-                    imageElement.src = image.url;
+                    imageElement.src = image.uri;
                     if (imageElement.complete && imageElement.naturalWidth > 0 && imageElement.naturalHeight > 0) {
                         image.width = imageElement.naturalWidth;
                         image.height = imageElement.naturalHeight;
@@ -2021,9 +2021,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                 styleMap['backgroundImage'].split(',')
                                     .map((value: string) => value.trim())
                                     .forEach(value => {
-                                        const url = cssResolveUrl(value);
-                                        if (url !== '' && !this._cacheImage.has(url)) {
-                                            this._cacheImage.set(url, { width: 0, height: 0, url });
+                                        const uri = cssResolveUrl(value);
+                                        if (uri !== '' && !this._cacheImage.has(uri)) {
+                                            this._cacheImage.set(uri, { width: 0, height: 0, uri });
                                         }
                                     });
                             }

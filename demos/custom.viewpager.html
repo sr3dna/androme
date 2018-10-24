@@ -88,20 +88,17 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script src="../dist/android.framework.min.js"></script>
-    <script async src="../dist/extensions/android.widget.coordinator.min.js"></script>
-    <script async src="../dist/extensions/android.widget.floatingactionbutton.min.js"></script>
-    <script async src="../dist/extensions/android.widget.menu.min.js"></script>
-    <script async src="../dist/extensions/android.widget.toolbar.min.js"></script>
+    <script src="../dist/extensions/android.widget.coordinator.min.js"></script>
+    <script src="../dist/extensions/android.widget.floatingactionbutton.min.js"></script>
+    <script src="../dist/extensions/android.widget.menu.min.js"></script>
+    <script src="../dist/extensions/android.widget.toolbar.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            //  <script> WITHOUT ASYNC: manual registerExtension required
-            //
-            //  androme.registerExtension(android.widget.floatingactionbutton);
-            //  androme.registerExtension(android.widget.menu);
-            //  androme.registerExtension(android.widget.toolbar);
-            //  androme.registerExtension(android.widget.coordinator);
-            //
+            androme.registerExtension(android.widget.coordinator);
+            androme.registerExtension(android.widget.floatingactionbutton);
+            androme.registerExtension(android.widget.menu);
+            androme.registerExtension(android.widget.toolbar);
             androme.ext('android.widget.toolbar', {
                 toolbar_demo: {
                     appBar: {}

@@ -994,7 +994,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 }, true);
             }
             else if (this.linearVertical) {
-                this.each((node: View) => {
+                this.initial.children.forEach((node: View) => {
                     const previous = (() => {
                         let current: Null<View> = node;
                         do {
@@ -1035,7 +1035,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, height);
                         }
                     }
-                }, true);
+                });
             }
         }
 

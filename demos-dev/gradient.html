@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/androme</title>
+    <link rel="stylesheet" type="text/css" href="common/dev.css">
+    <style>
+        #androme_ui {
+            background-color: #fff;
+            padding: 10px;
+            border: 1px solid #ccc;
+        }
+        table {
+            width: 200px;
+            background-color: floralwhite;
+            border: solid 1px #ccc;
+        }
+        td {
+            margin: 0px;
+            padding: 4px;
+            background: linear-gradient(45deg, rgba(153, 218, 255, 0.50), #008080), linear-gradient(135deg, yellow, blue);
+        }
+        tr:first-child td {
+            width: 50%;
+        }
+        tr:first-child td:nth-child(1) {
+            font-size: 13px;
+            font-weight: bold;
+            padding-left: 10px;
+        }
+        tr:first-child td:nth-child(2) {
+            font-size: 13px;
+            text-align: right;
+        }
+        tr:first-child td:nth-child(1) {
+            background: radial-gradient(at bottom left,red,yellow,green);
+        }
+        tr:last-child td {
+            font-size: 11px;
+            padding-left: 10px;
+            background: radial-gradient(circle at 100%, darkslateblue, #eee, slateblue);
+        }
+    </style>
+    <script src="/node_modules/systemjs/dist/system.js"></script>
+    <script src="common/dev.js"></script>
+    <script>
+        System.import('/build/main.js').then(result => {
+            androme = result;
+            System.import('/build/android/main.js').then(result => {
+                androme.setFramework(result['default']);
+                androme.parseDocument('androme_ui').then(function() {
+                    androme.close();
+
+                    var views = androme.system.writeLayoutAllXml();
+                    document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+
+                    var resource = androme.system.writeResourceAllXml();
+                    document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+                });
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- START: DEMO -->
+    <div id="androme_ui">
+        <table data-include="gradient_content" data-include-merge="true">
+            <tr>
+                <td>Chrome</td>
+                <td><img src="../demos/images/icons8-chrome.png" /></td>
+            </tr>
+            <tr>
+                <td colspan="2">https://www.google.com/chrome</td>
+            </tr>
+        </table>
+        <br />
+        <table>
+            <tr>
+                <td>Docs</td>
+                <td><img src="../demos/images/icons8-google-docs.png" /></td>
+            </tr>
+            <tr>
+                <td colspan="2">https://docs.google.com</td>
+            </tr>
+        </table>
+        <br />
+        <table data-include="gradient_nested" data-include-merge="true" data-include-end="true">
+            <tr>
+                <td>News</td>
+                <td><img src="../demos/images/icons8-google-news.png" /></td>
+            </tr>
+            <tr>
+                <td colspan="2">https://news.google.com</td>
+            </tr>
+        </table>
+        <br />
+        <table data-include-end="true">
+            <tr>
+                <td>Play</td>
+                <td><img src="../demos/images/icons8-google-play.png" /></td>
+            </tr>
+            <tr>
+                <td colspan="2">https://play.google.com</td>
+            </tr>
+        </table>
+        <br />
+        <table data-include="gradient_single" data-include-merge="true" data-include-end="true">
+            <tr>
+                <td>Plus</td>
+                <td><img src="../demos/images/icons8-google-plus.png" /></td>
+            </tr>
+            <tr>
+                <td colspan="2">https://plus.google.com</td>
+            </tr>
+        </table>
+    </div>
+    <!-- END: DEMO -->
+
+    <div>
+        <div class="output">
+            <pre id="output"></pre>
+            <div>
+                <button onclick="copy('output');">Copy</button>
+                <button onclick="androme.system.writeLayoutAllXml(true);">Save</button>
+                <button onclick="androme.saveAllToDisk();">Save All</button>
+            </div>
+        </div>
+        <div class="output">
+            <pre id="resource"></pre>
+            <div>
+                <button onclick="copy('resource');">Copy</button>
+                <button onclick="androme.system.writeResourceAllXml(true);">Save</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

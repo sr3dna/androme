@@ -78,16 +78,13 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script src="../dist/android.framework.min.js"></script>
-    <script async src="../dist/extensions/android.widget.coordinator.min.js"></script>
-    <script async src="../dist/extensions/android.widget.floatingactionbutton.js"></script>
+    <script src="../dist/extensions/android.widget.coordinator.min.js"></script>
+    <script src="../dist/extensions/android.widget.floatingactionbutton.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            //  <script> WITHOUT ASYNC: manual registerExtension required
-            //
-            //  androme.registerExtension(android.widget.floatingactionbutton);
-            //  androme.registerExtension(android.widget.coordinator);
-            //
+            androme.registerExtension(android.widget.coordinator);
+            androme.registerExtension(android.widget.floatingactionbutton);
             androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
@@ -106,7 +103,7 @@
     <div id="androme_ui" data-ext="android.widget.coordinator">
         <div data-include="coordinator_content" data-include-end="true">
             <div style="padding: 0px 20px;">
-                <h3>title</h2>
+                <h3>title</h3>
                 <div class="content">
                     content content content content content content content content content content
                     content content content content content content content content content content

@@ -75,16 +75,13 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script src="../dist/android.framework.min.js"></script>
-    <script async src="../dist/extensions/android.widget.menu.min.js"></script>
-    <script async src="../dist/extensions/android.widget.bottomnavigation.min.js"></script>
+    <script src="../dist/extensions/android.widget.menu.min.js"></script>
+    <script src="../dist/extensions/android.widget.bottomnavigation.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            //  <script> WITHOUT ASYNC: manual registerExtension required
-            //
-            //  androme.registerExtension(android.widget.menu);
-            //  androme.registerExtension(android.widget.bottomnavigation);
-            //
+            androme.registerExtension(android.widget.menu);
+            androme.registerExtension(android.widget.bottomnavigation);
             androme.ext('android.widget.bottomnavigation', { // optional: default configuration is provided
                 bottomnavigation_demo: {
                     android: {

@@ -140,6 +140,8 @@ Flexbox layouts using Constraint chains are mostly supported within the limitati
 
 <img src="demos/android/position_absolute.png" alt="position: absolute" />
 
+<img src="demos/android/gradient.png" alt="gradient: linear | radial" />
+
 ### Extensions: Standard
 
 <img src="demos/android/table.png" alt="extension: table" />
@@ -173,23 +175,15 @@ Most of the Android support library extensions can be configured using the same 
 
 ### Extensions: Configuration
 
-The <script async> attribute is required if you prefer having the extension loaded automatically rather than using "registerExtension".
-
 ```javascript
-<script async src="/dist/extensions/android.widget.coordinator.min.js"></script>
-<script async src="/dist/extensions/android.widget.floatingactionbutton.min.js"></script>
-<script async src="/dist/extensions/android.widget.menu.min.js"></script>
+<script src="/dist/extensions/android.widget.coordinator.min.js"></script>
+<script src="/dist/extensions/android.widget.menu.min.js"></script>
+<script src="/dist/extensions/android.widget.toolbar.min.js"></script>
 <script>
-    // configure an extension (built-in)
-    androme.configureExtension('android.widget.toolbar', { // optional: default configuration is provided
-        'elementId': { // HTML DOM
-            appBar: {
-                android: {
-                    theme: '@style/ThemeOverlay.AppCompat.Dark.ActionBar'
-                }
-            }
-        }
-    });
+    // required
+    androme.registerExtension(android.widget.coordinator);
+    androme.registerExtension(android.widget.floatingactionbutton);
+    androme.registerExtension(android.widget.toolbar);
 
     // create an extension (third-party)
     // framework: universal = 0; android = 2;
@@ -203,7 +197,16 @@ The <script async> attribute is required if you prefer having the extension load
     var sample = new Sample('your.namespace.sample', ['DIV'], { /* same as configure */ });
     androme.registerExtension(sample);
 
-    // configure an extension (third-party) - same as built-in
+    // configure an extension
+    androme.configureExtension('android.widget.toolbar', { // optional: default configuration is provided
+        'elementId': { // HTML DOM
+            appBar: {
+                android: {
+                    theme: '@style/ThemeOverlay.AppCompat.Dark.ActionBar'
+                }
+            }
+        }
+    });
 </script>
 ```
 ### API: Public properties and methods (androme)
@@ -329,7 +332,7 @@ Some applications can benefit from using includes and merge tags in order share 
 <TextView>Item 5</TextView>
 <!-- res/layout/filename2.xml -->
 ```
-The attributes "include" and "include-end" can only be applied to elements which share the same parent container. See /demos/custom.html for usage instructions.
+The attributes "include" and "include-end" can only be applied to elements which share the same parent container. See /demos/gradient.html for usage instructions.
 
 ### Generated from HTML and CSS
 

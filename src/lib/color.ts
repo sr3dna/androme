@@ -220,9 +220,9 @@ export function getColorByName(value: string) {
     return null;
 }
 
-export function convertToHex(value: string) {
+export function convertToHex(value: string, opacity = 1) {
     const hex = '0123456789ABCDEF';
-    let rgb = parseInt(value);
+    let rgb = parseInt(value) * opacity;
     if (isNaN(rgb)) {
         return '00';
     }
@@ -274,7 +274,7 @@ export function getColorNearest(value: string) {
 export function parseRGBA(value: string, opacity = '1'): string[] {
     if (value !== '') {
         if (value === 'initial') {
-            value = '#000000';
+            return [];
         }
         else if (value === 'transparent') {
             value = '#000000';
@@ -290,7 +290,7 @@ export function parseRGBA(value: string, opacity = '1'): string[] {
         if (rgb) {
             value = formatRGB(rgb);
         }
-        const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9\.]{1,3}))?\)/);
+        const match = value.match(/rgba?\(([0-9]+),\s*([0-9]+),\s*([0-9]+),?\s*([0-9.]+)?\)/);
         if (match && match.length >= 4 && match[4] !== '0') {
             if (match[4] == null) {
                 match[4] = opacity;

@@ -306,7 +306,7 @@
     }
     function camelToLowerCase(value) {
         value = value.charAt(0).toLowerCase() + value.substring(1);
-        const result = value.match(/([a-z]{1}[A-Z]{1})/g);
+        const result = value.match(/([a-z][A-Z])/g);
         if (result) {
             for (const match of result) {
                 value = value.replace(match, `${match[0]}_${match[1].toLowerCase()}`);
@@ -316,7 +316,7 @@
     }
     function convertCamelCase(value, char = '-') {
         value = value.replace(new RegExp(`^${char}+`), '');
-        const result = value.match(new RegExp(`(${char}{1}[a-z]{1})`, 'g'));
+        const result = value.match(new RegExp(`(${char}[a-z])`, 'g'));
         if (result) {
             for (const match of result) {
                 value = value.replace(match, match[1].toUpperCase());
@@ -421,7 +421,7 @@
         return typeof value === 'string' && value !== '';
     }
     function isUnit(value) {
-        return isString(value) ? /^-?[0-9\.]+(px|pt|em)$/.test(value.trim()) : false;
+        return isString(value) ? /^-?[0-9.]+(px|pt|em)$/.test(value.trim()) : false;
     }
     function isPercent(value) {
         return /^[0-9]+(\.[0-9]+)?%$/.test(value);
@@ -672,23 +672,13 @@
             paddingLeft: 0
         };
     }
-    function setElementCache(element, attr, data) {
-        if (element) {
-            element[`__${attr}`] = data;
+    function convertClientPX(value, dimension, fontSize, percent = false) {
+        if (percent) {
+            return isPercent(value) ? value : `${((parseFloat(convertPX(value)) / dimension) * 100).toFixed(2)}%`;
         }
-    }
-    function getElementCache(element, attr) {
-        return element ? element[`__${attr}`] : null;
-    }
-    function deleteElementCache(element, ...attrs) {
-        if (element) {
-            for (const attr of attrs) {
-                delete element[`__${attr}`];
-            }
+        else {
+            return isPercent(value) ? formatPX(dimension * (convertInt(value) / 100)) : convertPX(value, fontSize);
         }
-    }
-    function getNodeFromElement(element) {
-        return getElementCache(element, 'node');
     }
     function getRangeClientRect(element) {
         const range = document.createRange();
@@ -979,16 +969,31 @@
         }
         return null;
     }
+    function setElementCache(element, attr, data) {
+        if (element) {
+            element[`__${attr}`] = data;
+        }
+    }
+    function getElementCache(element, attr) {
+        return element ? element[`__${attr}`] : null;
+    }
+    function deleteElementCache(element, ...attrs) {
+        if (element) {
+            for (const attr of attrs) {
+                delete element[`__${attr}`];
+            }
+        }
+    }
+    function getNodeFromElement(element) {
+        return getElementCache(element, 'node');
+    }
 
     var dom = /*#__PURE__*/Object.freeze({
         isUserAgent: isUserAgent,
         getBoxRect: getBoxRect,
         getClientRect: getClientRect,
         getBoxModel: getBoxModel,
-        setElementCache: setElementCache,
-        getElementCache: getElementCache,
-        deleteElementCache: deleteElementCache,
-        getNodeFromElement: getNodeFromElement,
+        convertClientPX: convertClientPX,
         getRangeClientRect: getRangeClientRect,
         assignBounds: assignBounds,
         getStyle: getStyle,
@@ -1005,7 +1010,11 @@
         getElementsBetweenSiblings: getElementsBetweenSiblings,
         isStyleElement: isStyleElement,
         isElementVisible: isElementVisible,
-        findNestedExtension: findNestedExtension
+        findNestedExtension: findNestedExtension,
+        setElementCache: setElementCache,
+        getElementCache: getElementCache,
+        deleteElementCache: deleteElementCache,
+        getNodeFromElement: getNodeFromElement
     });
 
     class Node {
@@ -1252,7 +1261,7 @@
             }
         }
         alignedVertically(previous, cleared = new Map(), firstNode = false) {
-            if (this.documentParent.baseElement === previous.documentParent.baseElement) {
+            if (previous && this.documentParent.baseElement === previous.documentParent.baseElement) {
                 const widthParent = this.documentParent.has('width', CSS_STANDARD.UNIT) ? this.documentParent.toInt('width') : this.documentParent.box.width;
                 return (this.lineBreak ||
                     previous.lineBreak ||
@@ -2283,9 +2292,7 @@
                                     return a.siblingIndex <= b.siblingIndex ? -1 : 1;
                                 }
                             }
-                            else if (fontSizeA !== fontSizeB &&
-                                fontSizeA !== 0 &&
-                                fontSizeB !== 0) {
+                            else if (fontSizeA !== fontSizeB && fontSizeA !== 0 && fontSizeB !== 0) {
                                 return fontSizeA > fontSizeB ? -1 : 1;
                             }
                         }
@@ -2330,10 +2337,7 @@
                                     if (node.companion && node.companion.documentParent === parent) {
                                         node = node.companion;
                                     }
-                                    const previous = node.previousSibling();
-                                    if (previous) {
-                                        return !node.alignedVertically(previous, result);
-                                    }
+                                    return !node.alignedVertically(node.previousSibling(), result);
                                 }
                                 return true;
                             });
@@ -2361,16 +2365,59 @@
                                 if (node.companion && node.companion.documentParent === parent) {
                                     node = node.companion;
                                 }
-                                const previous = node.previousSibling();
-                                if (previous) {
-                                    return node.alignedVertically(previous, result);
-                                }
+                                return node.alignedVertically(node.previousSibling(), result);
                             }
                             return true;
                         });
                     }
                     return false;
             }
+        }
+        static sortByAlignment(list, alignmentType = NODE_ALIGNMENT.NONE, parent) {
+            let sorted = false;
+            if (parent && alignmentType === NODE_ALIGNMENT.NONE) {
+                if (parent.linearHorizontal) {
+                    alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
+                }
+                else if (parent.is(NODE_STANDARD.CONSTRAINT) && list.some(node => !node.pageflow)) {
+                    alignmentType |= NODE_ALIGNMENT.ABSOLUTE;
+                }
+            }
+            if (hasBit(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
+                if (list.some(node => node.floating)) {
+                    list.sort((a, b) => {
+                        if (a.floating && !b.floating) {
+                            return a.float === 'left' ? -1 : 1;
+                        }
+                        else if (!a.floating && b.floating) {
+                            return b.float === 'left' ? 1 : -1;
+                        }
+                        else if (a.floating && b.floating) {
+                            if (a.float !== b.float) {
+                                return a.float === 'left' ? -1 : 1;
+                            }
+                        }
+                        return a.linear.left <= b.linear.left ? -1 : 1;
+                    });
+                    sorted = true;
+                }
+            }
+            if (hasBit(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
+                if (list.some(node => node.toInt('zIndex') !== 0)) {
+                    list.sort((a, b) => {
+                        const indexA = convertInt(a.css('zIndex'));
+                        const indexB = convertInt(b.css('zIndex'));
+                        if (indexA === 0 && indexB === 0) {
+                            return a.siblingIndex <= b.siblingIndex ? -1 : 1;
+                        }
+                        else {
+                            return indexA <= indexB ? -1 : 1;
+                        }
+                    });
+                    sorted = true;
+                }
+            }
+            return sorted;
         }
         static siblingIndex(a, b) {
             return a.siblingIndex <= b.siblingIndex ? -1 : 1;
@@ -2395,21 +2442,44 @@
         reset() {
             this._currentId = 0;
             this.clear();
-        }
-        get(index) {
-            if (index == null) {
-                return this._list[this._list.length - 1];
-            }
-            return this._list[index];
+            return this;
         }
         append(...nodes) {
             this._list.push(...nodes);
             if (typeof this.delegateAppend === 'function') {
                 this.delegateAppend.call(this, nodes);
             }
+            return this;
         }
         prepend(...nodes) {
             this._list.unshift(...nodes);
+            return this;
+        }
+        each(predicate) {
+            this._list.forEach(predicate);
+            return this;
+        }
+        clear() {
+            this._list.length = 0;
+            return this;
+        }
+        sort(predicate) {
+            this._list.sort(predicate);
+            return this;
+        }
+        sortAsc(...attrs) {
+            sortAsc(this._list, ...attrs);
+            return this;
+        }
+        sortDesc(...attrs) {
+            sortDesc(this._list, ...attrs);
+            return this;
+        }
+        get(index) {
+            if (index == null) {
+                return this._list[this._list.length - 1];
+            }
+            return this._list[index];
         }
         remove(start, deleteCount = 1) {
             return this._list.splice(start, deleteCount);
@@ -2421,32 +2491,14 @@
             const [valid, invalid] = partition(this._list, predicate);
             return [new NodeList(valid), new NodeList(invalid)];
         }
-        each(predicate) {
-            this._list.forEach(predicate);
-        }
         find(attr, value) {
             if (typeof attr === 'string') {
                 return this._list.find(node => node[attr] === value);
             }
             return this._list.find(attr);
         }
-        clear() {
-            this._list.length = 0;
-        }
-        sort(predicate) {
-            this._list.sort(predicate);
-            return this;
-        }
         sliceSort(predicate) {
             return new NodeList(this._list.slice().sort(predicate));
-        }
-        sortAsc(...attrs) {
-            sortAsc(this._list, ...attrs);
-            return this;
-        }
-        sortDesc(...attrs) {
-            sortDesc(this._list, ...attrs);
-            return this;
         }
         get length() {
             return this._list.length;
@@ -2598,7 +2650,7 @@
         return `{${symbol + id.toString()}}`;
     }
     function removePlaceholderAll(value) {
-        return value.replace(/{[<:@>]{1}[0-9]+(\:[0-9]+)?}/g, '').trim();
+        return value.replace(/{[<:@>][0-9]+(:[0-9]+)?}/g, '').trim();
     }
     function replacePlaceholder(value, id, content, before = false) {
         const placeholder = typeof id === 'number' ? formatPlaceholder(id) : id;
@@ -2679,7 +2731,7 @@
         } while (true);
         return result;
     }
-    function getTemplateLevel(data, ...levels) {
+    function getTemplateBranch(data, ...levels) {
         let current = data;
         for (const level of levels) {
             const [index, array = '0'] = level.split('-');
@@ -2687,16 +2739,8 @@
         }
         return current;
     }
-    function createTemplate(template, data, index, include, exclude) {
+    function createTemplate(template, data, index) {
         let output = index ? template[index] : '';
-        if (data['#include']) {
-            include = data['#include'];
-            delete data['#include'];
-        }
-        if (data['#exclude']) {
-            exclude = data['#exclude'];
-            delete data['#exclude'];
-        }
         for (const i in data) {
             let value = '';
             if (data[i] === false || (Array.isArray(data[i]) && data[i].length === 0)) {
@@ -2705,14 +2749,14 @@
             }
             else if (Array.isArray(data[i])) {
                 for (const j in data[i]) {
-                    value += createTemplate(template, data[i][j], i, include, exclude);
+                    value += createTemplate(template, data[i][j], i);
                 }
             }
             else {
                 value = data[i];
             }
             if (isString(value)) {
-                output = index ? output.replace(new RegExp(`{[%@&]*${i}}`, 'g'), value) : value.trim();
+                output = index ? output.replace(new RegExp(`{[%@&]{0,1}${i}}`, 'g'), value) : value.trim();
             }
             else if (value === false || new RegExp(`{%${i}}`).test(output)) {
                 output = output.replace(`{%${i}}`, '');
@@ -2720,21 +2764,8 @@
             else if (new RegExp(`{&${i}}`).test(output)) {
                 output = '';
             }
-            if (include || exclude) {
-                const pattern = /\s+[\w:]+="{#(\w+)=(.*?)}"/g;
-                let match;
-                while ((match = pattern.exec(output)) != null) {
-                    if (include && include[match[1]]) {
-                        const attr = `{#${match[1]}=${match[2]}}`;
-                        output = output.replace(attr, data[match[2]] || match[2]);
-                    }
-                    else if (exclude && exclude[match[1]]) {
-                        output = output.replace(match[0], '');
-                    }
-                }
-            }
         }
-        return output.replace(/\s+[\w:]+="{@\w+}"/g, '');
+        return output.replace(/\s+[\w:]+="[^"]*{@\w+}"/g, '');
     }
 
     var xml = /*#__PURE__*/Object.freeze({
@@ -2745,7 +2776,7 @@
         replaceTab: replaceTab,
         replaceEntity: replaceEntity,
         parseTemplate: parseTemplate,
-        getTemplateLevel: getTemplateLevel,
+        getTemplateBranch: getTemplateBranch,
         createTemplate: createTemplate
     });
 
@@ -2797,52 +2828,6 @@
             this._views = [];
             this._includes = [];
         }
-        static sortByAlignment(children, parent, alignmentType = NODE_ALIGNMENT.NONE) {
-            let sorted = false;
-            if (parent && alignmentType === NODE_ALIGNMENT.NONE) {
-                if (parent.linearHorizontal) {
-                    alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
-                }
-                else if (parent.is(NODE_STANDARD.CONSTRAINT) && children.some(node => !node.pageflow)) {
-                    alignmentType |= NODE_ALIGNMENT.ABSOLUTE;
-                }
-            }
-            if (hasBit(alignmentType, NODE_ALIGNMENT.HORIZONTAL)) {
-                if (children.some(node => node.floating)) {
-                    children.sort((a, b) => {
-                        if (a.floating && !b.floating) {
-                            return a.float === 'left' ? -1 : 1;
-                        }
-                        else if (!a.floating && b.floating) {
-                            return b.float === 'left' ? 1 : -1;
-                        }
-                        else if (a.floating && b.floating) {
-                            if (a.float !== b.float) {
-                                return a.float === 'left' ? -1 : 1;
-                            }
-                        }
-                        return a.linear.left <= b.linear.left ? -1 : 1;
-                    });
-                    sorted = true;
-                }
-            }
-            if (hasBit(alignmentType, NODE_ALIGNMENT.ABSOLUTE)) {
-                if (children.some(node => node.toInt('zIndex') !== 0)) {
-                    children.sort((a, b) => {
-                        const indexA = convertInt(a.css('zIndex'));
-                        const indexB = convertInt(b.css('zIndex'));
-                        if (indexA === 0 && indexB === 0) {
-                            return a.siblingIndex <= b.siblingIndex ? -1 : 1;
-                        }
-                        else {
-                            return indexA <= indexB ? -1 : 1;
-                        }
-                    });
-                    sorted = true;
-                }
-            }
-            return sorted;
-        }
         static isFrameHorizontal(nodes, cleared, lineBreak = false) {
             const floated = NodeList.floated(nodes);
             const margin = nodes.filter(node => node.autoMargin);
@@ -2870,8 +2855,8 @@
                 (pageflow.length === 0 || floating.length === 0 || floatIndex < flowIndex) &&
                 visible.every(node => {
                     const verticalAlign = node.css('verticalAlign');
-                    return (node.toInt('top') >= 0 &&
-                        (['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(verticalAlign) || (isUnit(verticalAlign) && parseInt(verticalAlign) >= 0)));
+                    return (node.toInt('top') >= 0 && (['baseline', 'initial', 'unset', 'top', 'middle', 'sub', 'super'].includes(verticalAlign) ||
+                        (isUnit(verticalAlign) && parseInt(verticalAlign) >= 0)));
                 }) && (visible.some(node => ((node.textElement || node.imageElement || node.svgElement) && node.baseline) || (node.plainText && node.multiLine)) ||
                 (!linearX && nodes.every(node => node.pageflow && node.inlineElement))));
         }
@@ -2973,12 +2958,11 @@
         }
         setImageCache(element) {
             if (element && hasValue(element.src)) {
-                const image = {
+                this._cacheImage.set(element.src, {
                     width: element.naturalWidth,
                     height: element.naturalHeight,
-                    url: element.src
-                };
-                this._cacheImage.set(element.src, image);
+                    uri: element.src
+                });
             }
         }
         parseDocument(...elements) {
@@ -3032,9 +3016,9 @@
             };
             if (this.settings.preloadImages && rootElement) {
                 for (const image of this._cacheImage.values()) {
-                    if (image.width === 0 && image.height === 0 && image.url) {
+                    if (image.width === 0 && image.height === 0 && image.uri) {
                         const imageElement = document.createElement('IMG');
-                        imageElement.src = image.url;
+                        imageElement.src = image.uri;
                         if (imageElement.complete && imageElement.naturalWidth > 0 && imageElement.naturalHeight > 0) {
                             image.width = imageElement.naturalWidth;
                             image.height = imageElement.naturalHeight;
@@ -3440,7 +3424,7 @@
                             }
                         }
                     }
-                    Application.sortByAlignment(middle, parent);
+                    NodeList.sortByAlignment(middle, NODE_ALIGNMENT.NONE, parent);
                     axisY.push(...sortAsc(below, 'style.zIndex', 'id'));
                     axisY.push(...middle);
                     axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
@@ -3573,8 +3557,7 @@
                                                                     horizontal.push(adjacent);
                                                                     continue;
                                                                 }
-                                                                if (floated.size === 1 && (!adjacent.floating ||
-                                                                    floatedOpen.has(adjacent.float))) {
+                                                                if (floated.size === 1 && (!adjacent.floating || floatedOpen.has(adjacent.float))) {
                                                                     horizontal.push(adjacent);
                                                                     continue;
                                                                 }
@@ -3876,11 +3859,7 @@
                                                     }
                                                 }
                                                 else {
-                                                    if (linearY ||
-                                                        (!relativeWrap && children.some(node => {
-                                                            const previous = node.previousSibling();
-                                                            return (previous != null && node.alignedVertically(previous, clearedInside));
-                                                        }))) {
+                                                    if (linearY || (!relativeWrap && children.some(node => node.alignedVertically(node.previousSibling(), clearedInside)))) {
                                                         output = this.writeLinearLayout(nodeY, parentY, false);
                                                         if (linearY && !nodeY.documentRoot) {
                                                             nodeY.alignmentType |= NODE_ALIGNMENT.VERTICAL;
@@ -4728,9 +4707,9 @@
                                     styleMap['backgroundImage'].split(',')
                                         .map((value) => value.trim())
                                         .forEach(value => {
-                                        const url = cssResolveUrl(value);
-                                        if (url !== '' && !this._cacheImage.has(url)) {
-                                            this._cacheImage.set(url, { width: 0, height: 0, url });
+                                        const uri = cssResolveUrl(value);
+                                        if (uri !== '' && !this._cacheImage.has(uri)) {
+                                            this._cacheImage.set(uri, { width: 0, height: 0, uri });
                                         }
                                     });
                                 }
@@ -5050,6 +5029,37 @@
     function formatRGB(rgb) {
         return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
     }
+    function getColorByName(value) {
+        for (const color in X11_CSS3) {
+            if (color.toLowerCase() === value.trim().toLowerCase()) {
+                return X11_CSS3[color];
+            }
+        }
+        return null;
+    }
+    function convertToHex(value, opacity = 1) {
+        const hex = '0123456789ABCDEF';
+        let rgb = parseInt(value) * opacity;
+        if (isNaN(rgb)) {
+            return '00';
+        }
+        rgb = Math.max(0, Math.min(rgb, 255));
+        return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
+    }
+    function convertToRGB(value) {
+        value = value.replace('#', '').trim();
+        if (value.length === 3) {
+            value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
+        }
+        if (value.length === 6) {
+            return {
+                r: parseInt(value.substring(0, 2), 16),
+                g: parseInt(value.substring(2, 4), 16),
+                b: parseInt(value.substring(4), 16)
+            };
+        }
+        return null;
+    }
     function getColorNearest(value) {
         const result = HSL_SORTED.slice();
         let index = result.findIndex(item => item.hex === value);
@@ -5075,18 +5085,10 @@
             return null;
         }
     }
-    function getColorByName(value) {
-        for (const color in X11_CSS3) {
-            if (color.toLowerCase() === value.trim().toLowerCase()) {
-                return X11_CSS3[color];
-            }
-        }
-        return null;
-    }
     function parseRGBA(value, opacity = '1') {
         if (value !== '') {
             if (value === 'initial') {
-                value = '#000000';
+                return [];
             }
             else if (value === 'transparent') {
                 value = '#000000';
@@ -5102,7 +5104,7 @@
             if (rgb) {
                 value = formatRGB(rgb);
             }
-            const match = value.match(/rgb(?:a)?\(([0-9]{1,3}), ([0-9]{1,3}), ([0-9]{1,3})(?:, ([0-9\.]{1,3}))?\)/);
+            const match = value.match(/rgba?\(([0-9]+),\s*([0-9]+),\s*([0-9]+),?\s*([0-9.]+)?\)/);
             if (match && match.length >= 4 && match[4] !== '0') {
                 if (match[4] == null) {
                     match[4] = opacity;
@@ -5115,29 +5117,6 @@
             }
         }
         return [];
-    }
-    function convertToHex(value) {
-        const hex = '0123456789ABCDEF';
-        let rgb = parseInt(value);
-        if (isNaN(rgb)) {
-            return '00';
-        }
-        rgb = Math.max(0, Math.min(rgb, 255));
-        return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
-    }
-    function convertToRGB(value) {
-        value = value.replace('#', '').trim();
-        if (value.length === 3) {
-            value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
-        }
-        if (value.length === 6) {
-            return {
-                r: parseInt(value.substring(0, 2), 16),
-                g: parseInt(value.substring(2, 4), 16),
-                b: parseInt(value.substring(4), 16)
-            };
-        }
-        return null;
     }
     function parseHex(value) {
         if (value !== '') {
@@ -5164,11 +5143,11 @@
     }
 
     var color = /*#__PURE__*/Object.freeze({
-        getColorNearest: getColorNearest,
         getColorByName: getColorByName,
-        parseRGBA: parseRGBA,
         convertToHex: convertToHex,
         convertToRGB: convertToRGB,
+        getColorNearest: getColorNearest,
+        parseRGBA: parseRGBA,
         parseHex: parseHex,
         reduceToRGB: reduceToRGB
     });
@@ -5177,6 +5156,73 @@
         constructor(file) {
             this.file = file;
             this.file.stored = Resource.STORED;
+        }
+        static parseBackgroundPosition(value, dimension, fontSize, percent = false) {
+            const result = {
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                horizontal: 'left',
+                vertical: 'top'
+            };
+            const orientation = value.split(' ');
+            if (orientation.length === 4) {
+                orientation.forEach((position, index) => {
+                    switch (index) {
+                        case 0:
+                            result.horizontal = position;
+                            break;
+                        case 2:
+                            result.vertical = position;
+                            break;
+                        case 1:
+                        case 3:
+                            const clientXY = convertClientPX(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
+                            result[position[index - 1]] = convertInt(clientXY);
+                            break;
+                    }
+                });
+            }
+            else if (orientation.length === 2) {
+                orientation.forEach((position, index) => {
+                    switch (position) {
+                        case '0%':
+                            break;
+                        case '50%':
+                            if (index === 0) {
+                                result.horizontal = 'center';
+                            }
+                            else {
+                                result.vertical = 'center';
+                            }
+                            break;
+                        case '100%':
+                            if (index === 0) {
+                                result.horizontal = 'right';
+                            }
+                            else {
+                                result.vertical = 'bottom';
+                            }
+                            break;
+                        default:
+                            if (/^[a-z]+$/.test(position)) {
+                                if (index === 0) {
+                                    result.horizontal = position;
+                                }
+                                else {
+                                    result.vertical = position;
+                                }
+                            }
+                            else {
+                                const clientXY = convertClientPX(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
+                                result[index === 0 ? 'top' : 'left'] = convertInt(clientXY);
+                            }
+                            break;
+                    }
+                });
+            }
+            return result;
         }
         static insertStoredAsset(asset, name, value) {
             const stored = Resource.STORED[asset];
@@ -5318,7 +5364,7 @@
                                 const fontSize = node.css('fontSize');
                                 let result = [];
                                 if (value !== 'auto' && value !== 'auto auto' && value !== 'initial' && value !== '0px') {
-                                    const match = value.match(/^([0-9\.]+(?:px|pt|em|%)|auto)(?: ([0-9\.]+(?:px|pt|em|%)|auto))?(?: ([0-9\.]+(?:px|pt|em)))?(?: ([0-9\.]+(?:px|pt|em)))?$/);
+                                    const match = value.match(/^(?:([0-9.]+(?:px|pt|em|%)|auto)\s*)+$/);
                                     if (match) {
                                         if (match[1] === 'auto' || match[2] === 'auto') {
                                             result = [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
@@ -5341,7 +5387,85 @@
                                 break;
                             }
                             case 'backgroundImage': {
-                                boxStyle[attr] = !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE) ? value : '';
+                                if (!node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
+                                    const colorStop = '(?:,?\\s*(rgba?\\([0-9]+,\\s*[0-9]+,\\s*[0-9]+(?:,\\s*[0-9.]+)?\\)|[a-z]+)\\s*([0-9]+[a-z%]+)?)';
+                                    const gradients = [];
+                                    const pattern = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?${colorStop}${colorStop}${colorStop}?\\)`, 'g');
+                                    let match = null;
+                                    while ((match = pattern.exec(value)) != null) {
+                                        if (match[1] === 'linear') {
+                                            gradients.push({
+                                                type: 'linear',
+                                                angle: (() => {
+                                                    switch (match[2]) {
+                                                        case 'to top':
+                                                            return 0;
+                                                        case 'to right top':
+                                                            return 45;
+                                                        case 'to right':
+                                                            return 90;
+                                                        case 'to right bottom':
+                                                            return 135;
+                                                        case 'to bottom':
+                                                            return 180;
+                                                        case 'to left bottom':
+                                                            return 225;
+                                                        case 'to left':
+                                                            return 270;
+                                                        case 'to left top':
+                                                            return 305;
+                                                        default:
+                                                            return convertInt(match[2]);
+                                                    }
+                                                })(),
+                                                startColor: parseRGBA(match[3]),
+                                                startColorStop: match[4],
+                                                endColor: parseRGBA(match[5]),
+                                                endColorStop: match[6]
+                                            });
+                                        }
+                                        else {
+                                            gradients.push({
+                                                type: 'radial',
+                                                shapePosition: (() => {
+                                                    const result = ['ellipse', 'center'];
+                                                    if (match[2]) {
+                                                        const shape = match[2].split('at').map(item => item.trim());
+                                                        switch (shape[0]) {
+                                                            case 'ellipse':
+                                                            case 'circle':
+                                                            case 'closest-side':
+                                                            case 'closest-corner':
+                                                            case 'farthest-side':
+                                                            case 'farthest-corner':
+                                                                result[0] = shape[0];
+                                                                break;
+                                                            default:
+                                                                result[1] = shape[0];
+                                                                break;
+                                                        }
+                                                        if (shape[1]) {
+                                                            result[1] = shape[1];
+                                                        }
+                                                    }
+                                                    return result;
+                                                })(),
+                                                startColor: parseRGBA(match[3]),
+                                                startColorStop: match[4],
+                                                endColor: parseRGBA(match[7] || match[5]),
+                                                endColorStop: match[8] || match[6],
+                                                centerColor: match[7] ? parseRGBA(match[5]) : [],
+                                                centerColorStop: match[8] ? match[6] : undefined
+                                            });
+                                        }
+                                    }
+                                    if (gradients.length > 0) {
+                                        boxStyle['backgroundGradient'] = gradients.reverse();
+                                    }
+                                    else {
+                                        boxStyle[attr] = value;
+                                    }
+                                }
                                 break;
                             }
                             case 'backgroundRepeat':
@@ -5352,18 +5476,15 @@
                             }
                         }
                     }
-                    if (Array.isArray(boxStyle.backgroundColor) &&
-                        !node.has('backgroundColor') && (node.cssParent('backgroundColor', false, true) === boxStyle.backgroundColor[1] ||
+                    if (Array.isArray(boxStyle.backgroundColor) && !node.has('backgroundColor') && (node.cssParent('backgroundColor', false, true) === boxStyle.backgroundColor[1] ||
                         (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')))) {
                         boxStyle.backgroundColor.length = 0;
                     }
-                    if (boxStyle.borderTop.style !== 'none') {
-                        const borderTop = JSON.stringify(boxStyle.borderTop);
-                        if (borderTop === JSON.stringify(boxStyle.borderRight) &&
-                            borderTop === JSON.stringify(boxStyle.borderBottom) &&
-                            borderTop === JSON.stringify(boxStyle.borderLeft)) {
-                            boxStyle.border = boxStyle.borderTop;
-                        }
+                    const borderTop = JSON.stringify(boxStyle.borderTop);
+                    if (borderTop === JSON.stringify(boxStyle.borderRight) &&
+                        borderTop === JSON.stringify(boxStyle.borderBottom) &&
+                        borderTop === JSON.stringify(boxStyle.borderLeft)) {
+                        boxStyle.border = boxStyle.borderTop;
                     }
                     setElementCache(node.element, 'boxStyle', boxStyle);
                 }
@@ -5382,11 +5503,11 @@
                     }
                     else {
                         const color = parseRGBA(node.css('color'), node.css('opacity'));
-                        const backgroundColor = parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-                        if (backgroundColor.length > 0 && (backgroundImage ||
+                        const backgroundColor = [];
+                        if (!(backgroundImage ||
                             (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) ||
                             (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor')))) {
-                            backgroundColor.length = 0;
+                            backgroundColor.push(...parseRGBA(node.css('backgroundColor'), node.css('opacity')));
                         }
                         let fontFamily = node.css('fontFamily');
                         let fontSize = node.css('fontSize');
@@ -5517,7 +5638,7 @@
                                 }
                                 return null;
                             }
-                            const opacity = parseFloat(node.css('opacity'));
+                            const opacity = convertFloat(node.css('opacity'));
                             const svg = {
                                 element,
                                 name: element.id,
@@ -6676,11 +6797,7 @@
                             node.modifyBox(BOX_STANDARD.MARGIN_RIGHT, null);
                             const widthLeft = node.has('width', CSS_STANDARD.UNIT) ? node.toInt('width') : Math.max.apply(null, sectionRight.list.map(item => item.bounds.width));
                             const widthRight = Math.max.apply(null, sectionRight.list.map(item => Math.abs(item.toInt('right'))));
-                            sectionLeft.each(item => {
-                                if (item.pageflow && !item.hasWidth) {
-                                    item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft));
-                                }
-                            });
+                            sectionLeft.each(item => item.pageflow && !item.hasWidth && item.css(item.textElement ? 'maxWidth' : 'width', formatPX(widthLeft)));
                             node.css('width', formatPX(widthLeft + widthRight));
                         }
                     }

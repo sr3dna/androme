@@ -35,7 +35,7 @@
             if (androme.ready()) {
                 var div = document.createElement('div');
                 div.style.backgroundColor = ['#ddd', '#bbb', '#999', '#777', '#555'][count % 5];
-                if ((count % 2) == 1) {
+                if ((count % 2) === 1) {
                     div.style.fontStyle = 'italic';
                 }
                 div.id = 'activity_' + ++count;

@@ -1,6 +1,6 @@
 import { USER_AGENT } from './enumeration';
 
-import { convertCamelCase, convertInt, hasBit, hasValue, includes, resolvePath, withinFraction } from './util';
+import { convertCamelCase, convertInt, convertPX, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
 
 export function isUserAgent(value: number) {
     let client = USER_AGENT.CHROME;
@@ -39,26 +39,13 @@ export function getBoxModel(): BoxModel {
     };
 }
 
-export function setElementCache(element: Null<Element>, attr: string, data: any) {
-    if (element) {
-        element[`__${attr}`] = data;
+export function convertClientPX(value: string, dimension: number, fontSize: string, percent = false) {
+    if (percent) {
+        return isPercent(value) ? value : `${((parseFloat(convertPX(value)) / dimension) * 100).toFixed(2)}%`;
     }
-}
-
-export function getElementCache(element: Null<Element>, attr: string) {
-    return element ? element[`__${attr}`] : null;
-}
-
-export function deleteElementCache(element: Null<Element>, ...attrs: string[]) {
-    if (element) {
-        for (const attr of attrs) {
-            delete element[`__${attr}`];
-        }
+    else {
+        return isPercent(value) ? formatPX(dimension * (convertInt(value) / 100)) : convertPX(value, fontSize);
     }
-}
-
-export function getNodeFromElement<T extends androme.lib.base.Node>(element: Null<Element>): Null<T> {
-    return getElementCache(element, 'node');
 }
 
 export function getRangeClientRect(element: Element): [Null<BoxDimensions>, boolean] {
@@ -382,4 +369,26 @@ export function findNestedExtension(element: Element, name: string): Null<HTMLEl
         return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement;
     }
     return null;
+}
+
+export function setElementCache(element: Null<Element>, attr: string, data: any) {
+    if (element) {
+        element[`__${attr}`] = data;
+    }
+}
+
+export function getElementCache(element: Null<Element>, attr: string) {
+    return element ? element[`__${attr}`] : null;
+}
+
+export function deleteElementCache(element: Null<Element>, ...attrs: string[]) {
+    if (element) {
+        for (const attr of attrs) {
+            delete element[`__${attr}`];
+        }
+    }
+}
+
+export function getNodeFromElement<T extends androme.lib.base.Node>(element: Null<Element>): Null<T> {
+    return getElementCache(element, 'node');
 }

@@ -11,6 +11,7 @@ import { delimitUnit, parseRTL } from '../lib/util';
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
 import $util = androme.lib.util;
+import $resource = androme.lib.base.Resource;
 
 export default class <T extends View> extends androme.lib.base.extensions.List<T> {
     public processChild(): ExtensionResult {
@@ -63,10 +64,13 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                 const positionInside = node.css('listStylePosition') === 'inside';
                 const listStyleImage = !['', 'none'].includes(node.css('listStyleImage'));
                 let image = '';
-                let [left, top] = [0, 0];
+                let left = 0;
+                let top = 0;
                 if (mainData.imageSrc !== '') {
+                    const boxPosition = $resource.parseBackgroundPosition(mainData.imagePosition, node.bounds, node.css('fontSize'));
+                    left = boxPosition.left;
+                    top = boxPosition.top;
                     image = ResourceHandler.addImageURL(mainData.imageSrc);
-                    [left, top] = ResourceHandler.parseBackgroundPosition(mainData.imagePosition, node.css('fontSize')).map(value => $util.convertInt(value));
                 }
                 const gravity = (image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right';
                 if (gravity === '') {
@@ -91,7 +95,9 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                 })();
                 let layoutMarginLeft = left > 0 ? $util.formatPX(left) : '';
                 const options = {
-                    android: { layout_columnWeight: columnWeight }
+                    android: {
+                        layout_columnWeight: columnWeight
+                    }
                 };
                 if (positionInside) {
                     if (layoutMarginLeft !== '') {
@@ -162,7 +168,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                         node.id,
                         controller.renderNodeStatic(
                             image !== '' ? $enum.NODE_STANDARD.IMAGE
-                                         : (mainData.ordinal !== '' ? $enum.NODE_STANDARD.TEXT : $enum.NODE_STANDARD.SPACE),
+                                         : mainData.ordinal !== '' ? $enum.NODE_STANDARD.TEXT : $enum.NODE_STANDARD.SPACE,
                             parent.renderDepth + 1,
                             options,
                             'wrap_content',

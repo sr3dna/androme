@@ -188,7 +188,7 @@ export function isString(value: any): value is string {
 }
 
 export function isUnit(value: string) {
-    return isString(value) ? /^-?[0-9\.]+(px|pt|em)$/.test(value.trim()) : false;
+    return isString(value) ? /^-?[0-9.]+(px|pt|em)$/.test(value.trim()) : false;
 }
 
 export function isPercent(value: string) {

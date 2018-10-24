@@ -1,3 +1,9 @@
+type LayoutMapX<T> = {
+    [key: number]: ObjectIndex<T[]>;
+    length: number;
+};
+type LayoutMapY<T> = Map<number, Map<number, T>>;
+
 interface Settings {
     builtInExtensions: string[];
     supportRTL: boolean;
@@ -20,20 +26,20 @@ interface Settings {
     outputMaxProcessingTime: number;
 }
 
-type SettingsInternal = {
-    includes: boolean,
+interface SettingsInternal {
+    includes: boolean;
     inline: {
-        always: string[],
-        tagName: string[]
-    },
+        always: string[];
+        tagName: string[];
+    };
     layout: {
         pathName: string;
         fileExtension: string;
-    },
+    };
     unsupported: {
         tagName: string[]
-    }
-};
+    };
+}
 
 interface AppFramework<T extends androme.lib.base.Node> {
     lib: ObjectMap<any>;
@@ -54,32 +60,25 @@ interface AppCurrent<T extends androme.lib.base.Node> {
     application: androme.lib.base.Application<T>;
 }
 
-type ExtensionDependency = {
+interface ExtensionDependency {
     name: string;
     init: boolean;
-};
+}
 
-type ExtensionResult = {
+interface ExtensionResult {
     output: string;
     complete: boolean;
     next?: boolean;
     parent?: {};
     include?: boolean;
-};
+}
 
-type ViewData<T> = {
+interface ViewData<T> {
     cache: T;
     views: PlainFile[];
     includes: PlainFile[];
-};
+}
 
-type LayoutMapX<T> = {
-    [key: number]: ObjectIndex<T[]>;
-    length: number;
-};
-
-type LayoutMapY<T> = Map<number, Map<number, T>>;
-
-type NodeConstructor<T> = {
+interface NodeConstructor<T> {
     new (id: number, element?: Element): T;
-};
+}

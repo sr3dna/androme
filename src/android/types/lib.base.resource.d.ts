@@ -11,7 +11,6 @@ declare global {
             public static addImageURL(value: string, prefix?: string): string;
             public static addColor(value: string, opacity?: string): string;
             public static getColor(value: string): string;
-            public static parseBackgroundPosition(value: string, fontSize: string): string[];
             public addTheme(template: string, data: {}, options: {}): void;
         }
     }

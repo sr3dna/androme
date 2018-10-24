@@ -64,10 +64,7 @@ declare global {
             export function getBoxRect(): BoxRect;
             export function getClientRect(): BoxDimensions;
             export function getBoxModel(): BoxModel;
-            export function setElementCache(element: Null<Element>, attr: string, data: any): void;
-            export function getElementCache(element: Null<Element>, attr: string): any;
-            export function deleteElementCache(element: Null<Element>, ...attrs: string[]): void;
-            export function getNodeFromElement<T>(element: Null<Element>): Null<T>;
+            export function convertClientPX(value: string, dimension: number, fontSize: string, percent?: boolean): string;
             export function getRangeClientRect(element: Element): [Null<BoxDimensions>, boolean];
             export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions;
             export function getStyle(element: Null<Element>, cache?: boolean): CSSStyleDeclaration;
@@ -84,6 +81,10 @@ declare global {
             export function getElementsBetweenSiblings(firstElement: Null<Element>, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
             export function isElementVisible(element: Element): boolean;
             export function findNestedExtension(element: Element, name: string): Null<HTMLElement>;
+            export function setElementCache(element: Null<Element>, attr: string, data: any): void;
+            export function getElementCache(element: Null<Element>, attr: string): any;
+            export function deleteElementCache(element: Null<Element>, ...attrs: string[]): void;
+            export function getNodeFromElement<T>(element: Null<Element>): Null<T>;
         }
         namespace xml {
             export function formatPlaceholder(id: string | number, symbol?: string): string;
@@ -98,7 +99,7 @@ declare global {
         }
         namespace color {
             export function getColorByName(value: string): Color | null;
-            export function convertToHex(value: string): string;
+            export function convertToHex(value: string, opacity?: number): string;
             export function convertToRGB(value: string): RGB | null;
             export function getColorNearest(value: string): Color | null;
             export function parseRGBA(value: string, opacity?: string): string[];

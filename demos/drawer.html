@@ -109,20 +109,17 @@
     </style>
     <script src="../dist/androme.min.js"></script>
     <script src="../dist/android.framework.min.js"></script>
-    <script async src="../dist/extensions/android.widget.coordinator.min.js"></script>
-    <script async src="../dist/extensions/android.widget.floatingactionbutton.min.js"></script>
-    <script async src="../dist/extensions/android.widget.menu.min.js"></script>
-    <script async src="../dist/extensions/android.widget.drawer.min.js"></script>
+    <script src="../dist/extensions/android.widget.coordinator.min.js"></script>
+    <script src="../dist/extensions/android.widget.floatingactionbutton.min.js"></script>
+    <script src="../dist/extensions/android.widget.menu.min.js"></script>
+    <script src="../dist/extensions/android.widget.drawer.min.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            //  <script> WITHOUT ASYNC: manual registerExtension required
-            //
-            //  androme.registerExtension(android.widget.floatingactionbutton);
-            //  androme.registerExtension(android.widget.menu);
-            //  androme.registerExtension(android.widget.coordinator);
-            //  androme.registerExtension(android.widget.drawer);
-            //
+            androme.registerExtension(android.widget.floatingactionbutton);
+            androme.registerExtension(android.widget.menu);
+            androme.registerExtension(android.widget.coordinator);
+            androme.registerExtension(android.widget.drawer);
             androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
@@ -135,7 +132,7 @@
         });
         function toggleAside() {
             var element = document.getElementById('drawer_aside');
-            element.style.display = (element.style.display == 'block' ? 'none' : 'block');
+            element.style.display = (element.style.display === 'block' ? 'none' : 'block');
         }
     </script>
     <script src="common/prod.js"></script>

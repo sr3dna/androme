@@ -827,9 +827,7 @@ var android = (function () {
                             if ($util.convertFloat(this.android('layout_columnWeight')) > 0) {
                                 this.android('layout_width', '0px');
                             }
-                            else if ((widthDefined.length > 0 &&
-                                widthDefined.some(node => node.bounds.width >= this.box.width)) ||
-                                this.svgElement) {
+                            else if ((widthDefined.length > 0 && widthDefined.some(node => node.bounds.width >= this.box.width)) || this.svgElement) {
                                 this.android('layout_width', 'wrap_content');
                             }
                             else if ((this.blockStatic && this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL)) ||
@@ -1164,10 +1162,7 @@ var android = (function () {
                             const right = $util.convertInt(this.android(parseRTL(`${value}Right`, settings)));
                             const bottom = $util.convertInt(this.android(`${value}Bottom`));
                             const left = $util.convertInt(this.android(parseRTL(`${value}Left`, settings)));
-                            if (top !== 0 &&
-                                top === bottom &&
-                                bottom === left &&
-                                left === right) {
+                            if (top !== 0 && top === bottom && bottom === left && left === right) {
                                 this.delete('android', `${value}*`);
                                 this.android(value, $util.formatPX(top));
                             }
@@ -1322,9 +1317,7 @@ var android = (function () {
                         this.android('layout_height', $util.formatPX(this.bounds.height + (this.css('borderStyle') === 'outset' ? $util.convertInt(this.css('borderWidth')) : 0)));
                     }
                     else if (this.is($enum.NODE_STANDARD.LINE)) {
-                        if (layoutHeight > 0 &&
-                            this.has('height', 0, { map: 'initial' }) &&
-                            this.tagName !== 'HR') {
+                        if (layoutHeight > 0 && this.has('height', 0, { map: 'initial' }) && this.tagName !== 'HR') {
                             this.android('layout_height', $util.formatPX(layoutHeight + this.borderTopWidth + this.borderBottomWidth));
                         }
                     }
@@ -1401,7 +1394,7 @@ var android = (function () {
                     }, true);
                 }
                 else if (this.linearVertical) {
-                    this.each((node) => {
+                    this.initial.children.forEach((node) => {
                         const previous = (() => {
                             let current = node;
                             do {
@@ -1437,7 +1430,7 @@ var android = (function () {
                                 node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, height);
                             }
                         }
-                    }, true);
+                    });
                 }
             }
             alignLinearLayout(settings) {
@@ -1532,9 +1525,9 @@ var android = (function () {
                     const left = this.toInt('left');
                     if (top !== 0) {
                         if (top < 0 &&
-                            renderParent.is($enum.NODE_STANDARD.RELATIVE, $enum.NODE_STANDARD.LINEAR) &&
                             this.floating &&
-                            !!this.data('RESOURCE', 'backgroundImage')) {
+                            !!this.data('RESOURCE', 'backgroundImage') &&
+                            renderParent.is($enum.NODE_STANDARD.RELATIVE, $enum.NODE_STANDARD.LINEAR)) {
                             let found = false;
                             renderParent.renderChildren.some((node) => {
                                 if (node === this) {
@@ -1682,12 +1675,15 @@ var android = (function () {
         '	<solid android:color="@color/{&color}" />',
         '!2',
         '!3',
-        '	<corners android:radius="{&radius}" />',
+        '	<corners android:radius="{&radius}" android:topLeftRadius="{@topLeftRadius}" android:topRightRadius="{@topRightRadius}" android:bottomLeftRadius="{@bottomLeftRadius}" android:bottomRightRadius="{@bottomRightRadius}" />',
         '!3',
+        '!4',
+        '	<gradient android:type="{&type}" android:startColor="@color/{&startColor}" android:centerColor="@color/{@centerColor}" android:endColor="@color/{&endColor}" android:angle="{@angle}" android:centerX="{@centerX}" android:centerY="{@centerY}" android:gradientRadius="{@gradientRadius}" android:useLevel="{@useLevel}" />',
+        '!4',
         '</shape>',
         '!0'
     ];
-    var SHAPERECTANGLE_TMPL = template.join('\n');
+    var SHAPE_TMPL = template.join('\n');
 
     const template$1 = [
         '!0',
@@ -1701,34 +1697,41 @@ var android = (function () {
         '	</item>',
         '!1',
         '!2',
-        '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}" android:drawable="@drawable/{src}" width="{@width}" height="{@height}" />',
+        '	<item>',
+        '       <shape android:shape="rectangle">',
+        '	        <gradient android:type="{&type}" android:startColor="@color/{&startColor}" android:centerColor="@color/{@centerColor}" android:endColor="@color/{&endColor}" android:angle="{@angle}" android:centerX="{@centerX}" android:centerY="{@centerY}" android:gradientRadius="{@gradientRadius}" android:useLevel="{@useLevel}" />',
+        '		</shape>',
+        '	</item>',
         '!2',
         '!3',
+        '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}" android:drawable="@drawable/{src}" width="{@width}" height="{@height}" />',
+        '!3',
+        '!4',
         '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}">',
         '		<bitmap android:src="@drawable/{src}" android:gravity="{@gravity}" android:tileMode="{@tileMode}" android:tileModeX="{@tileModeX}" android:tileModeY="{@tileModeY}" />',
         '	</item>',
-        '!3',
-        '!7',
+        '!4',
+        '!8',
         '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}">',
         '		<shape android:shape="rectangle">',
-        '!8',
+        '!9',
         '			<stroke android:width="{&width}" {borderStyle} />',
-        '!8',
+        '!9',
         '		</shape>',
         '	</item>',
-        '!7',
-        '!4',
+        '!8',
+        '!5',
         '	<item android:top="{@top}" android:right="{@right}" android:bottom="{@bottom}" android:left="{@left}">',
         '		<shape android:shape="rectangle">',
-        '!5',
-        '			<stroke android:width="{&width}" {borderStyle} />',
-        '!5',
         '!6',
+        '			<stroke android:width="{&width}" {borderStyle} />',
+        '!6',
+        '!7',
         '			<corners android:radius="{@radius}" android:topLeftRadius="{@topLeftRadius}" android:topRightRadius="{@topRightRadius}" android:bottomRightRadius="{@bottomRightRadius}" android:bottomLeftRadius="{@bottomLeftRadius}" />',
-        '!6',
+        '!7',
         '		</shape>',
         '	</item>',
-        '!4',
+        '!5',
         '</layer-list>',
         '!0'
     ];
@@ -2052,7 +2055,7 @@ var android = (function () {
         static addColor(value, opacity = '1') {
             value = value.toUpperCase().trim();
             if (value !== '') {
-                const hex = parseFloat(opacity) < 1 ? `#${parseFloat(opacity).toFixed(2).substring(2) + value.substring(1)}` : value;
+                const hex = parseFloat(opacity) < 1 ? `#${$color.convertToHex('255', parseFloat(opacity)) + value.substring(1)}` : value;
                 let colorName = $resource.STORED.colors.get(hex) || '';
                 if (colorName === '') {
                     const color = $color.getColorNearest(value);
@@ -2078,13 +2081,6 @@ var android = (function () {
                 }
             }
             return '';
-        }
-        static parseBackgroundPosition(value, fontSize) {
-            const match = new RegExp(/([0-9]+[a-z]{2}) ([0-9]+[a-z]{2})/).exec(value);
-            if (match) {
-                return [$util$1.convertPX(match[1], fontSize), $util$1.convertPX(match[2], fontSize)];
-            }
-            return ['', ''];
         }
         reset() {
             super.reset();
@@ -2199,31 +2195,89 @@ var android = (function () {
             this.cache.elements.forEach(node => {
                 const stored = $dom$1.getElementCache(node.element, 'boxStyle');
                 if (stored && !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.BOX_STYLE)) {
-                    if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
+                    function checkPartialBackgroundPosition(current, adjacent, defaultPosition) {
+                        if (current.indexOf(' ') === -1 && adjacent.indexOf(' ') !== -1) {
+                            if (/^[a-z]+$/.test(current)) {
+                                return `${current === 'initial' ? defaultPosition : current} 0px`;
+                            }
+                            else {
+                                return `${defaultPosition} ${current}`;
+                            }
+                        }
+                        return current;
+                    }
+                    if (stored.backgroundColor.length > 0) {
                         stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                     }
-                    let backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
-                    let backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
+                    let backgroundImage = [];
+                    const backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
+                    const backgroundDimensions = [];
+                    const backgroundGradient = [];
                     const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
                     const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
-                    const backgroundDimensions = [];
-                    let backgroundPosition = [];
-                    for (let i = 0; i < backgroundImage.length; i++) {
-                        if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
-                            const image = this.imageDimensions.get($dom$1.cssResolveUrl(backgroundImage[i]));
-                            backgroundDimensions.push(image);
-                            backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
-                            backgroundPosition[i] = `${backgroundPositionX[i] === 'initial' ? '0%' : backgroundPositionX[i]} ${backgroundPositionY[i] === 'initial' ? '0%' : backgroundPositionY[i]}`;
-                        }
-                        else {
-                            backgroundImage[i] = '';
-                            backgroundRepeat[i] = '';
-                            backgroundPosition[i] = '';
+                    const backgroundPosition = [];
+                    if (stored.backgroundImage) {
+                        backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
+                        for (let i = 0; i < backgroundImage.length; i++) {
+                            if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
+                                backgroundDimensions.push(this.imageDimensions.get($dom$1.cssResolveUrl(backgroundImage[i])));
+                                backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
+                                const x = checkPartialBackgroundPosition(backgroundPositionX[i], backgroundPositionY[i], 'left');
+                                const y = checkPartialBackgroundPosition(backgroundPositionY[i], backgroundPositionX[i], 'top');
+                                backgroundPosition[i] = `${x === 'initial' ? '0px' : x} ${y === 'initial' ? '0px' : y}`;
+                            }
+                            else {
+                                backgroundImage[i] = '';
+                                backgroundRepeat[i] = '';
+                                backgroundPosition[i] = '';
+                            }
                         }
                     }
-                    backgroundImage = backgroundImage.filter(value => value !== '');
-                    backgroundRepeat = backgroundRepeat.filter(value => value !== '');
-                    backgroundPosition = backgroundPosition.filter(value => value !== '');
+                    else if (stored.backgroundGradient) {
+                        for (let i = 0; i < stored.backgroundGradient.length; i++) {
+                            const shape = stored.backgroundGradient[i];
+                            const gradient = {
+                                type: shape.type,
+                                startColor: shape.startColor.length > 0 ? ResourceHandler.addColor(shape.startColor[0], shape.startColor[2]) : '',
+                                centerColor: '',
+                                endColor: shape.endColor.length > 0 ? ResourceHandler.addColor(shape.endColor[0], shape.endColor[2]) : '',
+                                angle: '',
+                                centerX: '',
+                                centerY: '',
+                                gradientRadius: '',
+                                useLevel: ''
+                            };
+                            switch (gradient.type) {
+                                case 'radial':
+                                    const radial = shape;
+                                    const boxPosition = radial.shapePosition.length > 1 ? $resource.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), true) : null;
+                                    if (radial.centerColor.length > 0) {
+                                        gradient.centerColor = ResourceHandler.addColor(radial.centerColor[0], radial.centerColor[2]);
+                                    }
+                                    gradient.gradientRadius = $util$1.formatPX(node.bounds.width);
+                                    if (boxPosition) {
+                                        if (boxPosition.horizontal === 'right') {
+                                            gradient.centerX = `${100 - boxPosition.right}%`;
+                                        }
+                                        else {
+                                            gradient.centerX = `${boxPosition.left}%`;
+                                        }
+                                        if (boxPosition.vertical === 'bottom') {
+                                            gradient.centerY = `${100 - boxPosition.bottom}%`;
+                                        }
+                                        else {
+                                            gradient.centerY = `${boxPosition.top}%`;
+                                        }
+                                    }
+                                    break;
+                                case 'linear':
+                                    const linear = shape;
+                                    gradient.angle = (Math.floor(linear.angle / 45) * 45).toString();
+                                    break;
+                            }
+                            backgroundGradient.push(gradient);
+                        }
+                    }
                     const method = METHOD_ANDROID['boxStyle'];
                     const companion = node.companion;
                     if (companion &&
@@ -2231,7 +2285,7 @@ var android = (function () {
                         !companion.visible &&
                         !$dom$1.cssFromParent(companion.element, 'backgroundColor')) {
                         const boxStyle = $dom$1.getElementCache(companion.element, 'boxStyle');
-                        if (Array.isArray(boxStyle.backgroundColor) && boxStyle.backgroundColor.length > 0) {
+                        if (boxStyle.backgroundColor.length > 0) {
                             stored.backgroundColor = ResourceHandler.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
                         }
                     }
@@ -2240,7 +2294,8 @@ var android = (function () {
                         $resource.isBorderVisible(stored.borderBottom) ||
                         $resource.isBorderVisible(stored.borderLeft) ||
                         stored.borderRadius.length > 0);
-                    if (hasBorder || backgroundImage.length > 0) {
+                    const hasBackgroundImage = backgroundImage.filter(value => value !== '').length > 0;
+                    if (hasBorder || hasBackgroundImage || backgroundGradient.length > 0) {
                         function createDoubleBorder(templateData, border, top, right, bottom, left) {
                             const width = parseInt(border.width);
                             const baseWidth = Math.floor(width / 3);
@@ -2254,10 +2309,7 @@ var android = (function () {
                                 'right': right ? '' : leftTop,
                                 'bottom': bottom ? '' : rightBottom,
                                 'left': left ? '' : leftTop,
-                                '5': [{
-                                        width: $util$1.formatPX(leftWidth),
-                                        borderStyle: getBorderStyle(border)
-                                    }],
+                                '5': [{ width: $util$1.formatPX(leftWidth), borderStyle: getBorderStyle(border) }],
                                 '6': borderRadius
                             });
                             leftTop = `-${$util$1.formatPX(width + 1)}`;
@@ -2268,10 +2320,7 @@ var android = (function () {
                                 'right': right ? indentWidth : rightBottom,
                                 'bottom': bottom ? indentWidth : rightBottom,
                                 'left': left ? indentWidth : leftTop,
-                                '5': [{
-                                        width: $util$1.formatPX(rightWidth),
-                                        borderStyle: getBorderStyle(border)
-                                    }],
+                                '5': [{ width: $util$1.formatPX(rightWidth), borderStyle: getBorderStyle(border) }],
                                 '6': borderRadius
                             });
                         }
@@ -2317,133 +2366,44 @@ var android = (function () {
                             stored.borderLeft
                         ];
                         borders.forEach((item) => {
-                            if (Array.isArray(item.color) && item.color.length > 0) {
+                            if ($resource.isBorderVisible(item) && item.color.length > 0) {
                                 item.color = ResourceHandler.addColor(item.color[0], item.color[2]);
                             }
                         });
                         const image2 = [];
                         const image3 = [];
                         let data;
-                        let template = null;
                         let resourceName = '';
                         for (let i = 0; i < backgroundImage.length; i++) {
-                            let gravity = '';
-                            let tileMode = '';
-                            let tileModeX = '';
-                            let tileModeY = '';
-                            let [left, top] = ResourceHandler.parseBackgroundPosition(backgroundPosition[i], node.css('fontSize'));
-                            let right = '';
-                            let bottom = '';
-                            const image = backgroundDimensions[i];
-                            switch (backgroundRepeat[i]) {
-                                case 'repeat-x':
-                                    if (image == null || image.width < node.bounds.width) {
-                                        tileModeX = 'repeat';
+                            if (backgroundImage[i] !== '') {
+                                const boxPosition = $resource.parseBackgroundPosition(backgroundPosition[i], node.bounds, node.css('fontSize'));
+                                const image = backgroundDimensions[i];
+                                let gravity = (() => {
+                                    if (boxPosition.horizontal === 'center' && boxPosition.vertical === 'center') {
+                                        return 'center';
                                     }
-                                    break;
-                                case 'repeat-y':
-                                    if (image == null || image.height < node.bounds.height) {
-                                        tileModeY = 'repeat';
-                                    }
-                                    break;
-                                case 'no-repeat':
-                                    tileMode = 'disabled';
-                                    break;
-                                case 'repeat':
-                                    if (image == null ||
-                                        image.width < node.bounds.width ||
-                                        image.height < node.bounds.height) {
-                                        tileMode = 'repeat';
-                                    }
-                                    break;
-                            }
-                            if (left === '') {
-                                switch (backgroundPosition[i]) {
-                                    case 'left top':
-                                    case '0% 0%':
-                                        gravity = 'left|top';
+                                    return `${boxPosition.horizontal === 'center' ? 'center_horizontal' : boxPosition.horizontal}|${boxPosition.vertical === 'center' ? 'center_vertical' : boxPosition.vertical}`;
+                                })();
+                                let tileMode = '';
+                                let tileModeX = '';
+                                let tileModeY = '';
+                                switch (backgroundRepeat[i]) {
+                                    case 'repeat-x':
+                                        if (image == null || image.width < node.bounds.width) {
+                                            tileModeX = 'repeat';
+                                        }
                                         break;
-                                    case 'left center':
-                                    case '0% 50%':
-                                        gravity = 'left|center_vertical';
+                                    case 'repeat-y':
+                                        if (image == null || image.height < node.bounds.height) {
+                                            tileModeY = 'repeat';
+                                        }
                                         break;
-                                    case 'left bottom':
-                                    case '0% 100%':
-                                        gravity = 'left|bottom';
+                                    case 'no-repeat':
+                                        tileMode = 'disabled';
                                         break;
-                                    case 'right top':
-                                    case '100% 0%':
-                                        gravity = 'right|top';
-                                        break;
-                                    case 'right center':
-                                    case '100% 50%':
-                                        gravity = 'right|center_vertical';
-                                        break;
-                                    case 'right bottom':
-                                    case '100% 100%':
-                                        gravity = 'right|bottom';
-                                        break;
-                                    case 'center top':
-                                    case '50% 0%':
-                                        gravity = 'center_horizontal|top';
-                                        break;
-                                    case 'center bottom':
-                                    case '50% 100%':
-                                        gravity = 'center_horizontal|bottom';
-                                        break;
-                                    case 'center center':
-                                    case '50% 50%':
-                                        gravity = 'center';
-                                        break;
-                                    default:
-                                        const position = backgroundPosition[i].trim().split(' ');
-                                        if (position.length === 2) {
-                                            function mergeGravity(original, alignment) {
-                                                return original + (original !== '' ? '|' : '') + alignment;
-                                            }
-                                            position.forEach((value, index) => {
-                                                if ($util$1.isPercent(value)) {
-                                                    switch (index) {
-                                                        case 0:
-                                                            if (value === '0%') {
-                                                                gravity = mergeGravity(gravity, 'left');
-                                                            }
-                                                            else if (value === '100%') {
-                                                                gravity = mergeGravity(gravity, 'right');
-                                                            }
-                                                            else {
-                                                                left = $util$1.formatPX(node.bounds.width * ($util$1.convertInt(value) / 100));
-                                                            }
-                                                            break;
-                                                        case 1:
-                                                            if (value === '0%') {
-                                                                gravity = mergeGravity(gravity, 'top');
-                                                            }
-                                                            else if (value === '100%') {
-                                                                gravity = mergeGravity(gravity, 'bottom');
-                                                            }
-                                                            else {
-                                                                top = $util$1.formatPX(node.actualHeight * ($util$1.convertInt(value) / 100));
-                                                            }
-                                                            break;
-                                                    }
-                                                }
-                                                else if (/^[a-z]+$/.test(value)) {
-                                                    gravity = mergeGravity(gravity, value);
-                                                }
-                                                else {
-                                                    const leftTop = $util$1.convertPX(value, node.css('fontSize'));
-                                                    if (leftTop !== '0px') {
-                                                        if (index === 0) {
-                                                            left = leftTop;
-                                                        }
-                                                        else {
-                                                            top = leftTop;
-                                                        }
-                                                    }
-                                                    gravity = mergeGravity(gravity, index === 0 ? 'left' : 'top');
-                                                }
-                                            });
+                                    case 'repeat':
+                                        if (image == null || image.width < node.bounds.width || image.height < node.bounds.height) {
+                                            tileMode = 'repeat';
                                         }
                                         break;
                                 }
@@ -2461,19 +2421,19 @@ var android = (function () {
                                         if (image.width < backgroundWidth) {
                                             const layoutWidth = $util$1.convertInt(node.android('layout_width'));
                                             if (gravity.indexOf('left') !== -1) {
-                                                right = $util$1.formatPX(backgroundWidth - image.width);
+                                                boxPosition.right = backgroundWidth - image.width;
                                                 if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
                                                     node.android('layout_width', $util$1.formatPX(node.bounds.width));
                                                 }
                                             }
                                             else if (gravity.indexOf('right') !== -1) {
-                                                left = $util$1.formatPX(backgroundWidth - image.width);
+                                                boxPosition.left = backgroundWidth - image.width;
                                                 if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
                                                     node.android('layout_width', $util$1.formatPX(node.bounds.width));
                                                 }
                                             }
                                             else if (gravity === 'center' || gravity.indexOf('center_horizontal') !== -1) {
-                                                right = $util$1.formatPX(Math.floor((backgroundWidth - image.width) / 2));
+                                                boxPosition.right = Math.floor((backgroundWidth - image.width) / 2);
                                                 if (node.viewWidth === 0 && backgroundWidth > layoutWidth) {
                                                     node.android('layout_width', $util$1.formatPX(node.bounds.width));
                                                 }
@@ -2493,19 +2453,19 @@ var android = (function () {
                                         if (image.height < backgroundHeight) {
                                             const layoutHeight = $util$1.convertInt(node.android('layout_height'));
                                             if (gravity.indexOf('top') !== -1) {
-                                                bottom = $util$1.formatPX(backgroundHeight - image.height);
+                                                boxPosition.bottom = backgroundHeight - image.height;
                                                 if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
                                                     node.android('layout_height', $util$1.formatPX(node.bounds.height));
                                                 }
                                             }
                                             else if (gravity.indexOf('bottom') !== -1) {
-                                                top = $util$1.formatPX(backgroundHeight - image.height);
+                                                boxPosition.top = backgroundHeight - image.height;
                                                 if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
                                                     node.android('layout_height', $util$1.formatPX(node.bounds.height));
                                                 }
                                             }
                                             else if (gravity === 'center' || gravity.indexOf('center_vertical') !== -1) {
-                                                bottom = $util$1.formatPX(Math.floor((backgroundHeight - image.height) / 2));
+                                                boxPosition.bottom = Math.floor((backgroundHeight - image.height) / 2);
                                                 if (node.viewHeight === 0 && backgroundHeight > layoutHeight) {
                                                     node.android('layout_height', $util$1.formatPX(node.bounds.height));
                                                 }
@@ -2513,9 +2473,7 @@ var android = (function () {
                                         }
                                     }
                                 }
-                            }
-                            if (stored.backgroundSize.length > 0) {
-                                if ($util$1.isPercent(stored.backgroundSize[0]) || $util$1.isPercent(stored.backgroundSize[1])) {
+                                if (stored.backgroundSize.length > 0 && ($util$1.isPercent(stored.backgroundSize[0]) || $util$1.isPercent(stored.backgroundSize[1]))) {
                                     if (stored.backgroundSize[0] === '100%' && stored.backgroundSize[1] === '100%') {
                                         tileMode = '';
                                         tileModeX = '';
@@ -2530,72 +2488,74 @@ var android = (function () {
                                     }
                                     stored.backgroundSize = [];
                                 }
-                            }
-                            if (node.of($enum$1.NODE_STANDARD.IMAGE, $enum$1.NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
-                                node.android('src', `@drawable/${backgroundImage[0]}`);
-                                if ($util$1.convertInt(left) > 0) {
-                                    node.modifyBox($enum$1.BOX_STANDARD.MARGIN_LEFT, $util$1.convertInt(left));
-                                }
-                                if ($util$1.convertInt(top) > 0) {
-                                    node.modifyBox($enum$1.BOX_STANDARD.MARGIN_TOP, $util$1.convertInt(top));
-                                }
-                                let scaleType = '';
-                                switch (gravity) {
-                                    case 'left|top':
-                                    case 'left|center_vertical':
-                                    case 'left|bottom':
-                                        scaleType = 'fitStart';
-                                        break;
-                                    case 'right|top':
-                                    case 'right|center_vertical':
-                                    case 'right|bottom':
-                                        scaleType = 'fitEnd';
-                                        break;
-                                    case 'center':
-                                    case 'center_horizontal|top':
-                                    case 'center_horizontal|bottom':
-                                        scaleType = 'center';
-                                        break;
-                                }
-                                node.android('scaleType', scaleType);
-                                if (!hasBorder) {
-                                    return;
-                                }
-                                backgroundImage.length = 0;
-                            }
-                            else {
-                                if (gravity !== '' ||
-                                    tileMode !== '' ||
-                                    tileModeX !== '' ||
-                                    tileModeY !== '') {
-                                    image3.push({
-                                        top,
-                                        right,
-                                        bottom,
-                                        left,
-                                        gravity,
-                                        tileMode,
-                                        tileModeX,
-                                        tileModeY,
-                                        width: '',
-                                        height: '',
-                                        src: backgroundImage[i]
-                                    });
-                                }
-                                else {
-                                    image2.push({
-                                        top,
-                                        right,
-                                        bottom,
-                                        left,
-                                        gravity,
-                                        tileMode,
-                                        tileModeX,
-                                        tileModeY,
-                                        width: stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : '',
-                                        height: stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '',
-                                        src: backgroundImage[i]
-                                    });
+                                if (hasBackgroundImage) {
+                                    if (node.of($enum$1.NODE_STANDARD.IMAGE, $enum$1.NODE_ALIGNMENT.SINGLE) && backgroundPosition.length === 1) {
+                                        node.android('src', `@drawable/${backgroundImage[0]}`);
+                                        if (boxPosition.left > 0) {
+                                            node.modifyBox($enum$1.BOX_STANDARD.MARGIN_LEFT, boxPosition.left);
+                                        }
+                                        if (boxPosition.top > 0) {
+                                            node.modifyBox($enum$1.BOX_STANDARD.MARGIN_TOP, boxPosition.top);
+                                        }
+                                        let scaleType = '';
+                                        switch (gravity) {
+                                            case 'left|top':
+                                            case 'left|center_vertical':
+                                            case 'left|bottom':
+                                                scaleType = 'fitStart';
+                                                break;
+                                            case 'right|top':
+                                            case 'right|center_vertical':
+                                            case 'right|bottom':
+                                                scaleType = 'fitEnd';
+                                                break;
+                                            case 'center':
+                                            case 'center_horizontal|top':
+                                            case 'center_horizontal|bottom':
+                                                scaleType = 'center';
+                                                break;
+                                        }
+                                        node.android('scaleType', scaleType);
+                                        if (!hasBorder) {
+                                            return;
+                                        }
+                                        backgroundImage.length = 0;
+                                    }
+                                    else {
+                                        if (gravity === 'left|top') {
+                                            gravity = '';
+                                        }
+                                        if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
+                                            image3.push({
+                                                top: boxPosition.top !== 0 ? $util$1.formatPX(boxPosition.top) : '',
+                                                right: boxPosition.right !== 0 ? $util$1.formatPX(boxPosition.right) : '',
+                                                bottom: boxPosition.bottom !== 0 ? $util$1.formatPX(boxPosition.bottom) : '',
+                                                left: boxPosition.left !== 0 ? $util$1.formatPX(boxPosition.left) : '',
+                                                gravity,
+                                                tileMode,
+                                                tileModeX,
+                                                tileModeY,
+                                                width: '',
+                                                height: '',
+                                                src: backgroundImage[i]
+                                            });
+                                        }
+                                        else {
+                                            image2.push({
+                                                top: boxPosition.top !== 0 ? $util$1.formatPX(boxPosition.top) : '',
+                                                right: boxPosition.right !== 0 ? $util$1.formatPX(boxPosition.right) : '',
+                                                bottom: boxPosition.bottom !== 0 ? $util$1.formatPX(boxPosition.bottom) : '',
+                                                left: boxPosition.left !== 0 ? $util$1.formatPX(boxPosition.left) : '',
+                                                gravity,
+                                                tileMode,
+                                                tileModeX,
+                                                tileModeY,
+                                                width: stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : '',
+                                                height: stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '',
+                                                src: backgroundImage[i]
+                                            });
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -2620,15 +2580,20 @@ var android = (function () {
                         });
                         const backgroundColor = getShapeAttribute(stored, 'backgroundColor');
                         const borderRadius = getShapeAttribute(stored, 'radius');
-                        if (stored.border && $resource.isBorderVisible(stored.border) && !((parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
+                        let template;
+                        if (stored.border && !((parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
                             (parseInt(stored.border.width) > 2 && stored.border.style === 'double'))) {
-                            if (backgroundImage.length === 0 && (borderRadius === false || borderRadius[0].radius)) {
-                                template = $xml.parseTemplate(SHAPERECTANGLE_TMPL);
+                            if (!hasBackgroundImage && backgroundGradient.length <= 1) {
+                                if (borderRadius && borderRadius['radius'] == null) {
+                                    borderRadius['radius'] = '1px';
+                                }
+                                template = $xml.parseTemplate(SHAPE_TMPL);
                                 data = {
                                     '0': [{
                                             '1': getShapeAttribute(stored, 'stroke'),
                                             '2': backgroundColor,
-                                            '3': borderRadius
+                                            '3': borderRadius,
+                                            '4': backgroundGradient.length > 0 ? backgroundGradient : false
                                         }]
                                 };
                             }
@@ -2637,13 +2602,11 @@ var android = (function () {
                                 data = {
                                     '0': [{
                                             '1': backgroundColor,
-                                            '2': image2.length > 0 ? image2 : false,
-                                            '3': image3.length > 0 ? image3 : false,
-                                            '4': [{
-                                                    '5': getShapeAttribute(stored, 'stroke'),
-                                                    '6': borderRadius
-                                                }],
-                                            '7': false
+                                            '2': backgroundGradient.length > 0 ? backgroundGradient : false,
+                                            '3': image2.length > 0 ? image2 : false,
+                                            '4': image3.length > 0 ? image3 : false,
+                                            '5': borderRadius ? [{ '6': getShapeAttribute(stored, 'stroke'), '7': borderRadius }] : false,
+                                            '8': false
                                         }]
                                 };
                             }
@@ -2653,20 +2616,19 @@ var android = (function () {
                             data = {
                                 '0': [{
                                         '1': backgroundColor,
-                                        '2': image2.length > 0 ? image2 : false,
-                                        '3': image3.length > 0 ? image3 : false,
-                                        '4': [],
-                                        '7': []
+                                        '2': backgroundGradient.length > 0 ? backgroundGradient : false,
+                                        '3': image2.length > 0 ? image2 : false,
+                                        '4': image3.length > 0 ? image3 : false,
+                                        '5': [],
+                                        '8': []
                                     }]
                             };
-                            const root = $xml.getTemplateLevel(data, '0');
+                            const root = $xml.getTemplateBranch(data, '0');
                             const borderVisible = borders.filter(item => $resource.isBorderVisible(item));
                             const borderWidth = new Set(borderVisible.map(item => item.width));
                             const borderStyle = new Set(borderVisible.map(item => getBorderStyle(item)));
                             const borderData = borderVisible[0];
-                            if (borderWidth.size === 1 &&
-                                borderStyle.size === 1 &&
-                                !(borderData.style === 'groove' || borderData.style === 'ridge')) {
+                            if (borderWidth.size === 1 && borderStyle.size === 1 && !(borderData.style === 'groove' || borderData.style === 'ridge')) {
                                 const width = parseInt(borderData.width);
                                 if (width > 2 && borderData.style === 'double') {
                                     createDoubleBorder.apply(this, [
@@ -2681,13 +2643,13 @@ var android = (function () {
                                 else {
                                     const leftTop = `-${$util$1.formatPX(width + 1)}`;
                                     const rightBottom = `-${$util$1.formatPX(width)}`;
-                                    root['4'].push({
+                                    root['5'].push({
                                         'top': $resource.isBorderVisible(stored.borderTop) ? '' : leftTop,
                                         'right': $resource.isBorderVisible(stored.borderRight) ? '' : rightBottom,
                                         'bottom': $resource.isBorderVisible(stored.borderBottom) ? '' : rightBottom,
                                         'left': $resource.isBorderVisible(stored.borderLeft) ? '' : leftTop,
-                                        '5': getShapeAttribute({ border: borderVisible[0] }, 'stroke'),
-                                        '6': borderRadius
+                                        '6': getShapeAttribute({ border: borderVisible[0] }, 'stroke'),
+                                        '7': borderRadius
                                     });
                                 }
                             }
@@ -2711,23 +2673,23 @@ var android = (function () {
                                             const outsetWidth = hasInset ? Math.ceil(width / 2) : width;
                                             let leftTop = `-${$util$1.formatPX(outsetWidth + 1)}`;
                                             let rightBottom = `-${$util$1.formatPX(outsetWidth)}`;
-                                            root['4'].push({
+                                            root['5'].push({
                                                 'top': i === 0 ? '' : leftTop,
                                                 'right': i === 1 ? '' : rightBottom,
                                                 'bottom': i === 2 ? '' : rightBottom,
                                                 'left': i === 3 ? '' : leftTop,
-                                                '5': getShapeAttribute({ border }, 'stroke', i, hasInset),
-                                                '6': borderRadius
+                                                '6': getShapeAttribute({ border }, 'stroke', i, hasInset),
+                                                '7': borderRadius
                                             });
                                             if (hasInset) {
                                                 leftTop = `-${$util$1.formatPX(width + 1)}`;
                                                 rightBottom = `-${$util$1.formatPX(width)}`;
-                                                root['7'].push({
+                                                root['8'].push({
                                                     'top': i === 0 ? '' : leftTop,
                                                     'right': i === 1 ? '' : rightBottom,
                                                     'bottom': i === 2 ? '' : rightBottom,
                                                     'left': i === 3 ? '' : leftTop,
-                                                    '8': getShapeAttribute({ border }, 'stroke', i, true, true)
+                                                    '9': getShapeAttribute({ border }, 'stroke', i, true, true)
                                                 });
                                             }
                                         }
@@ -2744,7 +2706,7 @@ var android = (function () {
                             }
                         }
                         node.formatted($util$1.formatString(method['background'], resourceName), node.renderExtension.size === 0);
-                        if (backgroundImage.length > 0) {
+                        if (hasBackgroundImage) {
                             node.data('RESOURCE', 'backgroundImage', true);
                             if (this.settings.autoSizeBackgroundImage &&
                                 !node.documentRoot &&
@@ -2813,7 +2775,7 @@ var android = (function () {
                     }
                     const textShadow = node.css('textShadow');
                     if (textShadow !== 'none') {
-                        [/^(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9\.]+)?\)) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2})$/, /^([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) ([0-9\.]+[a-z]{2}) (.+)$/].some((value, index) => {
+                        [/^(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9.]+)?\)) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2})$/, /^([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) (.+)$/].some((value, index) => {
                             const match = textShadow.match(value);
                             if (match) {
                                 const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
@@ -2842,7 +2804,7 @@ var android = (function () {
                     }
                     const element = node.element;
                     const stored = Object.assign({}, $dom$1.getElementCache(element, 'fontStyle'));
-                    if (Array.isArray(stored.backgroundColor) && stored.backgroundColor.length > 0) {
+                    if (stored.backgroundColor.length > 0) {
                         stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                     }
                     if (stored.fontFamily) {
@@ -2852,7 +2814,7 @@ var android = (function () {
                             .trim();
                         let fontStyle = '';
                         let fontWeight = '';
-                        if (Array.isArray(stored.color) && stored.color.length > 0) {
+                        if (stored.color.length > 0) {
                             stored.color = ResourceHandler.addColor(stored.color[0], stored.color[2]);
                         }
                         if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily]) {
@@ -2938,7 +2900,7 @@ var android = (function () {
                                     '1': []
                                 }]
                         };
-                        const root = $xml.getTemplateLevel(data, '0');
+                        const root = $xml.getTemplateBranch(data, '0');
                         stored.children.forEach(svg => {
                             const group = {
                                 name: svg.name,
@@ -3068,43 +3030,44 @@ var android = (function () {
             this.cache.visible.forEach(node => {
                 const stored = $dom$1.getElementCache(node.element, 'optionArray');
                 if (stored) {
-                    const method = METHOD_ANDROID['optionArray'];
-                    let result = [];
+                    const result = [];
                     if (stored.numberArray) {
                         if (!this.settings.numberResourceValue) {
-                            result = stored.numberArray;
+                            result.push(...stored.numberArray);
                         }
                         else {
                             stored.stringArray = stored.numberArray;
                         }
                     }
                     if (stored.stringArray) {
-                        result = stored.stringArray.map(value => {
+                        result.push(...stored.stringArray.map(value => {
                             const name = ResourceHandler.addString(value, '', this.settings);
                             return name !== '' ? `@string/${name}` : '';
                         })
-                            .filter(name => name);
+                            .filter(name => name));
                     }
-                    const arrayValue = result.join('-');
-                    let arrayName = '';
-                    for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
-                        if (arrayValue === storedResult.join('-')) {
-                            arrayName = storedName;
-                            break;
+                    if (result.length > 0) {
+                        const arrayValue = result.join('-');
+                        let arrayName = '';
+                        for (const [storedName, storedResult] of $resource.STORED.arrays.entries()) {
+                            if (arrayValue === storedResult.join('-')) {
+                                arrayName = storedName;
+                                break;
+                            }
                         }
+                        if (arrayName === '') {
+                            arrayName = `${node.nodeId}_array`;
+                            $resource.STORED.arrays.set(arrayName, result);
+                        }
+                        const method = METHOD_ANDROID['optionArray'];
+                        node.formatted($util$1.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
                     }
-                    if (arrayName === '') {
-                        arrayName = `${node.nodeId}_array`;
-                        $resource.STORED.arrays.set(arrayName, result);
-                    }
-                    node.formatted($util$1.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
                 }
             });
         }
         addTheme(template, data, options) {
-            const map = $xml.parseTemplate(template);
             if (options.item) {
-                const root = $xml.getTemplateLevel(data, '0');
+                const root = $xml.getTemplateBranch(data, '0');
                 for (const name in options.item) {
                     let value = options.item[name];
                     const hex = $color.parseHex(value);
@@ -3117,7 +3080,7 @@ var android = (function () {
                     });
                 }
             }
-            const xml = $xml.createTemplate(map, data);
+            const xml = $xml.createTemplate($xml.parseTemplate(template), data);
             this.addFile(options.output.path, options.output.file, xml);
         }
         processFontStyle(viewData) {
@@ -3762,11 +3725,7 @@ var android = (function () {
                                         item.anchor(relativeParent['top'], 'true');
                                         break;
                                     case 'middle':
-                                        rows[0].forEach(sibling => {
-                                            if (sibling.bounds.height <= item.bounds.height) {
-                                                sibling.anchor('layout_centerVertical', 'true');
-                                            }
-                                        });
+                                        rows[0].forEach(sibling => sibling.bounds.height <= item.bounds.height && sibling.anchor('layout_centerVertical', 'true'));
                                         break;
                                 }
                             });
@@ -3958,8 +3917,8 @@ var android = (function () {
                                             }
                                         }
                                     });
-                                });
-                                pageflow.each(current => {
+                                })
+                                    .each(current => {
                                     const leftRight = mapSibling(current, 'leftRight');
                                     if (leftRight) {
                                         if (!current.constraint.horizontal) {
@@ -4625,8 +4584,8 @@ var android = (function () {
                                                         adjacent = nodes.find('nodeId', stripId(topBottom));
                                                         if (adjacent && current.withinY(adjacent.linear)) {
                                                             chain.push(adjacent);
-                                                            valid = mapParent(adjacent, index === 0 ? 'top' : 'bottom');
-                                                            if (valid) {
+                                                            if (mapParent(adjacent, index === 0 ? 'top' : 'bottom')) {
+                                                                valid = true;
                                                                 break;
                                                             }
                                                         }
@@ -5000,8 +4959,6 @@ var android = (function () {
         }
         renderGroup(node, parent, viewName, options) {
             const target = $util$2.hasValue(node.dataset.target) && !$util$2.hasValue(node.dataset.include);
-            let preXml = '';
-            let postXml = '';
             if (typeof viewName === 'number') {
                 viewName = View.getControlName(viewName);
             }
@@ -5024,6 +4981,8 @@ var android = (function () {
                     break;
             }
             node.setNodeType(viewName);
+            let preXml = '';
+            let postXml = '';
             if (node.overflowX || node.overflowY) {
                 const overflow = [];
                 if (node.overflowX && node.overflowY) {
@@ -5394,12 +5353,13 @@ var android = (function () {
             data.cache.visible.forEach(node => node.setBoxSpacing(this.settings));
         }
         setDimensions(data) {
+            const groups = {};
             function addToGroup(nodeName, node, dimen, attr, value) {
                 const group = groups[nodeName];
                 let name = dimen;
                 if (arguments.length === 5) {
                     if (value && /(px|dp|sp)$/.test(value)) {
-                        name = `${dimen},${attr},${value}`;
+                        name += `,${attr},${value}`;
                     }
                     else {
                         return;
@@ -5418,7 +5378,6 @@ var android = (function () {
                 }
                 return ['', '0px'];
             }
-            const groups = {};
             data.cache.visible.forEach(node => {
                 if (this.settings.dimensResourceValue) {
                     const nodeName = node.nodeName.toLowerCase();
@@ -5701,9 +5660,9 @@ var android = (function () {
     const template$5 = [
         '!0',
         '<?xml version="1.0" encoding="utf-8"?>',
-        '<font-family xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="{#app=http://schemas.android.com/apk/res-auto}">',
+        '<font-family {namespace}>',
         '!1',
-        '	<font android:fontStyle="{style}" android:fontWeight="{weight}" android:font="{font}" app:fontStyle="{#app=style}" app:fontWeight="{#app=weight}" app:font="{#app=font}" />',
+        '	<font android:fontStyle="{style}" android:fontWeight="{weight}" android:font="{font}" />',
         '!1',
         '</font-family>',
         '<!-- filename: res/font/{name}.xml -->',
@@ -5869,21 +5828,20 @@ var android = (function () {
             return result;
         }
         resourceStringToXml(saveToDisk = false) {
-            this.stored.strings = new Map([...this.stored.strings.entries()].sort(caseInsensitive));
-            const template = $xml$2.parseTemplate(STRING_TMPL);
             const data = {
                 '0': [{
                         '1': []
                     }]
             };
-            const root = $xml$2.getTemplateLevel(data, '0');
+            this.stored.strings = new Map([...this.stored.strings.entries()].sort(caseInsensitive));
+            const root = $xml$2.getTemplateBranch(data, '0');
             if (this.appName !== '' && !this.stored.strings.has('app_name')) {
                 root['1'].push({ name: 'app_name', value: this.appName });
             }
             for (const [name, value] of this.stored.strings.entries()) {
                 root['1'].push({ name, value });
             }
-            let xml = $xml$2.createTemplate(template, data);
+            let xml = $xml$2.createTemplate($xml$2.parseTemplate(STRING_TMPL), data);
             xml = $xml$2.replaceTab(xml, this.settings, true);
             if (saveToDisk) {
                 this.saveToDisk(parseFileDetails(xml));
@@ -5892,15 +5850,14 @@ var android = (function () {
         }
         resourceStringArrayToXml(saveToDisk = false) {
             let xml = '';
-            this.stored.arrays = new Map([...this.stored.arrays.entries()].sort());
             if (this.stored.arrays.size > 0) {
-                const template = $xml$2.parseTemplate(STRINGARRAY_TMPL);
                 const data = {
                     '0': [{
                             '1': []
                         }]
                 };
-                const root = $xml$2.getTemplateLevel(data, '0');
+                this.stored.arrays = new Map([...this.stored.arrays.entries()].sort());
+                const root = $xml$2.getTemplateBranch(data, '0');
                 for (const [name, values] of this.stored.arrays.entries()) {
                     const arrayItem = {
                         name,
@@ -5912,7 +5869,7 @@ var android = (function () {
                     }
                     root['1'].push(arrayItem);
                 }
-                xml = $xml$2.createTemplate(template, data);
+                xml = $xml$2.createTemplate($xml$2.parseTemplate(STRINGARRAY_TMPL), data);
                 xml = $xml$2.replaceTab(xml, this.settings, true);
                 if (saveToDisk) {
                     this.saveToDisk(parseFileDetails(xml));
@@ -5922,20 +5879,18 @@ var android = (function () {
         }
         resourceFontToXml(saveToDisk = false) {
             let xml = '';
-            this.stored.fonts = new Map([...this.stored.fonts.entries()].sort());
             if (this.stored.fonts.size > 0) {
-                const template = $xml$2.parseTemplate(FONT_TMPL);
+                this.stored.fonts = new Map([...this.stored.fonts.entries()].sort());
+                const namespace = this.settings.targetAPI < BUILD_ANDROID.OREO ? 'app' : 'android';
                 for (const [name, font] of this.stored.fonts.entries()) {
                     const data = {
-                        '#include': {},
-                        '#exclude': {},
                         '0': [{
                                 name,
+                                namespace: `xmlns:${namespace}="${XMLNS_ANDROID[namespace]}"`,
                                 '1': []
                             }]
                     };
-                    data[this.settings.targetAPI < BUILD_ANDROID.OREO ? '#include' : '#exclude']['app'] = true;
-                    const root = $xml$2.getTemplateLevel(data, '0');
+                    const root = $xml$2.getTemplateBranch(data, '0');
                     for (const attr in font) {
                         const [style, weight] = attr.split('-');
                         root['1'].push({
@@ -5944,7 +5899,10 @@ var android = (function () {
                             font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
                         });
                     }
-                    xml += '\n\n' + $xml$2.createTemplate(template, data);
+                    xml += '\n\n' + $xml$2.createTemplate($xml$2.parseTemplate(FONT_TMPL), data);
+                }
+                if (this.settings.targetAPI < BUILD_ANDROID.OREO) {
+                    xml = xml.replace(/android/g, 'app');
                 }
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
@@ -5956,18 +5914,17 @@ var android = (function () {
         resourceColorToXml(saveToDisk = false) {
             let xml = '';
             if (this.stored.colors.size > 0) {
-                this.stored.colors = new Map([...this.stored.colors.entries()].sort());
-                const template = $xml$2.parseTemplate(COLOR_TMPL);
                 const data = {
                     '0': [{
                             '1': []
                         }]
                 };
-                const root = $xml$2.getTemplateLevel(data, '0');
+                this.stored.colors = new Map([...this.stored.colors.entries()].sort());
+                const root = $xml$2.getTemplateBranch(data, '0');
                 for (const [name, value] of this.stored.colors.entries()) {
                     root['1'].push({ name, value });
                 }
-                xml = $xml$2.createTemplate(template, data);
+                xml = $xml$2.createTemplate($xml$2.parseTemplate(COLOR_TMPL), data);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
                     this.saveToDisk(parseFileDetails(xml));
@@ -5978,14 +5935,13 @@ var android = (function () {
         resourceStyleToXml(saveToDisk = false) {
             let xml = '';
             if (this.stored.styles.size > 0) {
-                const styles = Array.from(this.stored.styles.values()).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
-                const template = $xml$2.parseTemplate(STYLE_TMPL);
                 const data = {
                     '0': [{
                             '1': []
                         }]
                 };
-                const root = $xml$2.getTemplateLevel(data, '0');
+                const styles = Array.from(this.stored.styles.values()).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
+                const root = $xml$2.getTemplateBranch(data, '0');
                 for (const style of styles) {
                     const styleItem = {
                         name1: style.name,
@@ -6001,7 +5957,7 @@ var android = (function () {
                     });
                     root['1'].push(styleItem);
                 }
-                xml = $xml$2.createTemplate(template, data);
+                xml = $xml$2.createTemplate($xml$2.parseTemplate(STYLE_TMPL), data);
                 xml = replaceUnit(xml, this.settings, true);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
@@ -6012,22 +5968,21 @@ var android = (function () {
         }
         resourceDimenToXml(saveToDisk = false) {
             let xml = '';
-            this.stored.dimens = new Map([...this.stored.dimens.entries()].sort());
             if (this.stored.dimens.size > 0) {
-                const template = $xml$2.parseTemplate(DIMEN_TMPL);
                 const data = {
                     '0': [{
                             '1': []
                         }]
                 };
-                const root = $xml$2.getTemplateLevel(data, '0');
+                this.stored.dimens = new Map([...this.stored.dimens.entries()].sort());
+                const root = $xml$2.getTemplateBranch(data, '0');
                 for (const [name, value] of this.stored.dimens.entries()) {
                     root['1'].push({
                         name,
                         value
                     });
                 }
-                xml = $xml$2.createTemplate(template, data);
+                xml = $xml$2.createTemplate($xml$2.parseTemplate(DIMEN_TMPL), data);
                 xml = replaceUnit(xml, this.settings);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
@@ -6039,7 +5994,6 @@ var android = (function () {
         resourceDrawableToXml(saveToDisk = false) {
             let xml = '';
             if (this.stored.drawables.size > 0 || this.stored.images.size > 0) {
-                const template = $xml$2.parseTemplate(DRAWABLE_TMPL);
                 const data = {
                     '0': []
                 };
@@ -6066,7 +6020,7 @@ var android = (function () {
                         });
                     }
                 }
-                xml = $xml$2.createTemplate(template, data);
+                xml = $xml$2.createTemplate($xml$2.parseTemplate(DRAWABLE_TMPL), data);
                 xml = replaceUnit(xml, this.settings);
                 xml = $xml$2.replaceTab(xml, this.settings);
                 if (saveToDisk) {
@@ -6135,6 +6089,7 @@ var android = (function () {
     var $enum$4 = androme.lib.enumeration;
     var $const$1 = androme.lib.constant;
     var $util$5 = androme.lib.util;
+    var $resource$1 = androme.lib.base.Resource;
     class List extends androme.lib.base.extensions.List {
         processChild() {
             const node = this.node;
@@ -6184,10 +6139,13 @@ var android = (function () {
                     const positionInside = node.css('listStylePosition') === 'inside';
                     const listStyleImage = !['', 'none'].includes(node.css('listStyleImage'));
                     let image = '';
-                    let [left, top] = [0, 0];
+                    let left = 0;
+                    let top = 0;
                     if (mainData.imageSrc !== '') {
+                        const boxPosition = $resource$1.parseBackgroundPosition(mainData.imagePosition, node.bounds, node.css('fontSize'));
+                        left = boxPosition.left;
+                        top = boxPosition.top;
                         image = ResourceHandler.addImageURL(mainData.imageSrc);
-                        [left, top] = ResourceHandler.parseBackgroundPosition(mainData.imagePosition, node.css('fontSize')).map(value => $util$5.convertInt(value));
                     }
                     const gravity = (image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right';
                     if (gravity === '') {
@@ -6212,7 +6170,9 @@ var android = (function () {
                     })();
                     let layoutMarginLeft = left > 0 ? $util$5.formatPX(left) : '';
                     const options = {
-                        android: { layout_columnWeight: columnWeight }
+                        android: {
+                            layout_columnWeight: columnWeight
+                        }
                     };
                     if (positionInside) {
                         if (layoutMarginLeft !== '') {
@@ -6255,7 +6215,9 @@ var android = (function () {
                             });
                         }
                         else {
-                            Object.assign(options.android, { text: mainData.ordinal });
+                            Object.assign(options.android, {
+                                text: mainData.ordinal
+                            });
                         }
                         const companion = new View(this.application.cache.nextId, document.createElement('SPAN'));
                         companion.api = node.api;
@@ -6269,7 +6231,7 @@ var android = (function () {
                         node.companion = companion;
                         this.application.cache.append(companion);
                         controller.prependBefore(node.id, controller.renderNodeStatic(image !== '' ? $enum$4.NODE_STANDARD.IMAGE
-                            : (mainData.ordinal !== '' ? $enum$4.NODE_STANDARD.TEXT : $enum$4.NODE_STANDARD.SPACE), parent.renderDepth + 1, options, 'wrap_content', 'wrap_content', companion));
+                            : mainData.ordinal !== '' ? $enum$4.NODE_STANDARD.TEXT : $enum$4.NODE_STANDARD.SPACE, parent.renderDepth + 1, options, 'wrap_content', 'wrap_content', companion));
                     }
                 }
                 if (columnCount > 0) {
