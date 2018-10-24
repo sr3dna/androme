@@ -257,9 +257,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const element = <HTMLInputElement> this.element;
                 let name = $util.trimNull(element.id || element.name);
                 if (RESERVED_JAVA.includes(name)) {
-                    name += '_1';
+                    name = `_${name}`;
                 }
-                this.nodeId = $util.convertWord(generateId('android', (name || `${$util.lastIndexOf(this.controlName, '.').toLowerCase()}_1`)));
+                this.nodeId = $util.convertWord(generateId('android', name || $util.lastIndexOf(this.controlName, '.').toLowerCase(), name ? 0 : 1));
                 this.android('id', this.stringId);
             }
         }
@@ -447,7 +447,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 this.android('layout_height', 'match_parent', false);
                             }
                             else {
-                                let heightPercent = Math.ceil(this.bounds.height);
+                                let heightPercent = this.bounds.height;
                                 if (!tableElement) {
                                     heightPercent -= this.paddingTop + this.paddingBottom + this.borderTopWidth + this.borderBottomWidth;
                                 }
@@ -797,7 +797,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 const renderParent = this.renderParent;
                 if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
                     [['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, number, number], index: number) => {
-                        const node = $dom.getNodeFromElement<View>(renderParent[item[0]]);
+                        const node = $dom.getNodeFromElement(renderParent[item[0]]) as View;
                         if (node && !node.lineBreak && (
                                 node === this ||
                                 node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1]
@@ -816,7 +816,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 if (this.htmlElement && this.blockStatic) {
                     for (let i = 0; i < this.element.children.length; i++) {
                         const element = this.element.children[i];
-                        const node = $dom.getNodeFromElement<View>(element);
+                        const node = $dom.getNodeFromElement(element) as View;
                         if (node && node.pageflow && node.blockStatic && !node.lineBreak) {
                             const previous = node.previousSibling();
                             if (previous && previous.pageflow && !previous.lineBreak) {
@@ -832,7 +832,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 }
                             }
                             [element.previousElementSibling, element.nextElementSibling].forEach((item, index) => {
-                                const adjacent = $dom.getNodeFromElement<View>(item);
+                                const adjacent = $dom.getNodeFromElement(item) as View;
                                 if (adjacent && adjacent.excluded) {
                                     const offset = Math.min(adjacent.marginTop, adjacent.marginBottom);
                                     if (offset < 0) {
@@ -1008,7 +1008,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         node.baseElement
                     )
                     .filter(element => {
-                        const item = $dom.getNodeFromElement<View>(element);
+                        const item = $dom.getNodeFromElement(element) as View;
                         return item && (item.lineBreak || (item.excluded && item.blockStatic));
                     });
                     if (elements.length > 0) {
@@ -1018,10 +1018,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                         else {
                             bottom = (() => {
-                                if (previous.layoutHorizontal &&
-                                    previous.length > 0 &&
-                                    previous.renderChildren.some(item => !item.floating))
-                                {
+                                if (previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
                                     return previous.renderChildren.filter(item => !item.floating).sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0].linear.bottom;
                                 }
                                 return previous.linear.bottom;

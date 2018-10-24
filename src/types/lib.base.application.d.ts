@@ -10,8 +10,8 @@ declare global {
             public loading: boolean;
             public closed: boolean;
             public readonly framework: number;
-            public readonly cache: NodeList<T>;
             public readonly cacheSession: NodeList<T>;
+            public readonly cacheProcessing: NodeList<T>;
             public readonly elements: Set<Element>;
             public readonly extensions: Extension<T>[];
             public appName: string;
@@ -22,7 +22,7 @@ declare global {
             constructor(framework: number);
             public registerController(controller: Controller<T>): void;
             public registerResource(resource: Resource<T>): void;
-            public registerExtension(ext: Extension<Node>): void;
+            public registerExtension(ext: Extension<Node>): boolean;
             public finalize(): void;
             public saveAllToDisk(): void;
             public reset(): void;
@@ -43,7 +43,7 @@ declare global {
             public createIncludeFile(filename: string, content: string): void;
             public addRenderQueue(id: string, views: string[]): void;
             public saveSortOrder(id: string | number, nodes: T[]): void;
-            public getExtension(name: string): Null<Extension<T>>;
+            public getExtension(name: string): Extension<T> | undefined;
             public insertNode(element: Element, parent?: T): Null<T>;
             public toString(): string;
         }

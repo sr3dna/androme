@@ -7,6 +7,7 @@ this.android.widget.menu = (function () {
     'use strict';
 
     var WIDGET_NAME = {
+        __FRAMEWORK: 2,
         FAB: 'android.widget.floatingactionbutton',
         MENU: 'android.widget.menu',
         COORDINATOR: 'android.widget.coordinator',
@@ -197,9 +198,9 @@ this.android.widget.menu = (function () {
         }
     }
 
-    const menu = new Menu(WIDGET_NAME.MENU, 2, ['NAV']);
+    const menu = new Menu(WIDGET_NAME.MENU, WIDGET_NAME.__FRAMEWORK, ['NAV']);
     if (androme) {
-        androme.registerExtension(menu);
+        androme.registerExtensionAsync(menu);
     }
 
     return menu;

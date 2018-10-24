@@ -8,7 +8,7 @@ import $dom = androme.lib.dom;
 
 export default class <T extends View> extends androme.lib.base.extensions.Accessibility<T> {
     public afterRender() {
-        Array.from(this.application.cache.elements).forEach(node => {
+        Array.from(this.application.cacheProcessing.elements).forEach(node => {
             if (!node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
                 const element = node.element;
                 switch (node.controlName) {

@@ -22,21 +22,19 @@
             position: absolute;
             width: 56px;
             height: 56px;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-color: slateblue;
+            background: slateblue center no-repeat;
             border: none;
             border-radius: 28px;
             margin: 8px;
-            padding: 0px;
+            padding: 0;
         }
         #drawer_aside {
             position: absolute;
-            top: 0px;
-            left: 0px;
+            top: 0;
+            left: 0;
             width: 200px;
             height: 100%;
-            margin: 0px;
+            margin: 0;
             padding: 4px;
             background-color: #fff;
             border-right: solid 1px #aaa;
@@ -66,8 +64,8 @@
             float: right;
         }
         #drawer_demo #fab_left {
-            bottom: 0px;
-            left: 0px;
+            bottom: 0;
+            left: 0;
             background-image: url(../demos/images/icons8-left-24.png);
         }
         .content {
@@ -90,7 +88,7 @@
                     System.import('/build/android/extension/widget/floatingactionbutton/main.js'),
                     System.import('/build/android/extension/widget/menu/main.js'),
                     System.import('/build/android/extension/widget/drawer/main.js')
-                ]).then(result => {
+                ]).then(() => {
                     androme.parseDocument('androme_ui').then(function() {
                         androme.close();
 
@@ -114,7 +112,7 @@
     <div id="androme_ui">
         <div id="drawer_demo" data-ext="android.widget.drawer" onclick="toggleAside();">
             <div data-ext="android.widget.coordinator" data-include="drawer_content" data-include-end="true">
-                <div style="padding: 0px 20px 20px 20px;">
+                <div style="padding: 0 20px 20px 20px;">
                     <h3>title</h3>
                     <div class="content">
                         content content content content content content content content content content

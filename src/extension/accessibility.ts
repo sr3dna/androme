@@ -8,7 +8,7 @@ import { getNodeFromElement } from '../lib/dom';
 
 export default abstract class Accessibility<T extends Node> extends Extension<T> {
     public afterInit() {
-        Array.from(this.application.cache.elements).forEach(node => {
+        Array.from(this.application.cacheProcessing.elements).forEach(node => {
             if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
                 const element = node.element;
                 if (element instanceof HTMLInputElement) {

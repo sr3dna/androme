@@ -6,9 +6,9 @@
     <title>https://github.com/anpham6/androme</title>
     <style>
         body {
-            font-family: Tahoma, Arial;
+            font-family: Tahoma, Arial, sans-serif;
             padding: 10px;
-            margin: 0px;
+            margin: 0;
             background-color: #eee;
         }
         body > div {
@@ -27,7 +27,7 @@
         .output pre {
             height: 600px;
             font-size: 10px;
-            margin: 0px 0px 0px 15px;
+            margin: 0 0 0 15px;
             padding: 10px;
             background-color: floralwhite;
             border: 1px solid #ccc;
@@ -43,9 +43,9 @@
         #bottomnavigation_demo {
             position: absolute;
             width: 100%;
-            left: 0px;
-            bottom: 0px;
-            margin: 0px;
+            left: 0;
+            bottom: 0;
+            margin: 0;
             background-color: #fff;
             border-top: solid 1px #aaa;
         }
@@ -80,8 +80,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            androme.registerExtension(android.widget.menu);
-            androme.registerExtension(android.widget.bottomnavigation);
             androme.ext('android.widget.bottomnavigation', { // optional: default configuration is provided
                 bottomnavigation_demo: {
                     android: {

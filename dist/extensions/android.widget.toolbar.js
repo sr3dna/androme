@@ -7,6 +7,7 @@ this.android.widget.toolbar = (function () {
     'use strict';
 
     var WIDGET_NAME = {
+        __FRAMEWORK: 2,
         FAB: 'android.widget.floatingactionbutton',
         MENU: 'android.widget.menu',
         COORDINATOR: 'android.widget.coordinator',
@@ -87,7 +88,7 @@ this.android.widget.toolbar = (function () {
             const parent = this.parent;
             const target = $util.hasValue(node.dataset.target);
             const options = Object.assign({}, this.options[node.element.id]);
-            const optionsToolbar = Object.assign({}, options.toolbar);
+            const optionsToolbar = Object.assign({}, options.self);
             const optionsAppBar = Object.assign({}, options.appBar);
             const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
             const hasMenu = $dom.findNestedExtension(node.element, WIDGET_NAME.MENU) != null;
@@ -218,10 +219,10 @@ this.android.widget.toolbar = (function () {
                 else {
                     $util.overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
                 }
-                appBarNode = createPlaceholder(this.application.cache.nextId, node, appBarChildren);
+                appBarNode = createPlaceholder(this.application.cacheProcessing.nextId, node, appBarChildren);
                 appBarNode.parent = node.parent;
                 appBarNode.nodeId = $util_android.stripId(optionsAppBar.android.id);
-                this.application.cache.append(appBarNode);
+                this.application.cacheProcessing.append(appBarNode);
                 outer = controller.renderNodeStatic($const_android.VIEW_SUPPORT.APPBAR, target ? -1 : depth, optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
                 if (hasCollapsingToolbar) {
                     depth++;
@@ -232,11 +233,11 @@ this.android.widget.toolbar = (function () {
                     }
                     $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                     $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
-                    collapsingToolbarNode = createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren);
+                    collapsingToolbarNode = createPlaceholder(this.application.cacheProcessing.nextId, node, collapsingToolbarChildren);
                     collapsingToolbarNode.parent = appBarNode;
                     if (collapsingToolbarNode) {
                         collapsingToolbarNode.each(item => item.dataset.target = collapsingToolbarNode.nodeId);
-                        this.application.cache.append(collapsingToolbarNode);
+                        this.application.cacheProcessing.append(collapsingToolbarNode);
                         const content = controller.renderNodeStatic($const_android.VIEW_SUPPORT.COLLAPSING_TOOLBAR, target && !hasAppBar ? -1 : depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true);
                         outer = $xml.replacePlaceholder(outer, appBarNode.id, content);
                     }
@@ -281,7 +282,7 @@ this.android.widget.toolbar = (function () {
             const menu = $util.optional($dom.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
             if (menu !== '') {
                 const options = Object.assign({}, this.options[node.element.id]);
-                const optionsToolbar = Object.assign({}, options.toolbar);
+                const optionsToolbar = Object.assign({}, options.self);
                 $util.overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/${menu}`);
                 node.app('menu', optionsToolbar.app.menu);
             }
@@ -305,9 +306,9 @@ this.android.widget.toolbar = (function () {
         }
     }
 
-    const toolbar$1 = new Toolbar(WIDGET_NAME.TOOLBAR, 2);
+    const toolbar$1 = new Toolbar(WIDGET_NAME.TOOLBAR, WIDGET_NAME.__FRAMEWORK);
     if (androme) {
-        androme.registerExtension(toolbar$1);
+        androme.registerExtensionAsync(toolbar$1);
     }
 
     return toolbar$1;

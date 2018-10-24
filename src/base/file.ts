@@ -1,5 +1,3 @@
-import { ResourceMap } from '../types/resource';
-
 import Node from './node';
 import NodeList from './nodelist';
 

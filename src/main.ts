@@ -31,6 +31,9 @@ let framework: AppFramework<T>;
 let settings: Settings = {} as any;
 let system: FunctionMap<any> = {} as any;
 
+const extensionsAsync = new Set<Extension<T>>();
+const optionsAsync = new Map<string, {}>();
+
 export function setFramework(module: AppFramework<T>, cached = false) {
     if (framework !== module) {
         const appBase: AppBase<T> = cached ? module.cached() : module.create();
@@ -44,16 +47,15 @@ export function setFramework(module: AppFramework<T>, cached = false) {
         main.settings = settings;
         if (Array.isArray(settings.builtInExtensions)) {
             const register = new Set<androme.lib.base.Extension<T>>();
-            const extensions = main.builtInExtensions;
             for (let namespace of settings.builtInExtensions) {
                 namespace = namespace.trim();
-                if (extensions[namespace]) {
-                    register.add(extensions[namespace]);
+                if (main.builtInExtensions[namespace]) {
+                    register.add(main.builtInExtensions[namespace]);
                 }
                 else {
-                    for (const ext in extensions) {
+                    for (const ext in main.builtInExtensions) {
                         if (ext.startsWith(`${namespace}.`)) {
-                            register.add(extensions[ext]);
+                            register.add(main.builtInExtensions[ext]);
                         }
                     }
                 }
@@ -70,40 +72,78 @@ export function setFramework(module: AppFramework<T>, cached = false) {
 
 export function parseDocument(...elements: Null<string | Element>[]): FunctionMap<void> {
     if (main && !main.closed) {
+        if (settings.handleExtensionsAsync) {
+            extensionsAsync.forEach(ext => main.registerExtension(ext));
+            for (const [name, options] of optionsAsync.entries()) {
+                configureExtension(name, options);
+            }
+            extensionsAsync.clear();
+            optionsAsync.clear();
+        }
         return main.parseDocument(...elements);
     }
     return { then: (...args: any[]) => {} };
 }
 
 export function registerExtension(ext: Extension<T>) {
-    if (main && ext instanceof Extension && util.isString(ext.name) && Array.isArray(ext.tagNames)) {
-        main.registerExtension(ext);
+    if (main && ext instanceof Extension) {
+        return main.registerExtension(ext);
     }
+    return false;
 }
 
-export function configureExtension(name: string, options: {}) {
-    if (main) {
-        const ext = main.getExtension(name);
-        if (ext && typeof options === 'object') {
-            Object.assign(ext.options, options);
+export function registerExtensionAsync(ext: Extension<T>) {
+    if (registerExtension(ext)) {
+        return true;
+    }
+    else if (ext instanceof Extension) {
+        extensionsAsync.add(ext);
+        if (settings.handleExtensionsAsync) {
+            return true;
         }
     }
+    return false;
+}
+
+export function configureExtension(module: Extension<T> | string, options: {}) {
+    if (typeof options === 'object') {
+        if (module instanceof Extension) {
+            Object.assign(module.options, options);
+            return true;
+        }
+        else if (util.isString(module)) {
+            if (main) {
+                const ext = main.getExtension(module) || Array.from(extensionsAsync).find(item => item.name === module);
+                if (ext) {
+                    Object.assign(ext.options, options);
+                    return true;
+                }
+                else {
+                    optionsAsync.set(module, options);
+                    if (settings.handleExtensionsAsync) {
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+    return false;
 }
 
 export function getExtension(name: string) {
     return main && main.getExtension(name);
 }
 
-export function ext(name: any, options?: {}) {
-    if (typeof name === 'object') {
-        registerExtension(name);
+export function ext(module: Extension<T> | string, options?: {}) {
+    if (module instanceof Extension) {
+        return registerExtension(module);
     }
-    else if (util.isString(name)) {
+    else if (util.isString(module)) {
         if (typeof options === 'object') {
-            configureExtension(name, options);
+            return configureExtension(module, options);
         }
         else {
-            return getExtension(name);
+            return getExtension(module);
         }
     }
 }

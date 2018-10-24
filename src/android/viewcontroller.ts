@@ -47,7 +47,7 @@ const MAP_CHAIN = {
 };
 
 function getDimensResourceKey(resource: Map<string, string>, key: string, value: string) {
-    return resource.has(key) && resource.get(key) !== value ? generateId('dimens', `${key}_1`) : key;
+    return resource.has(key) && resource.get(key) !== value ? generateId('dimens', key, 1) : key;
 }
 
 function setAlignParent<T extends View>(node: T, orientation = '', bias = false) {
@@ -1712,7 +1712,9 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         switch (viewName) {
             case NODE_ANDROID.LINEAR:
                 options = {
-                    android: { orientation: options && options.horizontal ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL }
+                    android: {
+                        orientation: options && options.horizontal ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL
+                    }
                 };
                 break;
             case NODE_ANDROID.GRID:
@@ -2347,15 +2349,17 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             if (!percent) {
                                 options.app[beginPercent] = delimitUnit(node.nodeName, 'constraintguide_begin', $util.formatPX(location), this.settings);
                             }
-                            const xml = this.renderNodeStatic(
-                                NODE_ANDROID.GUIDELINE,
-                                node.renderDepth,
-                                options,
-                                'wrap_content',
-                                'wrap_content'
+                            this.appendAfter(
+                                node.id,
+                                this.renderNodeStatic(
+                                    NODE_ANDROID.GUIDELINE,
+                                    node.renderDepth,
+                                    options,
+                                    'wrap_content',
+                                    'wrap_content'
+                                )
                             );
                             const stringId: string = options['stringId'];
-                            this.appendAfter(node.id, xml);
                             node.anchor(map[LT], stringId, value, true);
                             node.delete('app', map[RB]);
                             node.constraint[`${value}Guideline`] = stringId;

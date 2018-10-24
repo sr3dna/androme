@@ -8,8 +8,19 @@
     <style>
         body > div > nav, ul {
             list-style-type: none;
-            padding: 0px;
+            padding: 0;
             border: solid 1px #aaa;
+        }
+        #androme_ui {
+            width: 200px;
+        }
+        #menu_demo > div:first-child {
+            background: url(../demos/images/icons8-chrome.png) no-repeat;
+            background-size: 24px;
+            background-position: 12px 6px;
+        }
+        #menu_demo_sub > ul {
+            margin: 10px 20px 0 20px;
         }
         nav {
             display: none;
@@ -55,7 +66,7 @@
                 androme.setFramework(android);
                 Promise.all([
                     System.import('/build/android/extension/widget/menu/main.js')
-                ]).then(result => {
+                ]).then(() => {
                     androme.parseDocument('androme_ui').then(function() {
                         androme.close();
 
@@ -80,8 +91,7 @@
         <button onclick="document.getElementById('menu_demo').style.display = 'block';">Show Menu</button>
         <button onclick="document.getElementById('menu_demo').style.display = 'none';">Hide Menu</button>
         <nav id="menu_demo" data-ext="android.widget.menu">
-            <div
-                style="background: url(../demos/images/icons8-chrome.png) no-repeat; background-size: 24px; background-position: 12px 6px;" title="Item 1"
+            <div title="Item 1"
                 data-id="@+id/menu_item_1"
                 data-show-as-action="always"
                 data-alphabetic-shortcut="A"
@@ -102,7 +112,7 @@
             <div>
                 <a href="#" onclick="toggleMenu();">Item 4</a>
                 <nav id="menu_demo_sub">
-                    <ul style="margin: 10px 20px 0px 20px;">
+                    <ul>
                         <li>
                             Item 7 <input type="radio" name="item_4" />
                         </li>

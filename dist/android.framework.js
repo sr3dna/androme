@@ -285,6 +285,7 @@ var android = (function () {
         showAttributes: true,
         insertSpaces: 4,
         convertPixels: 'dp',
+        handleExtensionsAsync: true,
         autoCloseOnWrite: true,
         outputDirectory: 'app/src/main',
         outputMainFileName: 'activity_main.xml',
@@ -1744,13 +1745,12 @@ var android = (function () {
         '!1',
         '	<group android:name="{@name}" android:rotation="{@rotation}" android:pivotX="{@pivotX}" android:pivotY="{@pivotY}" android:scaleX="{@scaleX}" android:scaleY="{@scaleY}" android:translateX="{@translateX}" android:translateY="{@translateY}">',
         '!2',
-        '		<clip-path',
-        '			android:name="{@name}"',
+        '		<clip-path android:name="{@name}"',
         '			android:pathData="{d}" />',
         '!2',
         '!3',
-        '		<path',
-        '			android:name="{@name}" android:fillColor="{@fillColor}" android:fillAlpha="{@fillAlpha}" android:strokeColor="{@strokeColor}" android:strokeWidth="{@strokeWidth}" android:strokeAlpha="{@strokeAlpha}" android:strokeLineCap="{@strokeLineCap}" android:strokeLineJoin="{@strokeLineJoin}" android:strokeMiterLimit="{@strokeMiterLimit}"',
+        '		<path android:name="{@name}"',
+        '			android:fillColor="{@fillColor}" android:fillAlpha="{@fillAlpha}" android:strokeColor="{@strokeColor}" android:strokeWidth="{@strokeWidth}" android:strokeAlpha="{@strokeAlpha}" android:strokeLineCap="{@strokeLineCap}" android:strokeLineJoin="{@strokeLineJoin}" android:strokeMiterLimit="{@strokeMiterLimit}"',
         '			android:pathData="{d}" />',
         '!3',
         '	</group>',
@@ -4965,7 +4965,9 @@ var android = (function () {
             switch (viewName) {
                 case NODE_ANDROID.LINEAR:
                     options = {
-                        android: { orientation: options && options.horizontal ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL }
+                        android: {
+                            orientation: options && options.horizontal ? AXIS_ANDROID.HORIZONTAL : AXIS_ANDROID.VERTICAL
+                        }
                     };
                     break;
                 case NODE_ANDROID.GRID:
@@ -6050,7 +6052,7 @@ var android = (function () {
     var $dom$3 = androme.lib.dom;
     class Accessibility extends androme.lib.base.extensions.Accessibility {
         afterRender() {
-            Array.from(this.application.cache.elements).forEach(node => {
+            Array.from(this.application.cacheProcessing.elements).forEach(node => {
                 if (!node.hasBit('excludeProcedure', $enum$3.NODE_PROCEDURE.ACCESSIBILITY)) {
                     const element = node.element;
                     switch (node.controlName) {
@@ -6219,7 +6221,7 @@ var android = (function () {
                                 text: mainData.ordinal
                             });
                         }
-                        const companion = new View(this.application.cache.nextId, document.createElement('SPAN'));
+                        const companion = new View(this.application.cacheProcessing.nextId, document.createElement('SPAN'));
                         companion.api = node.api;
                         companion.alignmentType = $enum$4.NODE_ALIGNMENT.SPACE;
                         companion.nodeName = `${node.tagName}_ORDINAL`;
@@ -6229,7 +6231,7 @@ var android = (function () {
                             companion.css('fontSize', '12px');
                         }
                         node.companion = companion;
-                        this.application.cache.append(companion);
+                        this.application.cacheProcessing.append(companion);
                         controller.prependBefore(node.id, controller.renderNodeStatic(image !== '' ? $enum$4.NODE_STANDARD.IMAGE
                             : mainData.ordinal !== '' ? $enum$4.NODE_STANDARD.TEXT : $enum$4.NODE_STANDARD.SPACE, parent.renderDepth + 1, options, 'wrap_content', 'wrap_content', companion));
                     }

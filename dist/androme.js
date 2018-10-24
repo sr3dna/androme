@@ -967,7 +967,7 @@
         if (isStyleElement(element)) {
             return Array.from(element.children).find((item) => includes(item.dataset.ext, name));
         }
-        return null;
+        return undefined;
     }
     function setElementCache(element, attr, data) {
         if (element) {
@@ -2817,8 +2817,8 @@
             this.renderQueue = {};
             this.loading = false;
             this.closed = false;
-            this.cache = new NodeList();
             this.cacheSession = new NodeList();
+            this.cacheProcessing = new NodeList();
             this.elements = new Set();
             this.extensions = [];
             this._cacheRoot = new Set();
@@ -2862,12 +2862,12 @@
         }
         registerController(controller) {
             controller.application = this;
-            controller.cache = this.cache;
+            controller.cache = this.cacheProcessing;
             this.viewController = controller;
         }
         registerResource(resource) {
             resource.application = this;
-            resource.cache = this.cache;
+            resource.cache = this.cacheProcessing;
             this.resourceHandler = resource;
         }
         registerExtension(ext) {
@@ -2877,13 +2877,16 @@
                     found.tagNames = ext.tagNames;
                 }
                 Object.assign(found.options, ext.options);
+                return true;
             }
             else {
                 if ((ext.framework === 0 || hasBit(ext.framework, this.framework)) && ext.dependencies.every(item => !!this.getExtension(item.name))) {
                     ext.application = this;
                     this.extensions.push(ext);
+                    return true;
                 }
             }
+            return false;
         }
         finalize() {
             const visible = this.cacheSession.visible.filter(node => !node.hasAlign(NODE_ALIGNMENT.SPACE));
@@ -2929,8 +2932,8 @@
             }
             this.appName = '';
             this.renderQueue = {};
-            this.cache.reset();
             this.cacheSession.reset();
+            this.cacheProcessing.reset();
             this.viewController.reset();
             this.resourceHandler.reset();
             this._cacheRoot.clear();
@@ -3091,9 +3094,9 @@
                 Array.from(document.body.childNodes).some((item) => isElementVisible(item) && ++nodeTotal > 1);
             }
             const elements = rootElement !== document.body ? rootElement.querySelectorAll('*') : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
-            this.cache.parent = undefined;
-            this.cache.delegateAppend = undefined;
-            this.cache.clear();
+            this.cacheProcessing.parent = undefined;
+            this.cacheProcessing.delegateAppend = undefined;
+            this.cacheProcessing.clear();
             for (const ext of this.extensions) {
                 ext.setTarget(undefined, undefined, rootElement);
                 ext.beforeInit();
@@ -3103,7 +3106,7 @@
                 rootNode.parent = new this.nodeObject(0, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
                 rootNode.documentRoot = true;
                 this.viewController.initNode(rootNode);
-                this.cache.parent = rootNode;
+                this.cacheProcessing.parent = rootNode;
             }
             else {
                 return false;
@@ -3154,8 +3157,8 @@
                     }
                 }
             }
-            if (this.cache.length > 0) {
-                for (const node of this.cache) {
+            if (this.cacheProcessing.length > 0) {
+                for (const node of this.cacheProcessing) {
                     const nodes = [];
                     let valid = false;
                     Array.from(node.element.childNodes).forEach((element) => {
@@ -3177,7 +3180,7 @@
                 }
                 const preAlignment = {};
                 const direction = [];
-                for (const node of this.cache) {
+                for (const node of this.cacheProcessing) {
                     if (node.styleElement) {
                         const element = node.element;
                         const textAlign = node.css('textAlign');
@@ -3227,7 +3230,7 @@
                     }
                     node.setMultiLine();
                 }
-                for (const node of this.cache) {
+                for (const node of this.cacheProcessing) {
                     if (node.styleElement) {
                         const element = node.element;
                         const attrs = preAlignment[node.id];
@@ -3251,11 +3254,11 @@
                         }
                     }
                 }
-                for (const node of this.cache) {
+                for (const node of this.cacheProcessing) {
                     if (!node.documentRoot) {
-                        let parent = node.getParentElementAsNode(this.settings.supportNegativeLeftTop, this.cache.parent);
+                        let parent = node.getParentElementAsNode(this.settings.supportNegativeLeftTop, this.cacheProcessing.parent);
                         if (!parent && !node.pageflow) {
-                            parent = this.cache.parent;
+                            parent = this.cacheProcessing.parent;
                         }
                         if (parent) {
                             node.parent = parent;
@@ -3266,7 +3269,7 @@
                         }
                     }
                 }
-                for (const node of this.cache.elements) {
+                for (const node of this.cacheProcessing.elements) {
                     if (node.htmlElement) {
                         let i = 0;
                         Array.from(node.element.childNodes).forEach((element) => {
@@ -3279,7 +3282,7 @@
                         node.initial.children.push(...node.children.slice());
                     }
                 }
-                this.cache.sortAsc('depth', 'id');
+                this.cacheProcessing.sortAsc('depth', 'id');
                 for (const ext of this.extensions) {
                     ext.setTarget(rootNode);
                     ext.afterInit();
@@ -3312,9 +3315,9 @@
                     }
                 }
             }
-            setMapY(-1, 0, this.cache.parent.parent);
+            setMapY(-1, 0, this.cacheProcessing.parent.parent);
             let maxDepth = 0;
-            for (const node of this.cache.visible) {
+            for (const node of this.cacheProcessing.visible) {
                 const x = Math.floor(node.linear.left);
                 if (mapX[node.depth] == null) {
                     mapX[node.depth] = {};
@@ -3329,7 +3332,7 @@
             for (let i = 0; i < maxDepth; i++) {
                 mapY.set((i * -1) - 2, new Map());
             }
-            this.cache.delegateAppend = (nodes) => {
+            this.cacheProcessing.delegateAppend = (nodes) => {
                 nodes.forEach(node => {
                     deleteMapY(node.id);
                     setMapY((node.initial.depth * -1) - 2, node.id, node);
@@ -3670,13 +3673,7 @@
                         }
                         if (!nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION) && !nodeY.rendered) {
                             let next = false;
-                            const subscribed = [];
-                            for (const ext of this.extensions) {
-                                if (ext.subscribersChild.has(nodeY)) {
-                                    subscribed.push(ext);
-                                }
-                            }
-                            for (const ext of [...parentY.renderExtension, ...subscribed]) {
+                            for (const ext of [...parentY.renderExtension, ...this.extensions.filter(item => item.subscribersChild.has(nodeY))]) {
                                 ext.setTarget(nodeY, parentY);
                                 const result = ext.processChild();
                                 if (result.output !== '') {
@@ -3685,7 +3682,7 @@
                                 if (result.parent) {
                                     parentY = result.parent;
                                 }
-                                next = result.next || false;
+                                next = !!result.next;
                                 if (result.complete || result.next) {
                                     break;
                                 }
@@ -3709,7 +3706,7 @@
                                             if (result.output !== '' || result.include) {
                                                 processed.push(item);
                                             }
-                                            next = result.next || false;
+                                            next = !!result.next;
                                             if (result.complete || result.next) {
                                                 return true;
                                             }
@@ -3940,7 +3937,7 @@
                     }
                 }
             }
-            const root = this.cache.parent;
+            const root = this.cacheProcessing.parent;
             if (root.dataset.layoutName && (!hasValue(root.dataset.target) || root.renderExtension.size === 0)) {
                 this.createLayoutFile(trimString(trimNull(root.dataset.pathname), '/'), root.dataset.layoutName, empty ? '' : baseTemplate, root.renderExtension.size > 0 && Array.from(root.renderExtension).some(item => item.documentRoot));
             }
@@ -3953,7 +3950,7 @@
             else if (root.renderExtension.size === 0) {
                 root.hide();
             }
-            this.cache.sort((a, b) => {
+            this.cacheProcessing.sort((a, b) => {
                 if (!a.visible) {
                     return 1;
                 }
@@ -3990,7 +3987,7 @@
                     }
                 }
             });
-            this.cacheSession.list.push(...this.cache.list);
+            this.cacheSession.list.push(...this.cacheProcessing.list);
         }
         writeFrameLayout(node, parent, children = false) {
             if (!children && node.children.length === 0) {
@@ -4303,14 +4300,20 @@
                         const grouping = [];
                         item.forEach(list => grouping.push(...list));
                         grouping.sort(NodeList.siblingIndex);
-                        floatgroup = this.viewController.createGroup(group, grouping[0], grouping);
                         if (this.settings.floatOverlapDisabled) {
+                            floatgroup = this.viewController.createGroup(group, grouping[0], grouping);
                             output = replacePlaceholder(output, group.id, this.writeFrameLayout(floatgroup, group, true));
                         }
                         else {
-                            output = replacePlaceholder(output, group.id, this.writeLinearLayout(floatgroup, group, false));
-                            if (item.some(list => list === rightSub || list === rightAbove)) {
-                                floatgroup.alignmentType |= NODE_ALIGNMENT.RIGHT;
+                            if (group.linearVertical) {
+                                floatgroup = group;
+                            }
+                            else {
+                                floatgroup = this.viewController.createGroup(group, grouping[0], grouping);
+                                output = replacePlaceholder(output, group.id, this.writeLinearLayout(floatgroup, group, false));
+                                if (item.some(list => list === rightSub || list === rightAbove)) {
+                                    floatgroup.alignmentType |= NODE_ALIGNMENT.RIGHT;
+                                }
                             }
                         }
                         floatgroup.alignmentType |= NODE_ALIGNMENT.FLOAT;
@@ -4600,7 +4603,7 @@
             if (element.nodeName.charAt(0) === '#') {
                 if (element.nodeName === '#text') {
                     if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                        node = new this.nodeObject(this.cache.nextId, element);
+                        node = new this.nodeObject(this.cacheProcessing.nextId, element);
                         this.viewController.initNode(node);
                         node.nodeName = 'PLAINTEXT';
                         if (parent) {
@@ -4621,7 +4624,7 @@
                 }
             }
             else if (isStyleElement(element)) {
-                const elementNode = new this.nodeObject(this.cache.nextId, element);
+                const elementNode = new this.nodeObject(this.cacheProcessing.nextId, element);
                 this.viewController.initNode(elementNode);
                 if (isElementVisible(element)) {
                     node = elementNode;
@@ -4633,7 +4636,7 @@
                 }
             }
             if (node) {
-                this.cache.append(node);
+                this.cacheProcessing.append(node);
             }
             return node;
         }
@@ -5265,7 +5268,7 @@
                 this.isBorderVisible(object.borderBottom) ||
                 this.isBorderVisible(object.borderLeft) ||
                 object.borderRadius.length > 0 ||
-                (object.backgroundImage !== '' && object.backgroundImage !== 'none')));
+                (object.backgroundImage && object.backgroundImage !== 'none')));
         }
         addFile(pathname, filename, content = '', uri = '') {
             this.file.addFile(pathname, filename, content, uri);
@@ -5387,7 +5390,7 @@
                                 break;
                             }
                             case 'backgroundImage': {
-                                if (!node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
+                                if (value !== 'none' && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
                                     const colorStop = '(?:,?\\s*(rgba?\\([0-9]+,\\s*[0-9]+,\\s*[0-9]+(?:,\\s*[0-9.]+)?\\)|[a-z]+)\\s*([0-9]+[a-z%]+)?)';
                                     const gradients = [];
                                     const pattern = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?${colorStop}${colorStop}${colorStop}?\\)`, 'g');
@@ -6154,7 +6157,7 @@
 
     class Accessibility extends Extension {
         afterInit() {
-            Array.from(this.application.cache.elements).forEach(node => {
+            Array.from(this.application.cacheProcessing.elements).forEach(node => {
                 if (!node.hasBit('excludeProcedure', NODE_PROCEDURE.ACCESSIBILITY)) {
                     const element = node.element;
                     if (element instanceof HTMLInputElement) {
@@ -6287,7 +6290,7 @@
         processNode(mapX) {
             const node = this.node;
             const parent = this.parent;
-            const columnBalance = this.options.columnBalance === true || false;
+            const columnBalance = !!this.options.columnBalance;
             let output = '';
             let columns = [];
             const mainData = {
@@ -6747,7 +6750,7 @@
                 node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))));
                 node.setBounds(true);
             }
-            Array.from(this.application.cache.elements).forEach(node => {
+            Array.from(this.application.cacheProcessing.elements).forEach(node => {
                 const outside = node.children.some(current => {
                     if (current.pageflow) {
                         return (current.float !== 'right' &&
@@ -7154,6 +7157,8 @@
     let framework;
     exports.settings = {};
     exports.system = {};
+    const extensionsAsync = new Set();
+    const optionsAsync = new Map();
     function setFramework(module, cached = false) {
         if (framework !== module) {
             const appBase = cached ? module.cached() : module.create();
@@ -7167,16 +7172,15 @@
             main.settings = exports.settings;
             if (Array.isArray(exports.settings.builtInExtensions)) {
                 const register = new Set();
-                const extensions = main.builtInExtensions;
                 for (let namespace of exports.settings.builtInExtensions) {
                     namespace = namespace.trim();
-                    if (extensions[namespace]) {
-                        register.add(extensions[namespace]);
+                    if (main.builtInExtensions[namespace]) {
+                        register.add(main.builtInExtensions[namespace]);
                     }
                     else {
-                        for (const ext in extensions) {
+                        for (const ext in main.builtInExtensions) {
                             if (ext.startsWith(`${namespace}.`)) {
-                                register.add(extensions[ext]);
+                                register.add(main.builtInExtensions[ext]);
                             }
                         }
                     }
@@ -7192,36 +7196,73 @@
     }
     function parseDocument(...elements) {
         if (main && !main.closed) {
+            if (exports.settings.handleExtensionsAsync) {
+                extensionsAsync.forEach(ext => main.registerExtension(ext));
+                for (const [name, options] of optionsAsync.entries()) {
+                    configureExtension(name, options);
+                }
+                extensionsAsync.clear();
+                optionsAsync.clear();
+            }
             return main.parseDocument(...elements);
         }
         return { then: (...args) => { } };
     }
     function registerExtension(ext) {
-        if (main && ext instanceof Extension && isString(ext.name) && Array.isArray(ext.tagNames)) {
-            main.registerExtension(ext);
+        if (main && ext instanceof Extension) {
+            return main.registerExtension(ext);
         }
+        return false;
     }
-    function configureExtension(name, options) {
-        if (main) {
-            const ext = main.getExtension(name);
-            if (ext && typeof options === 'object') {
-                Object.assign(ext.options, options);
+    function registerExtensionAsync(ext) {
+        if (registerExtension(ext)) {
+            return true;
+        }
+        else if (ext instanceof Extension) {
+            extensionsAsync.add(ext);
+            if (exports.settings.handleExtensionsAsync) {
+                return true;
             }
         }
+        return false;
+    }
+    function configureExtension(module, options) {
+        if (typeof options === 'object') {
+            if (module instanceof Extension) {
+                Object.assign(module.options, options);
+                return true;
+            }
+            else if (isString(module)) {
+                if (main) {
+                    const ext = main.getExtension(module) || Array.from(extensionsAsync).find(item => item.name === module);
+                    if (ext) {
+                        Object.assign(ext.options, options);
+                        return true;
+                    }
+                    else {
+                        optionsAsync.set(module, options);
+                        if (exports.settings.handleExtensionsAsync) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
     }
     function getExtension(name) {
         return main && main.getExtension(name);
     }
-    function ext(name, options) {
-        if (typeof name === 'object') {
-            registerExtension(name);
+    function ext(module, options) {
+        if (module instanceof Extension) {
+            return registerExtension(module);
         }
-        else if (isString(name)) {
+        else if (isString(module)) {
             if (typeof options === 'object') {
-                configureExtension(name, options);
+                return configureExtension(module, options);
             }
             else {
-                return getExtension(name);
+                return getExtension(module);
             }
         }
     }
@@ -7282,6 +7323,7 @@
     exports.setFramework = setFramework;
     exports.parseDocument = parseDocument;
     exports.registerExtension = registerExtension;
+    exports.registerExtensionAsync = registerExtensionAsync;
     exports.configureExtension = configureExtension;
     exports.getExtension = getExtension;
     exports.ext = ext;

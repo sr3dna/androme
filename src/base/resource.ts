@@ -1,5 +1,3 @@
-import { ResourceMap, SVG, SVGGroup, SVGPath } from '../types/resource';
-
 import { NODE_RESOURCE, USER_AGENT } from '../lib/enumeration';
 
 import Node from './node';
@@ -138,7 +136,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 this.isBorderVisible(object.borderBottom) ||
                 this.isBorderVisible(object.borderLeft) ||
                 object.borderRadius.length > 0 ||
-                (object.backgroundImage !== '' && object.backgroundImage !== 'none')
+                (object.backgroundImage && object.backgroundImage !== 'none')
             )
         );
     }
@@ -283,7 +281,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             break;
                         }
                         case 'backgroundImage': {
-                            if (!node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
+                            if (value !== 'none' && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
                                 const colorStop = '(?:,?\\s*(rgba?\\([0-9]+,\\s*[0-9]+,\\s*[0-9]+(?:,\\s*[0-9.]+)?\\)|[a-z]+)\\s*([0-9]+[a-z%]+)?)';
                                 const gradients: Gradient[] = [];
                                 const pattern: Null<RegExp> = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?${colorStop}${colorStop}${colorStop}?\\)`, 'g');

@@ -29,7 +29,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
     public processNode(mapX: LayoutMapX<T>): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;
-        const columnBalance = this.options.columnBalance === true || false;
+        const columnBalance = !!this.options.columnBalance;
         let output = '';
         let columns: T[][] = [];
         const mainData: GridData = {

@@ -10,11 +10,11 @@
             display: none;
         }
         #drawer_demo nav {
-            padding: 0px;
+            padding: 0;
         }
         #drawer_demo nav nav div {
-            padding-right: 0px;
-            padding-left: 0px;
+            padding-right: 0;
+            padding-left: 0;
         }
         #drawer_demo nav div {
             font-size: 11px;
@@ -33,8 +33,7 @@
         #drawer_header {
             height: 120px;
             padding: 10px;
-            background-color: slateblue;
-            background-image: url(../demos/images/android_background.jpg);
+            background: url(../demos/images/android_background.jpg) slateblue;
             background-size: 100% 100%;
         }
         #drawer_header span {
@@ -48,12 +47,11 @@
             border-top: solid 1px #ccc;
         }
         #toolbar_demo {
-            background-color: #6A5ACD;
-            background-image: url(../demos/images/android_header.jpg);
+            background: url(../demos/images/android_header.jpg) #6A5ACD;
             background-size: 100% 100%;
         }
         #toolbar_demo img {
-            margin: 2px 0px 0px 4px;
+            margin: 2px 0 0 4px;
             cursor: pointer;
         }
         #toolbar_menu {
@@ -64,7 +62,7 @@
             float: left;
         }
         #toolbar_menu img {
-            margin-left: 0px;
+            margin-left: 0;
         }
         div {
             font-size: 12px;
@@ -89,7 +87,7 @@
                     System.import('/build/android/extension/widget/menu/main.js'),
                     System.import('/build/android/extension/widget/toolbar/main.js'),
                     System.import('/build/android/extension/widget/drawer/main.js')
-                ]).then(result => {
+                ]).then(() => {
                     androme.ext('android.widget.drawer', {
                         self: {
                             android: {

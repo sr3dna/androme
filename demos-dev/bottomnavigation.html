@@ -13,9 +13,9 @@
         #bottomnavigation_demo {
             position: absolute;
             width: 100%;
-            left: 0px;
-            bottom: 0px;
-            margin: 0px;
+            left: 0;
+            bottom: 0;
+            margin: 0;
             background-color: #fff;
             border-top: solid 1px #aaa;
         }
@@ -54,7 +54,7 @@
                 Promise.all([
                     System.import('/build/android/extension/widget/menu/main.js'),
                     System.import('/build/android/extension/widget/bottomnavigation/main.js')
-                ]).then(result => {
+                ]).then(() => {
                     androme.ext('android.widget.bottomnavigation', {
                     bottomnavigation_demo: {
                             android: {

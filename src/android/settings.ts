@@ -38,6 +38,7 @@ const settings: SettingsAndroid = {
     showAttributes: true,
     insertSpaces: 4,
     convertPixels: 'dp',
+    handleExtensionsAsync: true,
     autoCloseOnWrite: true,
     outputDirectory: 'app/src/main',
     outputMainFileName: 'activity_main.xml',

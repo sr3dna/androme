@@ -6,9 +6,9 @@
     <title>https://github.com/anpham6/androme</title>
     <style>
         body {
-            font-family: Tahoma, Arial;
+            font-family: Tahoma, Arial, sans-serif;
             padding: 10px;
-            margin: 0px;
+            margin: 0;
             background-color: #eee;
         }
         body > div {
@@ -27,7 +27,7 @@
         .output pre {
             height: 600px;
             font-size: 10px;
-            margin: 0px 0px 0px 15px;
+            margin: 0 0 0 15px;
             padding: 10px;
             background-color: floralwhite;
             border: 1px solid #ccc;
@@ -51,16 +51,14 @@
             position: absolute;
             width: 56px;
             height: 56px;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-color: slateblue;
+            background: slateblue center no-repeat;
             border: none;
             border-radius: 28px;
             margin: 16px;
-            padding: 0px;
+            padding: 0;
         }
         #toolbar_menu img {
-            margin-left: 0px;
+            margin-left: 0;
         }
         #toolbar_menu {
             margin: 8px;
@@ -71,13 +69,13 @@
             margin-left: 8px;
             float: left;
         }
-        #fab_menu {
-            bottom: 0px;
-            right: 0px;
+        #toolbar_demo #fab_menu {
+            bottom: 0;
+            right: 0;
             background-image: url(images/icons8-menu-24.png);
         }
         h3 {
-            margin-top: 0px;
+            margin-top: 0;
         }
         .content {
             font-size: 12px;
@@ -95,23 +93,19 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            androme.registerExtension(android.widget.coordinator);
-            androme.registerExtension(android.widget.floatingactionbutton);
-            androme.registerExtension(android.widget.menu);
-            androme.registerExtension(android.widget.toolbar);
             androme.ext('android.widget.toolbar', { // optional: default configuration is provided
                 toolbar_demo: {
+                    self: {
+                        app: {
+                            popupTheme: 'ThemeOverlay.AppCompat.Light'
+                        }
+                    },
                     appBar: {
                         android: {
                             theme: 'ThemeOverlay.AppCompat.Dark.ActionBar'
                         }
                     },
                     collapsingToolbar: {},
-                    toolbar: {
-                        app: {
-                            popupTheme: 'ThemeOverlay.AppCompat.Light'
-                        }
-                    },
                     backgroundImage: {
                         app: {
                             layout_collapseMode: 'parallax'

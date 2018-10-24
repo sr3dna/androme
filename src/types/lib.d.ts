@@ -84,7 +84,7 @@ declare global {
             export function setElementCache(element: Null<Element>, attr: string, data: any): void;
             export function getElementCache(element: Null<Element>, attr: string): any;
             export function deleteElementCache(element: Null<Element>, ...attrs: string[]): void;
-            export function getNodeFromElement<T>(element: Null<Element>): Null<T>;
+            export function getNodeFromElement(element: Null<Element>): Null<{}>;
         }
         namespace xml {
             export function formatPlaceholder(id: string | number, symbol?: string): string;

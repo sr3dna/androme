@@ -202,7 +202,6 @@ export function cssAttribute(element: Element, attr: string): string {
 }
 
 export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = true) {
-    let valid = false;
     let depth = -1;
     function findFreeForm(elements: any[]): boolean {
         if (depth++ === maxDepth) {
@@ -211,7 +210,6 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
         return elements.some((item: Element) => {
             if (item.nodeName === '#text') {
                 if (isPlainText(item, whiteSpace) || (cssParent(item, 'whiteSpace', 'pre', 'pre-wrap') && item.textContent && item.textContent !== '')) {
-                    valid = true;
                     return true;
                 }
             }
@@ -223,12 +221,11 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
     }
     if (element.nodeName === '#text') {
         maxDepth = 0;
-        findFreeForm([element]);
+        return findFreeForm([element]);
     }
     else {
-        findFreeForm(Array.from(element.childNodes));
+        return findFreeForm(Array.from(element.childNodes));
     }
-    return valid;
 }
 
 export function isPlainText(element: Null<Element>, whiteSpace = false) {
@@ -364,11 +361,11 @@ export function isElementVisible(element: Element) {
     return false;
 }
 
-export function findNestedExtension(element: Element, name: string): Null<HTMLElement> {
+export function findNestedExtension(element: Element, name: string): HTMLElement | undefined {
     if (isStyleElement(element)) {
         return Array.from(element.children).find((item: HTMLElement) => includes(item.dataset.ext, name)) as HTMLElement;
     }
-    return null;
+    return undefined;
 }
 
 export function setElementCache(element: Null<Element>, attr: string, data: any) {
@@ -389,6 +386,6 @@ export function deleteElementCache(element: Null<Element>, ...attrs: string[]) {
     }
 }
 
-export function getNodeFromElement<T extends androme.lib.base.Node>(element: Null<Element>): Null<T> {
+export function getNodeFromElement(element: Null<Element>): Null<androme.lib.base.Node> {
     return getElementCache(element, 'node');
 }

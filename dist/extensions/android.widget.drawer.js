@@ -7,6 +7,7 @@ this.android.widget.drawer = (function () {
     'use strict';
 
     var WIDGET_NAME = {
+        __FRAMEWORK: 2,
         FAB: 'android.widget.floatingactionbutton',
         MENU: 'android.widget.menu',
         COORDINATOR: 'android.widget.coordinator',
@@ -133,9 +134,9 @@ this.android.widget.drawer = (function () {
         }
     }
 
-    const drawer = new Drawer(WIDGET_NAME.DRAWER, 2);
+    const drawer = new Drawer(WIDGET_NAME.DRAWER, WIDGET_NAME.__FRAMEWORK);
     if (androme) {
-        androme.registerExtension(drawer);
+        androme.registerExtensionAsync(drawer);
     }
 
     return drawer;

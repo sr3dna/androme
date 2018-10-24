@@ -26,7 +26,7 @@ declare global {
             }
             namespace util {
                 export function resetId(): void;
-                export function generateId(section: string, name: string): string;
+                export function generateId(section: string, name: string, start: number): string;
                 export function stripId(value: Null<string>): string;
                 export function convertUnit(value: any, dpi?: number, font?: boolean): string;
                 export function delimitUnit(nodeName: string, attr: string, size: string, settings: SettingsAndroid): string;

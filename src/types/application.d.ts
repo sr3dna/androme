@@ -1,7 +1,8 @@
-type LayoutMapX<T> = {
+interface LayoutMapX<T> {
     [key: number]: ObjectIndex<T[]>;
     length: number;
-};
+}
+
 type LayoutMapY<T> = Map<number, Map<number, T>>;
 
 interface Settings {
@@ -19,6 +20,7 @@ interface Settings {
     collapseUnattributedElements: boolean;
     customizationsOverwritePrivilege: boolean;
     insertSpaces: number;
+    handleExtensionsAsync: boolean;
     autoCloseOnWrite: boolean;
     outputDirectory: string;
     outputMainFileName: string;
@@ -77,6 +79,15 @@ interface ViewData<T> {
     cache: T;
     views: PlainFile[];
     includes: PlainFile[];
+}
+
+interface InitialData<T> {
+    readonly styleMap: StringMap;
+    readonly children: T[];
+    readonly bounds: BoxDimensions;
+    linear?: BoxDimensions;
+    box?: BoxDimensions;
+    depth: number;
 }
 
 interface NodeConstructor<T> {

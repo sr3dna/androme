@@ -5,7 +5,7 @@ import Extension from '../base/extension';
 
 import { convertInt, formatPX } from '../lib/util';
 
-export default class Origin<T extends Node> extends Extension<T> {
+export default abstract class Origin<T extends Node> extends Extension<T> {
     public afterInit() {
         function modifyMarginLeft(node: T, offset: number, parent = false) {
             node.bounds.left -= offset;
@@ -13,7 +13,7 @@ export default class Origin<T extends Node> extends Extension<T> {
             node.css('marginLeft', formatPX(node.marginLeft + (offset * (parent ? -1 : 1))));
             node.setBounds(true);
         }
-        Array.from(this.application.cache.elements).forEach(node => {
+        Array.from(this.application.cacheProcessing.elements).forEach(node => {
             const outside = node.children.some(current => {
                 if (current.pageflow) {
                     return (

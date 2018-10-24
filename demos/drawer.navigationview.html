@@ -6,9 +6,9 @@
     <title>https://github.com/anpham6/androme</title>
     <style>
         body {
-            font-family: Tahoma, Arial;
+            font-family: Tahoma, Arial, sans-serif;
             padding: 10px;
-            margin: 0px;
+            margin: 0;
             background-color: #eee;
         }
         body > div {
@@ -27,7 +27,7 @@
         .output pre {
             height: 600px;
             font-size: 10px;
-            margin: 0px 0px 0px 15px;
+            margin: 0 0 0 15px;
             padding: 10px;
             background-color: floralwhite;
             border: solid 1px #ccc;
@@ -40,11 +40,11 @@
             display: none;
         }
         #drawer_demo nav {
-            padding: 0px;
+            padding: 0;
         }
         #drawer_demo nav nav div {
-            padding-right: 0px;
-            padding-left: 0px;
+            padding-right: 0;
+            padding-left: 0;
         }
         #drawer_demo nav div {
             font-size: 11px;
@@ -63,8 +63,7 @@
         #drawer_header {
             height: 120px;
             padding: 10px;
-            background-color: slateblue;
-            background-image: url(images/android_background.jpg);
+            background: slateblue url(images/android_background.jpg);
             background-size: 100% 100%;
         }
         #drawer_header span {
@@ -78,12 +77,11 @@
             border-top: solid 1px #ccc;
         }
         #toolbar_demo {
-            background-color: #6A5ACD;
-            background-image: url(images/android_header.jpg);
+            background: url(images/android_header.jpg) #6A5ACD;
             background-size: 100% 100%;
         }
         #toolbar_demo img {
-            margin: 2px 0px 0px 4px;
+            margin: 2px 0 0 4px;
             cursor: pointer;
         }
         #toolbar_menu {
@@ -94,7 +92,7 @@
             float: left;
         }
         #toolbar_menu img {
-            margin-left: 0px;
+            margin-left: 0;
         }
         div {
             font-size: 12px;
@@ -116,11 +114,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            androme.registerExtension(android.widget.coordinator);
-            androme.registerExtension(android.widget.floatingactionbutton);
-            androme.registerExtension(android.widget.menu);
-            androme.registerExtension(android.widget.toolbar);
-            androme.registerExtension(android.widget.drawer);
             androme.ext('android.widget.drawer', {
                 self: {
                     android: {

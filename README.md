@@ -117,6 +117,7 @@ androme.settings = {
     showAttributes: true,
     insertSpaces: 4, // tabs: 0
     convertPixels: 'dp',
+    handleExtensionsAsync: true,
     autoCloseOnWrite: true,
     outputDirectory: 'app/src/main',
     outputMainFileName: 'activity_main.xml',
@@ -180,7 +181,7 @@ Most of the Android support library extensions can be configured using the same 
 <script src="/dist/extensions/android.widget.menu.min.js"></script>
 <script src="/dist/extensions/android.widget.toolbar.min.js"></script>
 <script>
-    // required
+    // required when handleExtensionsAsync = false
     androme.registerExtension(android.widget.coordinator);
     androme.registerExtension(android.widget.floatingactionbutton);
     androme.registerExtension(android.widget.toolbar);
@@ -198,7 +199,7 @@ Most of the Android support library extensions can be configured using the same 
     androme.registerExtension(sample);
 
     // configure an extension
-    androme.configureExtension('android.widget.toolbar', { // optional: default configuration is provided
+    androme.configureExtension('android.widget.toolbar', { // optional: default configuration is usually provided
         'elementId': { // HTML DOM
             appBar: {
                 android: {

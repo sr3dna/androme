@@ -1,5 +1,3 @@
-import { ResourceMap } from './resource';
-
 declare global {
     namespace androme.lib.base {
         export class Resource<T extends Node> implements AppCurrent<T> {

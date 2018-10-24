@@ -7,6 +7,7 @@ this.android.widget.floatingactionbutton = (function () {
     'use strict';
 
     var WIDGET_NAME = {
+        __FRAMEWORK: 2,
         FAB: 'android.widget.floatingactionbutton',
         MENU: 'android.widget.menu',
         COORDINATOR: 'android.widget.coordinator',
@@ -129,9 +130,9 @@ this.android.widget.floatingactionbutton = (function () {
         }
     }
 
-    const fab = new FloatingActionButton(WIDGET_NAME.FAB, 2, ['BUTTON', 'INPUT', 'IMG']);
+    const fab = new FloatingActionButton(WIDGET_NAME.FAB, WIDGET_NAME.__FRAMEWORK, ['BUTTON', 'INPUT', 'IMG']);
     if (androme) {
-        androme.registerExtension(fab);
+        androme.registerExtensionAsync(fab);
     }
 
     return fab;

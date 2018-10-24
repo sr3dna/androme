@@ -6,9 +6,9 @@
     <title>https://github.com/anpham6/androme</title>
     <style>
         body {
-            font-family: Tahoma, Arial;
+            font-family: Tahoma, Arial, sans-serif;
             padding: 10px;
-            margin: 0px;
+            margin: 0;
             background-color: #eee;
         }
         body > div {
@@ -27,7 +27,7 @@
         .output pre {
             height: 600px;
             font-size: 10px;
-            margin: 0px 0px 0px 15px;
+            margin: 0 0 0 15px;
             padding: 10px;
             background-color: floralwhite;
             border: 1px solid #ccc;
@@ -46,27 +46,25 @@
             position: absolute;
             width: 56px;
             height: 56px;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-color: slateblue;
+            background: slateblue center no-repeat;
             border: none;
             border-radius: 28px;
             margin: 8px;
-            padding: 0px;
+            padding: 0;
         }
-        #fab_web {
+        #androme_ui #fab_web {
             bottom: 64px;
-            right: 0px;
+            right: 0;
             background-image: url(images/icons8-web-24.png);
         }
-        #fab_browse_page {
-            bottom: 0px;
-            right: 0px;
+        #androme_ui #fab_browse_page {
+            bottom: 0;
+            right: 0;
             background-image: url(images/icons8-browse-page-24.png);
         }
-        #fab_left {
-            bottom: 0px;
-            left: 0px;
+        #androme_ui #fab_left {
+            bottom: 0;
+            left: 0;
             background-image: url(images/icons8-left-24.png);
         }
         .content {
@@ -83,8 +81,6 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             androme.setFramework(android);
-            androme.registerExtension(android.widget.coordinator);
-            androme.registerExtension(android.widget.floatingactionbutton);
             androme.parseDocument('androme_ui').then(function() {
                 androme.close();
 
@@ -102,7 +98,7 @@
     <!-- START: DEMO -->
     <div id="androme_ui" data-ext="android.widget.coordinator">
         <div data-include="coordinator_content" data-include-end="true">
-            <div style="padding: 0px 20px;">
+            <div style="padding: 0 20px;">
                 <h3>title</h3>
                 <div class="content">
                     content content content content content content content content content content
@@ -113,7 +109,7 @@
                 content content content content content content content content content content
                 content content content content content content content content content content
             </div>
-            <div class="content" style="margin: 0px 20px 20px 20px;">
+            <div class="content" style="margin: 0 20px 20px 20px;">
                 content content content content content content content content content content
                 content content content content content content content content content content
             </div>

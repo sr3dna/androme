@@ -153,7 +153,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                             text: mainData.ordinal
                         });
                     }
-                    const companion = new View(this.application.cache.nextId, document.createElement('SPAN')) as T;
+                    const companion = new View(this.application.cacheProcessing.nextId, document.createElement('SPAN')) as T;
                     companion.api = node.api;
                     companion.alignmentType = $enum.NODE_ALIGNMENT.SPACE;
                     companion.nodeName = `${node.tagName}_ORDINAL`;
@@ -163,7 +163,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                         companion.css('fontSize', '12px');
                     }
                     node.companion = companion;
-                    this.application.cache.append(companion);
+                    this.application.cacheProcessing.append(companion);
                     controller.prependBefore(
                         node.id,
                         controller.renderNodeStatic(
@@ -214,7 +214,9 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                             $enum.NODE_STANDARD.SPACE,
                             current.renderDepth,
                             {
-                                android: { layout_columnSpan: columnCount.toString() }
+                                android: {
+                                    layout_columnSpan: columnCount.toString()
+                                }
                             },
                             'match_parent',
                             $util.formatPX(spaceHeight)

@@ -1,4 +1,5 @@
 export default {
+    __FRAMEWORK: 2,
     FAB: 'android.widget.floatingactionbutton',
     MENU: 'android.widget.menu',
     COORDINATOR: 'android.widget.coordinator',

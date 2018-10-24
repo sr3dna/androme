@@ -66,7 +66,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         const parent = this.parent as T;
         const target = $util.hasValue(node.dataset.target);
         const options = Object.assign({}, this.options[node.element.id]);
-        const optionsToolbar = Object.assign({}, options.toolbar);
+        const optionsToolbar = Object.assign({}, options.self);
         const optionsAppBar = Object.assign({}, options.appBar);
         const optionsCollapsingToolbar = Object.assign({}, options.collapsingToolbar);
         const hasMenu = $dom.findNestedExtension(node.element, WIDGET_NAME.MENU) != null;
@@ -211,10 +211,10 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
             else {
                 $util.overwriteDefault(optionsAppBar, 'android', 'theme', '@style/ThemeOverlay.AppCompat.Dark.ActionBar');
             }
-            appBarNode = createPlaceholder(this.application.cache.nextId, node, appBarChildren) as T;
+            appBarNode = createPlaceholder(this.application.cacheProcessing.nextId, node, appBarChildren) as T;
             appBarNode.parent = node.parent;
             appBarNode.nodeId = $util_android.stripId(optionsAppBar.android.id);
-            this.application.cache.append(appBarNode);
+            this.application.cacheProcessing.append(appBarNode);
             outer = controller.renderNodeStatic(
                 $const_android.VIEW_SUPPORT.APPBAR,
                 target ? -1 : depth,
@@ -233,11 +233,11 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
                 }
                 $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'layout_scrollFlags', 'scroll|exitUntilCollapsed');
                 $util.overwriteDefault(optionsCollapsingToolbar, 'app', 'toolbarId', node.stringId);
-                collapsingToolbarNode = createPlaceholder(this.application.cache.nextId, node, collapsingToolbarChildren) as T;
+                collapsingToolbarNode = createPlaceholder(this.application.cacheProcessing.nextId, node, collapsingToolbarChildren) as T;
                 collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
                     collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
-                    this.application.cache.append(collapsingToolbarNode);
+                    this.application.cacheProcessing.append(collapsingToolbarNode);
                     const content = controller.renderNodeStatic(
                         $const_android.VIEW_SUPPORT.COLLAPSING_TOOLBAR,
                         target && !hasAppBar ? -1 : depth,
@@ -292,7 +292,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         const menu: string = $util.optional($dom.findNestedExtension(node.element, WIDGET_NAME.MENU), 'dataset.layoutName');
         if (menu !== '') {
             const options = Object.assign({}, this.options[node.element.id]);
-            const optionsToolbar = Object.assign({}, options.toolbar);
+            const optionsToolbar = Object.assign({}, options.self);
             $util.overwriteDefault(optionsToolbar, 'app', 'menu', `@menu/${menu}`);
             node.app('menu', optionsToolbar.app.menu);
         }

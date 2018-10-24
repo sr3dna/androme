@@ -1,4 +1,3 @@
-import { StyleStored, SVG } from '../types/resource';
 import { SettingsAndroid } from './types/local';
 
 import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
@@ -255,7 +254,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     name = `__symbol${Math.ceil(Math.random() * 100000)}`;
                 }
                 if ($resource.STORED.strings.has(name)) {
-                    name = generateId('strings', `${name}_1`);
+                    name = generateId('strings', name, 1);
                 }
                 $resource.STORED.strings.set(name, value);
             }
@@ -349,7 +348,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         colorName = color.name;
                     }
                     else {
-                        colorName = generateId('color', `${color.name}_1`);
+                        colorName = generateId('color', color.name, 1);
                     }
                     $resource.STORED.colors.set(hex, colorName);
                 }
@@ -1424,7 +1423,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         }
         const style: ObjectMapNested<number[]> = {};
         const layout: ObjectMapNested<number[]> = {};
-        const resource: ObjectMap<StyleStored[]> = {};
+        const resource: ObjectMap<ResourceStyleData[]> = {};
         const mapNode: ObjectMapNested<string[]> = {};
         const inherit = new Set<string>();
         for (const tag in this._tagStyle) {
@@ -1582,7 +1581,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         }
         for (const tagName in style) {
             const tag = style[tagName];
-            const tagData: StyleStored[] = [];
+            const tagData: ResourceStyleData[] = [];
             for (const attrs in tag) {
                 tagData.push({
                     name: '',

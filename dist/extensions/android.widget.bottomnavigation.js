@@ -7,6 +7,7 @@ this.android.widget.bottomnavigation = (function () {
     'use strict';
 
     var WIDGET_NAME = {
+        __FRAMEWORK: 2,
         FAB: 'android.widget.floatingactionbutton',
         MENU: 'android.widget.menu',
         COORDINATOR: 'android.widget.coordinator',
@@ -91,9 +92,9 @@ this.android.widget.bottomnavigation = (function () {
         }
     }
 
-    const bottomNavigation = new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, 2);
+    const bottomNavigation = new BottomNavigation(WIDGET_NAME.BOTTOM_NAVIGATION, WIDGET_NAME.__FRAMEWORK);
     if (androme) {
-        androme.registerExtension(bottomNavigation);
+        androme.registerExtensionAsync(bottomNavigation);
     }
 
     return bottomNavigation;

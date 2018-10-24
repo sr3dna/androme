@@ -7,18 +7,17 @@
     <link rel="stylesheet" type="text/css" href="common/dev.css">
     <style>
         ul {
-            margin: 0px;
+            margin: 0;
             padding: 5px;
             list-style: none;
         }
         h2 {
-            font-family: Tahoma;
             font-size: 12px;
             font-weight: bold;
             color: #fff;
             background-color: darkblue;
             border: 1px solid yellowgreen;
-            margin: 0px;
+            margin: 0;
             padding: 8px;
         }
         a {
@@ -34,7 +33,7 @@
         select {
             min-width: 37px;
             font-size: 11px;
-            padding: 2px 0px;
+            padding: 2px 0;
         }
         input[type=button], input[type=submit] {
             font-size: 12px;
@@ -48,7 +47,7 @@
             overflow: hidden;
         }
         li > label {
-            font-family: Arial;
+            font-family: Arial, sans-serif;
             width: 80px;
             padding-top: 3px;
             margin-right: 5px;
@@ -67,9 +66,6 @@
             font-family: sans-serif;
             margin-right: 1px;
         }
-        .empty {
-            height: 5px;
-        }
         .entry-date, .entry-topic, .entry-custom {
             float: left;
         }
@@ -77,7 +73,7 @@
             margin-bottom: 4px;
         }
         .entry-date > div:last-child {
-            margin-bottom: 0px;
+            margin-bottom: 0;
         }
         input[name^='topic'], input[name^='customname'] {
             width: 130px;
@@ -90,7 +86,7 @@
             width: 350px;
             height: 1px;
             margin: 10px auto;
-            padding: 0px;
+            padding: 0;
             border: none;
             background-color: #ccc;
         }
@@ -124,7 +120,7 @@
     <!-- START: DEMO -->
     <div id="androme_ui">
         <h2>Entry</h2>
-        <form name="entry" autocompvare="off">
+        <form name="entry" autocomplete="off">
             <ul>
                 <li>
                     <label for="order" style="font-style: italic;">Order:</label>
@@ -436,8 +432,8 @@
                         <option value="0">0</option>
                         <option value="1">1</option>
                     </select>
-                    <input type="button" value="Open" disabled="disabled" target="_blank" />
-                    <input type="button" value="All" disabled="disabled" target="_blank" />
+                    <input type="button" value="Open" disabled="disabled" />
+                    <input type="button" value="All" disabled="disabled" />
                 </li>
                 <li>
                     <label>Mode:</label>

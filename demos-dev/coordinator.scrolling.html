@@ -11,9 +11,6 @@
             background-color: #fff;
             border: 1px solid #ccc;
         }
-        #coordinator_demo {
-            padding: 0px 20px 20px 20px;
-        }
         #coordinator_demo > div {
             font-size: 12px;
             padding: 20px;
@@ -29,16 +26,14 @@
             position: absolute;
             width: 56px;
             height: 56px;
-            background-position: center;
-            background-repeat: no-repeat;
-            background-color: slateblue;
+            background: slateblue center no-repeat;
             border: none;
             border-radius: 28px;
             margin: 16px;
-            padding: 0px;
+            padding: 0;
         }
         #toolbar_menu img {
-            margin-left: 0px;
+            margin-left: 0;
         }
         #toolbar_menu {
             margin: 8px;
@@ -49,13 +44,13 @@
             margin-left: 8px;
             float: left;
         }
-        #fab_menu {
-            bottom: 0px;
-            right: 0px;
+        #toolbar_demo #fab_menu {
+            bottom: 0;
+            right: 0;
             background-image: url(../demos/images/icons8-menu-24.png);
         }
         h3 {
-            margin-top: 0px;
+            margin-top: 0;
         }
         .content {
             font-size: 12px;
@@ -77,20 +72,20 @@
                     System.import('/build/android/extension/widget/floatingactionbutton/main.js'),
                     System.import('/build/android/extension/widget/menu/main.js'),
                     System.import('/build/android/extension/widget/toolbar/main.js')
-                ]).then(result => {
+                ]).then(() => {
                     androme.ext('android.widget.toolbar', {
                         toolbar_demo: {
+                            self: {
+                                app: {
+                                    popupTheme: 'ThemeOverlay.AppCompat.Light'
+                                }
+                            },
                             appBar: {
                                 android: {
                                     theme: 'ThemeOverlay.AppCompat.Dark.ActionBar'
                                 }
                             },
                             collapsingToolbar: {},
-                            toolbar: {
-                                app: {
-                                    popupTheme: 'ThemeOverlay.AppCompat.Light'
-                                }
-                            },
                             backgroundImage: {
                                 app: {
                                     layout_collapseMode: 'parallax'
