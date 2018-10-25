@@ -958,10 +958,10 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     get hasWidth() {
-        return !this.inlineStatic ? this.has('width', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT, { map: 'initial', not: ['0px', '0%'] }) || this.toInt('minWidth') > 0 : false;
+        return this.inlineStatic ? false : this.has('width', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT, { map: 'initial', not: ['0px', '0%'] }) || this.toInt('minWidth') > 0;
     }
     get hasHeight() {
-        return !this.inlineStatic ? this.has('height', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT, { map: 'initial', not: ['0px', '0%'] }) || this.toInt('minHeight') > 0 : false;
+        return this.inlineStatic ? false : this.has('height', CSS_STANDARD.UNIT | CSS_STANDARD.PERCENT, { map: 'initial', not: ['0px', '0%'] }) || this.toInt('minHeight') > 0;
     }
 
     get lineHeight() {
@@ -1092,7 +1092,7 @@ export default abstract class Node implements androme.lib.base.Node {
                     this._inlineText = (
                         this.htmlElement &&
                         hasFreeFormText(this._element) &&
-                        (this.children.length === 0 || this.children.every(node => !!getElementCache(node.element, 'inlineSupport'))) &&
+                        (this.initial.children.length === 0 || this.initial.children.every(node => !!getElementCache(node.element, 'inlineSupport'))) &&
                         (this._element.childNodes.length === 0 || !Array.from(this._element.childNodes).some((element: Element) => {
                             const node = getNodeFromElement(element) as T;
                             return !!node && !node.lineBreak && (!node.excluded || !node.visible);

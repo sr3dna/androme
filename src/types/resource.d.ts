@@ -23,8 +23,9 @@ interface BoxStyle {
     borderBottom: BorderAttribute;
     borderLeft: BorderAttribute;
     borderRadius: string[];
+    background?: string;
     backgroundColor: string[] | string;
-    backgroundImage?: string;
+    backgroundImage?: string[];
     backgroundGradient?: Gradient[];
     backgroundSize: string[];
     backgroundRepeat: string;

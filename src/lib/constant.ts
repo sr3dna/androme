@@ -110,3 +110,7 @@ export const EXT_NAME = {
     LIST: 'androme.list',
     TABLE: 'androme.table'
 };
+
+export const DOM_REGEX = {
+    URL: /url\("?(.*?)"?\)/
+};

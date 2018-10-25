@@ -503,21 +503,23 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 if (stored.backgroundColor.length > 0) {
                     stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
                 }
-                let backgroundImage: string[] = [];
+                const backgroundImage: string[] = [];
                 const backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
                 const backgroundDimensions: Null<Image>[] = [];
                 const backgroundGradient: BackgroundGradient[] = [];
                 const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
                 const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
                 const backgroundPosition: string[] = [];
-                if (stored.backgroundImage) {
-                    backgroundImage = stored.backgroundImage.split(',').map(value => value.trim());
+                if (Array.isArray(stored.backgroundImage)) {
+                    backgroundImage.push(...stored.backgroundImage);
                     for (let i = 0; i < backgroundImage.length; i++) {
-                        if (backgroundImage[i] !== '' && backgroundImage[i] !== 'none') {
+                        if (backgroundImage[i] && backgroundImage[i] !== 'none') {
                             backgroundDimensions.push(this.imageDimensions.get($dom.cssResolveUrl(backgroundImage[i])));
                             backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
-                            const x = checkPartialBackgroundPosition(backgroundPositionX[i], backgroundPositionY[i], 'left');
-                            const y = checkPartialBackgroundPosition(backgroundPositionY[i], backgroundPositionX[i], 'top');
+                            const postionX = backgroundPositionX[i] || backgroundPositionX[i - 1];
+                            const postionY = backgroundPositionY[i] || backgroundPositionY[i - 1];
+                            const x = checkPartialBackgroundPosition(postionX, postionY, 'left');
+                            const y = checkPartialBackgroundPosition(postionY, postionX, 'top');
                             backgroundPosition[i] = `${x === 'initial' ? '0px' : x} ${y === 'initial' ? '0px' : y}`;
                         }
                         else {
@@ -1385,10 +1387,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 if (hex !== '') {
                     value = `@color/${ResourceHandler.addColor(hex)}`;
                 }
-                root['1'].push({
-                    name,
-                    value
-                });
+                root['1'].push({ name, value });
             }
         }
         const xml = $xml.createTemplate($xml.parseTemplate(template), data);

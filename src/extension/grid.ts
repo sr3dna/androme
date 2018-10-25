@@ -5,6 +5,7 @@ import { EXT_NAME } from '../lib/constant';
 
 import Node from '../base/node';
 import NodeList from '../base/nodelist';
+import Application from '../base/application';
 import Extension from '../base/extension';
 
 import { hasValue, sortAsc, withinFraction } from '../lib/util';
@@ -197,7 +198,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                     }
                 }
                 for (let l = 0; l < columns.length; l++) {
-                    if (columns[l]) {
+                    if (columns[l] && columns[l].length > 0) {
                         columnEnd.push(columnRight[l]);
                     }
                 }
@@ -328,15 +329,22 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             }
             if (siblings && siblings.length > 0) {
                 siblings.unshift(node);
-                const [linearX, linearY] = [NodeList.linearX(siblings), NodeList.linearY(siblings)];
                 const group = this.application.viewController.createGroup(parent, node, siblings);
-                if (linearX || linearY) {
-                    output = this.application.writeLinearLayout(group, parent, linearX);
-                    group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
+                const linearX = NodeList.linearX(siblings);
+                if (linearX && Application.isRelativeHorizontal(siblings)) {
+                    output = this.application.writeRelativeLayout(group, parent);
+                    group.alignmentType |= NODE_ALIGNMENT.HORIZONTAL;
                 }
                 else {
-                    output = this.application.writeConstraintLayout(group, parent);
+                    if (linearX || NodeList.linearY(siblings)) {
+                        output = this.application.writeLinearLayout(group, parent, linearX);
+                    }
+                    else {
+                        output = this.application.writeConstraintLayout(group, parent);
+                    }
+                    group.alignmentType |= NODE_ALIGNMENT.SEGMENTED;
                 }
+                node.alignmentType |= NODE_ALIGNMENT.EXCLUDE;
                 return { output, parent: group, complete: true };
             }
         }

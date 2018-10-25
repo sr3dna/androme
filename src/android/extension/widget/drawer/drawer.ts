@@ -119,10 +119,10 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.NoActionBar');
         const data = {
             '0': [{
-                    'appTheme': options.appTheme,
-                    'parentTheme': options.parentTheme,
-                    '1': []
-                }]
+                'appTheme': options.appTheme,
+                'parentTheme': options.parentTheme,
+                '1': []
+            }]
         };
         $util.overwriteDefault(options, 'output', 'path', 'res/values-v21');
         $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.DRAWER}.xml`);

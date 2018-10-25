@@ -304,12 +304,12 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
             '0': [{
-                    'appTheme': options.appTheme,
-                    'parentTheme': options.parentTheme,
-                    'appBarOverlay': appBarOverlay || 'ThemeOverlay.AppCompat.Dark.ActionBar',
-                    'popupOverlay': popupOverlay || 'ThemeOverlay.AppCompat.Light',
-                    '1': []
-                }]
+                'appTheme': options.appTheme,
+                'parentTheme': options.parentTheme,
+                'appBarOverlay': appBarOverlay || 'ThemeOverlay.AppCompat.Dark.ActionBar',
+                'popupOverlay': popupOverlay || 'ThemeOverlay.AppCompat.Light',
+                '1': []
+            }]
         };
         $util.overwriteDefault(options, 'output', 'path', 'res/values');
         $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.TOOLBAR}.xml`);

@@ -393,47 +393,55 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                     if (this.android('layout_width') === '') {
                         const widthDefined = renderChildren.filter(node => !node.autoMargin && node.has('width', $enum.CSS_STANDARD.UNIT, { map: 'initial' }));
-                        if ($util.convertFloat(this.android('layout_columnWeight')) > 0) {
+                        const gridParent = renderParent.is($enum.NODE_STANDARD.GRID);
+                        const columnWeight = this.android('layout_columnWeight');
+                        if (gridParent && columnWeight && columnWeight !== '0') {
                             this.android('layout_width', '0px');
                         }
                         else if ((widthDefined.length > 0 && widthDefined.some(node => node.bounds.width >= this.box.width)) || this.svgElement) {
                             this.android('layout_width', 'wrap_content');
                         }
-                        else if (
-                            (this.blockStatic && this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL)) ||
-                            (!this.documentRoot && renderChildren.some(node => node.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) && !node.has('width'))))
-                        {
-                            this.android('layout_width', 'match_parent');
-                        }
                         else {
-                            const inlineRight: number = Math.max.apply(null, renderChildren.filter(node => node.inlineElement && node.float !== 'right').map(node => node.linear.right)) || 0;
-                            const wrap = (
-                                this.nodeType < $enum.NODE_STANDARD.INLINE ||
-                                this.inlineElement ||
-                                !this.pageflow ||
-                                !this.siblingflow ||
-                                this.display === 'table' ||
-                                parent.flex.enabled ||
-                                (renderParent.inlineElement && !renderParent.hasWidth && !this.inlineElement && this.nodeType > $enum.NODE_STANDARD.BLOCK) ||
-                                renderParent.is($enum.NODE_STANDARD.GRID)
-                            );
-                            if (this.is($enum.NODE_STANDARD.GRID) && $util.withinFraction(inlineRight, this.box.right)) {
+                            if (this.is($enum.NODE_STANDARD.GRID) &&
+                                $util.withinFraction(
+                                    this.box.right,
+                                    Math.max.apply(null, renderChildren.filter(node => node.inlineElement || !node.blockStatic).map(node => node.linear.right))
+                               ))
+                            {
                                 this.android('layout_width', 'wrap_content');
                             }
-                            else if (!wrap || (this.blockStatic && !this.has('maxWidth'))) {
-                                const previousSibling = this.previousSibling();
-                                const nextSibling = this.nextSibling();
-                                if (width >= widthParent ||
-                                    (this.linearVertical && !this.floating && !this.autoMargin) ||
-                                    (this.is($enum.NODE_STANDARD.FRAME) && renderChildren.some(node => node.blockStatic && (node.autoMarginHorizontal || node.autoMarginLeft))) ||
-                                    (!this.htmlElement && this.length > 0 && renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !renderChildren.some(item => item.plainText && item.multiLine)) ||
-                                    (this.htmlElement && this.blockStatic && (
-                                        this.documentParent.documentBody ||
-                                        this.ascend().every(node => node.blockStatic) ||
-                                        (this.documentParent.blockStatic && this.nodeType <= $enum.NODE_STANDARD.LINEAR && (!previousSibling || !previousSibling.floating) && (!nextSibling || !nextSibling.floating))
-                                   )))
-                                {
-                                    this.android('layout_width', 'match_parent');
+                            else if (
+                                (this.blockStatic && this.hasAlign($enum.NODE_ALIGNMENT.VERTICAL)) ||
+                                (!this.documentRoot && renderChildren.some(node => node.hasAlign($enum.NODE_ALIGNMENT.VERTICAL) && !node.has('width'))))
+                            {
+                                this.android('layout_width', 'match_parent');
+                            }
+                            else {
+                                const wrap = (
+                                    this.nodeType < $enum.NODE_STANDARD.INLINE ||
+                                    this.inlineElement ||
+                                    !this.pageflow ||
+                                    !this.siblingflow ||
+                                    this.display === 'table' ||
+                                    parent.flex.enabled ||
+                                    (renderParent.inlineElement && !renderParent.hasWidth && !this.inlineElement && this.nodeType > $enum.NODE_STANDARD.BLOCK) ||
+                                    gridParent
+                                );
+                                if (!wrap || (this.blockStatic && !this.has('maxWidth'))) {
+                                    const previousSibling = this.previousSibling();
+                                    const nextSibling = this.nextSibling();
+                                    if (width >= widthParent ||
+                                        (this.linearVertical && !this.floating && !this.autoMargin) ||
+                                        (this.is($enum.NODE_STANDARD.FRAME) && renderChildren.some(node => node.blockStatic && (node.autoMarginHorizontal || node.autoMarginLeft))) ||
+                                        (!this.htmlElement && this.length > 0 && renderChildren.some(item => item.linear.width >= this.documentParent.box.width) && !renderChildren.some(item => item.plainText && item.multiLine)) ||
+                                        (this.htmlElement && this.blockStatic && (
+                                            this.documentParent.documentBody ||
+                                            this.ascend().every(node => node.blockStatic) ||
+                                            (this.documentParent.blockStatic && this.nodeType <= $enum.NODE_STANDARD.LINEAR && (!previousSibling || !previousSibling.floating) && (!nextSibling || !nextSibling.floating))
+                                       )))
+                                    {
+                                        this.android('layout_width', 'match_parent');
+                                    }
                                 }
                             }
                             this.android('layout_width', 'wrap_content', false);
@@ -503,11 +511,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, null);
                                 this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, null);
                             }
-                            else if (
-                                this.block &&
-                                this.box.height > 0 &&
-                                this.lineHeight === this.box.height)
-                            {
+                            else if (this.block && this.box.height > 0 && this.lineHeight === this.box.height) {
                                 this.android('layout_height', $util.formatPX(boundsHeight));
                             }
                         }

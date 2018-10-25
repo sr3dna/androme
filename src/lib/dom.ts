@@ -1,13 +1,18 @@
 import { USER_AGENT } from './enumeration';
 
+import { DOM_REGEX } from './constant';
+
 import { convertCamelCase, convertInt, convertPX, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
 
 export function isUserAgent(value: number) {
     let client = USER_AGENT.CHROME;
-    if (navigator.appVersion.indexOf('Edge') !== -1) {
+    if (navigator.userAgent.indexOf('Edge') !== -1) {
         client = USER_AGENT.EDGE;
     }
-    else if (navigator.appVersion.indexOf('Chrome') === -1 && navigator.appVersion.indexOf('Safari') !== -1) {
+    else if (navigator.userAgent.indexOf('Firefox') !== -1) {
+        client = USER_AGENT.FIREFOX;
+    }
+    else if (navigator.userAgent.indexOf('Chrome') === -1 && navigator.userAgent.indexOf('Safari') !== -1) {
         client = USER_AGENT.SAFARI;
     }
     return hasBit(client, value);
@@ -147,7 +152,7 @@ export function getBoxSpacing(element: Element, complete = false, merge = false)
 }
 
 export function cssResolveUrl(value: string) {
-    const match = value.match(/^url\("?(.*?)"?\)$/);
+    const match = value.match(DOM_REGEX.URL);
     if (match) {
         return resolvePath(match[1]);
     }
@@ -205,7 +210,7 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
     let depth = -1;
     function findFreeForm(elements: any[]): boolean {
         if (depth++ === maxDepth) {
-            return true;
+            return false;
         }
         return elements.some((item: Element) => {
             if (item.nodeName === '#text') {
@@ -213,8 +218,12 @@ export function hasFreeFormText(element: Element, maxDepth = 0, whiteSpace = tru
                     return true;
                 }
             }
-            else if (item instanceof HTMLElement && item.childNodes.length > 0) {
-                return findFreeForm(Array.from(item.childNodes));
+            else if (
+                item instanceof HTMLElement &&
+                item.childNodes.length > 0 &&
+                findFreeForm(Array.from(item.childNodes)))
+            {
+                return true;
             }
             return false;
         });

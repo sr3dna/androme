@@ -2,7 +2,8 @@ export enum USER_AGENT {
     NONE = 0,
     CHROME = 2,
     SAFARI = 4,
-    EDGE = 8
+    EDGE = 8,
+    FIREFOX = 16
 }
 
 export enum APP_FRAMEWORK {
@@ -21,20 +22,21 @@ export enum APP_SECTION {
 
 export enum NODE_ALIGNMENT {
     NONE = 0,
-    EXTENDABLE = 2,
-    HORIZONTAL = 4,
-    VERTICAL = 8,
-    ABSOLUTE = 16,
-    FLOAT = 32,
-    SEGMENTED = 64,
-    PERCENT = 128,
-    TOP = 256,
-    RIGHT = 512,
-    BOTTOM = 1024,
-    LEFT = 2048,
-    SINGLE = 4096,
-    MULTILINE = 8192,
-    SPACE = 16384
+    EXCLUDE = 2,
+    EXTENDABLE = 4,
+    HORIZONTAL = 8,
+    VERTICAL = 16,
+    ABSOLUTE = 32,
+    FLOAT = 64,
+    SEGMENTED = 128,
+    PERCENT = 256,
+    TOP = 512,
+    RIGHT = 1024,
+    BOTTOM = 2048,
+    LEFT = 4096,
+    SINGLE = 8192,
+    MULTILINE = 16384,
+    SPACE = 32768
 }
 
 export enum NODE_RESOURCE {

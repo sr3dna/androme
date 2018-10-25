@@ -153,8 +153,10 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         }
         function anchoredSibling(node: T, nodes: NodeList<T>, orientation: string) {
             if (!node.constraint[orientation]) {
+                const connected: string[] = [];
                 let parent: Null<T> = node;
-                while (parent) {
+                while (parent && !connected.includes(parent.stringId)) {
+                    connected.push(parent.stringId);
                     const stringId = mapSibling(parent, orientation === AXIS_ANDROID.HORIZONTAL ? 'leftRight' : 'topBottom');
                     if (stringId) {
                         parent = nodes.find('nodeId', stripId(stringId));
@@ -305,10 +307,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             if (!node.inline && textIndent > 0) {
                                 current.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, textIndent);
                             }
-                            if (!current.siblingflow ||
-                                (current.floating && current.position === 'relative') ||
-                                (current.multiLine && textIndent < 0))
-                            {
+                            if (!current.siblingflow || (current.floating && current.position === 'relative') || (current.multiLine && textIndent < 0)) {
                                 rowPreviousLeft = current;
                             }
                             rows[rows.length] = [current];
@@ -478,7 +477,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         }
                         for (let i = 0; i < nodes.length; i++) {
                             const current = nodes.get(i);
-                            let alignWith = optimal;
+                            let alignWith: Null<T> = optimal;
                             if (i === 0) {
                                 current.app(mapLayout['left'], 'parent');
                             }
@@ -496,10 +495,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             if (verticalAlign === 'baseline' && current.tagName === 'TEXTAREA') {
                                 verticalAlign = 'text-bottom';
                             }
-                            if (!alignWith ||
-                                verticalAlign.startsWith('text') ||
-                                optimal === current)
-                            {
+                            if (!alignWith || verticalAlign.startsWith('text') || alignWith === current) {
+                                alignWith = null;
                                 baseline.some(item => {
                                     if (item !== current) {
                                         alignWith = item;
@@ -554,7 +551,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         }
                         else if (columnCount === 0) {
                             pageflow.each(current => {
-                                const parent = current.documentParent;
+                                const parent = node.renderParent.is($enum.NODE_STANDARD.GRID) && !node.styleElement ? node : current.documentParent;
                                 if (current.autoMarginHorizontal) {
                                     setAlignParent(current, AXIS_ANDROID.HORIZONTAL);
                                 }
@@ -606,14 +603,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         const bottomParent = mapParent(current, 'bottom');
                                         const blockElement = !flex.enabled && !current.inlineElement;
                                         if ($util.withinFraction(current.linear.top, adjacent.linear.bottom) ||
-                                            (alignOrigin && $util.withinRange(current.linear.top, adjacent.linear.bottom, this.settings.whitespaceVerticalOffset)))
+                                            (alignOrigin && intersectY && $util.withinRange(current.linear.top, adjacent.linear.bottom, this.settings.whitespaceVerticalOffset)))
                                         {
                                             if (intersectY || !bottomParent || blockElement) {
                                                 current.anchor(mapLayout['topBottom'], stringId, vertical, intersectY);
                                             }
                                         }
                                         if ($util.withinFraction(current.linear.bottom, adjacent.linear.top) ||
-                                            (alignOrigin && $util.withinRange(current.linear.bottom, adjacent.linear.top, this.settings.whitespaceVerticalOffset)))
+                                            (alignOrigin && intersectY && $util.withinRange(current.linear.bottom, adjacent.linear.top, this.settings.whitespaceVerticalOffset)))
                                         {
                                             if (intersectY || !topParent || blockElement) {
                                                 current.anchor(mapLayout['bottomTop'], stringId, vertical, intersectY);
@@ -634,14 +631,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 const leftRight = mapSibling(current, 'leftRight');
                                 if (leftRight) {
                                     if (!current.constraint.horizontal) {
-                                        current.constraint.horizontal = flex.enabled || anchoredSibling(current, nodes, AXIS_ANDROID.HORIZONTAL);
+                                        current.constraint.horizontal = flex.enabled || anchoredSibling(current, pageflow, AXIS_ANDROID.HORIZONTAL);
                                     }
                                     current.constraint.marginHorizontal = leftRight;
                                 }
                                 const topBottom = mapSibling(current, 'topBottom');
                                 if (topBottom) {
                                     if (!current.constraint.vertical) {
-                                        current.constraint.vertical = flex.enabled || anchoredSibling(current, nodes, AXIS_ANDROID.VERTICAL);
+                                        current.constraint.vertical = flex.enabled || anchoredSibling(current, pageflow, AXIS_ANDROID.VERTICAL);
                                     }
                                     current.constraint.marginVertical = topBottom;
                                     mapDelete(current, 'top');
@@ -760,10 +757,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 });
                             }
                         }
-                        if (flex.enabled ||
-                            columnCount > 0 ||
-                            (!this.settings.constraintChainDisabled && pageflow.length > 1))
-                        {
+                        if (flex.enabled || columnCount > 0 || (!this.settings.constraintChainDisabled && pageflow.length > 1)) {
                             const horizontal: NodeList<T>[] = [];
                             const vertical: NodeList<T>[] = [];
                             if (flex.enabled) {
@@ -885,7 +879,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                             break;
                                     }
                                     return coordinate.map(value => {
-                                        const sameXY = $util.sortAsc(siblings.list.filter(item => $util.sameValue(current, item, value)), coordinate[0]);
+                                        const sameXY = $util.sortAsc(siblings.list.filter(item => $util.sameValue(current, item, value) && item[orientation === AXIS_ANDROID.HORIZONTAL ? 'intersectX' : 'intersectY'](current.linear)), coordinate[0]);
                                         if (sameXY.length > 1) {
                                             if (!validate || (!sameXY.some(item => item.floating) && sameXY[0].app(mapParent[0]) === 'parent' && sameXY[sameXY.length - 1].app(mapParent[1]) === 'parent')) {
                                                 return sameXY;
@@ -934,7 +928,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         }
                                     }
                                     if (verticalChain.includes(current) && !percentage) {
-                                        verticalOutput.push(...partitionChain(current, pageflow, AXIS_ANDROID.HORIZONTAL, true));
+                                        verticalOutput.push(...partitionChain(current, pageflow, AXIS_ANDROID.VERTICAL, true));
                                         if (verticalOutput.length > 1 && availableChain(verticalOutput)) {
                                             vertical.push(new NodeList(verticalOutput).sortAsc('linear.top'));
                                         }
@@ -1322,10 +1316,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                             if (!valid) {
                                                 for (const item of chain) {
                                                     pageflow.list.some(next => {
-                                                        if (item !== next &&
-                                                            next.linear.top === item.linear.top &&
-                                                            next.linear.bottom === item.linear.bottom)
-                                                        {
+                                                        if (item !== next && next.linear.top === item.linear.top && next.linear.bottom === item.linear.bottom) {
                                                             mapDelete(item, 'topBottom', 'bottomTop');
                                                             item.app(mapLayout['top'], next.stringId);
                                                             item.app(mapLayout['bottom'], next.stringId);
@@ -1375,9 +1366,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             unbound.forEach(current => this.addGuideline(current, '', false, false));
                             const [adjacent, unanchored] = nodes.partition(item => item.anchored);
                             unanchored.each(current => {
-                                if ($util.withinRange(current.horizontalBias(this.settings), 0.5, 0.01) &&
-                                    $util.withinRange(current.verticalBias(this.settings), 0.5, 0.01))
-                                {
+                                if ($util.withinRange(current.horizontalBias(this.settings), 0.5, 0.01) && $util.withinRange(current.verticalBias(this.settings), 0.5, 0.01)) {
                                     setAlignParent(current);
                                 }
                                 else if (
@@ -1480,11 +1469,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                         const stringId = mapSibling(next, value[0] ? value[2] : value[3]);
                                                         if (stringId) {
                                                             next = this.findByStringId(stringId);
-                                                            if (next && (
-                                                                  (value[0] && mapParent(next, value[4])) ||
-                                                                  (value[1] && mapParent(next, value[5]))
-                                                               ))
-                                                            {
+                                                            if (next && ((value[0] && mapParent(next, value[4])) || (value[1] && mapParent(next, value[5])))) {
                                                                 valid = true;
                                                                 break;
                                                             }
@@ -1543,11 +1528,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     }
                                 }
                                 else {
-                                    if (left &&
-                                        right &&
-                                        current.right == null &&
-                                        current.hasWidth)
-                                    {
+                                    if (left && right && current.right == null && current.hasWidth) {
                                         switch (current.cssParent('textAlign', true)) {
                                             case 'center':
                                             case 'right':
@@ -1558,11 +1539,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                                 break;
                                         }
                                     }
-                                    if (top &&
-                                        bottom &&
-                                        current.bottom == null &&
-                                        current.hasHeight)
-                                    {
+                                    if (top && bottom && current.bottom == null && current.hasHeight) {
                                         switch (current.css('verticalAlign')) {
                                             case 'bottom':
                                             case 'text-bottom':
@@ -2265,7 +2242,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 const position = percent ? Math.abs((node[dimension][LT] + offset) - (parent.documentBody ? 0 : parent.box[LT])) / parent.box[index === 0 ? 'width' : 'height'] : 0;
                 if (!percent) {
                     found = parent.renderChildren.some(item => {
-                        if (item.constraint[value] && (
+                        if (item !== node && item.constraint[value] && (
                                 !item.constraint[`chain${$util.capitalize(value)}`] ||
                                 item.constraint[`margin${$util.capitalize(value)}`]
                            ))
@@ -2304,8 +2281,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 if (!found) {
                     const guideline = parent.constraint.guideline || {};
                     let location = percent ? parseFloat(Math.abs(position - (!opposite ? 0 : 1)).toFixed(this.settings.constraintPercentAccuracy))
-                                           : (!opposite ? (node[dimension][LT] + offset) - parent.box[LT]
-                                                        : (node[dimension][LT] + offset) - parent.box[RB]);
+                                           : (!opposite ? (node[dimension][LT] + offset) - parent.box[LT] : (node[dimension][LT] + offset) - parent.box[RB]);
                     if (!percent && !opposite) {
                         if (location < 0) {
                             const padding = parent[`padding${$util.capitalize(LT)}`];

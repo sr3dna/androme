@@ -1,4 +1,4 @@
-import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD } from '../lib/enumeration';
+import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
 import Node from './node';
 import NodeList from './nodelist';
@@ -7,7 +7,7 @@ import Resource from './resource';
 import Extension from './extension';
 
 import { convertCamelCase, convertInt, convertPX, convertWord, hasBit, hasValue, isNumber, isPercent, isUnit, sortAsc, trimNull, trimString } from '../lib/util';
-import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isStyleElement, setElementCache } from '../lib/dom';
+import { cssParent, cssResolveUrl, deleteElementCache, getElementCache, getElementsBetweenSiblings, getNodeFromElement, getStyle, hasFreeFormText, isElementVisible, isLineBreak, isPlainText, isStyleElement, isUserAgent, setElementCache } from '../lib/dom';
 import { formatPlaceholder, replaceIndent, replacePlaceholder } from '../lib/xml';
 
 function prioritizeExtensions<T extends Node>(extensions: Extension<T>[], element: Element) {
@@ -809,8 +809,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                                         if (floated.size > 0) {
                                                             maxBottom = Math.max.apply(null, horizontal.filter(node => node.floating).map(node => node.bounds.bottom));
                                                         }
-                                                        if (floatedOpen.size > 0 &&
-                                                            !clearedDirection.has('both') && (
+                                                        if (floatedOpen.size > 0 && !clearedDirection.has('both') && (
                                                                 maxBottom == null ||
                                                                 adjacent.bounds.top < maxBottom
                                                            ))
@@ -1236,7 +1235,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             this.createLayoutFile(
                 trimString(trimNull(root.dataset.pathname), '/'),
                 root.dataset.layoutName,
-                empty ? '' : baseTemplate,
+                !empty ? baseTemplate : '',
                 root.renderExtension.size > 0 && Array.from(root.renderExtension).some(item => item.documentRoot)
             );
         }
@@ -1965,6 +1964,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     private setStyleMap() {
         let warning = false;
+        const clientFirefox = isUserAgent(USER_AGENT.FIREFOX);
         for (let i = 0; i < document.styleSheets.length; i++) {
             const styleSheet = <CSSStyleSheet> document.styleSheets[i];
             if (styleSheet.cssRules) {
@@ -2021,8 +2021,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     }
                                 }
                             }
-                            if (this.settings.preloadImages && hasValue(styleMap['backgroundImage']) && styleMap['backgroundImage'] !== 'initial') {
-                                styleMap['backgroundImage'].split(',')
+                            if (this.settings.preloadImages && hasValue(styleMap.backgroundImage) && styleMap.backgroundImage !== 'initial') {
+                                styleMap.backgroundImage.split(',')
                                     .map((value: string) => value.trim())
                                     .forEach(value => {
                                         const uri = cssResolveUrl(value);
@@ -2030,6 +2030,16 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             this._cacheImage.set(uri, { width: 0, height: 0, uri });
                                         }
                                     });
+                            }
+                            if (clientFirefox && styleMap.display == null) {
+                                switch (element.tagName) {
+                                    case 'INPUT':
+                                    case 'TEXTAREA':
+                                    case 'SELECT':
+                                    case 'BUTTON':
+                                        styleMap.display = 'inline-block';
+                                        break;
+                                }
                             }
                             const data = getElementCache(element, 'styleMap');
                             if (data) {

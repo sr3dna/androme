@@ -19,6 +19,7 @@ declare global {
             export import BLOCK_ELEMENT = $const.BLOCK_ELEMENT;
             export import INLINE_ELEMENT = $const.INLINE_ELEMENT;
             export import EXT_NAME = $const.EXT_NAME;
+            export import DOM_REGEX = $const.DOM_REGEX;
         }
         namespace util {
             export function formatString(value: string, ...params: string[]): string;

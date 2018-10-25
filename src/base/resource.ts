@@ -1,5 +1,7 @@
 import { NODE_RESOURCE, USER_AGENT } from '../lib/enumeration';
 
+import { DOM_REGEX } from '../lib/constant';
+
 import Node from './node';
 import NodeList from './nodelist';
 import Application from './application';
@@ -136,7 +138,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 this.isBorderVisible(object.borderBottom) ||
                 this.isBorderVisible(object.borderLeft) ||
                 object.borderRadius.length > 0 ||
-                (object.backgroundImage && object.backgroundImage !== 'none')
+                (Array.isArray(object.backgroundImage) && object.backgroundImage.length > 0)
             )
         );
     }
@@ -193,6 +195,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                ))
             {
                 const boxStyle: BoxStyle = {
+                    background: null,
                     borderTop: null,
                     borderRight: null,
                     borderBottom: null,
@@ -280,11 +283,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             boxStyle[attr] = result;
                             break;
                         }
+                        case 'background':
                         case 'backgroundImage': {
                             if (value !== 'none' && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
                                 const colorStop = '(?:,?\\s*(rgba?\\([0-9]+,\\s*[0-9]+,\\s*[0-9]+(?:,\\s*[0-9.]+)?\\)|[a-z]+)\\s*([0-9]+[a-z%]+)?)';
                                 const gradients: Gradient[] = [];
-                                const pattern: Null<RegExp> = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?${colorStop}${colorStop}${colorStop}?\\)`, 'g');
+                                let pattern: Null<RegExp> = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?${colorStop}${colorStop}${colorStop}?\\)`, 'g');
                                 let match: Null<RegExpExecArray> = null;
                                 while ((match = pattern.exec(value)) != null) {
                                     if (match[1] === 'linear') {
@@ -357,7 +361,15 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     boxStyle['backgroundGradient'] = gradients.reverse();
                                 }
                                 else {
-                                    boxStyle[attr] = value;
+                                    const result: string[] = [];
+                                    pattern = new RegExp(DOM_REGEX.URL, 'g');
+                                    match = null;
+                                    while ((match = pattern.exec(value)) != null) {
+                                        if (match) {
+                                            result.push(match[0]);
+                                        }
+                                    }
+                                    boxStyle[attr] = result;
                                 }
                             }
                             break;
