@@ -80,7 +80,7 @@ declare global {
             export function hasLineBreak(element: Null<Element>): boolean;
             export function isLineBreak(element: Null<Element>, excluded?: boolean): boolean;
             export function getElementsBetweenSiblings(firstElement: Null<Element>, secondElement: Element, cacheNode?: boolean, whiteSpace?: boolean): Element[];
-            export function isElementVisible(element: Element): boolean;
+            export function isElementVisible(element: Element, hideOffScreen: boolean): boolean;
             export function findNestedExtension(element: Element, name: string): Null<HTMLElement>;
             export function setElementCache(element: Null<Element>, attr: string, data: any): void;
             export function getElementCache(element: Null<Element>, attr: string): any;

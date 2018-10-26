@@ -1,6 +1,6 @@
 {
   "name": "android.widget",
-  "version": "2.0.2",
+  "version": "2.1.0",
   "description": "Extensions for the android framework using widgets from the Android Support library.",
   "repository": {
     "type": "git",
@@ -21,7 +21,7 @@
     "rollup": "^0.66.6",
     "rollup-plugin-babel": "^4.0.3",
     "rollup-plugin-terser": "^3.0.0",
-    "terser": "^3.10.1",
+    "terser": "^3.10.3",
     "tslint": "^5.11.0",
     "typescript": "^3.1.3"
   }

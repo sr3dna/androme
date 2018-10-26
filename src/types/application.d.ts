@@ -8,15 +8,16 @@ type LayoutMapY<T> = Map<number, Map<number, T>>;
 interface Settings {
     builtInExtensions: string[];
     supportRTL: boolean;
-    alwaysReevaluateResources: boolean;
     renderInlineText: boolean;
     preloadImages: boolean;
     autoSizeBackgroundImage: boolean;
     autoSizePaddingAndBorderWidth: boolean;
+    alwaysReevaluateResources: boolean;
     whitespaceHorizontalOffset: number;
     whitespaceVerticalOffset: number;
     supportNegativeLeftTop: boolean;
     floatOverlapDisabled: boolean;
+    hideOffScreenElements: boolean;
     collapseUnattributedElements: boolean;
     customizationsOverwritePrivilege: boolean;
     insertSpaces: number;

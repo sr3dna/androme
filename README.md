@@ -112,6 +112,7 @@ androme.settings = {
     constraintPercentAccuracy: 4, // eq: 1px
     supportNegativeLeftTop: true,
     floatOverlapDisabled: false,
+    hideOffScreenElements: true;
     collapseUnattributedElements: true,
     customizationsOverwritePrivilege: false,
     showAttributes: true,
@@ -422,7 +423,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol63222"
+                    android:text="@string/__symbol36490"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -443,7 +444,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                         style="@style/Select.Linearlayout_1" />
                     <Spinner
                         android:id="@+id/year0"
-                        android:entries="@array/year1_array"
+                        android:entries="@array/year0_array"
                         android:layout_marginStart="@dimen/select_margin_start"
                         style="@style/Select.Linearlayout_1" />
                 </LinearLayout>
@@ -463,7 +464,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                         style="@style/Select.Linearlayout_1" />
                     <Spinner
                         android:id="@+id/year1"
-                        android:entries="@array/year1_array"
+                        android:entries="@array/year0_array"
                         android:layout_marginStart="@dimen/select_margin_start"
                         style="@style/Select.Linearlayout_1" />
                 </LinearLayout>
@@ -483,7 +484,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                         style="@style/Select.Linearlayout_1" />
                     <Spinner
                         android:id="@+id/year2"
-                        android:entries="@array/year1_array"
+                        android:entries="@array/year0_array"
                         android:layout_marginStart="@dimen/select_margin_start"
                         style="@style/Select.Linearlayout_1" />
                 </LinearLayout>
@@ -572,7 +573,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol63222"
+                    android:text="@string/__symbol36490"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1009,7 +1010,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol63222"
+                    android:text="@string/__symbol36490"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1140,7 +1141,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol63222">):</string>
+    <string name="__symbol36490">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1293,7 +1294,7 @@ The attributes "include" and "include-end" can only be applied to elements which
         <item>1</item>
         <item>2</item>
     </string-array>
-    <string-array name="year1_array">
+    <string-array name="year0_array">
         <item>2001</item>
         <item>2002</item>
         <item>2003</item>

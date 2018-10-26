@@ -595,7 +595,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 );
                 const hasBackgroundImage = backgroundImage.filter(value => value !== '').length > 0;
                 if (hasBorder || hasBackgroundImage || backgroundGradient.length > 0) {
-                    function createDoubleBorder(templateData: {}, border: BorderAttribute, top: boolean, right: boolean, bottom: boolean, left: boolean) {
+                    function createDoubleBorder(root: {}, border: BorderAttribute, top: boolean, right: boolean, bottom: boolean, left: boolean) {
                         const width = parseInt(border.width);
                         const baseWidth = Math.floor(width / 3);
                         const remainder = width % 3;
@@ -603,24 +603,24 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         const rightWidth = baseWidth + (remainder === 2 ? 1 : 0);
                         let leftTop = `-${$util.formatPX(leftWidth + 1)}`;
                         let rightBottom = `-${$util.formatPX(leftWidth)}`;
-                        templateData['4'].push({
+                        root['5'].push({
                             'top': top ? '' :  rightBottom,
                             'right': right ? '' :  leftTop,
                             'bottom': bottom ? '' :  rightBottom,
                             'left': left ? '' :  leftTop,
-                            '5': [{ width: $util.formatPX(leftWidth), borderStyle: getBorderStyle(border) }],
-                            '6': borderRadius
+                            '6': [{ width: $util.formatPX(leftWidth), borderStyle: getBorderStyle(border) }],
+                            '7': borderRadius
                         });
                         leftTop = `-${$util.formatPX(width + 1)}`;
                         rightBottom = `-${$util.formatPX(width)}`;
                         const indentWidth = `${$util.formatPX(width - baseWidth)}`;
-                        templateData['4'].push({
+                        root['5'].push({
                             'top': top ? indentWidth : leftTop,
                             'right': right ? indentWidth : rightBottom,
                             'bottom': bottom ? indentWidth : rightBottom,
                             'left': left ? indentWidth : leftTop,
-                            '5': [{ width: $util.formatPX(rightWidth), borderStyle: getBorderStyle(border) }],
-                            '6': borderRadius
+                            '6': [{ width: $util.formatPX(rightWidth), borderStyle: getBorderStyle(border) }],
+                            '7': borderRadius
                         });
                     }
                     function getShapeAttribute(boxStyle: BoxStyle, name: string, direction = -1, hasInset = false, isInset = false): any[] | boolean {
@@ -687,14 +687,15 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             let tileMode = '';
                             let tileModeX = '';
                             let tileModeY = '';
+                            const imageRepeat = (image == null || image.width < node.bounds.width || image.height < node.bounds.height);
                             switch (backgroundRepeat[i]) {
                                 case 'repeat-x':
-                                    if (image == null || image.width < node.bounds.width) {
+                                    if (imageRepeat) {
                                         tileModeX = 'repeat';
                                     }
                                     break;
                                 case 'repeat-y':
-                                    if (image == null || image.height < node.bounds.height) {
+                                    if (imageRepeat) {
                                         tileModeY = 'repeat';
                                     }
                                     break;
@@ -702,12 +703,12 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     tileMode = 'disabled';
                                     break;
                                 case 'repeat':
-                                    if (image == null || image.width < node.bounds.width || image.height < node.bounds.height) {
+                                    if (imageRepeat) {
                                         tileMode = 'repeat';
                                     }
                                     break;
                             }
-                            if (gravity !== '' && image && image.width > 0 && image.height > 0) {
+                            if (gravity !== '' && image && image.width > 0 && image.height > 0 && node.renderChildren.length === 0) {
                                 if (tileModeY === 'repeat') {
                                     let backgroundWidth = node.viewWidth;
                                     if (backgroundWidth > 0) {
@@ -825,35 +826,28 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     if (gravity === 'left|top') {
                                         gravity = '';
                                     }
+                                    const imageXml: BackgroundImage = {
+                                        top: boxPosition.top !== 0 ? $util.formatPX(boxPosition.top) : '',
+                                        right: boxPosition.right !== 0 ? $util.formatPX(boxPosition.right) : '',
+                                        bottom: boxPosition.bottom !== 0 ? $util.formatPX(boxPosition.bottom) : '',
+                                        left: boxPosition.left !== 0 ? $util.formatPX(boxPosition.left) : '',
+                                        gravity,
+                                        tileMode,
+                                        tileModeX,
+                                        tileModeY,
+                                        width: '',
+                                        height: '',
+                                        src: backgroundImage[i]
+                                    };
                                     if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
-                                        image3.push({
-                                            top: boxPosition.top !== 0 ? $util.formatPX(boxPosition.top) : '',
-                                            right: boxPosition.right !== 0 ? $util.formatPX(boxPosition.right) : '',
-                                            bottom: boxPosition.bottom !== 0 ? $util.formatPX(boxPosition.bottom) : '',
-                                            left: boxPosition.left !== 0 ? $util.formatPX(boxPosition.left) : '',
-                                            gravity,
-                                            tileMode,
-                                            tileModeX,
-                                            tileModeY,
-                                            width: '',
-                                            height: '',
-                                            src: backgroundImage[i]
-                                        });
+                                        image3.push(imageXml);
                                     }
                                     else {
-                                        image2.push({
-                                            top: boxPosition.top !== 0 ? $util.formatPX(boxPosition.top) : '',
-                                            right: boxPosition.right !== 0 ? $util.formatPX(boxPosition.right) : '',
-                                            bottom: boxPosition.bottom !== 0 ? $util.formatPX(boxPosition.bottom) : '',
-                                            left: boxPosition.left !== 0 ? $util.formatPX(boxPosition.left) : '',
-                                            gravity,
-                                            tileMode,
-                                            tileModeX,
-                                            tileModeY,
-                                            width: stored.backgroundSize.length > 0 ? stored.backgroundSize[0] : '',
-                                            height: stored.backgroundSize.length > 0 ? stored.backgroundSize[1] : '',
-                                            src: backgroundImage[i]
-                                        });
+                                        if (stored.backgroundSize.length > 0) {
+                                            imageXml.width = stored.backgroundSize[0];
+                                            imageXml.height = stored.backgroundSize[1];
+                                        }
+                                        image2.push(imageXml);
                                     }
                                 }
                             }
@@ -908,7 +902,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                     '2': backgroundGradient.length > 0 ? backgroundGradient : false,
                                     '3': image2.length > 0 ? image2 : false,
                                     '4': image3.length > 0 ? image3 : false,
-                                    '5': borderRadius ? [{ '6': getShapeAttribute(stored, 'stroke'), '7': borderRadius }] : false,
+                                    '5': $resource.isBorderVisible(stored.border) || borderRadius ? [{ '6': getShapeAttribute(stored, 'stroke'), '7': borderRadius }] : false,
                                     '8': false
                                 }]
                             };
@@ -934,7 +928,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         if (borderWidth.size === 1 && borderStyle.size === 1 && !(borderData.style === 'groove' || borderData.style === 'ridge')) {
                             const width = parseInt(borderData.width);
                             if (width > 2 && borderData.style === 'double') {
-                                createDoubleBorder.apply(this, [
+                                createDoubleBorder.apply(null, [
                                     root,
                                     borderData,
                                     $resource.isBorderVisible(stored.borderTop),
@@ -962,7 +956,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 if ($resource.isBorderVisible(border)) {
                                     const width = parseInt(border.width);
                                     if (width > 2 && border.style === 'double') {
-                                        createDoubleBorder.apply(this, [
+                                        createDoubleBorder.apply(null, [
                                             root,
                                             border,
                                             i === 0,

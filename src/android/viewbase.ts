@@ -243,10 +243,17 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
         }
 
         public setNodeType(nodeName: string) {
-            for (const type in NODE_ANDROID) {
-                if (NODE_ANDROID[type] === nodeName && $enum.NODE_STANDARD[type] != null) {
-                    this.nodeType = $enum.NODE_STANDARD[type];
-                    break;
+            if (this.nodeType === 0) {
+                for (const android in NODE_ANDROID) {
+                    if (NODE_ANDROID[android] === nodeName) {
+                        for (const standard in $enum.NODE_STANDARD) {
+                            if ($enum.NODE_STANDARD[$enum.NODE_STANDARD[standard]] === android) {
+                                this.nodeType = <unknown> $enum.NODE_STANDARD[standard] as number;
+                                break;
+                            }
+                        }
+                        break;
+                    }
                 }
             }
             this.controlName = nodeName;
@@ -930,7 +937,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             }
                         }
                     }
-                    borderWidth = this.css('boxSizing') === 'content-box';
+                    borderWidth = this.css('boxSizing') === 'content-box' || $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
                 }
                 else {
                     if (this.styleElement && !this.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
@@ -998,7 +1005,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 }, true);
             }
             else if (this.linearVertical) {
-                this.initial.children.forEach((node: View) => {
+                const children = this.initial.children.some(node => $util.hasValue(node.dataset.include)) ? this.initial.children as View[] : this.renderChildren;
+                children.forEach((node: View) => {
                     const previous = (() => {
                         let current: Null<View> = node;
                         do {
@@ -1200,7 +1208,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
             else {
                 const value: number = $const.MAP_ELEMENT[this.nodeName];
-                return value != null ? View.getControlName(value) : '';
+                if (value != null) {
+                    this.nodeType = value;
+                    return View.getControlName(value);
+                }
+                return '';
             }
         }
 

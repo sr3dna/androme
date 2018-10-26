@@ -104,7 +104,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
                 if (b.layoutHorizontal) {
                     nodeTypeB = Math.min.apply(null, b.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
                 }
-                return nodeTypeA <= nodeTypeB ? -1 : 1;
+                return nodeTypeA === nodeTypeB ? (a.id < b.id ? -1 : 1) : (nodeTypeA < nodeTypeB ? -1 : 1);
             });
         }
         else {

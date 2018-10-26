@@ -1,4 +1,4 @@
-/* androme 2.0.2
+/* androme 2.1.0
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -656,7 +656,7 @@
         else if (navigator.userAgent.indexOf('Chrome') === -1 && navigator.userAgent.indexOf('Safari') !== -1) {
             client = USER_AGENT.SAFARI;
         }
-        return hasBit(client, value);
+        return hasBit(value, client);
     }
     function getBoxRect() {
         return {
@@ -931,12 +931,15 @@
     function isStyleElement(element) {
         return element instanceof HTMLElement || element instanceof SVGSVGElement;
     }
-    function isElementVisible(element) {
+    function isElementVisible(element, hideOffScreen) {
         if (!getElementCache(element, 'inlineSupport') && !(element.parentElement instanceof SVGSVGElement)) {
             if (isStyleElement(element)) {
                 if (typeof element.getBoundingClientRect === 'function') {
                     const bounds = element.getBoundingClientRect();
-                    if ((bounds.width !== 0 && bounds.height !== 0) || hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
+                    if (bounds.width !== 0 && bounds.height !== 0) {
+                        return !(hideOffScreen && bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
+                    }
+                    else if (hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
                         return true;
                     }
                     else {
@@ -2241,7 +2244,7 @@
                     if (b.layoutHorizontal) {
                         nodeTypeB = Math.min.apply(null, b.children.map(item => item.nodeType > 0 ? item.nodeType : NODE_STANDARD.INLINE));
                     }
-                    return nodeTypeA <= nodeTypeB ? -1 : 1;
+                    return nodeTypeA === nodeTypeB ? (a.id < b.id ? -1 : 1) : (nodeTypeA < nodeTypeB ? -1 : 1);
                 });
             }
             else {
@@ -3099,7 +3102,7 @@
         initCache(rootElement) {
             let nodeTotal = 0;
             if (rootElement === document.body) {
-                Array.from(document.body.childNodes).some((item) => isElementVisible(item) && ++nodeTotal > 1);
+                Array.from(document.body.childNodes).some((item) => isElementVisible(item, this.settings.hideOffScreenElements) && ++nodeTotal > 1);
             }
             const elements = rootElement !== document.body ? rootElement.querySelectorAll('*') : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
             this.cacheProcessing.parent = undefined;
@@ -3748,7 +3751,7 @@
                             }
                             if (nodeY.controlName === '') {
                                 const borderVisible = nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0;
-                                const backgroundImage = /url(.*?)/.test(nodeY.css('backgroundImage'));
+                                const backgroundImage = DOM_REGEX.URL.test(nodeY.css('backgroundImage')) || DOM_REGEX.URL.test(nodeY.css('background'));
                                 const backgroundColor = nodeY.has('backgroundColor');
                                 const backgroundVisible = borderVisible || backgroundImage || backgroundColor;
                                 if (nodeY.children.length === 0) {
@@ -4635,7 +4638,7 @@
             else if (isStyleElement(element)) {
                 const elementNode = new this.nodeObject(this.cacheProcessing.nextId, element);
                 this.viewController.initNode(elementNode);
-                if (isElementVisible(element)) {
+                if (isElementVisible(element, this.settings.hideOffScreenElements)) {
                     node = elementNode;
                     node.setExclusions();
                 }
@@ -4691,6 +4694,7 @@
                                             case 'height':
                                             case 'lineHeight':
                                             case 'verticalAlign':
+                                            case 'textIndent':
                                             case 'columnGap':
                                             case 'top':
                                             case 'right':
@@ -5237,7 +5241,7 @@
                             }
                             else {
                                 const clientXY = convertClientPX(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
-                                result[index === 0 ? 'top' : 'left'] = convertInt(clientXY);
+                                result[index === 0 ? 'left' : 'top'] = convertInt(clientXY);
                             }
                             break;
                     }
@@ -5341,12 +5345,12 @@
                             case 'borderBottom':
                             case 'borderLeft': {
                                 let cssColor = node.css(`${attr}Color`);
-                                switch (cssColor) {
+                                switch (cssColor.toLowerCase()) {
                                     case 'initial':
                                         cssColor = value;
                                         break;
                                     case 'inherit':
-                                    case 'currentColor':
+                                    case 'currentcolor':
                                         cssColor = cssInherit(node.element, `${attr}Color`);
                                         break;
                                 }
@@ -5623,12 +5627,12 @@
                                     let strokeColor = cssAttribute(item, 'stroke');
                                     const color = parseHex(cssAttribute(item, 'color'));
                                     if (fillColor !== '') {
-                                        switch (fillColor) {
+                                        switch (fillColor.toLowerCase()) {
                                             case 'none':
                                             case 'transparent':
                                                 fillColor = '';
                                                 break;
-                                            case 'currentColor':
+                                            case 'currentcolor':
                                                 fillColor = color || parseHex(cssInherit(item, 'color'));
                                                 break;
                                             default:
@@ -5637,12 +5641,12 @@
                                         }
                                     }
                                     if (strokeColor !== '') {
-                                        switch (strokeColor) {
+                                        switch (strokeColor.toLowerCase()) {
                                             case 'none':
                                             case 'transparent':
                                                 strokeColor = '';
                                                 break;
-                                            case 'currentColor':
+                                            case 'currentcolor':
                                                 strokeColor = color || parseHex(cssInherit(item, 'color'));
                                                 break;
                                             default:
@@ -5937,6 +5941,12 @@
                             }
                         }
                         if (value !== '') {
+                            if (node.renderParent.layoutVertical && node.inlineText) {
+                                const textIndent = node.toInt('textIndent');
+                                if (textIndent > 0) {
+                                    value = '&#160;'.repeat(Math.ceil(textIndent / 6)) + value;
+                                }
+                            }
                             setElementCache(element, 'valueString', { name, value });
                         }
                     }

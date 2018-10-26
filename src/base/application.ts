@@ -1,5 +1,7 @@
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
 
+import { DOM_REGEX } from '../lib/constant';
+
 import Node from './node';
 import NodeList from './nodelist';
 import Controller from './controller';
@@ -353,7 +355,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public initCache(rootElement: HTMLElement) {
         let nodeTotal = 0;
         if (rootElement === document.body) {
-            Array.from(document.body.childNodes).some((item: Element) => isElementVisible(item) && ++nodeTotal > 1);
+            Array.from(document.body.childNodes).some((item: Element) => isElementVisible(item, this.settings.hideOffScreenElements) && ++nodeTotal > 1);
         }
         const elements = rootElement !== document.body ? rootElement.querySelectorAll('*') : document.querySelectorAll(nodeTotal > 1 ? 'body, body *' : 'body *');
         this.cacheProcessing.parent = undefined;
@@ -1025,7 +1027,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                         if (nodeY.controlName === '') {
                             const borderVisible = nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0;
-                            const backgroundImage = /url(.*?)/.test(nodeY.css('backgroundImage'));
+                            const backgroundImage = DOM_REGEX.URL.test(nodeY.css('backgroundImage')) || DOM_REGEX.URL.test(nodeY.css('background'));
                             const backgroundColor = nodeY.has('backgroundColor');
                             const backgroundVisible = borderVisible || backgroundImage || backgroundColor;
                             if (nodeY.children.length === 0) {
@@ -1939,7 +1941,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         else if (isStyleElement(element)) {
             const elementNode = new this.nodeObject(this.cacheProcessing.nextId, element);
             this.viewController.initNode(elementNode);
-            if (isElementVisible(element)) {
+            if (isElementVisible(element, this.settings.hideOffScreenElements)) {
                 node = elementNode;
                 node.setExclusions();
             }
@@ -1998,6 +2000,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         case 'height':
                                         case 'lineHeight':
                                         case 'verticalAlign':
+                                        case 'textIndent':
                                         case 'columnGap':
                                         case 'top':
                                         case 'right':

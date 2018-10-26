@@ -83,7 +83,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         }
                         else {
                             const clientXY = convertClientPX(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
-                            result[index === 0 ? 'top' : 'left'] = convertInt(clientXY);
+                            result[index === 0 ? 'left' : 'top'] = convertInt(clientXY);
                         }
                         break;
                 }
@@ -216,12 +216,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         case 'borderBottom':
                         case 'borderLeft': {
                             let cssColor = node.css(`${attr}Color`);
-                            switch (cssColor) {
+                            switch (cssColor.toLowerCase()) {
                                 case 'initial':
                                     cssColor = value;
                                     break;
                                 case 'inherit':
-                                case 'currentColor':
+                                case 'currentcolor':
                                     cssColor = cssInherit(node.element, `${attr}Color`);
                                     break;
                             }
@@ -512,12 +512,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 let strokeColor = cssAttribute(item, 'stroke');
                                 const color = parseHex(cssAttribute(item, 'color'));
                                 if (fillColor !== '') {
-                                    switch (fillColor) {
+                                    switch (fillColor.toLowerCase()) {
                                         case 'none':
                                         case 'transparent':
                                             fillColor = '';
                                             break;
-                                        case 'currentColor':
+                                        case 'currentcolor':
                                             fillColor = color || parseHex(cssInherit(item, 'color'));
                                             break;
                                         default:
@@ -526,12 +526,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     }
                                 }
                                 if (strokeColor !== '') {
-                                    switch (strokeColor) {
+                                    switch (strokeColor.toLowerCase()) {
                                         case 'none':
                                         case 'transparent':
                                             strokeColor = '';
                                             break;
-                                        case 'currentColor':
+                                        case 'currentcolor':
                                             strokeColor = color || parseHex(cssInherit(item, 'color'));
                                             break;
                                         default:
@@ -835,6 +835,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         }
                     }
                     if (value !== '') {
+                        if (node.renderParent.layoutVertical && node.inlineText) {
+                            const textIndent = node.toInt('textIndent');
+                            if (textIndent > 0) {
+                                value = '&#160;'.repeat(Math.ceil(textIndent / 6)) + value;
+                            }
+                        }
                         setElementCache(element, 'valueString', { name, value });
                     }
                 }

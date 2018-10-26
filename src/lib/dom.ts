@@ -15,7 +15,7 @@ export function isUserAgent(value: number) {
     else if (navigator.userAgent.indexOf('Chrome') === -1 && navigator.userAgent.indexOf('Safari') !== -1) {
         client = USER_AGENT.SAFARI;
     }
-    return hasBit(client, value);
+    return hasBit(value, client);
 }
 
 export function getBoxRect(): BoxRect {
@@ -327,12 +327,15 @@ export function isStyleElement(element: Element): element is HTMLElement {
     return element instanceof HTMLElement || element instanceof SVGSVGElement;
 }
 
-export function isElementVisible(element: Element) {
+export function isElementVisible(element: Element, hideOffScreen: boolean) {
     if (!getElementCache(element, 'inlineSupport') && !(element.parentElement instanceof SVGSVGElement)) {
         if (isStyleElement(element)) {
             if (typeof element.getBoundingClientRect === 'function') {
                 const bounds = element.getBoundingClientRect();
-                if ((bounds.width !== 0 && bounds.height !== 0) || hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
+                if (bounds.width !== 0 && bounds.height !== 0) {
+                    return !(hideOffScreen && bounds.left < 0 && bounds.top < 0 && Math.abs(bounds.left) >= bounds.width && Math.abs(bounds.top) >= bounds.height);
+                }
+                else if (hasValue(element.dataset.ext) || getStyle(element).clear !== 'none') {
                     return true;
                 }
                 else {

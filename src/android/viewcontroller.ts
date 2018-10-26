@@ -185,8 +185,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 if (relative) {
                     function checkSingleLine(item: T, nowrap = false, flexParent = false) {
                         if (item && item.textElement && (
-                                nowrap ||
-                                flexParent ||
+                                nowrap || flexParent ||
                                 (!item.hasWidth && !item.multiLine && item.textContent.trim().split(String.fromCharCode(32)).length > 1)
                            ))
                         {
@@ -286,7 +285,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                         node.modifyBox($enum.BOX_STANDARD.PADDING_LEFT, null);
                     }
                     const rangeMultiLine: T[] = [];
-                    const clientEdge = $dom.isUserAgent($enum.USER_AGENT.EDGE);
+                    const edgeOrFirefox = $dom.isUserAgent($enum.USER_AGENT.EDGE | $enum.USER_AGENT.FIREFOX);
                     for (let i = 0; i < nodes.length; i++) {
                         const current = nodes.get(i);
                         const previous = nodes.get(i - 1);
@@ -295,7 +294,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             const [bounds, multiLine] = $dom.getRangeClientRect(current.element);
                             if (bounds && (multiLine || bounds.width < current.box.width)) {
                                 dimension = bounds;
-                                if (clientEdge && multiLine && !/^\s*\n+/.test(current.textContent)) {
+                                if (edgeOrFirefox && multiLine && !/^\s*\n+/.test(current.textContent)) {
                                     rangeMultiLine.push(current);
                                 }
                             }
@@ -317,7 +316,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             const siblings = $dom.getElementsBetweenSiblings(previous.baseElement, current.baseElement, false, true);
                             const viewGroup = current instanceof ViewGroup && !current.hasAlign($enum.NODE_ALIGNMENT.SEGMENTED);
                             const previousSibling = current.previousSibling();
-                            const baseWidth = rowWidth + current.marginLeft + dimension.width - (clientEdge ? current.borderRightWidth : 0);
+                            const baseWidth = rowWidth + current.marginLeft + dimension.width - (edgeOrFirefox ? current.borderRightWidth : 0);
                             let connected = false;
                             if (i === 1 && previous.textElement && current.textElement) {
                                 connected = siblings.length === 0 && !/\s+$/.test(previous.textContent) && !/^\s+/.test(current.textContent);
@@ -1681,12 +1680,13 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         return group;
     }
 
-    public renderGroup(node: T, parent: T, viewName: number | string, options?: ObjectMap<any>) {
+    public renderGroup(node: T, parent: T, nodeType: number | string, options?: ObjectMap<any>) {
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
-        if (typeof viewName === 'number') {
-            viewName = View.getControlName(viewName);
+        if (typeof nodeType === 'number') {
+            node.nodeType = nodeType;
+            nodeType = View.getControlName(nodeType);
         }
-        switch (viewName) {
+        switch (nodeType) {
             case NODE_ANDROID.LINEAR:
                 options = {
                     android: {
@@ -1706,7 +1706,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 options = {};
                 break;
         }
-        node.setNodeType(viewName);
+        node.setNodeType(nodeType);
         let preXml = '';
         let postXml = '';
         if (node.overflowX || node.overflowY) {
@@ -1779,7 +1779,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         node.apply(options);
         return ViewController.getEnclosingTag(
             target || $util.hasValue(parent.dataset.target) || (node.renderDepth === 0 && !node.documentRoot) ? -1 : node.renderDepth,
-            viewName,
+            nodeType,
             node.id,
             $xml.formatPlaceholder(node.id),
             preXml,
@@ -1787,12 +1787,13 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         );
     }
 
-    public renderNode(node: T, parent: T, nodeName: number | string, recursive = false): string {
+    public renderNode(node: T, parent: T, nodeType: number | string, recursive = false): string {
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
-        if (typeof nodeName === 'number') {
-            nodeName = View.getControlName(nodeName);
+        if (typeof nodeType === 'number') {
+            node.nodeType = nodeType;
+            nodeType = View.getControlName(nodeType);
         }
-        node.setNodeType(nodeName);
+        node.setNodeType(nodeType);
         switch (node.tagName) {
             case 'IMG': {
                 if (!recursive) {
@@ -1871,7 +1872,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 container.renderDepth,
                                 NODE_ANDROID.FRAME,
                                 container.id,
-                                this.renderNode(node, container, nodeName, true)
+                                this.renderNode(node, container, nodeType, true)
                             );
                         }
                     }
@@ -2020,14 +2021,21 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         );
     }
 
-    public renderNodeStatic(nodeName: number | string, depth: number, options = {}, width = '', height = '', node?: T, children?: boolean) {
+    public renderNodeStatic(nodeType: number | string, depth: number, options = {}, width = '', height = '', node?: T, children?: boolean) {
         if (!node) {
             node = new View() as T;
             node.api = this.settings.targetAPI;
         }
         node.apply(ResourceHandler.formatOptions(options, this.settings));
         const renderDepth = Math.max(0, depth);
-        const viewName = typeof nodeName === 'number' ? View.getControlName(nodeName) : nodeName;
+        let viewName =  '';
+        if (typeof nodeType === 'number') {
+            node.nodeType = nodeType;
+            viewName = View.getControlName(nodeType);
+        }
+        else {
+            viewName = nodeType;
+        }
         switch (viewName) {
             case 'include':
             case 'merge':
