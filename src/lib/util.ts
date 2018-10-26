@@ -118,23 +118,6 @@ export function convertPX(value: any, fontSize?: Null<string>) {
     return '0px';
 }
 
-export function replaceWhiteSpace(value: string) {
-    value = value.replace(/\u00A0/g, '&#160;');
-    value = value.replace(/\u2002/g, '&#8194;');
-    value = value.replace(/\u2003/g, '&#8195;');
-    value = value.replace(/\u2009/g, '&#8201;');
-    value = value.replace(/\u200C/g, '&#8204;');
-    value = value.replace(/\u200D/g, '&#8205;');
-    value = value.replace(/\u200E/g, '&#8206;');
-    value = value.replace(/\u200F/g, '&#8207;');
-    return value;
-}
-
-export function formatPX(value: any) {
-    value = parseFloat(value);
-    return `${!isNaN(value) ? Math.round(value) : 0}px`;
-}
-
 export function convertAlpha(value: number) {
     let result = '';
     while (value >= ALPHABET.length) {
@@ -175,12 +158,17 @@ export function convertEnum(value: number, base: {}, derived: {}): string {
     return '';
 }
 
+export function formatPX(value: any) {
+    value = parseFloat(value);
+    return `${!isNaN(value) ? Math.round(value) : 0}px`;
+}
+
 export function hasBit(value: number, type: number) {
     return (value & type) === type;
 }
 
 export function isNumber(value: string | number): value is number {
-    return /^-?[0-9]+(\.[0-9]+)?$/.test(value.toString().trim());
+    return /^-?\d+(\.\d+)?$/.test(value.toString().trim());
 }
 
 export function isString(value: any): value is string {
@@ -188,11 +176,11 @@ export function isString(value: any): value is string {
 }
 
 export function isUnit(value: string) {
-    return isString(value) ? /^-?[0-9.]+(px|pt|em)$/.test(value.trim()) : false;
+    return isString(value) ? /^-?[\d.]+(px|pt|em)$/.test(value.trim()) : false;
 }
 
 export function isPercent(value: string) {
-    return /^[0-9]+(\.[0-9]+)?%$/.test(value);
+    return /^\d+(\.\d+)?%$/.test(value);
 }
 
 export function includes(source: Null<string>, value: string, delimiter = ',') {

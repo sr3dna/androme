@@ -102,12 +102,13 @@ export const INLINE_ELEMENT = [
 ];
 
 export const EXT_NAME = {
-    EXTERNAL: 'androme.external',
-    ORIGIN: 'androme.origin',
     ACCESSIBILITY: 'androme.accessibility',
     CUSTOM: 'androme.custom',
+    EXTERNAL: 'androme.external',
     GRID: 'androme.grid',
     LIST: 'androme.list',
+    ORIGIN: 'androme.origin',
+    SPRITE: 'androme.sprite',
     TABLE: 'androme.table'
 };
 

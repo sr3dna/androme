@@ -354,7 +354,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         return this;
     }
 
-    public each(predicate: (value: T, index?: number) => void) {
+    public each(predicate: IteratorPredicate<T, void>) {
         this._list.forEach(predicate);
         return this;
     }

@@ -39,6 +39,7 @@ declare global {
             export class List<T extends Node> extends Extension<T> {}
             export class Nav<T extends Node> extends Extension<T> {}
             export class Origin<T extends Node> extends Extension<T> {}
+            export class Sprite<T extends Node> extends Extension<T> {}
             export class Table<T extends Node> extends Extension<T> {}
         }
     }

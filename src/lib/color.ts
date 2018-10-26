@@ -290,7 +290,7 @@ export function parseRGBA(value: string, opacity = '1'): string[] {
         if (rgb) {
             value = formatRGB(rgb);
         }
-        const match = value.match(/rgba?\(([0-9]+),\s*([0-9]+),\s*([0-9]+),?\s*([0-9.]+)?\)/);
+        const match = value.match(/rgba?\((\d+), (\d+), (\d+),?\s*([\d.]+)?\)/);
         if (match && match.length >= 4 && match[4] !== '0') {
             if (match[4] == null) {
                 match[4] = opacity;
@@ -312,7 +312,7 @@ export function parseHex(value: string) {
         if (color.length > 0) {
             value = color[0];
         }
-        if (value.charAt(0) === '#' && /^#[a-zA-Z0-9]{3,6}$/.test(value)) {
+        if (value.charAt(0) === '#' && /^#[a-zA-Z\d]{3,6}$/.test(value)) {
             const rgb = convertToRGB(value);
             return value.length === 4 && rgb ? parseRGBA(formatRGB(rgb))[0] : value;
         }

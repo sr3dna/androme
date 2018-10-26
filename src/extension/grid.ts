@@ -221,7 +221,7 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
             mainData.columnCount = columnBalance ? columns[0].length : columns.length;
             output = this.application.writeGridLayout(node, parent, mainData.columnCount);
             node.children.slice().forEach(item => {
-                node.remove(item);
+                node.removeChild(item);
                 item.hide();
             });
             for (let l = 0, count = 0; l < columns.length; l++) {

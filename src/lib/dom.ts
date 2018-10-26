@@ -75,10 +75,8 @@ export function getRangeClientRect(element: Element): [Null<BoxDimensions>, bool
             result.top = Math.min.apply(null, Array.from(top));
             result.bottom = Math.max.apply(null, Array.from(bottom));
             if (domRect[domRect.length - 1].top >= domRect[0].bottom &&
-                element.textContent && (
-                    element.textContent.trim() !== '' ||
-                    /^\s*\n/.test(element.textContent)
-               ))
+                element.textContent &&
+                (element.textContent.trim() !== '' || /^\s*\n/.test(element.textContent)))
             {
                 multiLine = true;
             }

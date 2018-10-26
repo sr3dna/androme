@@ -48,8 +48,7 @@ type StyleList = ArrayObject<ObjectMap<number[]>>;
 
 const METHOD_ANDROID = {
     'boxStyle': {
-        'background': 'android:background="@drawable/{0}"',
-        'backgroundColor': 'android:background="@color/{0}"'
+        'src': 'android:background="@drawable/{0}"'
     },
     'fontStyle': {
         'fontFamily': 'android:fontFamily="{0}"',
@@ -241,13 +240,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 name = name.trim()
                     .toLowerCase()
-                    .replace(/[^a-z0-9]/g, '_')
+                    .replace(/[^a-z\d]/g, '_')
                     .replace(/_+/g, '_')
                     .split('_')
                     .slice(0, 4)
                     .join('_')
                     .replace(/_+$/g, '');
-                if (numeric || /^[0-9]/.test(name) || RESERVED_JAVA.includes(name)) {
+                if (numeric || /^\d/.test(name) || RESERVED_JAVA.includes(name)) {
                     name = `__${name}`;
                 }
                 else if (name === '') {
@@ -269,7 +268,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         if (srcset !== '') {
             const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
             srcset.split(',').forEach(value => {
-                const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                const match = /^(.*?)\s*(\d+\.?\d*x)?$/.exec(value.trim());
                 if (match) {
                     if (match[2] == null) {
                         match[2] = '1x';
@@ -339,21 +338,23 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         value = value.toUpperCase().trim();
         if (value !== '') {
             const hex = parseFloat(opacity) < 1 ? `#${$color.convertToHex('255', parseFloat(opacity)) + value.substring(1)}` : value;
-            let colorName = $resource.STORED.colors.get(hex) || '';
-            if (colorName === '') {
-                const color = $color.getColorNearest(value);
-                if (color) {
-                    color.name = $util.camelToLowerCase(color.name);
-                    if (hex === color.hex) {
-                        colorName = color.name;
+            if (hex !== '#00000000') {
+                let colorName = $resource.STORED.colors.get(hex) || '';
+                if (colorName === '') {
+                    const color = $color.getColorNearest(value);
+                    if (color) {
+                        color.name = $util.camelToLowerCase(color.name);
+                        if (hex === color.hex) {
+                            colorName = color.name;
+                        }
+                        else {
+                            colorName = generateId('color', color.name, 1);
+                        }
+                        $resource.STORED.colors.set(hex, colorName);
                     }
-                    else {
-                        colorName = generateId('color', color.name, 1);
-                    }
-                    $resource.STORED.colors.set(hex, colorName);
                 }
+                return colorName;
             }
-            return colorName;
         }
         return '';
     }
@@ -511,21 +512,23 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
                 const backgroundPosition: string[] = [];
                 if (Array.isArray(stored.backgroundImage)) {
-                    backgroundImage.push(...stored.backgroundImage);
-                    for (let i = 0; i < backgroundImage.length; i++) {
-                        if (backgroundImage[i] && backgroundImage[i] !== 'none') {
-                            backgroundDimensions.push(this.imageDimensions.get($dom.cssResolveUrl(backgroundImage[i])));
-                            backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
-                            const postionX = backgroundPositionX[i] || backgroundPositionX[i - 1];
-                            const postionY = backgroundPositionY[i] || backgroundPositionY[i - 1];
-                            const x = checkPartialBackgroundPosition(postionX, postionY, 'left');
-                            const y = checkPartialBackgroundPosition(postionY, postionX, 'top');
-                            backgroundPosition[i] = `${x === 'initial' ? '0px' : x} ${y === 'initial' ? '0px' : y}`;
-                        }
-                        else {
-                            backgroundImage[i] = '';
-                            backgroundRepeat[i] = '';
-                            backgroundPosition[i] = '';
+                    if (!node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE)) {
+                        backgroundImage.push(...stored.backgroundImage);
+                        for (let i = 0; i < backgroundImage.length; i++) {
+                            if (backgroundImage[i] && backgroundImage[i] !== 'none') {
+                                backgroundDimensions.push(this.imageDimensions.get($dom.cssResolveUrl(backgroundImage[i])));
+                                backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
+                                const postionX = backgroundPositionX[i] || backgroundPositionX[i - 1];
+                                const postionY = backgroundPositionY[i] || backgroundPositionY[i - 1];
+                                const x = checkPartialBackgroundPosition(postionX, postionY, 'left');
+                                const y = checkPartialBackgroundPosition(postionY, postionX, 'top');
+                                backgroundPosition[i] = `${x === 'initial' ? '0px' : x} ${y === 'initial' ? '0px' : y}`;
+                            }
+                            else {
+                                backgroundImage[i] = '';
+                                backgroundRepeat[i] = '';
+                                backgroundPosition[i] = '';
+                            }
                         }
                     }
                 }
@@ -574,7 +577,6 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         backgroundGradient.push(gradient);
                     }
                 }
-                const method = METHOD_ANDROID['boxStyle'];
                 const companion = node.companion;
                 if (companion &&
                     companion.htmlElement &&
@@ -1002,7 +1004,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             $resource.STORED.drawables.set(resourceName, xml);
                         }
                     }
-                    node.formatted($util.formatString(method['background'], resourceName), node.renderExtension.size === 0);
+                    const method = METHOD_ANDROID[node.is($enum.NODE_STANDARD.IMAGE) ? 'imageSource' : 'boxStyle'];
+                    node.formatted($util.formatString(method['src'], resourceName), node.renderExtension.size === 0);
                     if (hasBackgroundImage) {
                         node.data('RESOURCE', 'backgroundImage', true);
                         if (this.settings.autoSizeBackgroundImage &&
@@ -1055,7 +1058,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                 }
                 else if (!$dom.getElementCache(node.element, 'fontStyle') && $util.isString(stored.backgroundColor)) {
-                    node.formatted($util.formatString(method['backgroundColor'], stored.backgroundColor), node.renderExtension.size === 0);
+                    node.formatted($util.formatString(METHOD_ANDROID['fontStyle']['backgroundColor'], stored.backgroundColor), node.renderExtension.size === 0);
                 }
             }
         });
@@ -1074,7 +1077,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 const textShadow = node.css('textShadow');
                 if (textShadow !== 'none') {
-                    [/^(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9.]+)?\)) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2})$/, /^([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) (.+)$/].some((value, index) => {
+                    [
+                        /^(rgb(?:a)?\(\d+, \d+, \d+(?:, [\d.]+)?\)) ([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+)$/,
+                        /^([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+) (.+)$/
+                    ]
+                    .some((value, index) => {
                         const match = textShadow.match(value);
                         if (match) {
                             const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
@@ -1630,7 +1637,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         for (const styles of inherit) {
             let parent = '';
             styles.split('.').forEach(value => {
-                const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
+                const match = value.match(/^(\w*?)(?:_(\d+))?$/);
                 if (match) {
                     const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
                     tagData.name = value;

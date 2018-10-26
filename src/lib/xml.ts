@@ -1,11 +1,11 @@
-import { isString, repeat, replaceWhiteSpace } from './util';
+import { isString, repeat } from './util';
 
 export function formatPlaceholder(id: string | number, symbol = ':') {
     return `{${symbol + id.toString()}}`;
 }
 
 export function removePlaceholderAll(value: string) {
-    return value.replace(/{[<:@>][0-9]+(:[0-9]+)?}/g, '').trim();
+    return value.replace(/{[<:@>]\d+(:\d+)?}/g, '').trim();
 }
 
 export function replacePlaceholder(value: string, id: string | number, content: string, before = false) {
@@ -51,9 +51,21 @@ export function replaceTab(value: string, { insertSpaces = 4 }, preserve = false
 }
 
 export function replaceEntity(value: string) {
-    value = value.replace(/&#([0-9]+);/g, (match, capture) => String.fromCharCode(parseInt(capture)));
+    value = value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(parseInt(capture)));
     value = value.replace(/&nbsp;/g, '&#160;');
     return replaceWhiteSpace(value);
+}
+
+export function replaceWhiteSpace(value: string) {
+    value = value.replace(/\u00A0/g, '&#160;');
+    value = value.replace(/\u2002/g, '&#8194;');
+    value = value.replace(/\u2003/g, '&#8195;');
+    value = value.replace(/\u2009/g, '&#8201;');
+    value = value.replace(/\u200C/g, '&#8204;');
+    value = value.replace(/\u200D/g, '&#8205;');
+    value = value.replace(/\u200E/g, '&#8206;');
+    value = value.replace(/\u200F/g, '&#8207;');
+    return value;
 }
 
 export function parseTemplate(template: string) {
@@ -80,7 +92,7 @@ export function parseTemplate(template: string) {
             match = null;
         }
         if (!match) {
-            pattern = /(!([0-9]+)\n?)[\w\W]*\1/g;
+            pattern = /(!(\d+)\n?)[\w\W]*\1/g;
         }
         if (pattern) {
             match = pattern.exec(template);

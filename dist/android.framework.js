@@ -1,4 +1,4 @@
-/* androme 2.1.0
+/* androme 2.1.1
    https://github.com/anpham6/androme */
 
 var android = (function () {
@@ -255,6 +255,7 @@ var android = (function () {
             'androme.origin',
             'androme.custom',
             'androme.accessibility',
+            'androme.sprite',
             'androme.list',
             'androme.table',
             'androme.grid'
@@ -442,7 +443,7 @@ var android = (function () {
     function replaceUnit(value, { density = 160, convertPixels = 'dp' }, font = false) {
         switch (convertPixels) {
             case 'dp':
-                return value.replace(/([">])(-)?([0-9]+(?:\.[0-9]+)?px)(["<])/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], density, font) + capture[3]);
+                return value.replace(/([">])(-)?(\d+(?:\.\d+)?px)(["<])/g, (match, ...capture) => capture[0] + (capture[1] || '') + convertUnit(capture[2], density, font) + capture[3]);
             default:
                 return value;
         }
@@ -671,17 +672,16 @@ var android = (function () {
                 node.renderParent = this.renderParent;
                 node.renderExtension = this.renderExtension;
                 node.documentRoot = this.documentRoot;
-                node.documentParent = this.documentParent;
                 if (children) {
                     node.children = this.children.slice();
                 }
                 node.inherit(this, 'initial', 'base', 'style', 'styleMap');
                 return node;
             }
-            setNodeType(nodeName) {
+            setNodeType(controlName) {
                 if (this.nodeType === 0) {
                     for (const android in NODE_ANDROID) {
-                        if (NODE_ANDROID[android] === nodeName) {
+                        if (NODE_ANDROID[android] === controlName) {
                             for (const standard in $enum.NODE_STANDARD) {
                                 if ($enum.NODE_STANDARD[$enum.NODE_STANDARD[standard]] === android) {
                                     this.nodeType = $enum.NODE_STANDARD[standard];
@@ -692,7 +692,7 @@ var android = (function () {
                         }
                     }
                 }
-                this.controlName = nodeName;
+                this.controlName = controlName;
                 if (this.android('id') !== '') {
                     this.nodeId = stripId(this.android('id'));
                 }
@@ -1218,14 +1218,16 @@ var android = (function () {
                 if (this.pageflow) {
                     const renderParent = this.renderParent;
                     if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
-                        [['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]].forEach((item, index) => {
+                        [
+                            ['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP],
+                            ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]
+                        ]
+                            .forEach((item, index) => {
                             const node = $dom.getNodeFromElement(renderParent[item[0]]);
                             if (node && !node.lineBreak && (node === this ||
                                 node === this.renderChildren[index === 0 ? 0 : this.renderChildren.length - 1])) {
                                 const marginOffset = renderParent[`margin${item[1]}`];
-                                if (marginOffset > 0 &&
-                                    renderParent[`padding${item[1]}`] === 0 &&
-                                    renderParent[`border${item[1]}Width`] === 0) {
+                                if (marginOffset > 0 && renderParent[`padding${item[1]}`] === 0 && renderParent[`border${item[1]}Width`] === 0) {
                                     node.modifyBox(item[2], null);
                                 }
                             }
@@ -1486,8 +1488,8 @@ var android = (function () {
                             this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + View.getPaddedHeight(this)));
                         }
                     }
-                    if (!renderChildren.some(node => node.imageElement && node.baseline) && (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) ||
-                        renderChildren.some(node => node.floating || !node.siblingflow))) {
+                    if (!renderChildren.some(node => node.imageElement && node.baseline) &&
+                        (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) || renderChildren.some(node => node.floating || !node.siblingflow))) {
                         this.android('baselineAligned', 'false');
                     }
                     else {
@@ -1503,9 +1505,7 @@ var android = (function () {
                             }
                         }
                     }
-                    if (settings.ellipsisOnTextOverflow &&
-                        this.length > 1 &&
-                        renderChildren.every(node => node.textElement && !node.floating)) {
+                    if (settings.ellipsisOnTextOverflow && this.length > 1 && renderChildren.every(node => node.textElement && !node.floating)) {
                         const node = renderChildren[renderChildren.length - 1];
                         if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
                             node.android('singleLine', 'true');
@@ -1780,8 +1780,7 @@ var android = (function () {
     var $resource = androme.lib.base.Resource;
     const METHOD_ANDROID = {
         'boxStyle': {
-            'background': 'android:background="@drawable/{0}"',
-            'backgroundColor': 'android:background="@color/{0}"'
+            'src': 'android:background="@drawable/{0}"'
         },
         'fontStyle': {
             'fontFamily': 'android:fontFamily="{0}"',
@@ -1973,13 +1972,13 @@ var android = (function () {
                     }
                     name = name.trim()
                         .toLowerCase()
-                        .replace(/[^a-z0-9]/g, '_')
+                        .replace(/[^a-z\d]/g, '_')
                         .replace(/_+/g, '_')
                         .split('_')
                         .slice(0, 4)
                         .join('_')
                         .replace(/_+$/g, '');
-                    if (numeric || /^[0-9]/.test(name) || RESERVED_JAVA.includes(name)) {
+                    if (numeric || /^\d/.test(name) || RESERVED_JAVA.includes(name)) {
                         name = `__${name}`;
                     }
                     else if (name === '') {
@@ -2000,7 +1999,7 @@ var android = (function () {
             if (srcset !== '') {
                 const filepath = element.src.substring(0, element.src.lastIndexOf('/') + 1);
                 srcset.split(',').forEach(value => {
-                    const match = /^(.*?)\s*([0-9]+\.?[0-9]*x)?$/.exec(value.trim());
+                    const match = /^(.*?)\s*(\d+\.?\d*x)?$/.exec(value.trim());
                     if (match) {
                         if (match[2] == null) {
                             match[2] = '1x';
@@ -2067,21 +2066,23 @@ var android = (function () {
             value = value.toUpperCase().trim();
             if (value !== '') {
                 const hex = parseFloat(opacity) < 1 ? `#${$color.convertToHex('255', parseFloat(opacity)) + value.substring(1)}` : value;
-                let colorName = $resource.STORED.colors.get(hex) || '';
-                if (colorName === '') {
-                    const color = $color.getColorNearest(value);
-                    if (color) {
-                        color.name = $util$1.camelToLowerCase(color.name);
-                        if (hex === color.hex) {
-                            colorName = color.name;
+                if (hex !== '#00000000') {
+                    let colorName = $resource.STORED.colors.get(hex) || '';
+                    if (colorName === '') {
+                        const color = $color.getColorNearest(value);
+                        if (color) {
+                            color.name = $util$1.camelToLowerCase(color.name);
+                            if (hex === color.hex) {
+                                colorName = color.name;
+                            }
+                            else {
+                                colorName = generateId('color', color.name, 1);
+                            }
+                            $resource.STORED.colors.set(hex, colorName);
                         }
-                        else {
-                            colorName = generateId('color', color.name, 1);
-                        }
-                        $resource.STORED.colors.set(hex, colorName);
                     }
+                    return colorName;
                 }
-                return colorName;
             }
             return '';
         }
@@ -2228,21 +2229,23 @@ var android = (function () {
                     const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
                     const backgroundPosition = [];
                     if (Array.isArray(stored.backgroundImage)) {
-                        backgroundImage.push(...stored.backgroundImage);
-                        for (let i = 0; i < backgroundImage.length; i++) {
-                            if (backgroundImage[i] && backgroundImage[i] !== 'none') {
-                                backgroundDimensions.push(this.imageDimensions.get($dom$1.cssResolveUrl(backgroundImage[i])));
-                                backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
-                                const postionX = backgroundPositionX[i] || backgroundPositionX[i - 1];
-                                const postionY = backgroundPositionY[i] || backgroundPositionY[i - 1];
-                                const x = checkPartialBackgroundPosition(postionX, postionY, 'left');
-                                const y = checkPartialBackgroundPosition(postionY, postionX, 'top');
-                                backgroundPosition[i] = `${x === 'initial' ? '0px' : x} ${y === 'initial' ? '0px' : y}`;
-                            }
-                            else {
-                                backgroundImage[i] = '';
-                                backgroundRepeat[i] = '';
-                                backgroundPosition[i] = '';
+                        if (!node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.IMAGE_SOURCE)) {
+                            backgroundImage.push(...stored.backgroundImage);
+                            for (let i = 0; i < backgroundImage.length; i++) {
+                                if (backgroundImage[i] && backgroundImage[i] !== 'none') {
+                                    backgroundDimensions.push(this.imageDimensions.get($dom$1.cssResolveUrl(backgroundImage[i])));
+                                    backgroundImage[i] = ResourceHandler.addImageURL(backgroundImage[i]);
+                                    const postionX = backgroundPositionX[i] || backgroundPositionX[i - 1];
+                                    const postionY = backgroundPositionY[i] || backgroundPositionY[i - 1];
+                                    const x = checkPartialBackgroundPosition(postionX, postionY, 'left');
+                                    const y = checkPartialBackgroundPosition(postionY, postionX, 'top');
+                                    backgroundPosition[i] = `${x === 'initial' ? '0px' : x} ${y === 'initial' ? '0px' : y}`;
+                                }
+                                else {
+                                    backgroundImage[i] = '';
+                                    backgroundRepeat[i] = '';
+                                    backgroundPosition[i] = '';
+                                }
                             }
                         }
                     }
@@ -2291,7 +2294,6 @@ var android = (function () {
                             backgroundGradient.push(gradient);
                         }
                     }
-                    const method = METHOD_ANDROID['boxStyle'];
                     const companion = node.companion;
                     if (companion &&
                         companion.htmlElement &&
@@ -2712,7 +2714,8 @@ var android = (function () {
                                 $resource.STORED.drawables.set(resourceName, xml);
                             }
                         }
-                        node.formatted($util$1.formatString(method['background'], resourceName), node.renderExtension.size === 0);
+                        const method = METHOD_ANDROID[node.is($enum$1.NODE_STANDARD.IMAGE) ? 'imageSource' : 'boxStyle'];
+                        node.formatted($util$1.formatString(method['src'], resourceName), node.renderExtension.size === 0);
                         if (hasBackgroundImage) {
                             node.data('RESOURCE', 'backgroundImage', true);
                             if (this.settings.autoSizeBackgroundImage &&
@@ -2764,7 +2767,7 @@ var android = (function () {
                         }
                     }
                     else if (!$dom$1.getElementCache(node.element, 'fontStyle') && $util$1.isString(stored.backgroundColor)) {
-                        node.formatted($util$1.formatString(method['backgroundColor'], stored.backgroundColor), node.renderExtension.size === 0);
+                        node.formatted($util$1.formatString(METHOD_ANDROID['fontStyle']['backgroundColor'], stored.backgroundColor), node.renderExtension.size === 0);
                     }
                 }
             });
@@ -2782,7 +2785,11 @@ var android = (function () {
                     }
                     const textShadow = node.css('textShadow');
                     if (textShadow !== 'none') {
-                        [/^(rgb(?:a)?\([0-9]{1,3}, [0-9]{1,3}, [0-9]{1,3}(?:, [0-9.]+)?\)) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2})$/, /^([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) ([0-9.]+[a-z]{2}) (.+)$/].some((value, index) => {
+                        [
+                            /^(rgb(?:a)?\(\d+, \d+, \d+(?:, [\d.]+)?\)) ([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+)$/,
+                            /^([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+) (.+)$/
+                        ]
+                            .some((value, index) => {
                             const match = textShadow.match(value);
                             if (match) {
                                 const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
@@ -3328,7 +3335,7 @@ var android = (function () {
             for (const styles of inherit) {
                 let parent = '';
                 styles.split('.').forEach(value => {
-                    const match = value.match(/^(\w*?)(?:_([0-9]+))?$/);
+                    const match = value.match(/^(\w*?)(?:_(\d+))?$/);
                     if (match) {
                         const tagData = resource[match[1].toUpperCase()][match[2] == null ? 0 : parseInt(match[2])];
                         tagData.name = value;
@@ -3654,8 +3661,8 @@ var android = (function () {
                                     rowPreviousBottom = items.filter(item => !item.floating)[0] || items[0];
                                     for (let j = 0; j < items.length; j++) {
                                         if (items[j] !== rowPreviousBottom &&
-                                            items[j].linear.bottom > rowPreviousBottom.linear.bottom && (!items[j].floating ||
-                                            (items[j].floating && rowPreviousBottom.floating))) {
+                                            items[j].linear.bottom > rowPreviousBottom.linear.bottom &&
+                                            (!items[j].floating || (items[j].floating && rowPreviousBottom.floating))) {
                                             rowPreviousBottom = items[j];
                                         }
                                     }
@@ -3874,9 +3881,7 @@ var android = (function () {
                                             const vertical = anchoredSibling(adjacent, nodes, AXIS_ANDROID.VERTICAL) ? AXIS_ANDROID.VERTICAL : '';
                                             const intersectY = current.intersectY(adjacent.linear);
                                             const alignOrigin = current.alignOrigin && adjacent.alignOrigin;
-                                            if (!current.hasWidth &&
-                                                current.linear.left === adjacent.linear.left &&
-                                                current.linear.right === adjacent.linear.right) {
+                                            if (!current.hasWidth && current.linear.left === adjacent.linear.left && current.linear.right === adjacent.linear.right) {
                                                 if (!mapParent(current, 'right')) {
                                                     current.anchor(mapLayout['left'], stringId);
                                                 }
@@ -4725,13 +4730,15 @@ var android = (function () {
                                         bottomTop: mapSibling(current, 'bottomTop'),
                                     };
                                     if ((bottom && mapSibling(current, 'topBottom') && current.hasHeight) ||
-                                        (top && bottom && (!current.has('marginTop', $enum$2.CSS_STANDARD.AUTO) &&
-                                            current.linear.bottom < maxBottom))) {
+                                        (top && bottom && current.linear.bottom < maxBottom && !current.has('marginTop', $enum$2.CSS_STANDARD.AUTO))) {
                                         mapDelete(current, 'bottom');
                                         bottom = false;
                                     }
                                     if (current.pageflow) {
-                                        [[left, right, 'rightLeft', 'leftRight', 'right', 'left', 'Horizontal'], [top, bottom, 'bottomTop', 'topBottom', 'bottom', 'top', 'Vertical']]
+                                        [
+                                            [left, right, 'rightLeft', 'leftRight', 'right', 'left', 'Horizontal'],
+                                            [top, bottom, 'bottomTop', 'topBottom', 'bottom', 'top', 'Vertical']
+                                        ]
                                             .forEach((value, index) => {
                                             if (value[0] || value[1]) {
                                                 let valid = value[0] && value[1];
@@ -4990,19 +4997,19 @@ var android = (function () {
                     }
                 }
                 let previous = null;
-                const scrollView = overflow.map((nodeName, index) => {
+                const scrollView = overflow.map((controlName, index) => {
                     const container = new View(this.cache.nextId, index === 0 ? node.element : undefined);
-                    container.api = this.settings.targetAPI;
+                    container.api = node.api;
                     container.nodeName = node.nodeName;
-                    container.documentParent = node.documentParent;
-                    container.setNodeType(nodeName);
+                    container.setNodeType(controlName);
                     if (index === 0) {
                         container.inherit(node, 'initial', 'base', 'data', 'style', 'styleMap');
-                        container.parent = parent;
+                        parent.replaceChild(node, container);
                         container.render(parent);
                     }
                     else {
                         container.init();
+                        container.documentParent = node.documentParent;
                         container.inherit(node, 'dimensions');
                         container.inherit(node, 'initial', 'style', 'styleMap');
                         if (previous) {
@@ -5021,9 +5028,9 @@ var android = (function () {
                     }
                     container.resetBox($enum$2.BOX_STANDARD.PADDING);
                     const indent = $util$2.repeat(container.renderDepth);
-                    preXml += `{<${container.id}}${indent}<${nodeName}{@${container.id}}>\n` +
+                    preXml += `{<${container.id}}${indent}<${controlName}{@${container.id}}>\n` +
                         `{:${container.id}}`;
-                    postXml = `${indent}</${nodeName}>\n{>${container.id}}` + (index === 1 ? '\n' : '') + postXml;
+                    postXml = `${indent}</${controlName}>\n{>${container.id}}` + (index === 1 ? '\n' : '') + postXml;
                     previous = container;
                     this.cache.append(container);
                     return container;
@@ -5067,14 +5074,14 @@ var android = (function () {
                         }
                         else {
                             if (width === 0) {
-                                const match = /width="([0-9]+)"/.exec(element.outerHTML);
+                                const match = /width="(\d+)"/.exec(element.outerHTML);
                                 if (match) {
                                     width = parseInt(match[1]);
                                     node.css('width', $util$2.formatPX(match[1]));
                                 }
                             }
                             if (height === 0) {
-                                const match = /height="([0-9]+)"/.exec(element.outerHTML);
+                                const match = /height="(\d+)"/.exec(element.outerHTML);
                                 if (match) {
                                     height = parseInt(match[1]);
                                     node.css('height', $util$2.formatPX(match[1]));
@@ -6030,20 +6037,6 @@ var android = (function () {
         }
     }
 
-    class External extends androme.lib.base.extensions.External {
-    }
-
-    class Origin extends androme.lib.base.extensions.Origin {
-    }
-
-    class Custom extends androme.lib.base.extensions.Custom {
-        afterInsert() {
-            const node = this.node;
-            const options = Object.assign({}, this.options[node.element.id]);
-            node.apply(ResourceHandler.formatOptions(options, this.application.settings));
-        }
-    }
-
     var $enum$3 = androme.lib.enumeration;
     var $util$4 = androme.lib.util;
     var $dom$3 = androme.lib.dom;
@@ -6085,52 +6078,129 @@ var android = (function () {
         }
     }
 
+    class Custom extends androme.lib.base.extensions.Custom {
+        afterInsert() {
+            const node = this.node;
+            const options = Object.assign({}, this.options[node.element.id]);
+            node.apply(ResourceHandler.formatOptions(options, this.application.settings));
+        }
+    }
+
+    class External extends androme.lib.base.extensions.External {
+    }
+
     var $enum$4 = androme.lib.enumeration;
     var $const$1 = androme.lib.constant;
     var $util$5 = androme.lib.util;
+    var $dom$4 = androme.lib.dom;
+    class Grid extends androme.lib.base.extensions.Grid {
+        processChild() {
+            const node = this.node;
+            const data = node.data($const$1.EXT_NAME.GRID, 'cellData');
+            if (data) {
+                if (data.rowSpan > 1) {
+                    node.android('layout_rowSpan', data.rowSpan.toString());
+                }
+                if (data.columnSpan > 1) {
+                    node.android('layout_columnSpan', data.columnSpan.toString());
+                }
+                if (node.parent.display === 'table' && node.display === 'table-cell') {
+                    node.android('layout_gravity', 'fill');
+                }
+            }
+            return super.processChild();
+        }
+        afterRender() {
+            for (const node of this.subscribers) {
+                if (!(node.display === 'table' && node.css('borderCollapse') === 'collapse')) {
+                    const mainData = node.data($const$1.EXT_NAME.GRID, 'mainData');
+                    if (mainData) {
+                        node.each(item => {
+                            const cellData = item.data($const$1.EXT_NAME.GRID, 'cellData');
+                            if (cellData) {
+                                const dimensions = $dom$4.getBoxSpacing(item.documentParent.element, true);
+                                const padding = mainData.padding;
+                                if (cellData.cellFirst) {
+                                    padding.top = dimensions.paddingTop + dimensions.marginTop;
+                                }
+                                if (cellData.rowStart) {
+                                    padding.left = Math.max(dimensions.marginLeft + dimensions.paddingLeft, padding.left);
+                                }
+                                if (cellData.rowEnd) {
+                                    const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!cellData.cellLast ? dimensions.marginTop + dimensions.paddingTop : 0);
+                                    if (heightBottom > 0) {
+                                        if (cellData.cellLast) {
+                                            padding.bottom = heightBottom;
+                                        }
+                                        else {
+                                            this.application.viewController.appendAfter(item.id, this.application.viewController.renderColumnSpace(item.renderDepth, 'match_parent', $util$5.formatPX(heightBottom), mainData.columnCount));
+                                        }
+                                    }
+                                    padding.right = Math.max(dimensions.marginRight + dimensions.paddingRight, padding.right);
+                                }
+                            }
+                        }, true);
+                    }
+                }
+            }
+            for (const node of this.subscribers) {
+                const data = node.data($const$1.EXT_NAME.GRID, 'mainData');
+                if (data) {
+                    node.modifyBox($enum$4.BOX_STANDARD.PADDING_TOP, data.padding.top);
+                    node.modifyBox($enum$4.BOX_STANDARD.PADDING_RIGHT, data.padding.right);
+                    node.modifyBox($enum$4.BOX_STANDARD.PADDING_BOTTOM, data.padding.bottom);
+                    node.modifyBox($enum$4.BOX_STANDARD.PADDING_LEFT, data.padding.left);
+                }
+            }
+        }
+    }
+
+    var $enum$5 = androme.lib.enumeration;
+    var $const$2 = androme.lib.constant;
+    var $util$6 = androme.lib.util;
     var $resource$1 = androme.lib.base.Resource;
     class List extends androme.lib.base.extensions.List {
         processChild() {
             const node = this.node;
-            const mainData = node.data($const$1.EXT_NAME.LIST, 'mainData');
+            const mainData = node.data($const$2.EXT_NAME.LIST, 'mainData');
             if (mainData) {
                 const parent = this.parent;
                 const controller = this.application.viewController;
                 const settings = this.application.settings;
-                const parentLeft = $util$5.convertInt(parent.css('paddingLeft')) + $util$5.convertInt(parent.cssInitial('marginLeft', true));
+                const parentLeft = $util$6.convertInt(parent.css('paddingLeft')) + $util$6.convertInt(parent.cssInitial('marginLeft', true));
                 let columnCount = 0;
                 let paddingLeft = node.marginLeft;
-                node.modifyBox($enum$4.BOX_STANDARD.MARGIN_LEFT, null);
-                if (parent.is($enum$4.NODE_STANDARD.GRID)) {
-                    columnCount = $util$5.convertInt(parent.android('columnCount'));
+                node.modifyBox($enum$5.BOX_STANDARD.MARGIN_LEFT, null);
+                if (parent.is($enum$5.NODE_STANDARD.GRID)) {
+                    columnCount = $util$6.convertInt(parent.android('columnCount'));
                     paddingLeft += parentLeft;
                 }
                 else if (parent.children[0] === node) {
                     paddingLeft += parentLeft;
                 }
                 const ordinal = node.children.find(item => item.float === 'left' &&
-                    $util$5.convertInt(item.cssInitial('marginLeft', true)) < 0 &&
-                    Math.abs($util$5.convertInt(item.cssInitial('marginLeft', true))) <= $util$5.convertInt(item.documentParent.cssInitial('marginLeft', true)));
+                    $util$6.convertInt(item.cssInitial('marginLeft', true)) < 0 &&
+                    Math.abs($util$6.convertInt(item.cssInitial('marginLeft', true))) <= $util$6.convertInt(item.documentParent.cssInitial('marginLeft', true)));
                 if (ordinal && mainData.ordinal === '') {
                     let output = '';
                     ordinal.parent = parent;
                     if (ordinal.inlineText || ordinal.children.length === 0) {
-                        output = controller.renderNode(ordinal, parent, $enum$4.NODE_STANDARD.TEXT);
+                        output = controller.renderNode(ordinal, parent, $enum$5.NODE_STANDARD.TEXT);
                     }
                     else if (ordinal.children.every(item => item.pageflow)) {
-                        output = controller.renderGroup(ordinal, parent, $enum$4.NODE_STANDARD.RELATIVE);
+                        output = controller.renderGroup(ordinal, parent, $enum$5.NODE_STANDARD.RELATIVE);
                     }
                     else {
-                        output = controller.renderGroup(ordinal, parent, $enum$4.NODE_STANDARD.CONSTRAINT);
+                        output = controller.renderGroup(ordinal, parent, $enum$5.NODE_STANDARD.CONSTRAINT);
                     }
                     controller.prependBefore(node.id, output);
                     if (columnCount === 3) {
                         node.android('layout_columnSpan', '2');
                     }
                     paddingLeft += ordinal.marginLeft;
-                    ordinal.modifyBox($enum$4.BOX_STANDARD.MARGIN_LEFT, null);
+                    ordinal.modifyBox($enum$5.BOX_STANDARD.MARGIN_LEFT, null);
                     if (!ordinal.hasWidth && paddingLeft > 0) {
-                        ordinal.android('minWidth', $util$5.formatPX(paddingLeft));
+                        ordinal.android('minWidth', $util$6.formatPX(paddingLeft));
                     }
                 }
                 else {
@@ -6149,13 +6219,13 @@ var android = (function () {
                     const gravity = (image !== '' && !listStyleImage) || (parentLeft === 0 && node.marginLeft === 0) ? '' : 'right';
                     if (gravity === '') {
                         paddingLeft += node.paddingLeft;
-                        node.modifyBox($enum$4.BOX_STANDARD.PADDING_LEFT, null);
+                        node.modifyBox($enum$5.BOX_STANDARD.PADDING_LEFT, null);
                     }
                     if (left > 0 && paddingLeft > left) {
                         paddingLeft -= left;
                     }
                     paddingLeft = Math.max(paddingLeft, 20);
-                    const minWidth = paddingLeft > 0 ? delimitUnit(node.nodeName, parseRTL('min_width', settings), $util$5.formatPX(paddingLeft), settings) : '';
+                    const minWidth = paddingLeft > 0 ? delimitUnit(node.nodeName, parseRTL('min_width', settings), $util$6.formatPX(paddingLeft), settings) : '';
                     const paddingRight = (() => {
                         if (paddingLeft <= 24) {
                             return 6;
@@ -6167,7 +6237,7 @@ var android = (function () {
                             return 10;
                         }
                     })();
-                    let layoutMarginLeft = left > 0 ? $util$5.formatPX(left) : '';
+                    let layoutMarginLeft = left > 0 ? $util$6.formatPX(left) : '';
                     const options = {
                         android: {
                             layout_columnWeight: columnWeight
@@ -6177,7 +6247,7 @@ var android = (function () {
                         if (layoutMarginLeft !== '') {
                             layoutMarginLeft = delimitUnit(node.nodeName, parseRTL('margin_left', settings), layoutMarginLeft, settings);
                         }
-                        controller.prependBefore(node.id, controller.renderNodeStatic($enum$4.NODE_STANDARD.SPACE, parent.renderDepth + 1, {
+                        controller.prependBefore(node.id, controller.renderNodeStatic($enum$5.NODE_STANDARD.SPACE, parent.renderDepth + 1, {
                             android: {
                                 minWidth,
                                 layout_columnWeight: columnWeight,
@@ -6185,7 +6255,7 @@ var android = (function () {
                             }
                         }, 'wrap_content', 'wrap_content'));
                         Object.assign(options.android, {
-                            minWidth: delimitUnit(node.nodeName, parseRTL('min_width', settings), $util$5.formatPX(24), settings)
+                            minWidth: delimitUnit(node.nodeName, parseRTL('min_width', settings), $util$6.formatPX(24), settings)
                         });
                     }
                     else {
@@ -6193,9 +6263,9 @@ var android = (function () {
                             minWidth,
                             gravity: paddingLeft > 20 ? parseRTL(gravity, settings) : '',
                             [parseRTL('layout_marginLeft', settings)]: layoutMarginLeft,
-                            [parseRTL('paddingLeft', settings)]: gravity === '' && image === '' ? $util$5.formatPX(paddingRight) : (paddingLeft === 20 ? '2px' : ''),
-                            [parseRTL('paddingRight', settings)]: gravity === 'right' && paddingLeft > 20 ? $util$5.formatPX(paddingRight) : '',
-                            paddingTop: node.paddingTop > 0 ? $util$5.formatPX(node.paddingTop) : ''
+                            [parseRTL('paddingLeft', settings)]: gravity === '' && image === '' ? $util$6.formatPX(paddingRight) : (paddingLeft === 20 ? '2px' : ''),
+                            [parseRTL('paddingRight', settings)]: gravity === 'right' && paddingLeft > 20 ? $util$6.formatPX(paddingRight) : '',
+                            paddingTop: node.paddingTop > 0 ? $util$6.formatPX(node.paddingTop) : ''
                         });
                         if (columnCount === 3) {
                             node.android('layout_columnSpan', '2');
@@ -6208,7 +6278,7 @@ var android = (function () {
                         if (image !== '') {
                             Object.assign(options.android, {
                                 src: `@drawable/${image}`,
-                                layout_marginTop: top > 0 ? $util$5.formatPX(top) : '',
+                                layout_marginTop: top > 0 ? $util$6.formatPX(top) : '',
                                 baselineAlignBottom: 'true',
                                 scaleType: !positionInside && gravity === 'right' ? 'fitEnd' : 'fitStart'
                             });
@@ -6218,17 +6288,17 @@ var android = (function () {
                         }
                         const companion = new View(this.application.cacheProcessing.nextId, document.createElement('SPAN'));
                         companion.api = node.api;
-                        companion.alignmentType = $enum$4.NODE_ALIGNMENT.SPACE;
+                        companion.alignmentType = $enum$5.NODE_ALIGNMENT.SPACE;
                         companion.nodeName = `${node.tagName}_ORDINAL`;
                         companion.setNodeType(NODE_ANDROID.SPACE);
                         companion.inherit(node, 'style');
-                        if (mainData.ordinal !== '' && !/[A-Za-z0-9]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
+                        if (mainData.ordinal !== '' && !/[A-Za-z\d]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
                             companion.css('fontSize', '12px');
                         }
                         node.companion = companion;
                         this.application.cacheProcessing.append(companion);
-                        controller.prependBefore(node.id, controller.renderNodeStatic(image !== '' ? $enum$4.NODE_STANDARD.IMAGE
-                            : mainData.ordinal !== '' ? $enum$4.NODE_STANDARD.TEXT : $enum$4.NODE_STANDARD.SPACE, parent.renderDepth + 1, options, 'wrap_content', 'wrap_content', companion));
+                        controller.prependBefore(node.id, controller.renderNodeStatic(image !== '' ? $enum$5.NODE_STANDARD.IMAGE
+                            : mainData.ordinal !== '' ? $enum$5.NODE_STANDARD.TEXT : $enum$5.NODE_STANDARD.SPACE, parent.renderDepth + 1, options, 'wrap_content', 'wrap_content', companion));
                     }
                 }
                 if (columnCount > 0) {
@@ -6239,134 +6309,129 @@ var android = (function () {
         }
         beforeInsert() {
             const node = this.node;
-            if (node.is($enum$4.NODE_STANDARD.GRID)) {
+            if (node.is($enum$5.NODE_STANDARD.GRID)) {
                 const columnCount = node.android('columnCount');
                 for (let i = 0; i < node.renderChildren.length; i++) {
                     const current = node.renderChildren[i];
                     const previous = node.renderChildren[i - 1];
                     let spaceHeight = 0;
                     if (previous) {
-                        const marginBottom = $util$5.convertInt(previous.android('layout_marginBottom'));
+                        const marginBottom = $util$6.convertInt(previous.android('layout_marginBottom'));
                         if (marginBottom > 0) {
-                            spaceHeight += $util$5.convertInt(previous.android('layout_marginBottom'));
+                            spaceHeight += $util$6.convertInt(previous.android('layout_marginBottom'));
                             previous.delete('android', 'layout_marginBottom');
-                            previous.modifyBox($enum$4.BOX_STANDARD.MARGIN_BOTTOM, null);
+                            previous.modifyBox($enum$5.BOX_STANDARD.MARGIN_BOTTOM, null);
                         }
                     }
-                    const marginTop = $util$5.convertInt(current.android('layout_marginTop'));
+                    const marginTop = $util$6.convertInt(current.android('layout_marginTop'));
                     if (marginTop > 0) {
                         spaceHeight += marginTop;
                         current.delete('android', 'layout_marginTop');
-                        current.modifyBox($enum$4.BOX_STANDARD.MARGIN_TOP, null);
+                        current.modifyBox($enum$5.BOX_STANDARD.MARGIN_TOP, null);
                     }
                     if (spaceHeight > 0) {
-                        this.application.viewController.prependBefore(current.id, this.application.viewController.renderNodeStatic($enum$4.NODE_STANDARD.SPACE, current.renderDepth, {
+                        this.application.viewController.prependBefore(current.id, this.application.viewController.renderNodeStatic($enum$5.NODE_STANDARD.SPACE, current.renderDepth, {
                             android: {
                                 layout_columnSpan: columnCount.toString()
                             }
-                        }, 'match_parent', $util$5.formatPX(spaceHeight)), 0);
+                        }, 'match_parent', $util$6.formatPX(spaceHeight)), 0);
                     }
                 }
             }
         }
         afterInsert() {
             const node = this.node;
-            if (node.is($enum$4.NODE_STANDARD.GRID) && node.blockStatic && !node.has('width')) {
+            if (node.is($enum$5.NODE_STANDARD.GRID) && node.blockStatic && !node.has('width')) {
                 node.android('layout_width', 'match_parent');
             }
         }
     }
 
-    var $enum$5 = androme.lib.enumeration;
-    var $const$2 = androme.lib.constant;
-    var $util$6 = androme.lib.util;
-    var $dom$4 = androme.lib.dom;
-    class Grid extends androme.lib.base.extensions.Grid {
-        processChild() {
+    class Origin extends androme.lib.base.extensions.Origin {
+    }
+
+    var $enum$6 = androme.lib.enumeration;
+    var $const$3 = androme.lib.constant;
+    var $util$7 = androme.lib.util;
+    class Sprite extends androme.lib.base.extensions.Sprite {
+        processNode() {
             const node = this.node;
-            const data = node.data($const$2.EXT_NAME.GRID, 'cellData');
-            if (data) {
-                if (data.rowSpan > 1) {
-                    node.android('layout_rowSpan', data.rowSpan.toString());
-                }
-                if (data.columnSpan > 1) {
-                    node.android('layout_columnSpan', data.columnSpan.toString());
-                }
-                if (node.parent.display === 'table' && node.display === 'table-cell') {
-                    node.android('layout_gravity', 'fill');
-                }
+            const parent = this.parent;
+            const image = node.data($const$3.EXT_NAME.SPRITE, 'image');
+            let output = '';
+            let container;
+            if (image && image.position) {
+                container = new View(this.application.cacheProcessing.nextId, node.element);
+                container.api = node.api;
+                container.siblingIndex = node.siblingIndex;
+                container.nodeName = node.nodeName;
+                container.inherit(node, 'initial', 'base', 'data', 'style', 'styleMap');
+                container.setNodeType(NODE_ANDROID.FRAME);
+                container.excludeResource |= $enum$6.NODE_RESOURCE.IMAGE_SOURCE;
+                parent.replaceChild(node, container);
+                container.render(parent);
+                this.application.cacheProcessing.append(container);
+                node.parent = container;
+                node.nodeType = $enum$6.NODE_STANDARD.IMAGE;
+                node.setNodeType(NODE_ANDROID.IMAGE);
+                node.css({
+                    position: 'static',
+                    top: 'auto',
+                    right: 'auto',
+                    bottom: 'auto',
+                    left: 'auto',
+                    display: 'inline-block',
+                    width: $util$7.formatPX(image.width),
+                    height: $util$7.formatPX(image.height),
+                    marginTop: $util$7.formatPX(image.position.y),
+                    marginRight: '0px',
+                    marginBottom: '0px',
+                    marginLeft: $util$7.formatPX(image.position.x),
+                    paddingTop: '0px',
+                    paddingRight: '0px',
+                    paddingBottom: '0px',
+                    paddingLeft: '0px',
+                    borderTopStyle: 'none',
+                    borderRightStyle: 'none',
+                    borderBottomStyle: 'none',
+                    borderLeftStyle: 'none',
+                    borderRadius: '0px',
+                    backgroundPositionX: '0px',
+                    backgroundPositionY: '0px',
+                    backgroundColor: 'transparent'
+                });
+                node.excludeProcedure |= $enum$6.NODE_PROCEDURE.AUTOFIT;
+                node.excludeResource |= $enum$6.NODE_RESOURCE.FONT_STYLE;
+                output = ViewController.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, `{:${container.id}}`);
             }
-            return super.processChild();
-        }
-        afterRender() {
-            for (const node of this.subscribers) {
-                if (!(node.display === 'table' && node.css('borderCollapse') === 'collapse')) {
-                    const mainData = node.data($const$2.EXT_NAME.GRID, 'mainData');
-                    if (mainData) {
-                        node.each(item => {
-                            const cellData = item.data($const$2.EXT_NAME.GRID, 'cellData');
-                            if (cellData) {
-                                const dimensions = $dom$4.getBoxSpacing(item.documentParent.element, true);
-                                const padding = mainData.padding;
-                                if (cellData.cellFirst) {
-                                    padding.top = dimensions.paddingTop + dimensions.marginTop;
-                                }
-                                if (cellData.rowStart) {
-                                    padding.left = Math.max(dimensions.marginLeft + dimensions.paddingLeft, padding.left);
-                                }
-                                if (cellData.rowEnd) {
-                                    const heightBottom = dimensions.marginBottom + dimensions.paddingBottom + (!cellData.cellLast ? dimensions.marginTop + dimensions.paddingTop : 0);
-                                    if (heightBottom > 0) {
-                                        if (cellData.cellLast) {
-                                            padding.bottom = heightBottom;
-                                        }
-                                        else {
-                                            this.application.viewController.appendAfter(item.id, this.application.viewController.renderColumnSpace(item.renderDepth, 'match_parent', $util$6.formatPX(heightBottom), mainData.columnCount));
-                                        }
-                                    }
-                                    padding.right = Math.max(dimensions.marginRight + dimensions.paddingRight, padding.right);
-                                }
-                            }
-                        }, true);
-                    }
-                }
-            }
-            for (const node of this.subscribers) {
-                const data = node.data($const$2.EXT_NAME.GRID, 'mainData');
-                if (data) {
-                    node.modifyBox($enum$5.BOX_STANDARD.PADDING_TOP, data.padding.top);
-                    node.modifyBox($enum$5.BOX_STANDARD.PADDING_RIGHT, data.padding.right);
-                    node.modifyBox($enum$5.BOX_STANDARD.PADDING_BOTTOM, data.padding.bottom);
-                    node.modifyBox($enum$5.BOX_STANDARD.PADDING_LEFT, data.padding.left);
-                }
-            }
+            return { output, parent: container, complete: true };
         }
     }
 
-    var $const$3 = androme.lib.constant;
-    var $util$7 = androme.lib.util;
+    var $const$4 = androme.lib.constant;
+    var $util$8 = androme.lib.util;
     class Table extends androme.lib.base.extensions.Table {
         processNode() {
             const result = super.processNode();
             const node = this.node;
-            const columnCount = $util$7.convertInt(node.android('columnCount'));
+            const columnCount = $util$8.convertInt(node.android('columnCount'));
             if (columnCount > 1) {
-                let requireWidth = !!node.data($const$3.EXT_NAME.TABLE, 'expand');
+                let requireWidth = !!node.data($const$4.EXT_NAME.TABLE, 'expand');
                 node.each((item) => {
                     if (item.css('width') === '0px') {
                         item.android('layout_width', '0px');
                         item.android('layout_columnWeight', (item.element.colSpan || 1).toString());
                     }
                     else {
-                        const expand = item.data($const$3.EXT_NAME.TABLE, 'expand');
-                        const exceed = !!item.data($const$3.EXT_NAME.TABLE, 'exceed');
-                        const downsized = !!item.data($const$3.EXT_NAME.TABLE, 'downsized');
+                        const expand = item.data($const$4.EXT_NAME.TABLE, 'expand');
+                        const exceed = !!item.data($const$4.EXT_NAME.TABLE, 'exceed');
+                        const downsized = !!item.data($const$4.EXT_NAME.TABLE, 'downsized');
                         if (expand != null) {
                             if (expand) {
-                                const percent = $util$7.convertFloat(item.data($const$3.EXT_NAME.TABLE, 'percent')) / 100;
+                                const percent = $util$8.convertFloat(item.data($const$4.EXT_NAME.TABLE, 'percent')) / 100;
                                 if (percent > 0) {
                                     item.android('layout_width', '0px');
-                                    item.android('layout_columnWeight', $util$7.trimEnd(percent.toFixed(3), '0'));
+                                    item.android('layout_columnWeight', $util$8.trimEnd(percent.toFixed(3), '0'));
                                     requireWidth = true;
                                 }
                             }
@@ -6383,7 +6448,7 @@ var android = (function () {
                                     item.android('maxLines', '1');
                                 }
                                 if (item.has('width') && item.toInt('width') < item.bounds.width) {
-                                    item.android('layout_width', $util$7.formatPX(item.bounds.width));
+                                    item.android('layout_width', $util$8.formatPX(item.bounds.width));
                                 }
                             }
                         }
@@ -6402,7 +6467,7 @@ var android = (function () {
                         node.android('layout_width', 'match_parent');
                     }
                     else {
-                        node.css('width', $util$7.formatPX(node.bounds.width));
+                        node.css('width', $util$8.formatPX(node.bounds.width));
                     }
                 }
             }
@@ -6410,9 +6475,9 @@ var android = (function () {
         }
         processChild() {
             const node = this.node;
-            const rowSpan = $util$7.convertInt(node.data($const$3.EXT_NAME.TABLE, 'rowSpan'));
-            const columnSpan = $util$7.convertInt(node.data($const$3.EXT_NAME.TABLE, 'colSpan'));
-            const spaceSpan = $util$7.convertInt(node.data($const$3.EXT_NAME.TABLE, 'spaceSpan'));
+            const rowSpan = $util$8.convertInt(node.data($const$4.EXT_NAME.TABLE, 'rowSpan'));
+            const columnSpan = $util$8.convertInt(node.data($const$4.EXT_NAME.TABLE, 'colSpan'));
+            const spaceSpan = $util$8.convertInt(node.data($const$4.EXT_NAME.TABLE, 'spaceSpan'));
             if (rowSpan > 1) {
                 node.android('layout_rowSpan', rowSpan.toString());
             }
@@ -6562,6 +6627,7 @@ var android = (function () {
                 [EXT_NAME.ORIGIN]: new Origin(EXT_NAME.ORIGIN, framework),
                 [EXT_NAME.CUSTOM]: new Custom(EXT_NAME.CUSTOM, framework),
                 [EXT_NAME.ACCESSIBILITY]: new Accessibility(EXT_NAME.ACCESSIBILITY, framework),
+                [EXT_NAME.SPRITE]: new Sprite(EXT_NAME.SPRITE, framework),
                 [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
                 [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
                 [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN'])

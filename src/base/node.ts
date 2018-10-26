@@ -185,7 +185,7 @@ export default abstract class Node implements androme.lib.base.Node {
         }
     }
 
-    public each(predicate: (value: T, index?: number) => void, rendered = false) {
+    public each(predicate: IteratorPredicate<T, void>, rendered = false) {
         (rendered ? this.renderChildren : this.children).forEach(predicate);
         return this;
     }
@@ -255,6 +255,7 @@ export default abstract class Node implements androme.lib.base.Node {
                         break;
                     case 'base':
                         this.style = node.style;
+                        this.documentParent = node.documentParent;
                     case 'dimensions':
                         this.bounds = assignBounds(node.bounds);
                         this.linear = assignBounds(node.linear);
@@ -606,12 +607,7 @@ export default abstract class Node implements androme.lib.base.Node {
                             this.multiLine = multiLine;
                         }
                         else {
-                            if (!this.hasWidth && (
-                                    this.blockStatic ||
-                                    this.display === 'table-cell' ||
-                                    hasLineBreak(this._element)
-                               ))
-                            {
+                            if (!this.hasWidth && (this.blockStatic || this.display === 'table-cell' || hasLineBreak(this._element))) {
                                 this.multiLine = multiLine;
                             }
                         }
@@ -685,13 +681,28 @@ export default abstract class Node implements androme.lib.base.Node {
         return null;
     }
 
-    public remove(node: T) {
+    public removeChild(node: T) {
         for (let i = 0; i < this.children.length; i++) {
             if (node === this.children[i]) {
                 this.children.splice(i, 1);
                 break;
             }
         }
+    }
+
+    public replaceChild(node: Node, withNode: Node, append = true) {
+        for (let i = 0; i < this.children.length; i++) {
+            if (node === this.children[i]) {
+                this.children[i] = withNode;
+                withNode.parent = this;
+                return true;
+            }
+        }
+        if (append) {
+            withNode.parent = this;
+            return true;
+        }
+        return false;
     }
 
     public appendRendered(node: T) {
@@ -768,10 +779,8 @@ export default abstract class Node implements androme.lib.base.Node {
             const node = getNodeFromElement(element) as T;
             if (node &&
                 !(node.lineBreak && !lineBreak) &&
-                !(node.excluded && !excluded) && (
-                    (pageflow && node.pageflow) ||
-                    (!pageflow && node.siblingflow)
-               ))
+                !(node.excluded && !excluded) &&
+                (pageflow && node.pageflow || !pageflow && node.siblingflow))
             {
                 return node;
             }
@@ -833,7 +842,7 @@ export default abstract class Node implements androme.lib.base.Node {
     set parent(value) {
         if (value !== this._parent) {
             if (this._parent) {
-                this._parent.remove(this);
+                this._parent.removeChild(this);
             }
             this._parent = value;
         }

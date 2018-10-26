@@ -161,7 +161,8 @@ declare global {
             public setDimensions(region?: string[]): void;
             public setMultiLine(): void;
             public getParentElementAsNode(negative?: boolean, containerDefault?: Node): Node | null;
-            public remove(node: Node): void;
+            public removeChild(node: Node): void;
+            public replaceChild(node: Node, withNode: Node, append?: boolean): void;
             public appendRendered(node: Node): void;
             public resetBox(region: number, node?: Node, negative?: boolean): void;
             public removeElement(): void;

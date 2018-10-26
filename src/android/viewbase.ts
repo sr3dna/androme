@@ -234,7 +234,6 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             node.renderParent = this.renderParent;
             node.renderExtension = this.renderExtension;
             node.documentRoot = this.documentRoot;
-            node.documentParent = this.documentParent;
             if (children) {
                 node.children = this.children.slice();
             }
@@ -242,10 +241,10 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             return node;
         }
 
-        public setNodeType(nodeName: string) {
+        public setNodeType(controlName: string) {
             if (this.nodeType === 0) {
                 for (const android in NODE_ANDROID) {
-                    if (NODE_ANDROID[android] === nodeName) {
+                    if (NODE_ANDROID[android] === controlName) {
                         for (const standard in $enum.NODE_STANDARD) {
                             if ($enum.NODE_STANDARD[$enum.NODE_STANDARD[standard]] === android) {
                                 this.nodeType = <unknown> $enum.NODE_STANDARD[standard] as number;
@@ -256,7 +255,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                 }
             }
-            this.controlName = nodeName;
+            this.controlName = controlName;
             if (this.android('id') !== '') {
                 this.nodeId = stripId(this.android('id'));
             }
@@ -807,7 +806,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             if (this.pageflow) {
                 const renderParent = this.renderParent;
                 if (!renderParent.documentBody && renderParent.blockStatic && this.documentParent === renderParent) {
-                    [['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP], ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]].forEach((item: [string, string, number, number], index: number) => {
+                    [
+                        ['firstElementChild', 'Top', $enum.BOX_STANDARD.MARGIN_TOP, $enum.BOX_STANDARD.PADDING_TOP],
+                        ['lastElementChild', 'Bottom', $enum.BOX_STANDARD.MARGIN_BOTTOM, $enum.BOX_STANDARD.PADDING_BOTTOM]
+                    ]
+                    .forEach((item: [string, string, number, number], index: number) => {
                         const node = $dom.getNodeFromElement(renderParent[item[0]]) as View;
                         if (node && !node.lineBreak && (
                                 node === this ||
@@ -815,10 +818,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                            ))
                         {
                             const marginOffset = renderParent[`margin${item[1]}`];
-                            if (marginOffset > 0 &&
-                                renderParent[`padding${item[1]}`] === 0 &&
-                                renderParent[`border${item[1]}Width`] === 0)
-                            {
+                            if (marginOffset > 0 && renderParent[`padding${item[1]}`] === 0 && renderParent[`border${item[1]}Width`] === 0) {
                                 node.modifyBox(item[2], null);
                             }
                         }
@@ -1096,10 +1096,8 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         this.android('layout_height', $util.formatPX(this.bounds.height + offsetHeight + View.getPaddedHeight(this)));
                     }
                 }
-                if (!renderChildren.some(node => node.imageElement && node.baseline) && (
-                        this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) ||
-                        renderChildren.some(node => node.floating || !node.siblingflow)
-                   ))
+                if (!renderChildren.some(node => node.imageElement && node.baseline) &&
+                    (this.hasAlign($enum.NODE_ALIGNMENT.FLOAT) || renderChildren.some(node => node.floating || !node.siblingflow)))
                 {
                     this.android('baselineAligned', 'false');
                 }
@@ -1117,10 +1115,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                     }
                 }
-                if (settings.ellipsisOnTextOverflow &&
-                    this.length > 1 &&
-                    renderChildren.every(node => node.textElement && !node.floating))
-                {
+                if (settings.ellipsisOnTextOverflow && this.length > 1 && renderChildren.every(node => node.textElement && !node.floating)) {
                     const node = renderChildren[renderChildren.length - 1];
                     if (node.textElement && !node.multiLine && node.textContent.trim().split(String.fromCharCode(32)).length > 1) {
                         node.android('singleLine', 'true');

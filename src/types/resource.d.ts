@@ -39,8 +39,8 @@ interface BoxPosition extends BoxRect {
 }
 
 interface BorderAttribute {
-    style: string;
     width: string;
+    style: string;
     color: string | string[];
 }
 
@@ -181,4 +181,5 @@ interface Image {
     width: number;
     height: number;
     uri?: string;
+    position?: Point;
 }

@@ -157,7 +157,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                     companion.nodeName = `${node.tagName}_ORDINAL`;
                     companion.setNodeType(NODE_ANDROID.SPACE);
                     companion.inherit(node, 'style');
-                    if (mainData.ordinal !== '' && !/[A-Za-z0-9]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
+                    if (mainData.ordinal !== '' && !/[A-Za-z\d]+\./.test(mainData.ordinal) && companion.toInt('fontSize') > 12) {
                         companion.css('fontSize', '12px');
                     }
                     node.companion = companion;

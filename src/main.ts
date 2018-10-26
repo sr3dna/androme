@@ -15,6 +15,7 @@ import Grid from './extension/grid';
 import List from './extension/list';
 import Nav from './extension/nav';
 import Origin from './extension/origin';
+import Sprite from './extension/sprite';
 import Table from './extension/table';
 
 import * as enumeration from './lib/enumeration';
@@ -196,6 +197,7 @@ const lib = {
             List,
             Nav,
             Origin,
+            Sprite,
             Table
         }
     },

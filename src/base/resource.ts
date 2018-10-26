@@ -218,22 +218,22 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             let cssColor = node.css(`${attr}Color`);
                             switch (cssColor.toLowerCase()) {
                                 case 'initial':
-                                    cssColor = value;
+                                    cssColor = '#000000';
                                     break;
                                 case 'inherit':
                                 case 'currentcolor':
                                     cssColor = cssInherit(node.element, `${attr}Color`);
                                     break;
                             }
-                            const style = node.css(`${attr}Style`) || 'none';
                             let width = node.css(`${attr}Width`) || '1px';
+                            const style = node.css(`${attr}Style`) || 'none';
                             const color = style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : [];
                             if (style === 'inset' && width === '0px') {
                                 width = '1px';
                             }
                             boxStyle[attr] = {
-                                style,
                                 width,
+                                style,
                                 color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0']
                             };
                             break;
@@ -261,7 +261,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             const fontSize = node.css('fontSize');
                             let result: string[] = [];
                             if (value !== 'auto' && value !== 'auto auto' && value !== 'initial' && value !== '0px') {
-                                const match = value.match(/^(?:([0-9.]+(?:px|pt|em|%)|auto)\s*)+$/);
+                                const match = value.match(/^(?:([\d.]+(?:px|pt|em|%)|auto)\s*)+$/);
                                 if (match) {
                                     if (match[1] === 'auto' || match[2] === 'auto') {
                                         result = [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
@@ -286,7 +286,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         case 'background':
                         case 'backgroundImage': {
                             if (value !== 'none' && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
-                                const colorStop = '(?:,?\\s*(rgba?\\([0-9]+,\\s*[0-9]+,\\s*[0-9]+(?:,\\s*[0-9.]+)?\\)|[a-z]+)\\s*([0-9]+[a-z%]+)?)';
+                                const colorStop = '(?:,?\\s*(rgba?\\(\\d+, \\d+, \\d+(?:,\\s*[\\d.]+)?\\)|[a-z]+)\\s*(\\d+[a-z%]+)?)';
                                 const gradients: Gradient[] = [];
                                 let pattern: Null<RegExp> = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?${colorStop}${colorStop}${colorStop}?\\)`, 'g');
                                 let match: Null<RegExpExecArray> = null;

@@ -345,10 +345,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                 rowPreviousBottom = items.filter(item => !item.floating)[0] || items[0];
                                 for (let j = 0; j < items.length; j++) {
                                     if (items[j] !== rowPreviousBottom &&
-                                        items[j].linear.bottom > rowPreviousBottom.linear.bottom && (
-                                            !items[j].floating ||
-                                            (items[j].floating && rowPreviousBottom.floating)
-                                       ))
+                                        items[j].linear.bottom > rowPreviousBottom.linear.bottom &&
+                                        (!items[j].floating || (items[j].floating && rowPreviousBottom.floating)))
                                     {
                                         rowPreviousBottom = items[j];
                                     }
@@ -575,10 +573,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                         const vertical = anchoredSibling(adjacent, nodes, AXIS_ANDROID.VERTICAL) ? AXIS_ANDROID.VERTICAL : '';
                                         const intersectY = current.intersectY(adjacent.linear);
                                         const alignOrigin = current.alignOrigin && adjacent.alignOrigin;
-                                        if (!current.hasWidth &&
-                                            current.linear.left === adjacent.linear.left &&
-                                            current.linear.right === adjacent.linear.right)
-                                        {
+                                        if (!current.hasWidth && current.linear.left === adjacent.linear.left && current.linear.right === adjacent.linear.right) {
                                             if (!mapParent(current, 'right')) {
                                                 current.anchor(mapLayout['left'], stringId);
                                             }
@@ -1449,56 +1444,56 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     bottomTop: mapSibling(current, 'bottomTop'),
                                 };
                                 if ((bottom && mapSibling(current, 'topBottom') && current.hasHeight) ||
-                                    (top && bottom && (
-                                        !current.has('marginTop', $enum.CSS_STANDARD.AUTO) &&
-                                        current.linear.bottom < maxBottom
-                                   )))
+                                    (top && bottom && current.linear.bottom < maxBottom && !current.has('marginTop', $enum.CSS_STANDARD.AUTO)))
                                 {
                                     mapDelete(current, 'bottom');
                                     bottom = false;
                                 }
                                 if (current.pageflow) {
-                                    [[left, right, 'rightLeft', 'leftRight', 'right', 'left', 'Horizontal'], [top, bottom, 'bottomTop', 'topBottom', 'bottom', 'top', 'Vertical']]
-                                        .forEach((value: [boolean, boolean, string, string, string, string, string], index) => {
-                                            if (value[0] || value[1]) {
-                                                let valid = value[0] && value[1];
-                                                let next: Null<T> = current;
-                                                if (!valid) {
-                                                    do {
-                                                        const stringId = mapSibling(next, value[0] ? value[2] : value[3]);
-                                                        if (stringId) {
-                                                            next = this.findByStringId(stringId);
-                                                            if (next && ((value[0] && mapParent(next, value[4])) || (value[1] && mapParent(next, value[5])))) {
-                                                                valid = true;
-                                                                break;
-                                                            }
-                                                        }
-                                                        else {
-                                                            next = null;
-                                                        }
-                                                    }
-                                                    while (next);
-                                                }
-                                                if (valid) {
-                                                    node.constraint[`layout${value[6]}`] = true;
-                                                }
-                                                if (!current.constraint[`chain${value[6]}`]) {
-                                                    if (value[0] && value[1]) {
-                                                        if (!current.autoMargin && !current.linearVertical) {
-                                                            current.android(`layout_${index === 0 ? 'width' : 'height'}`, 'match_parent', false);
+                                    [
+                                        [left, right, 'rightLeft', 'leftRight', 'right', 'left', 'Horizontal'],
+                                        [top, bottom, 'bottomTop', 'topBottom', 'bottom', 'top', 'Vertical']
+                                    ]
+                                    .forEach((value: [boolean, boolean, string, string, string, string, string], index) => {
+                                        if (value[0] || value[1]) {
+                                            let valid = value[0] && value[1];
+                                            let next: Null<T> = current;
+                                            if (!valid) {
+                                                do {
+                                                    const stringId = mapSibling(next, value[0] ? value[2] : value[3]);
+                                                    if (stringId) {
+                                                        next = this.findByStringId(stringId);
+                                                        if (next && ((value[0] && mapParent(next, value[4])) || (value[1] && mapParent(next, value[5])))) {
+                                                            valid = true;
+                                                            break;
                                                         }
                                                     }
-                                                    else if (value[1]) {
-                                                        if (valid) {
-                                                            const below = this.findByStringId(mapSibling(current, value[3]));
-                                                            if (below && below.marginBottom === 0) {
-                                                                mapDelete(current, value[4]);
-                                                            }
+                                                    else {
+                                                        next = null;
+                                                    }
+                                                }
+                                                while (next);
+                                            }
+                                            if (valid) {
+                                                node.constraint[`layout${value[6]}`] = true;
+                                            }
+                                            if (!current.constraint[`chain${value[6]}`]) {
+                                                if (value[0] && value[1]) {
+                                                    if (!current.autoMargin && !current.linearVertical) {
+                                                        current.android(`layout_${index === 0 ? 'width' : 'height'}`, 'match_parent', false);
+                                                    }
+                                                }
+                                                else if (value[1]) {
+                                                    if (valid) {
+                                                        const below = this.findByStringId(mapSibling(current, value[3]));
+                                                        if (below && below.marginBottom === 0) {
+                                                            mapDelete(current, value[4]);
                                                         }
                                                     }
                                                 }
                                             }
-                                        });
+                                        }
+                                    });
                                     if (right) {
                                         if (!rightParent) {
                                             rightParent = false;
@@ -1723,19 +1718,19 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 }
             }
             let previous: Null<T> = null;
-            const scrollView = overflow.map((nodeName, index) => {
+            const scrollView = overflow.map((controlName, index) => {
                 const container = new View(this.cache.nextId, index === 0 ? node.element : undefined) as T;
-                container.api = this.settings.targetAPI;
+                container.api = node.api;
                 container.nodeName = node.nodeName;
-                container.documentParent = node.documentParent;
-                container.setNodeType(nodeName);
+                container.setNodeType(controlName);
                 if (index === 0) {
                     container.inherit(node, 'initial', 'base', 'data', 'style', 'styleMap');
-                    container.parent = parent;
+                    parent.replaceChild(node, container);
                     container.render(parent);
                 }
                 else {
                     container.init();
+                    container.documentParent = node.documentParent;
                     container.inherit(node, 'dimensions');
                     container.inherit(node, 'initial', 'style', 'styleMap');
                     if (previous) {
@@ -1754,9 +1749,9 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 }
                 container.resetBox($enum.BOX_STANDARD.PADDING);
                 const indent = $util.repeat(container.renderDepth);
-                preXml += `{<${container.id}}${indent}<${nodeName}{@${container.id}}>\n` +
+                preXml += `{<${container.id}}${indent}<${controlName}{@${container.id}}>\n` +
                           `{:${container.id}}`;
-                postXml = `${indent}</${nodeName}>\n{>${container.id}}` + (index === 1 ? '\n' : '') + postXml;
+                postXml = `${indent}</${controlName}>\n{>${container.id}}` + (index === 1 ? '\n' : '') + postXml;
                 previous = container;
                 this.cache.append(container);
                 return container;
@@ -1808,14 +1803,14 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                     }
                     else {
                         if (width === 0) {
-                            const match = /width="([0-9]+)"/.exec(element.outerHTML);
+                            const match = /width="(\d+)"/.exec(element.outerHTML);
                             if (match) {
                                 width = parseInt(match[1]);
                                 node.css('width', $util.formatPX(match[1]));
                             }
                         }
                         if (height === 0) {
-                            const match = /height="([0-9]+)"/.exec(element.outerHTML);
+                            const match = /height="(\d+)"/.exec(element.outerHTML);
                             if (match) {
                                 height = parseInt(match[1]);
                                 node.css('height', $util.formatPX(match[1]));

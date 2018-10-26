@@ -72,7 +72,7 @@ interface ExtensionResult {
     output: string;
     complete: boolean;
     next?: boolean;
-    parent?: {};
+    parent?: Null<{}>;
     include?: boolean;
 }
 

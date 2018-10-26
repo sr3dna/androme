@@ -87,6 +87,7 @@ androme.settings = {
         'androme.origin',
         'androme.custom',
         'androme.accessibility',
+        'androme.sprite',
         'androme.list',
         'androme.table',
         'androme.grid'
@@ -184,7 +185,7 @@ Most of the Android support library extensions can be configured using the same 
 <script>
     // required when handleExtensionsAsync = false
     androme.registerExtension(android.widget.coordinator);
-    androme.registerExtension(android.widget.floatingactionbutton);
+    androme.registerExtension(android.widget.menu);
     androme.registerExtension(android.widget.toolbar);
 
     // create an extension (third-party)
@@ -218,7 +219,7 @@ There is no official documentation as this project is still in early development
 ```javascript
 .settings // see user preferences section
 
-setFramework(module: {}, cached: boolean); // install html converter
+setFramework(module: {}, cached?: boolean); // install html converter
 
 parseDocument() // see installation section
 
@@ -235,6 +236,7 @@ registerExtension(extension: androme.lib.base.Extension) // see extension config
 getExtension(name: string) // retrieve an extension by namespace and control | same: ext(name: string)
 
 // android internal methods
+system.addXmlNs(name: string, uri: string) // add global namespaces for third-party controls
 system.writeLayoutAllXml(saveToDisk: boolean) // output generated xml
 system.writeResourceAllXml(saveToDisk: boolean)
 system.writeResourceArrayXml(saveToDisk: boolean)
@@ -245,7 +247,6 @@ system.writeResourceFontXml(saveToDisk: boolean)
 system.writeResourceStringXml(saveToDisk: boolean)
 system.writeResourceStyleXml(saveToDisk: boolean)
 system.customize(build: number, widget: string, options: {}) // global attributes applied to specific views (widget: 'Button' / 'Spinner' / 'namespace.thirdparty.control')
-system.addXmlNs(name: string, uri: string) // add global namespaces for third-party controls
 ```
 You can use the "system.customize" method to create default settings for the specific controls which are applied after a view is rendered.
 ```javascript
