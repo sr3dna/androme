@@ -869,8 +869,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                        ))
                     {
                         if (!hasBackgroundImage && backgroundGradient.length <= 1) {
-                            if (borderRadius && borderRadius['radius'] == null) {
-                                borderRadius['radius'] = '1px';
+                            if (borderRadius && borderRadius[0]['radius'] == null) {
+                                borderRadius[0]['radius'] = '1px';
                             }
                             template = $xml.parseTemplate(SHAPE_TMPL);
                             data = {

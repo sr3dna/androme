@@ -246,7 +246,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 node.css('borderBottomRightRadius')
                             ];
                             if (top === right && right === bottom && bottom === left) {
-                                boxStyle.borderRadius = top === '' || top === '0px' ? [] : [top];
+                                boxStyle.borderRadius = convertInt(top) === 0 ? [] : [top];
                             }
                             else {
                                 boxStyle.borderRadius = [top, right, bottom, left];
