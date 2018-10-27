@@ -1,4 +1,4 @@
-/* androme 2.1.1
+/* androme 2.1.2
    https://github.com/anpham6/androme */
 
 (function (global, factory) {
@@ -354,10 +354,10 @@
                 if (match) {
                     switch (match[0]) {
                         case 'pt':
-                            result *= (4 / 3);
+                            result *= 4 / 3;
                             break;
                         case 'em':
-                            result *= convertInt(fontSize) || 16;
+                            result *= convertInt(convertPX(fontSize)) || 16;
                             break;
                     }
                 }
@@ -2659,6 +2659,17 @@
         }
     }
 
+    function replaceWhiteSpace(value) {
+        value = value.replace(/\u00A0/g, '&#160;');
+        value = value.replace(/\u2002/g, '&#8194;');
+        value = value.replace(/\u2003/g, '&#8195;');
+        value = value.replace(/\u2009/g, '&#8201;');
+        value = value.replace(/\u200C/g, '&#8204;');
+        value = value.replace(/\u200D/g, '&#8205;');
+        value = value.replace(/\u200E/g, '&#8206;');
+        value = value.replace(/\u200F/g, '&#8207;');
+        return value;
+    }
     function formatPlaceholder(id, symbol = ':') {
         return `{${symbol + id.toString()}}`;
     }
@@ -2708,17 +2719,6 @@
         value = value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(parseInt(capture)));
         value = value.replace(/&nbsp;/g, '&#160;');
         return replaceWhiteSpace(value);
-    }
-    function replaceWhiteSpace(value) {
-        value = value.replace(/\u00A0/g, '&#160;');
-        value = value.replace(/\u2002/g, '&#8194;');
-        value = value.replace(/\u2003/g, '&#8195;');
-        value = value.replace(/\u2009/g, '&#8201;');
-        value = value.replace(/\u200C/g, '&#8204;');
-        value = value.replace(/\u200D/g, '&#8205;');
-        value = value.replace(/\u200E/g, '&#8206;');
-        value = value.replace(/\u200F/g, '&#8207;');
-        return value;
     }
     function parseTemplate(template) {
         const result = {};
@@ -2780,7 +2780,7 @@
                 value = data[i];
             }
             if (isString(value)) {
-                output = index ? output.replace(new RegExp(`{[%@&]{0,1}${i}}`, 'g'), value) : value.trim();
+                output = index ? output.replace(new RegExp(`{[%@&]?${i}}`, 'g'), value) : value.trim();
             }
             else if (value === false || new RegExp(`{%${i}}`).test(output)) {
                 output = output.replace(`{%${i}}`, '');
@@ -2799,7 +2799,6 @@
         replaceIndent: replaceIndent,
         replaceTab: replaceTab,
         replaceEntity: replaceEntity,
-        replaceWhiteSpace: replaceWhiteSpace,
         parseTemplate: parseTemplate,
         getTemplateBranch: getTemplateBranch,
         createTemplate: createTemplate
@@ -3173,8 +3172,8 @@
                             }
                             switch (element.tagName) {
                                 case 'SELECT':
-                                    if (styleMap['verticalAlign'] == null && element.size > 1) {
-                                        styleMap['verticalAlign'] = 'text-bottom';
+                                    if (styleMap.verticalAlign == null && element.size > 1) {
+                                        styleMap.verticalAlign = 'text-bottom';
                                     }
                                     break;
                             }
@@ -5006,7 +5005,7 @@
     for (const name in X11_CSS3) {
         const x11 = X11_CSS3[name];
         x11.name = name;
-        const rgb = convertToRGB(x11['hex']);
+        const rgb = convertToRGB(x11.hex);
         if (rgb) {
             x11.rgb = rgb;
             x11.hsl = convertToHSL(x11.rgb);
@@ -5161,7 +5160,10 @@
             if (color.length > 0) {
                 value = color[0];
             }
-            if (value.charAt(0) === '#' && /^#[a-zA-Z\d]{3,6}$/.test(value)) {
+            if (/^#[a-zA-Z\d]{3,8}$/.test(value)) {
+                if (value.length === 9) {
+                    value = `#${value.substring(3)}`;
+                }
                 const rgb = convertToRGB(value);
                 return value.length === 4 && rgb ? parseRGBA(formatRGB(rgb))[0] : value;
             }
@@ -5293,7 +5295,7 @@
             return '';
         }
         static isBorderVisible(border) {
-            return border != null && !(border.style === 'none' || border.width === '0px' || (Array.isArray(border.color) && (border.color.length === 0 || border.color[2] === '0')));
+            return border && !(border.style === 'none' || border.width === '0px' || border.color === '' || (Array.isArray(border.color) && (border.color.length === 0 || parseFloat(border.color[2]).toString() === '0')));
         }
         static hasDrawableBackground(object) {
             return (object != null && (this.isBorderVisible(object.borderTop) ||
@@ -5386,22 +5388,22 @@
                                     node.css('borderBottomRightRadius')
                                 ];
                                 if (top === right && right === bottom && bottom === left) {
-                                    boxStyle[attr] = top === '' || top === '0px' ? [] : [top];
+                                    boxStyle.borderRadius = top === '' || top === '0px' ? [] : [top];
                                 }
                                 else {
-                                    boxStyle[attr] = [top, right, bottom, left];
+                                    boxStyle.borderRadius = [top, right, bottom, left];
                                 }
                                 break;
                             }
                             case 'backgroundColor': {
-                                boxStyle[attr] = parseRGBA(value, node.css('opacity'));
+                                boxStyle.backgroundColor = parseRGBA(value, node.css('opacity'));
                                 break;
                             }
                             case 'backgroundSize': {
-                                const fontSize = node.css('fontSize');
                                 let result = [];
                                 if (value !== 'auto' && value !== 'auto auto' && value !== 'initial' && value !== '0px') {
                                     const match = value.match(/^(?:([\d.]+(?:px|pt|em|%)|auto)\s*)+$/);
+                                    const fontSize = node.css('fontSize');
                                     if (match) {
                                         if (match[1] === 'auto' || match[2] === 'auto') {
                                             result = [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
@@ -5420,7 +5422,7 @@
                                         }
                                     }
                                 }
-                                boxStyle[attr] = result;
+                                boxStyle.backgroundSize = result;
                                 break;
                             }
                             case 'background':
@@ -5498,7 +5500,7 @@
                                         }
                                     }
                                     if (gradients.length > 0) {
-                                        boxStyle['backgroundGradient'] = gradients.reverse();
+                                        boxStyle.backgroundGradient = gradients.reverse();
                                     }
                                     else {
                                         const result = [];
@@ -5509,7 +5511,7 @@
                                                 result.push(match[0]);
                                             }
                                         }
-                                        boxStyle[attr] = result;
+                                        boxStyle.backgroundImage = result;
                                     }
                                 }
                                 break;

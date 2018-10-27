@@ -185,7 +185,8 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 if (relative) {
                     function checkSingleLine(item: T, nowrap = false, flexParent = false) {
                         if (item && item.textElement && (
-                                nowrap || flexParent ||
+                                nowrap ||
+                                flexParent ||
                                 (!item.hasWidth && !item.multiLine && item.textContent.trim().split(String.fromCharCode(32)).length > 1)
                            ))
                         {
@@ -1426,10 +1427,10 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                             let bottomParent: Null<boolean> = null;
                             let rightParent: Null<boolean> = null;
                             const maxBottom: number = Math.max.apply(null, nodes.list.map(item => item.linear.bottom));
-                            const connected = {};
+                            const connected: ObjectMapNested<string> = {};
                             function deleteChain(item: T, value: string) {
                                 mapDelete(item, value);
-                                connected[item.stringId][value] = null;
+                                delete connected[item.stringId][value];
                             }
                             for (let i = 0; i < nodes.length; i++) {
                                 const current = nodes.get(i);
@@ -1441,7 +1442,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     leftRight: mapSibling(current, 'leftRight'),
                                     rightLeft: mapSibling(current, 'rightLeft'),
                                     topBottom: mapSibling(current, 'topBottom'),
-                                    bottomTop: mapSibling(current, 'bottomTop'),
+                                    bottomTop: mapSibling(current, 'bottomTop')
                                 };
                                 if ((bottom && mapSibling(current, 'topBottom') && current.hasHeight) ||
                                     (top && bottom && current.linear.bottom < maxBottom && !current.has('marginTop', $enum.CSS_STANDARD.AUTO)))

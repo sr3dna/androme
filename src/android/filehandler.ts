@@ -321,10 +321,10 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                         });
                     }
                 }
-                else if (images['mdpi']) {
+                else if (images.mdpi) {
                     root.push({
-                        name: `res/drawable/${name}.${$util.lastIndexOf(images['mdpi'], '.')}`,
-                        value: `<!-- image: ${images['mdpi']} -->`
+                        name: `res/drawable/${name}.${$util.lastIndexOf(images.mdpi, '.')}`,
+                        value: `<!-- image: ${images.mdpi} -->`
                     });
                 }
             }

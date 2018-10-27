@@ -105,10 +105,10 @@ export function convertPX(value: any, fontSize?: Null<string>) {
             if (match) {
                 switch (match[0]) {
                     case 'pt':
-                        result *= (4 / 3);
+                        result *= 4 / 3;
                         break;
                     case 'em':
-                        result *= convertInt(fontSize) || 16;
+                        result *= convertInt(convertPX(fontSize)) || 16;
                         break;
                 }
             }

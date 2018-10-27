@@ -46,27 +46,13 @@ type BackgroundGradient = {
 
 type StyleList = ArrayObject<ObjectMap<number[]>>;
 
-const METHOD_ANDROID = {
-    'boxStyle': {
-        'src': 'android:background="@drawable/{0}"'
-    },
-    'fontStyle': {
-        'fontFamily': 'android:fontFamily="{0}"',
-        'fontStyle': 'android:textStyle="{0}"',
-        'fontWeight': 'android:fontWeight="{0}"',
-        'fontSize': 'android:textSize="{0}"',
-        'color': 'android:textColor="@color/{0}"',
-        'backgroundColor': 'android:background="@color/{0}"'
-    },
-    'valueString': {
-        'text': 'android:text="{0}"'
-    },
-    'optionArray': {
-        'entries': 'android:entries="@array/{0}"'
-    },
-    'imageSource': {
-        'src': 'android:src="@drawable/{0}"'
-    }
+const FONT_STYLE = {
+    'fontFamily': 'android:fontFamily="{0}"',
+    'fontStyle': 'android:textStyle="{0}"',
+    'fontWeight': 'android:fontWeight="{0}"',
+    'fontSize': 'android:textSize="{0}"',
+    'color': 'android:textColor="@color/{0}"',
+    'backgroundColor': 'android:background="@color/{0}"'
 };
 
 function getStoredDrawable(xml: string) {
@@ -111,32 +97,32 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
             if (halfSize) {
                 switch (direction) {
                     case 0:
-                        result['groove'] = colorReduced;
+                        result.groove = colorReduced;
                         break;
                     case 1:
-                        result['groove'] = colorReduced;
+                        result.groove = colorReduced;
                         break;
                     case 2:
-                        result['groove'] = result.solid;
+                        result.groove = result.solid;
                         break;
                     case 3:
-                        result['groove'] = result.solid;
+                        result.groove = result.solid;
                         break;
                 }
             }
             else {
                 switch (direction) {
                     case 0:
-                        result['groove'] = result.solid;
+                        result.groove = result.solid;
                         break;
                     case 1:
-                        result['groove'] = result.solid;
+                        result.groove = result.solid;
                         break;
                     case 2:
-                        result['groove'] = colorReduced;
+                        result.groove = colorReduced;
                         break;
                     case 3:
-                        result['groove'] = colorReduced;
+                        result.groove = colorReduced;
                         break;
                 }
             }
@@ -145,32 +131,32 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
             if (halfSize) {
                 switch (direction) {
                     case 0:
-                        result['ridge'] = result.solid;
+                        result.ridge = result.solid;
                         break;
                     case 1:
-                        result['ridge'] = result.solid;
+                        result.ridge = result.solid;
                         break;
                     case 2:
-                        result['ridge'] = colorReduced;
+                        result.ridge = colorReduced;
                         break;
                     case 3:
-                        result['ridge'] = colorReduced;
+                        result.ridge = colorReduced;
                         break;
                 }
             }
             else {
                 switch (direction) {
                     case 0:
-                        result['ridge'] = colorReduced;
+                        result.ridge = colorReduced;
                         break;
                     case 1:
-                        result['ridge'] = colorReduced;
+                        result.ridge = colorReduced;
                         break;
                     case 2:
-                        result['ridge'] = result.solid;
+                        result.ridge = result.solid;
                         break;
                     case 3:
-                        result['ridge'] = result.solid;
+                        result.ridge = result.solid;
                         break;
                 }
             }
@@ -205,7 +191,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         break;
                                     case 'src':
                                         if (/^\w+:\/\//.test(value)) {
-                                            value = this.addImage({ 'mdpi': value });
+                                            value = this.addImage({ mdpi: value });
                                             if (value !== '') {
                                                 obj[attr] = `@drawable/${value}`;
                                                 continue;
@@ -276,37 +262,37 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     const src = filepath + $util.lastIndexOf(match[1]);
                     switch (match[2]) {
                         case '0.75x':
-                            images['ldpi'] = src;
+                            images.ldpi = src;
                             break;
                         case '1x':
-                            images['mdpi'] = src;
+                            images.mdpi = src;
                             break;
                         case '1.5x':
-                            images['hdpi'] = src;
+                            images.hdpi = src;
                             break;
                         case '2x':
-                            images['xhdpi'] = src;
+                            images.xhdpi = src;
                             break;
                         case '3x':
-                            images['xxhdpi'] = src;
+                            images.xxhdpi = src;
                             break;
                         case '4x':
-                            images['xxxhdpi'] = src;
+                            images.xxxhdpi = src;
                             break;
                     }
                 }
             });
         }
-        if (images['mdpi'] == null) {
-            images['mdpi'] = element.src;
+        if (images.mdpi == null) {
+            images.mdpi = element.src;
         }
         return this.addImage(images, prefix);
     }
 
     public static addImage(images: StringMap, prefix = '') {
         let src = '';
-        if (images && images['mdpi']) {
-            src = $util.lastIndexOf(images['mdpi']);
+        if (images && images.mdpi) {
+            src = $util.lastIndexOf(images.mdpi);
             const format = $util.lastIndexOf(src, '.').toLowerCase();
             src = src.replace(/.\w+$/, '').replace(/-/g, '_');
             switch (format) {
@@ -329,7 +315,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     public static addImageURL(value: string, prefix = '') {
         const url = $dom.cssResolveUrl(value);
         if (url !== '') {
-            return this.addImage({ 'mdpi': url }, prefix);
+            return this.addImage({ mdpi: url }, prefix);
         }
         return '';
     }
@@ -535,7 +521,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 else if (stored.backgroundGradient) {
                     for (let i = 0; i < stored.backgroundGradient.length; i++) {
                         const shape = stored.backgroundGradient[i];
-                        const gradient = {
+                        const gradient: BackgroundGradient = {
                             type: shape.type,
                             startColor: shape.startColor.length > 0 ? ResourceHandler.addColor(shape.startColor[0], shape.startColor[2]) : '',
                             centerColor: '',
@@ -1004,8 +990,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             $resource.STORED.drawables.set(resourceName, xml);
                         }
                     }
-                    const method = METHOD_ANDROID[node.is($enum.NODE_STANDARD.IMAGE) ? 'imageSource' : 'boxStyle'];
-                    node.formatted($util.formatString(method['src'], resourceName), node.renderExtension.size === 0);
+                    node.android('background', `@drawable/${resourceName}`, node.renderExtension.size === 0);
                     if (hasBackgroundImage) {
                         node.data('RESOURCE', 'backgroundImage', true);
                         if (this.settings.autoSizeBackgroundImage &&
@@ -1058,7 +1043,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                 }
                 else if (!$dom.getElementCache(node.element, 'fontStyle') && $util.isString(stored.backgroundColor)) {
-                    node.formatted($util.formatString(METHOD_ANDROID['fontStyle']['backgroundColor'], stored.backgroundColor), node.renderExtension.size === 0);
+                    node.formatted($util.formatString(FONT_STYLE.backgroundColor, stored.backgroundColor), node.renderExtension.size === 0);
                 }
             }
         });
@@ -1152,8 +1137,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         $resource.STORED.fonts.set(fontFamily, fonts);
                     }
                 }
-                const method = METHOD_ANDROID['fontStyle'];
-                const keys = Object.keys(method);
+                const keys = Object.keys(FONT_STYLE);
                 for (let i = 0; i < keys.length; i++) {
                     if (sorted[i] == null) {
                         sorted[i] = {};
@@ -1161,7 +1145,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     const value: string = stored[keys[i]];
                     if ($util.hasValue(value)) {
                         if (node.supported('android', keys[i])) {
-                            const attr = $util.formatString(method[keys[i]], value);
+                            const attr = $util.formatString(FONT_STYLE[keys[i]], value);
                             if (sorted[i][attr] == null) {
                                 sorted[i][attr] = [];
                             }
@@ -1272,12 +1256,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE))
                 {
                     const element = <HTMLImageElement> node.element;
-                    result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
+                    result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ mdpi: element.src });
                 }
             }
             if (result !== '') {
-                const method = METHOD_ANDROID['imageSource'];
-                node.formatted($util.formatString(method['src'], result), node.renderExtension.size === 0);
+                node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
                 $dom.setElementCache(node.element, 'imageSource', result);
             }
         });
@@ -1326,11 +1309,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                 }
                 const name = ResourceHandler.addString(stored.value, stored.name, this.settings);
-                if (name !== '') {
-                    const method = METHOD_ANDROID['valueString'];
-                    if (node.toInt('textIndent') + node.bounds.width > 0) {
-                        node.formatted($util.formatString(method['text'], isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name), node.renderExtension.size === 0);
-                    }
+                if (name !== '' && node.toInt('textIndent') + node.bounds.width > 0) {
+                    node.android('text', isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name, node.renderExtension.size === 0);
                 }
             }
         });
@@ -1372,8 +1352,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         arrayName = `${node.nodeId}_array`;
                         $resource.STORED.arrays.set(arrayName, result);
                     }
-                    const method = METHOD_ANDROID['optionArray'];
-                    node.formatted($util.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
+                    node.android('entries', `@array/${arrayName}`, node.renderExtension.size === 0);
                 }
             }
         });

@@ -147,7 +147,7 @@ const HSL_SORTED: Color[] = [];
 for (const name in X11_CSS3) {
     const x11: Color = X11_CSS3[name];
     x11.name = name;
-    const rgb = convertToRGB(x11['hex']);
+    const rgb = convertToRGB(x11.hex);
     if (rgb) {
         x11.rgb = rgb;
         x11.hsl = convertToHSL(x11.rgb);
@@ -312,7 +312,10 @@ export function parseHex(value: string) {
         if (color.length > 0) {
             value = color[0];
         }
-        if (value.charAt(0) === '#' && /^#[a-zA-Z\d]{3,6}$/.test(value)) {
+        if (/^#[a-zA-Z\d]{3,8}$/.test(value)) {
+            if (value.length === 9) {
+                value = `#${value.substring(3)}`;
+            }
             const rgb = convertToRGB(value);
             return value.length === 4 && rgb ? parseRGBA(formatRGB(rgb))[0] : value;
         }

@@ -127,7 +127,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public static isBorderVisible(border?: BorderAttribute) {
-        return border != null && !(border.style === 'none' || border.width === '0px' || (Array.isArray(border.color) && (border.color.length === 0 || border.color[2] === '0')));
+        return border && !(border.style === 'none' || border.width === '0px' || border.color === '' || (Array.isArray(border.color) && (border.color.length === 0 || parseFloat(border.color[2]).toString() === '0')));
     }
 
     public static hasDrawableBackground(object?: BoxStyle) {
@@ -246,22 +246,22 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 node.css('borderBottomRightRadius')
                             ];
                             if (top === right && right === bottom && bottom === left) {
-                                boxStyle[attr] = top === '' || top === '0px' ? [] : [top];
+                                boxStyle.borderRadius = top === '' || top === '0px' ? [] : [top];
                             }
                             else {
-                                boxStyle[attr] = [top, right, bottom, left];
+                                boxStyle.borderRadius = [top, right, bottom, left];
                             }
                             break;
                         }
                         case 'backgroundColor': {
-                            boxStyle[attr] = parseRGBA(value, node.css('opacity'));
+                            boxStyle.backgroundColor = parseRGBA(value, node.css('opacity'));
                             break;
                         }
                         case 'backgroundSize': {
-                            const fontSize = node.css('fontSize');
                             let result: string[] = [];
                             if (value !== 'auto' && value !== 'auto auto' && value !== 'initial' && value !== '0px') {
                                 const match = value.match(/^(?:([\d.]+(?:px|pt|em|%)|auto)\s*)+$/);
+                                const fontSize = node.css('fontSize');
                                 if (match) {
                                     if (match[1] === 'auto' || match[2] === 'auto') {
                                         result = [match[1] === 'auto' ? '' : convertPX(match[1], fontSize), match[2] === 'auto' ? '' : convertPX(match[2], fontSize)];
@@ -280,7 +280,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     }
                                 }
                             }
-                            boxStyle[attr] = result;
+                            boxStyle.backgroundSize = result;
                             break;
                         }
                         case 'background':
@@ -358,7 +358,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     }
                                 }
                                 if (gradients.length > 0) {
-                                    boxStyle['backgroundGradient'] = gradients.reverse();
+                                    boxStyle.backgroundGradient = gradients.reverse();
                                 }
                                 else {
                                     const result: string[] = [];
@@ -369,7 +369,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                             result.push(match[0]);
                                         }
                                     }
-                                    boxStyle[attr] = result;
+                                    boxStyle.backgroundImage = result;
                                 }
                             }
                             break;

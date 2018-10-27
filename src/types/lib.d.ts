@@ -93,7 +93,6 @@ declare global {
             export function replaceIndent(value: string, depth: number): string;
             export function replaceTab(value: string, settings?: {}, preserve?: boolean): string;
             export function replaceEntity(value: string): string;
-            export function replaceWhiteSpace(value: string): string;
             export function parseTemplate(template: string): ObjectMap<string>;
             export function getTemplateBranch(data: {}, ...levels: string[]): {};
             export function createTemplate(template: ObjectMap<string>, data: {}, index?: string, include?: {}, exclude?: {}): string;

@@ -1,6 +1,6 @@
 {
   "name": "androme",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "description": "Converts and optimizes HTML pages with JavaScript into the various standard Android layouts in XML. iOS could possibly be supported with Swift. Compatible with Chrome and Safari.",
   "main": "dist/androme.min.js",
   "scripts": {

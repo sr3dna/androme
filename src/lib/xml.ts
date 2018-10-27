@@ -1,5 +1,17 @@
 import { isString, repeat } from './util';
 
+function replaceWhiteSpace(value: string) {
+    value = value.replace(/\u00A0/g, '&#160;');
+    value = value.replace(/\u2002/g, '&#8194;');
+    value = value.replace(/\u2003/g, '&#8195;');
+    value = value.replace(/\u2009/g, '&#8201;');
+    value = value.replace(/\u200C/g, '&#8204;');
+    value = value.replace(/\u200D/g, '&#8205;');
+    value = value.replace(/\u200E/g, '&#8206;');
+    value = value.replace(/\u200F/g, '&#8207;');
+    return value;
+}
+
 export function formatPlaceholder(id: string | number, symbol = ':') {
     return `{${symbol + id.toString()}}`;
 }
@@ -54,18 +66,6 @@ export function replaceEntity(value: string) {
     value = value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(parseInt(capture)));
     value = value.replace(/&nbsp;/g, '&#160;');
     return replaceWhiteSpace(value);
-}
-
-export function replaceWhiteSpace(value: string) {
-    value = value.replace(/\u00A0/g, '&#160;');
-    value = value.replace(/\u2002/g, '&#8194;');
-    value = value.replace(/\u2003/g, '&#8195;');
-    value = value.replace(/\u2009/g, '&#8201;');
-    value = value.replace(/\u200C/g, '&#8204;');
-    value = value.replace(/\u200D/g, '&#8205;');
-    value = value.replace(/\u200E/g, '&#8206;');
-    value = value.replace(/\u200F/g, '&#8207;');
-    return value;
 }
 
 export function parseTemplate(template: string) {
@@ -131,7 +131,7 @@ export function createTemplate(template: ObjectMap<string>, data: {}, index?: st
             value = data[i];
         }
         if (isString(value)) {
-            output = index ? output.replace(new RegExp(`{[%@&]{0,1}${i}}`, 'g'), value) : value.trim();
+            output = index ? output.replace(new RegExp(`{[%@&]?${i}}`, 'g'), value) : value.trim();
         }
         else if (value === false || new RegExp(`{%${i}}`).test(output)) {
             output = output.replace(`{%${i}}`, '');

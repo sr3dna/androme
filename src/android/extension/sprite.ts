@@ -2,6 +2,7 @@ import { NODE_ANDROID } from '../lib/constant';
 
 import View from '../view';
 import ViewController from '../viewcontroller';
+import ResourceHandler from '../resourcehandler';
 
 import $enum = androme.lib.enumeration;
 import $const = androme.lib.constant;
@@ -14,7 +15,7 @@ export default class <T extends View> extends androme.lib.base.extensions.Sprite
         const image = <Image> node.data($const.EXT_NAME.SPRITE, 'image');
         let output = '';
         let container: Null<T>;
-        if (image && image.position) {
+        if (image && image.uri && image.position) {
             container = new View(this.application.cacheProcessing.nextId, node.element) as T;
             container.api = node.api;
             container.siblingIndex = node.siblingIndex;
@@ -54,8 +55,9 @@ export default class <T extends View> extends androme.lib.base.extensions.Sprite
                 backgroundPositionY: '0px',
                 backgroundColor: 'transparent'
             });
-            node.excludeProcedure |= $enum.NODE_PROCEDURE.AUTOFIT;
-            node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE;
+            node.excludeProcedure |= $enum.NODE_PROCEDURE.OPTIMIZATION;
+            node.excludeResource |= $enum.NODE_RESOURCE.FONT_STYLE | $enum.NODE_RESOURCE.BOX_STYLE;
+            node.android('src', `@drawable/${ResourceHandler.addImage({ mdpi: image.uri })}`);
             output = ViewController.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, `{:${container.id}}`);
         }
         return { output, parent: container, complete: true };

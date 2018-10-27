@@ -41,7 +41,7 @@ export function convertUnit(value: any, dpi = 160, font = false) {
     if (value) {
         value = parseFloat(value);
         if (!isNaN(value)) {
-            value /= (dpi / 160);
+            value /= dpi / 160;
             value = value >= 1 || value === 0 ? Math.floor(value) : value.toFixed(2);
             return value + (font ? 'sp' : 'dp');
         }

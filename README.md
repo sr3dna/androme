@@ -127,8 +127,6 @@ androme.settings = {
     outputMaxProcessingTime: 30
 };
 ```
-Constraint chain is available as a setting since flexbox does not always support exact placement for views that are not in the typical grid format. The same can be said for removing the built-in extension "androme.grid" when the generated UI is not accurate which it will instead use LinearLayout for placement.
-
 Most layout issues are probably due to layout_width and layout_height not being set correctly. Changing wrap_content to match_parent and vice versa or setting the actual width and height will fix most problems. HTML has a very flexible layout system built for very wide screens which makes it difficult sometimes to convert them for mobile devices. Using a table to create your layouts is recommended if you are not experienced with HTML.
 
 ### Standard
@@ -212,14 +210,14 @@ Most of the Android support library extensions can be configured using the same 
     });
 </script>
 ```
-### API: Public properties and methods (androme)
+### API: Public properties and methods
 
 There is no official documentation as this project is still in early development. The entire source code is available on GitHub if you need further clarification.
 
 ```javascript
 .settings // see user preferences section
 
-setFramework(module: {}, cached?: boolean); // install html converter
+setFramework(module: {}, cached?: boolean); // install application converter
 
 parseDocument() // see installation section
 
@@ -246,7 +244,7 @@ system.writeResourceDrawableXml(saveToDisk: boolean)
 system.writeResourceFontXml(saveToDisk: boolean)
 system.writeResourceStringXml(saveToDisk: boolean)
 system.writeResourceStyleXml(saveToDisk: boolean)
-system.customize(build: number, widget: string, options: {}) // global attributes applied to specific views (widget: 'Button' / 'Spinner' / 'namespace.thirdparty.control')
+system.customize(build: number, widget: string, options: {}) // global attributes applied to specific views
 ```
 You can use the "system.customize" method to create default settings for the specific controls which are applied after a view is rendered.
 ```javascript

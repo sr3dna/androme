@@ -417,8 +417,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                         switch (element.tagName) {
                             case 'SELECT':
-                                if (styleMap['verticalAlign'] == null && (<HTMLSelectElement> element).size > 1) {
-                                    styleMap['verticalAlign'] = 'text-bottom';
+                                if (styleMap.verticalAlign == null && (<HTMLSelectElement> element).size > 1) {
+                                    styleMap.verticalAlign = 'text-bottom';
                                 }
                                 break;
                         }

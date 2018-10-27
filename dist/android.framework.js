@@ -1,4 +1,4 @@
-/* androme 2.1.1
+/* androme 2.1.2
    https://github.com/anpham6/androme */
 
 var android = (function () {
@@ -430,7 +430,7 @@ var android = (function () {
         if (value) {
             value = parseFloat(value);
             if (!isNaN(value)) {
-                value /= (dpi / 160);
+                value /= dpi / 160;
                 value = value >= 1 || value === 0 ? Math.floor(value) : value.toFixed(2);
                 return value + (font ? 'sp' : 'dp');
             }
@@ -1710,8 +1710,8 @@ var android = (function () {
         '!1',
         '!2',
         '	<item>',
-        '       <shape android:shape="rectangle">',
-        '	        <gradient android:type="{&type}" android:startColor="@color/{&startColor}" android:centerColor="@color/{@centerColor}" android:endColor="@color/{&endColor}" android:angle="{@angle}" android:centerX="{@centerX}" android:centerY="{@centerY}" android:gradientRadius="{@gradientRadius}" android:useLevel="{@useLevel}" />',
+        '		<shape android:shape="rectangle">',
+        '			<gradient android:type="{&type}" android:startColor="@color/{&startColor}" android:centerColor="@color/{@centerColor}" android:endColor="@color/{&endColor}" android:angle="{@angle}" android:centerX="{@centerX}" android:centerY="{@centerY}" android:gradientRadius="{@gradientRadius}" android:useLevel="{@useLevel}" />',
         '		</shape>',
         '	</item>',
         '!2',
@@ -1778,27 +1778,13 @@ var android = (function () {
     var $xml = androme.lib.xml;
     var $color = androme.lib.color;
     var $resource = androme.lib.base.Resource;
-    const METHOD_ANDROID = {
-        'boxStyle': {
-            'src': 'android:background="@drawable/{0}"'
-        },
-        'fontStyle': {
-            'fontFamily': 'android:fontFamily="{0}"',
-            'fontStyle': 'android:textStyle="{0}"',
-            'fontWeight': 'android:fontWeight="{0}"',
-            'fontSize': 'android:textSize="{0}"',
-            'color': 'android:textColor="@color/{0}"',
-            'backgroundColor': 'android:background="@color/{0}"'
-        },
-        'valueString': {
-            'text': 'android:text="{0}"'
-        },
-        'optionArray': {
-            'entries': 'android:entries="@array/{0}"'
-        },
-        'imageSource': {
-            'src': 'android:src="@drawable/{0}"'
-        }
+    const FONT_STYLE = {
+        'fontFamily': 'android:fontFamily="{0}"',
+        'fontStyle': 'android:textStyle="{0}"',
+        'fontWeight': 'android:fontWeight="{0}"',
+        'fontSize': 'android:textSize="{0}"',
+        'color': 'android:textColor="@color/{0}"',
+        'backgroundColor': 'android:background="@color/{0}"'
     };
     function getStoredDrawable(xml) {
         for (const [name, value] of $resource.STORED.drawables.entries()) {
@@ -1841,32 +1827,32 @@ var android = (function () {
                 if (halfSize) {
                     switch (direction) {
                         case 0:
-                            result['groove'] = colorReduced;
+                            result.groove = colorReduced;
                             break;
                         case 1:
-                            result['groove'] = colorReduced;
+                            result.groove = colorReduced;
                             break;
                         case 2:
-                            result['groove'] = result.solid;
+                            result.groove = result.solid;
                             break;
                         case 3:
-                            result['groove'] = result.solid;
+                            result.groove = result.solid;
                             break;
                     }
                 }
                 else {
                     switch (direction) {
                         case 0:
-                            result['groove'] = result.solid;
+                            result.groove = result.solid;
                             break;
                         case 1:
-                            result['groove'] = result.solid;
+                            result.groove = result.solid;
                             break;
                         case 2:
-                            result['groove'] = colorReduced;
+                            result.groove = colorReduced;
                             break;
                         case 3:
-                            result['groove'] = colorReduced;
+                            result.groove = colorReduced;
                             break;
                     }
                 }
@@ -1875,32 +1861,32 @@ var android = (function () {
                 if (halfSize) {
                     switch (direction) {
                         case 0:
-                            result['ridge'] = result.solid;
+                            result.ridge = result.solid;
                             break;
                         case 1:
-                            result['ridge'] = result.solid;
+                            result.ridge = result.solid;
                             break;
                         case 2:
-                            result['ridge'] = colorReduced;
+                            result.ridge = colorReduced;
                             break;
                         case 3:
-                            result['ridge'] = colorReduced;
+                            result.ridge = colorReduced;
                             break;
                     }
                 }
                 else {
                     switch (direction) {
                         case 0:
-                            result['ridge'] = colorReduced;
+                            result.ridge = colorReduced;
                             break;
                         case 1:
-                            result['ridge'] = colorReduced;
+                            result.ridge = colorReduced;
                             break;
                         case 2:
-                            result['ridge'] = result.solid;
+                            result.ridge = result.solid;
                             break;
                         case 3:
-                            result['ridge'] = result.solid;
+                            result.ridge = result.solid;
                             break;
                     }
                 }
@@ -1938,7 +1924,7 @@ var android = (function () {
                                             break;
                                         case 'src':
                                             if (/^\w+:\/\//.test(value)) {
-                                                value = this.addImage({ 'mdpi': value });
+                                                value = this.addImage({ mdpi: value });
                                                 if (value !== '') {
                                                     obj[attr] = `@drawable/${value}`;
                                                     continue;
@@ -2007,36 +1993,36 @@ var android = (function () {
                         const src = filepath + $util$1.lastIndexOf(match[1]);
                         switch (match[2]) {
                             case '0.75x':
-                                images['ldpi'] = src;
+                                images.ldpi = src;
                                 break;
                             case '1x':
-                                images['mdpi'] = src;
+                                images.mdpi = src;
                                 break;
                             case '1.5x':
-                                images['hdpi'] = src;
+                                images.hdpi = src;
                                 break;
                             case '2x':
-                                images['xhdpi'] = src;
+                                images.xhdpi = src;
                                 break;
                             case '3x':
-                                images['xxhdpi'] = src;
+                                images.xxhdpi = src;
                                 break;
                             case '4x':
-                                images['xxxhdpi'] = src;
+                                images.xxxhdpi = src;
                                 break;
                         }
                     }
                 });
             }
-            if (images['mdpi'] == null) {
-                images['mdpi'] = element.src;
+            if (images.mdpi == null) {
+                images.mdpi = element.src;
             }
             return this.addImage(images, prefix);
         }
         static addImage(images, prefix = '') {
             let src = '';
-            if (images && images['mdpi']) {
-                src = $util$1.lastIndexOf(images['mdpi']);
+            if (images && images.mdpi) {
+                src = $util$1.lastIndexOf(images.mdpi);
                 const format = $util$1.lastIndexOf(src, '.').toLowerCase();
                 src = src.replace(/.\w+$/, '').replace(/-/g, '_');
                 switch (format) {
@@ -2058,7 +2044,7 @@ var android = (function () {
         static addImageURL(value, prefix = '') {
             const url = $dom$1.cssResolveUrl(value);
             if (url !== '') {
-                return this.addImage({ 'mdpi': url }, prefix);
+                return this.addImage({ mdpi: url }, prefix);
             }
             return '';
         }
@@ -2714,8 +2700,7 @@ var android = (function () {
                                 $resource.STORED.drawables.set(resourceName, xml);
                             }
                         }
-                        const method = METHOD_ANDROID[node.is($enum$1.NODE_STANDARD.IMAGE) ? 'imageSource' : 'boxStyle'];
-                        node.formatted($util$1.formatString(method['src'], resourceName), node.renderExtension.size === 0);
+                        node.android('background', `@drawable/${resourceName}`, node.renderExtension.size === 0);
                         if (hasBackgroundImage) {
                             node.data('RESOURCE', 'backgroundImage', true);
                             if (this.settings.autoSizeBackgroundImage &&
@@ -2767,7 +2752,7 @@ var android = (function () {
                         }
                     }
                     else if (!$dom$1.getElementCache(node.element, 'fontStyle') && $util$1.isString(stored.backgroundColor)) {
-                        node.formatted($util$1.formatString(METHOD_ANDROID['fontStyle']['backgroundColor'], stored.backgroundColor), node.renderExtension.size === 0);
+                        node.formatted($util$1.formatString(FONT_STYLE.backgroundColor, stored.backgroundColor), node.renderExtension.size === 0);
                     }
                 }
             });
@@ -2859,8 +2844,7 @@ var android = (function () {
                             $resource.STORED.fonts.set(fontFamily, fonts);
                         }
                     }
-                    const method = METHOD_ANDROID['fontStyle'];
-                    const keys = Object.keys(method);
+                    const keys = Object.keys(FONT_STYLE);
                     for (let i = 0; i < keys.length; i++) {
                         if (sorted[i] == null) {
                             sorted[i] = {};
@@ -2868,7 +2852,7 @@ var android = (function () {
                         const value = stored[keys[i]];
                         if ($util$1.hasValue(value)) {
                             if (node.supported('android', keys[i])) {
-                                const attr = $util$1.formatString(method[keys[i]], value);
+                                const attr = $util$1.formatString(FONT_STYLE[keys[i]], value);
                                 if (sorted[i][attr] == null) {
                                     sorted[i][attr] = [];
                                 }
@@ -2977,12 +2961,11 @@ var android = (function () {
                     if ((node.imageElement || (node.tagName === 'INPUT' && node.element.type === 'image')) &&
                         !node.hasBit('excludeResource', $enum$1.NODE_RESOURCE.IMAGE_SOURCE)) {
                         const element = node.element;
-                        result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ 'mdpi': element.src });
+                        result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ mdpi: element.src });
                     }
                 }
                 if (result !== '') {
-                    const method = METHOD_ANDROID['imageSource'];
-                    node.formatted($util$1.formatString(method['src'], result), node.renderExtension.size === 0);
+                    node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
                     $dom$1.setElementCache(node.element, 'imageSource', result);
                 }
             });
@@ -3030,11 +3013,8 @@ var android = (function () {
                         }
                     }
                     const name = ResourceHandler.addString(stored.value, stored.name, this.settings);
-                    if (name !== '') {
-                        const method = METHOD_ANDROID['valueString'];
-                        if (node.toInt('textIndent') + node.bounds.width > 0) {
-                            node.formatted($util$1.formatString(method['text'], isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name), node.renderExtension.size === 0);
-                        }
+                    if (name !== '' && node.toInt('textIndent') + node.bounds.width > 0) {
+                        node.android('text', isNaN(parseInt(name)) || parseInt(name).toString() !== name ? `@string/${name}` : name, node.renderExtension.size === 0);
                     }
                 }
             });
@@ -3073,8 +3053,7 @@ var android = (function () {
                             arrayName = `${node.nodeId}_array`;
                             $resource.STORED.arrays.set(arrayName, result);
                         }
-                        const method = METHOD_ANDROID['optionArray'];
-                        node.formatted($util$1.formatString(method['entries'], arrayName), node.renderExtension.size === 0);
+                        node.android('entries', `@array/${arrayName}`, node.renderExtension.size === 0);
                     }
                 }
             });
@@ -3513,7 +3492,8 @@ var android = (function () {
                     const cleared = NodeList$2.cleared(node.initial.children);
                     if (relative) {
                         function checkSingleLine(item, nowrap = false, flexParent = false) {
-                            if (item && item.textElement && (nowrap || flexParent ||
+                            if (item && item.textElement && (nowrap ||
+                                flexParent ||
                                 (!item.hasWidth && !item.multiLine && item.textContent.trim().split(String.fromCharCode(32)).length > 1))) {
                                 item.android('singleLine', 'true');
                             }
@@ -4715,7 +4695,7 @@ var android = (function () {
                                 const connected = {};
                                 function deleteChain(item, value) {
                                     mapDelete(item, value);
-                                    connected[item.stringId][value] = null;
+                                    delete connected[item.stringId][value];
                                 }
                                 for (let i = 0; i < nodes.length; i++) {
                                     const current = nodes.get(i);
@@ -4727,7 +4707,7 @@ var android = (function () {
                                         leftRight: mapSibling(current, 'leftRight'),
                                         rightLeft: mapSibling(current, 'rightLeft'),
                                         topBottom: mapSibling(current, 'topBottom'),
-                                        bottomTop: mapSibling(current, 'bottomTop'),
+                                        bottomTop: mapSibling(current, 'bottomTop')
                                     };
                                     if ((bottom && mapSibling(current, 'topBottom') && current.hasHeight) ||
                                         (top && bottom && current.linear.bottom < maxBottom && !current.has('marginTop', $enum$2.CSS_STANDARD.AUTO))) {
@@ -6019,10 +5999,10 @@ var android = (function () {
                             });
                         }
                     }
-                    else if (images['mdpi']) {
+                    else if (images.mdpi) {
                         root.push({
-                            name: `res/drawable/${name}.${$util$3.lastIndexOf(images['mdpi'], '.')}`,
-                            value: `<!-- image: ${images['mdpi']} -->`
+                            name: `res/drawable/${name}.${$util$3.lastIndexOf(images.mdpi, '.')}`,
+                            value: `<!-- image: ${images.mdpi} -->`
                         });
                     }
                 }
@@ -6360,7 +6340,7 @@ var android = (function () {
             const image = node.data($const$3.EXT_NAME.SPRITE, 'image');
             let output = '';
             let container;
-            if (image && image.position) {
+            if (image && image.uri && image.position) {
                 container = new View(this.application.cacheProcessing.nextId, node.element);
                 container.api = node.api;
                 container.siblingIndex = node.siblingIndex;
@@ -6400,8 +6380,9 @@ var android = (function () {
                     backgroundPositionY: '0px',
                     backgroundColor: 'transparent'
                 });
-                node.excludeProcedure |= $enum$6.NODE_PROCEDURE.AUTOFIT;
-                node.excludeResource |= $enum$6.NODE_RESOURCE.FONT_STYLE;
+                node.excludeProcedure |= $enum$6.NODE_PROCEDURE.OPTIMIZATION;
+                node.excludeResource |= $enum$6.NODE_RESOURCE.FONT_STYLE | $enum$6.NODE_RESOURCE.BOX_STYLE;
+                node.android('src', `@drawable/${ResourceHandler.addImage({ mdpi: image.uri })}`);
                 output = ViewController.getEnclosingTag(container.renderDepth, NODE_ANDROID.FRAME, container.id, `{:${container.id}}`);
             }
             return { output, parent: container, complete: true };
