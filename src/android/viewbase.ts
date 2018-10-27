@@ -1005,6 +1005,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                 }, true);
             }
             else if (this.linearVertical) {
+                function getPreviousBottom(list: View[]) {
+                    return list.sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0].linear.bottom;
+                }
                 const children = this.initial.children.some(node => $util.hasValue(node.dataset.include)) ? this.initial.children as View[] : this.renderChildren;
                 children.forEach((node: View) => {
                     const previous = (() => {
@@ -1016,7 +1019,9 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         return current;
                     })();
                     const elements = $dom.getElementsBetweenSiblings(
-                        previous ? (previous.length > 0 && !previous.styleElement ? previous.lastElementChild : previous.baseElement) : null,
+                        previous
+                            ? (previous.length > 0 && !previous.styleElement ? previous.lastElementChild : previous.baseElement)
+                            : null,
                         node.baseElement
                     )
                     .filter(element => {
@@ -1030,8 +1035,11 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                         else {
                             bottom = (() => {
-                                if (previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
-                                    return previous.renderChildren.filter(item => !item.floating).sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0].linear.bottom;
+                                if (previous.renderParent.of($enum.NODE_STANDARD.FRAME, $enum.NODE_ALIGNMENT.FLOAT)) {
+                                    return getPreviousBottom(previous.renderParent.renderChildren.slice());
+                                }
+                                else if (previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
+                                    return getPreviousBottom(previous.renderChildren.filter(item => !item.floating));
                                 }
                                 return previous.linear.bottom;
                             })();

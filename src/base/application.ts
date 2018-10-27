@@ -703,7 +703,12 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 axisY.push(...sortAsc(below, 'style.zIndex', 'id'));
                 axisY.push(...middle);
                 axisY.push(...sortAsc(above, 'style.zIndex', 'id'));
-                const cleared = NodeList.cleared(axisY);
+                const documentParent = parent.children.filter(item => item.siblingflow).map(item => item.documentParent);
+                const cleared = NodeList.cleared(
+                    new Set(documentParent).size === 1
+                        ? Array.from(documentParent[0].baseElement.children).map((element: Element) => getNodeFromElement(element) as T).filter(item => item)
+                        : axisY
+                );
                 const includes: string[] = [];
                 let current = '';
                 let k = -1;
@@ -796,13 +801,13 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                             const pending = [...horizontal, ...vertical, adjacent];
                                             const clearedPartial = NodeList.cleared(pending);
                                             const clearedPrevious = new Map<T, string>();
-                                            if (clearedPartial.has(previousSibling)) {
+                                            if (clearedPartial.has(previousSibling) || (previousSibling.lineBreak && cleared.has(previousSibling))) {
                                                 clearedPrevious.set(previousSibling, previousSibling.css('clear'));
                                             }
                                             const verticalAlign = adjacent.alignedVertically(previousSibling, clearedPrevious);
                                             if (verticalAlign || clearedPartial.has(adjacent) || (this.settings.floatOverlapDisabled && previousSibling.floating && adjacent.blockStatic && floatedOpen.size === 2)) {
                                                 if (horizontal.length > 0) {
-                                                    if (!this.settings.floatOverlapDisabled && !previousSibling.lineBreak) {
+                                                    if (!this.settings.floatOverlapDisabled) {
                                                         const clearedDirection = new Set(pending.map(node => clearedPartial.get(node) || '').filter(value => value !== ''));
                                                         let maxBottom: Null<number> = null;
                                                         if (floated.size > 0) {
