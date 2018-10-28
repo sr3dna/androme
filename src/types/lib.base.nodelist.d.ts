@@ -10,7 +10,7 @@ declare global {
             public static sortByAlignment<T extends Node>(list: T[], alignmentType?: number, parent?: T): boolean;
             public static siblingIndex(): number;
             public parent?: T;
-            public delegateAppend?: (nodes: T[]) => void;
+            public delegateAppend?: (node: T) => void;
             public readonly length: number;
             public readonly list: T[];
             public readonly visible: T[];
@@ -21,8 +21,7 @@ declare global {
             constructor(nodes?: T[], parent?: T);
             public [Symbol.iterator](): Iterator<T>;
             public reset(): this;
-            public append(...nodes: T[]): this;
-            public prepend(...nodes: T[]): this;
+            public append(node: T, delegate?: boolean): this;
             public each(predicate: IteratorPredicate<T, void>): this;
             public sort(predicate: (a: T, b: T) => number): this;
             public clear(): this;

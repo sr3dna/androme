@@ -21,11 +21,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         let bottom: T[] = [];
         let left: T[] = [];
         const nodes = list.slice();
-        for (const node of list) {
-            if (node.companion) {
-                nodes.push(node.companion as T);
-            }
-        }
+        list.forEach(node => node.companion && nodes.push(node.companion as T));
         for (let i = 0; i < nodes.length; i++) {
             const node = nodes[i];
             if (i === 0) {
@@ -306,7 +302,7 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         return this.cleared(Array.from(parent.baseElement.children).map(element => getNodeFromElement(element) as T).filter(node => node));
     }
 
-    public delegateAppend?: (nodes: T[]) => void;
+    public delegateAppend?: (node: T) => void;
 
     private _currentId = 0;
     private readonly _list: T[] = [];
@@ -341,16 +337,11 @@ export default class NodeList<T extends Node> implements androme.lib.base.NodeLi
         return this;
     }
 
-    public append(...nodes: T[]) {
-        this._list.push(...nodes);
-        if (typeof this.delegateAppend === 'function') {
-            this.delegateAppend.call(this, nodes);
+    public append(node: T, delegate = true) {
+        this._list.push(node);
+        if (delegate && this.delegateAppend) {
+            this.delegateAppend.call(this, node);
         }
-        return this;
-    }
-
-    public prepend(...nodes: T[]) {
-        this._list.unshift(...nodes);
         return this;
     }
 

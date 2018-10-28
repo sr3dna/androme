@@ -25,7 +25,7 @@ export default class <T extends View> extends androme.lib.base.extensions.Sprite
             container.excludeResource |= $enum.NODE_RESOURCE.IMAGE_SOURCE;
             parent.replaceChild(node, container);
             container.render(parent);
-            this.application.cacheProcessing.append(container);
+            this.application.cacheProcessing.append(container, false);
             node.parent = container;
             node.nodeType = $enum.NODE_STANDARD.IMAGE;
             node.setNodeType(NODE_ANDROID.IMAGE);

@@ -61,9 +61,7 @@ export function setFramework(module: AppFramework<T>, cached = false) {
                     }
                 }
             }
-            for (const ext of register) {
-                main.registerExtension(ext);
-            }
+            register.forEach(item => main.registerExtension(item));
         }
         framework = module;
         system = module.system;
@@ -74,7 +72,7 @@ export function setFramework(module: AppFramework<T>, cached = false) {
 export function parseDocument(...elements: Null<string | Element>[]): FunctionMap<void> {
     if (main && !main.closed) {
         if (settings.handleExtensionsAsync) {
-            extensionsAsync.forEach(ext => main.registerExtension(ext));
+            extensionsAsync.forEach(item => main.registerExtension(item));
             for (const [name, options] of optionsAsync.entries()) {
                 configureExtension(name, options);
             }
@@ -83,7 +81,19 @@ export function parseDocument(...elements: Null<string | Element>[]): FunctionMa
         }
         return main.parseDocument(...elements);
     }
-    return { then: (...args: any[]) => {} };
+    return {
+        then: (callback: () => void) => {
+            if (!main) {
+                alert('ERROR: Framework not installed.');
+            }
+            else if (main.closed) {
+                if (confirm('ERROR: Document is closed. Reset and rerun?')) {
+                    main.reset();
+                    parseDocument.apply(null, arguments).then(callback);
+                }
+            }
+        }
+    };
 }
 
 export function registerExtension(ext: Extension<T>) {

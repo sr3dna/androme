@@ -161,7 +161,7 @@ export default class <T extends View> extends androme.lib.base.extensions.List<T
                         companion.css('fontSize', '12px');
                     }
                     node.companion = companion;
-                    this.application.cacheProcessing.append(companion);
+                    this.application.cacheProcessing.append(companion, false);
                     controller.prependBefore(
                         node.id,
                         controller.renderNodeStatic(

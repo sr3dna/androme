@@ -53,9 +53,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
             const placeholder = new View(nextId);
             placeholder.init();
             placeholder.api = container.api;
-            for (const item of nodes) {
-                item.parent = placeholder;
-            }
+            nodes.forEach(item => item.parent = placeholder);
             placeholder.inherit(container, 'dimensions');
             placeholder.auto = false;
             placeholder.excludeResource |= $enum.NODE_RESOURCE.ALL;
@@ -214,7 +212,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
             appBarNode = createPlaceholder(this.application.cacheProcessing.nextId, node, appBarChildren) as T;
             appBarNode.parent = node.parent;
             appBarNode.nodeId = $util_android.stripId(optionsAppBar.android.id);
-            this.application.cacheProcessing.append(appBarNode);
+            this.application.cacheProcessing.append(appBarNode, appBarChildren.length > 0);
             outer = controller.renderNodeStatic(
                 $const_android.VIEW_SUPPORT.APPBAR,
                 target ? -1 : depth,
@@ -237,7 +235,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
                 collapsingToolbarNode.parent = appBarNode;
                 if (collapsingToolbarNode) {
                     collapsingToolbarNode.each(item => item.dataset.target = (collapsingToolbarNode as T).nodeId);
-                    this.application.cacheProcessing.append(collapsingToolbarNode);
+                    this.application.cacheProcessing.append(collapsingToolbarNode, collapsingToolbarChildren.length > 0);
                     const content = controller.renderNodeStatic(
                         $const_android.VIEW_SUPPORT.COLLAPSING_TOOLBAR,
                         target && !hasAppBar ? -1 : depth,

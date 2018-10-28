@@ -167,9 +167,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                     '2': []
                 };
                 const item = arrayItem['2'];
-                for (const value of values) {
-                    item.push({ value });
-                }
+                values.forEach(value => item.push({ value }));
                 root['1'].push(arrayItem);
             }
             xml = $xml.createTemplate($xml.parseTemplate(STRINGARRAY_TMPL), data);
@@ -246,22 +244,22 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                     '1': []
                 }]
             };
-            const styles = Array.from(this.stored.styles.values()).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
             const root = $xml.getTemplateBranch(data, '0');
+            const styles = Array.from(this.stored.styles.values()).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
             for (const style of styles) {
-                const styleItem: {} = {
-                    name1: style.name,
+                const item: {} = {
+                    parentName: style.name,
                     parent: style.parent || '',
                     '2': []
                 };
                 style.attrs.split(';').sort().forEach((attr: string) => {
-                    const [name2, value] = attr.split('=');
-                    styleItem['2'].push({
-                        name2,
+                    const [name, value] = attr.split('=');
+                    item['2'].push({
+                        name,
                         value: value.replace(/"/g, '')
                     });
                 });
-                root['1'].push(styleItem);
+                root['1'].push(item);
             }
             xml = $xml.createTemplate($xml.parseTemplate(STYLE_TMPL), data);
             xml = replaceUnit(xml, this.settings, true);

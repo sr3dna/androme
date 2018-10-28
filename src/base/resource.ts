@@ -227,14 +227,13 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             }
                             let width = node.css(`${attr}Width`) || '1px';
                             const style = node.css(`${attr}Style`) || 'none';
-                            const color = style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : [];
                             if (style === 'inset' && width === '0px') {
                                 width = '1px';
                             }
                             boxStyle[attr] = {
                                 width,
                                 style,
-                                color: color.length > 0 ? color : ['#000000', 'rgb(0, 0, 0)', '0']
+                                color: style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : ''
                             };
                             break;
                         }

@@ -60,20 +60,16 @@ export function camelToLowerCase(value: string) {
     value = value.charAt(0).toLowerCase() + value.substring(1);
     const result = value.match(/([a-z][A-Z])/g);
     if (result) {
-        for (const match of result) {
-            value = value.replace(match, `${match[0]}_${match[1].toLowerCase()}`);
-        }
+        result.forEach(match => value = value.replace(match, `${match[0]}_${match[1].toLowerCase()}`));
     }
     return value;
 }
 
 export function convertCamelCase(value: string, char = '-') {
     value = value.replace(new RegExp(`^${char}+`), '');
-    const result = value.match(new RegExp(`(${char}[a-z])`, 'g'));
+    const result = value.match(new RegExp(`(${char}[a-z\\d])`, 'g'));
     if (result) {
-        for (const match of result) {
-            value = value.replace(match, match[1].toUpperCase());
-        }
+        result.forEach(match => value = value.replace(match, match[1].toUpperCase()));
     }
     return value;
 }

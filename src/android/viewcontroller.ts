@@ -1,6 +1,6 @@
 import { SettingsAndroid, ViewAttribute } from './types/local';
 
-import { AXIS_ANDROID, BOX_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
+import { AXIS_ANDROID, NODE_ANDROID, WEBVIEW_ANDROID, XMLNS_ANDROID } from './lib/constant';
 
 import BASE_TMPL from './template/base';
 
@@ -9,7 +9,7 @@ import ViewGroup from './viewgroup';
 import ResourceHandler from './resourcehandler';
 import NodeList = androme.lib.base.NodeList;
 
-import { delimitUnit, generateId, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
+import { delimitUnit, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
@@ -45,10 +45,6 @@ const MAP_CHAIN = {
     widthHeight: ['Width', 'Height'],
     horizontalVertical: ['Horizontal', 'Vertical']
 };
-
-function getDimensResourceKey(resource: Map<string, string>, key: string, value: string) {
-    return resource.has(key) && resource.get(key) !== value ? generateId('dimens', key, 1) : key;
-}
 
 function setAlignParent<T extends View>(node: T, orientation = '', bias = false) {
     [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
@@ -104,18 +100,6 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         this.setAttributes(data);
         for (const value of [...data.views, ...data.includes]) {
             value.content = $xml.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
-            if (this.settings.dimensResourceValue) {
-                let content = value.content;
-                const resource: Map<string, string> = ResourceHandler.getStored('dimens');
-                const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
-                let match: Null<RegExpExecArray>;
-                while ((match = pattern.exec(content)) != null) {
-                    const key = getDimensResourceKey(resource, `${match[2]}_${parseRTL(match[3], this.settings)}`, match[4]);
-                    resource.set(key, match[4]);
-                    content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
-                }
-                value.content = content;
-            }
             value.content = replaceUnit(value.content, this.settings);
             value.content = $xml.replaceTab(value.content, this.settings);
         }
@@ -825,9 +809,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                             }
                                             break;
                                     }
-                                    for (const y of levels) {
-                                        horizontal.push(new NodeList(map[y]));
-                                    }
+                                    levels.forEach(value => horizontal.push(new NodeList(map[value])));
                                 }
                             }
                             else if (columnCount > 0) {
@@ -887,7 +869,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                                     return coordinate.map(value => {
                                         const sameXY = $util.sortAsc(siblings.list.filter(item => $util.sameValue(current, item, value) && item[orientation === AXIS_ANDROID.HORIZONTAL ? 'intersectX' : 'intersectY'](current.linear)), coordinate[0]);
                                         if (sameXY.length > 1) {
-                                            if (!validate || (!sameXY.some(item => item.floating) && sameXY[0].app(mapParent[0]) === 'parent' && sameXY[sameXY.length - 1].app(mapParent[1]) === 'parent')) {
+                                            if (!validate || (sameXY.every(item => !item.floating) && sameXY[0].app(mapParent[0]) === 'parent' && sameXY[sameXY.length - 1].app(mapParent[1]) === 'parent')) {
                                                 return sameXY;
                                             }
                                             else {
@@ -2138,71 +2120,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     }
 
     public setBoxSpacing(data: ViewData<NodeList<T>>) {
-        data.cache.visible.forEach(node => node.setBoxSpacing(this.settings));
-    }
-
-    public setDimensions(data: ViewData<NodeList<T>>) {
-        const groups: ObjectMapNested<T[]> = {};
-        function addToGroup(nodeName: string, node: T, dimen: string, attr?: string, value?: string) {
-            const group: ObjectMap<T[]> = groups[nodeName];
-            let name = dimen;
-            if (arguments.length === 5) {
-                if (value && /(px|dp|sp)$/.test(value)) {
-                    name += `,${attr},${value}`;
-                }
-                else {
-                    return;
-                }
-            }
-            if (group[name] == null) {
-                group[name] = [];
-            }
-            group[name].push(node);
-        }
-        function valueBox(node: T, region: string, settings: SettingsAndroid) {
-            const name = $util.convertEnum(parseInt(region), $enum.BOX_STANDARD, BOX_ANDROID);
-            if (name !== '') {
-                const attr = parseRTL(name, settings);
-                return [attr, node.android(attr) || '0px'];
-            }
-            return ['', '0px'];
-        }
-        data.cache.visible.forEach(node => {
-            if (this.settings.dimensResourceValue) {
-                const nodeName = node.nodeName.toLowerCase();
-                if (groups[nodeName] == null) {
-                    groups[nodeName] = {};
-                }
-                for (const key of Object.keys($enum.BOX_STANDARD)) {
-                    const result = valueBox(node, key, <SettingsAndroid> this.application.settings);
-                    if (result[0] !== '' && result[1] !== '0px') {
-                        const name = `${$enum.BOX_STANDARD[key].toLowerCase()},${result[0]},${result[1]}`;
-                        addToGroup(nodeName, node, name);
-                    }
-                }
-                ['android:layout_width:width',
-                 'android:layout_height:height',
-                 'android:minWidth:min_width',
-                 'android:minHeight:min_height',
-                 'app:layout_constraintWidth_min:constraint_width_min',
-                 'app:layout_constraintHeight_min:constraint_height_min'].forEach(value => {
-                    const [obj, attr, dimen] = value.split(':');
-                    addToGroup(nodeName, node, dimen, attr, node[obj](attr));
-                });
-            }
-        });
-        if (this.settings.dimensResourceValue) {
-            const resource: Map<string, string> = ResourceHandler.getStored('dimens');
-            for (const nodeName in groups) {
-                const group: ObjectMap<T[]> = groups[nodeName];
-                for (const name in group) {
-                    const [dimen, attr, value] = name.split(',');
-                    const key = getDimensResourceKey(resource, `${nodeName}_${parseRTL(dimen, this.settings)}`, value);
-                    group[name].forEach(node => node[attr.indexOf('constraint') !== -1 ? 'app' : 'android'](attr, `@dimen/${key}`));
-                    resource.set(key, value);
-                }
-            }
-        }
+        data.cache.visible.forEach(node => node.rendered && node.setBoxSpacing(this.settings));
     }
 
     protected addGuideline(node: T, orientation = '', percent?: boolean, opposite?: boolean) {

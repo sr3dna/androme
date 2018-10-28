@@ -29,7 +29,7 @@ declare global {
             public parseDocument(...elements: Null<string | Element>[]): FunctionMap<void>;
             public setConstraints(): void;
             public setResources(): void;
-            public initCache(rootElement: HTMLElement): boolean;
+            public createCache(rootElement: HTMLElement): boolean;
             public createDocument(): void;
             public writeFrameLayout(node: T, parent: T, children?: boolean): string;
             public writeLinearLayout(node: T, parent: T, horizontal: boolean): string;
@@ -42,7 +42,7 @@ declare global {
             public createLayoutFile(pathname: string, filename: string, content: string, documentRoot?: boolean): void;
             public createIncludeFile(filename: string, content: string): void;
             public addRenderQueue(id: string, views: string[]): void;
-            public saveSortOrder(id: string | number, nodes: T[]): void;
+            public preserveRenderPosition(id: string | number, nodes: T[]): void;
             public getExtension(name: string): Extension<T> | undefined;
             public insertNode(element: Element, parent?: T): Null<T>;
             public toString(): string;

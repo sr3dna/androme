@@ -22,11 +22,11 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
             }
             if (url !== '') {
                 url = cssResolveUrl(url);
-                if (this.application.cacheImage.has(url)) {
+                const image = <Image> this.application.cacheImage.get(url);
+                if (image) {
                     const fontSize = node.css('fontSize');
                     const width = convertInt(convertClientPX(node.has('width') ? node.css('width') : node.css('minWidth'), node.bounds.width, fontSize));
                     const height = convertInt(convertClientPX(node.has('height') ? node.css('width') : node.css('minHeight'), node.bounds.height, fontSize));
-                    const image = <Image> this.application.cacheImage.get(url);
                     const position = Resource.parseBackgroundPosition(`${node.css('backgroundPositionX')} ${node.css('backgroundPositionY')}`, node.bounds, fontSize);
                     if (width > 0 && position.left <= 0 && image.width > width &&
                         height > 0 && position.top <= 0 && image.height > height)

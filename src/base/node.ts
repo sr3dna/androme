@@ -103,9 +103,7 @@ export default abstract class Node implements androme.lib.base.Node {
             if (this.styleElement) {
                 const element = <HTMLElement> this._element;
                 const styleMap = getElementCache(element, 'styleMap') || {};
-                for (const inline of Array.from(element.style)) {
-                    styleMap[convertCamelCase(inline)] = element.style[inline];
-                }
+                Array.from(element.style).forEach(value => styleMap[convertCamelCase(value)] = element.style[value]);
                 this.style = getElementCache(element, 'style') || getComputedStyle(element);
                 this.styleMap = Object.assign({}, styleMap);
                 Object.assign(this.initial.styleMap, styleMap);
@@ -118,23 +116,11 @@ export default abstract class Node implements androme.lib.base.Node {
     }
 
     public is(...views: number[]) {
-        for (const value of views) {
-            if (this.nodeType === value) {
-                return true;
-            }
-        }
-        return false;
+        return views.some(value => this.nodeType === value);
     }
 
     public of(nodeType: number, ...alignmentType: number[]) {
-        if (this.nodeType === nodeType) {
-            for (const value of alignmentType) {
-                if (this.hasAlign(value)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        return this.nodeType === nodeType && alignmentType.some(value => this.hasAlign(value));
     }
 
     public attr(obj: string, attr: string, value = '', overwrite = true): string {
@@ -293,9 +279,9 @@ export default abstract class Node implements androme.lib.base.Node {
                         }
                         break;
                     case 'alignment':
-                        ['position', 'display', 'verticalAlign', 'cssFloat', 'clear'].forEach(attr => {
-                            this.styleMap[attr] = node.css(attr);
-                            this.initial.styleMap[attr] = node.cssInitial(attr);
+                        ['position', 'display', 'verticalAlign', 'cssFloat', 'clear'].forEach(value => {
+                            this.styleMap[value] = node.css(value);
+                            this.initial.styleMap[value] = node.cssInitial(value);
                         });
                         if (node.css('marginLeft') === 'auto') {
                             this.styleMap.marginLeft = 'auto';

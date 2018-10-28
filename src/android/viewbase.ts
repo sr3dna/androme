@@ -125,7 +125,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
             }
         }
 
-        public alignParent(position: string, settings: SettingsAndroid) {
+        public alignParent(position: string, settings: Settings) {
             if (this.renderParent.is($enum.NODE_STANDARD.CONSTRAINT, $enum.NODE_STANDARD.RELATIVE)) {
                 const direction = $util.capitalize(parseRTL(position, settings));
                 if (this.renderParent.controlName === NODE_ANDROID.CONSTRAINT) {
@@ -394,11 +394,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                         }
                         if (!this.documentBody && this.has('maxWidth', $enum.CSS_STANDARD.UNIT) && this.layoutVertical) {
                             const maxWidth = this.css('maxWidth');
-                            for (const node of renderChildren) {
-                                if (node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
-                                    node.android('maxWidth', maxWidth);
-                                }
-                            }
+                            renderChildren.forEach(node => node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth') && node.android('maxWidth', maxWidth));
                         }
                     }
                     if (this.android('layout_width') === '') {
@@ -494,11 +490,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                     }
                     if (!this.documentBody && this.has('maxHeight', $enum.CSS_STANDARD.UNIT) && this.layoutHorizontal) {
                         const maxHeight = this.css('maxHeight');
-                        for (const node of renderChildren) {
-                            if (node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
-                                node.android('maxWidth', maxHeight);
-                            }
-                        }
+                        renderChildren.forEach(node => node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxHeight') && node.android('maxHeight', maxHeight));
                     }
                 }
                 if (this.android('layout_height') === '') {

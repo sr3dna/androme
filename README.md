@@ -422,7 +422,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_18"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol36490"
+                    android:text="@string/__symbol59213"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <RelativeLayout
@@ -431,61 +431,61 @@ The attributes "include" and "include-end" can only be applied to elements which
                 android:layout_width="wrap_content">
                 <LinearLayout
                     android:id="@+id/linearlayout_8"
-                    style="@style/Relativelayout_2">
+                    style="@style/Relativelayout2">
                     <Spinner
                         android:id="@+id/month0"
                         android:entries="@array/custommonth0_array"
-                        style="@style/Select.Linearlayout_1" />
+                        style="@style/Select.Linearlayout1" />
                     <Spinner
                         android:id="@+id/day0"
                         android:entries="@array/customday0_array"
                         android:layout_marginStart="@dimen/select_margin_start"
-                        style="@style/Select.Linearlayout_1" />
+                        style="@style/Select.Linearlayout1" />
                     <Spinner
                         android:id="@+id/year0"
                         android:entries="@array/year0_array"
                         android:layout_marginStart="@dimen/select_margin_start"
-                        style="@style/Select.Linearlayout_1" />
+                        style="@style/Select.Linearlayout1" />
                 </LinearLayout>
                 <LinearLayout
                     android:id="@+id/linearlayout_9"
                     android:layout_below="@+id/linearlayout_8"
                     android:layout_marginTop="@dimen/select_group_margin_top"
-                    style="@style/Relativelayout_2">
+                    style="@style/Relativelayout2">
                     <Spinner
                         android:id="@+id/month1"
                         android:entries="@array/custommonth0_array"
-                        style="@style/Select.Linearlayout_1" />
+                        style="@style/Select.Linearlayout1" />
                     <Spinner
                         android:id="@+id/day1"
                         android:entries="@array/customday0_array"
                         android:layout_marginStart="@dimen/select_margin_start"
-                        style="@style/Select.Linearlayout_1" />
+                        style="@style/Select.Linearlayout1" />
                     <Spinner
                         android:id="@+id/year1"
                         android:entries="@array/year0_array"
                         android:layout_marginStart="@dimen/select_margin_start"
-                        style="@style/Select.Linearlayout_1" />
+                        style="@style/Select.Linearlayout1" />
                 </LinearLayout>
                 <LinearLayout
                     android:id="@+id/linearlayout_10"
                     android:layout_below="@+id/linearlayout_9"
                     android:layout_marginTop="@dimen/select_group_margin_top"
-                    style="@style/Relativelayout_2">
+                    style="@style/Relativelayout2">
                     <Spinner
                         android:id="@+id/month2"
                         android:entries="@array/custommonth0_array"
-                        style="@style/Select.Linearlayout_1" />
+                        style="@style/Select.Linearlayout1" />
                     <Spinner
                         android:id="@+id/day2"
                         android:entries="@array/customday0_array"
                         android:layout_marginStart="@dimen/select_margin_start"
-                        style="@style/Select.Linearlayout_1" />
+                        style="@style/Select.Linearlayout1" />
                     <Spinner
                         android:id="@+id/year2"
                         android:entries="@array/year0_array"
                         android:layout_marginStart="@dimen/select_margin_start"
-                        style="@style/Select.Linearlayout_1" />
+                        style="@style/Select.Linearlayout1" />
                 </LinearLayout>
             </RelativeLayout>
             <Space
@@ -510,12 +510,12 @@ The attributes "include" and "include-end" can only be applied to elements which
                 <Spinner
                     android:id="@+id/hour"
                     android:entries="@array/hour_array"
-                    style="@style/Select.Linearlayout_1" />
+                    style="@style/Select.Linearlayout1" />
                 <Spinner
                     android:id="@+id/minute"
                     android:entries="@array/minute_array"
                     android:layout_marginStart="@dimen/select_margin_start"
-                    style="@style/Select.Linearlayout_1" />
+                    style="@style/Select.Linearlayout1" />
             </LinearLayout>
             <Space
                 android:id="@+id/space_3"
@@ -572,7 +572,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_21"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol36490"
+                    android:text="@string/__symbol59213"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1009,7 +1009,7 @@ The attributes "include" and "include-end" can only be applied to elements which
                     android:layout_height="wrap_content"
                     android:layout_toEndOf="@+id/textview_24"
                     android:layout_width="wrap_content"
-                    android:text="@string/__symbol36490"
+                    android:text="@string/__symbol59213"
                     style="@style/Plaintext" />
             </RelativeLayout>
             <LinearLayout
@@ -1097,12 +1097,12 @@ The attributes "include" and "include-end" can only be applied to elements which
                             android:id="@+id/c2"
                             android:layout_marginStart="@dimen/radio_margin_start"
                             android:text="@string/birth"
-                            style="@style/Radio.Radiogroup_1" />
+                            style="@style/Radio.Radiogroup1" />
                         <RadioButton
                             android:id="@+id/c3"
                             android:layout_marginStart="@dimen/radio_margin_start_1"
                             android:text="@string/death"
-                            style="@style/Radio.Radiogroup_1" />
+                            style="@style/Radio.Radiogroup1" />
                     </RadioGroup>
                     <CheckBox
                         android:id="@+id/c4"
@@ -1140,7 +1140,7 @@ The attributes "include" and "include-end" can only be applied to elements which
     <string name="app_name">androme_ui</string>
     <string name="__00_inactive">00 - Inactive</string>
     <string name="__01_active">01 - Active</string>
-    <string name="__symbol36490">):</string>
+    <string name="__symbol59213">):</string>
     <string name="active">Active:</string>
     <string name="add"><u>Add</u></string>
     <string name="all">All</string>
@@ -1382,13 +1382,13 @@ The attributes "include" and "include-end" can only be applied to elements which
         <item name="android:textColor">@color/black</item>
         <item name="android:textSize">11sp</item>
     </style>
-    <style name="Radio.Radiogroup_1">
+    <style name="Radio.Radiogroup1">
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_marginEnd">@dimen/radio_margin_end</item>
         <item name="android:layout_marginTop">@dimen/radio_margin_top</item>
         <item name="android:layout_width">wrap_content</item>
     </style>
-    <style name="Relativelayout_2">
+    <style name="Relativelayout2">
         <item name="android:layout_alignParentStart">true</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_width">wrap_content</item>
@@ -1399,7 +1399,7 @@ The attributes "include" and "include-end" can only be applied to elements which
         <item name="android:textColor">@color/black</item>
         <item name="android:textSize">11sp</item>
     </style>
-    <style name="Select.Linearlayout_1">
+    <style name="Select.Linearlayout1">
         <item name="android:background">@drawable/select_typeofentry</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:layout_width">wrap_content</item>

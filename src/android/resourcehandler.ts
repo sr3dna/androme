@@ -1,6 +1,6 @@
 import { SettingsAndroid } from './types/local';
 
-import { FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
+import { BOX_ANDROID, FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
 import SHAPE_TMPL from './template/resource/shape';
 import LAYERLIST_TMPL from './template/resource/layer-list';
@@ -9,7 +9,7 @@ import VECTOR_TMPL from './template/resource/vector';
 import View from './view';
 import NodeList = androme.lib.base.NodeList;
 
-import { generateId, replaceUnit } from './lib/util';
+import { generateId, parseRTL, replaceUnit } from './lib/util';
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
@@ -85,7 +85,7 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
             let opacity = '1';
             if (hex.length === 9) {
                 hex = `#${hex.substring(3)}`;
-                opacity = `0.${hex.substring(1, 3)}`;
+                opacity = `0.${parseInt(hex.substring(1, 3), 16)}`;
             }
             const reduced = $color.parseRGBA($color.reduceToRGB(hex, groove || hex === '#000000' ? 0.3 : -0.3));
             if (reduced.length > 0) {
@@ -166,10 +166,6 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
 }
 
 export default class ResourceHandler<T extends View> extends androme.lib.base.Resource<T> {
-    public static getStored(name: string): Map<string, any> {
-        return $resource.STORED[name];
-    }
-
     public static formatOptions(options: {}, settings: SettingsAndroid) {
         for (const namespace in options) {
             const obj: StringMap = options[namespace];
@@ -369,6 +365,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     public finalize(viewData: ViewData<NodeList<T>>) {
         const styles: ObjectMap<string[]> = {};
         this.processFontStyle(viewData);
+        this.processDimensions(viewData);
         viewData.cache.each(node => {
             const children = node.renderChildren.filter(item => item.visible && item.auto);
             if (children.length > 1) {
@@ -430,7 +427,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             }
                         }
                         if (!(name !== '' && style !== '' && name.startsWith(`${style}.`))) {
-                            name = (style !== '' ? `${style}.` : '') + $util.capitalize(node.nodeId);
+                            name = $util.convertCamelCase((style !== '' ? `${style}.` : '') + $util.capitalize(node.nodeId), '_');
                             styles[name] = common;
                         }
                         children.forEach(item => item.attr('_', 'style', `@style/${name}`));
@@ -647,7 +644,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             let tileMode = '';
                             let tileModeX = '';
                             let tileModeY = '';
-                            const imageRepeat = (image == null || image.width < node.bounds.width || image.height < node.bounds.height);
+                            const imageRepeat = image == null || image.width < node.bounds.width || image.height < node.bounds.height;
                             switch (backgroundRepeat[i]) {
                                 case 'repeat-x':
                                     if (imageRepeat) {
@@ -1236,15 +1233,15 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 group.translateY = svg.y.toString();
                             }
                         }
-                        svg.children.forEach(path => {
-                            if (path.clipPath) {
+                        svg.children.forEach(item => {
+                            if (item.clipPath) {
                                 group['2'].push({
-                                    name: path.name,
-                                    d: path.d
+                                    name: item.name,
+                                    d: item.d
                                 });
                             }
                             else {
-                                group['3'].push(path);
+                                group['3'].push(item);
                             }
                         });
                         root['1'].push(group);
@@ -1631,6 +1628,85 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     parent = value;
                 }
             });
+        }
+    }
+
+    private processDimensions(data: ViewData<NodeList<T>>) {
+        if (this.settings.dimensResourceValue) {
+            const groups: ObjectMapNested<T[]> = {};
+            const resource: Map<string, string> = $resource.STORED.dimens;
+            function addToGroup(nodeName: string, node: T, dimen: string, attr?: string, value?: string) {
+                const group: ObjectMap<T[]> = groups[nodeName];
+                let name = dimen;
+                if (arguments.length === 5) {
+                    if (value && /(px|dp|sp)$/.test(value)) {
+                        name += `,${attr},${value}`;
+                    }
+                    else {
+                        return;
+                    }
+                }
+                if (group[name] == null) {
+                    group[name] = [];
+                }
+                group[name].push(node);
+            }
+            function boxValue(node: T, region: string, settings: Settings) {
+                const name = $util.convertEnum(parseInt(region), $enum.BOX_STANDARD, BOX_ANDROID);
+                if (name !== '') {
+                    const attr = parseRTL(name, settings);
+                    return [attr, node.android(attr) || '0px'];
+                }
+                return ['', '0px'];
+            }
+            function getResourceKey(key: string, value: string) {
+                return resource.has(key) && resource.get(key) !== value ? generateId('dimens', key, 1) : key;
+            }
+            data.cache.visible.forEach(node => {
+                const nodeName = node.nodeName.toLowerCase();
+                if (groups[nodeName] == null) {
+                    groups[nodeName] = {};
+                }
+                for (const key of Object.keys($enum.BOX_STANDARD)) {
+                    const result = boxValue(node, key, this.application.settings);
+                    if (result[0] !== '' && result[1] !== '0px') {
+                        const name = `${$enum.BOX_STANDARD[key].toLowerCase()},${result[0]},${result[1]}`;
+                        addToGroup(nodeName, node, name);
+                    }
+                }
+                [
+                    'android:layout_width:width',
+                    'android:layout_height:height',
+                    'android:minWidth:min_width',
+                    'android:minHeight:min_height',
+                    'app:layout_constraintWidth_min:constraint_width_min',
+                    'app:layout_constraintHeight_min:constraint_height_min'
+                ]
+                .forEach(value => {
+                    const [obj, attr, dimen] = value.split(':');
+                    addToGroup(nodeName, node, dimen, attr, node[obj](attr));
+                });
+            });
+            for (const nodeName in groups) {
+                const group: ObjectMap<T[]> = groups[nodeName];
+                for (const name in group) {
+                    const [dimen, attr, value] = name.split(',');
+                    const key = getResourceKey(`${nodeName}_${parseRTL(dimen, this.settings)}`, value);
+                    group[name].forEach(node => node[attr.indexOf('constraint') !== -1 ? 'app' : 'android'](attr, `@dimen/${key}`));
+                    resource.set(key, value);
+                }
+            }
+            for (const value of [...data.views, ...data.includes]) {
+                let content = value.content;
+                const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
+                let match: Null<RegExpExecArray>;
+                while ((match = pattern.exec(content)) != null) {
+                    const key = getResourceKey(`${match[2]}_${parseRTL(match[3], this.settings)}`, match[4]);
+                    resource.set(key, match[4]);
+                    content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
+                }
+                value.content = content;
+            }
         }
     }
 }

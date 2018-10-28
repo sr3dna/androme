@@ -30,7 +30,7 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
                 break;
             case 'INPUT':
                 if ((<HTMLInputElement> element).type === 'image') {
-                    src = $resource_android.addImage({ 'mdpi': (<HTMLInputElement> element).src }, $const_android.DRAWABLE_PREFIX.DIALOG);
+                    src = $resource_android.addImage({ mdpi: (<HTMLInputElement> element).src }, $const_android.DRAWABLE_PREFIX.DIALOG);
                 }
                 else {
                     src = $resource_android.addImageURL(node.css('backgroundImage'), $const_android.DRAWABLE_PREFIX.DIALOG);

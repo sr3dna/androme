@@ -14,7 +14,7 @@ declare global {
             public app(attr: string, value?: string, overwrite?: boolean);
             public formatted(value: string, overwrite?: boolean): void;
             public anchor(position: string, adjacent?: string, orientation?: string, overwrite?: boolean): void;
-            public alignParent(position: string, settings: SettingsAndroid): boolean;
+            public alignParent(position: string, settings: Settings): boolean;
             public horizontalBias(settings: SettingsAndroid): number;
             public verticalBias(settings: SettingsAndroid): number;
             public supported(obj: string, attr: string): boolean;
