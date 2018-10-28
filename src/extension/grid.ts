@@ -190,7 +190,6 @@ export default abstract class Grid<T extends Node> extends Extension<T> {
                         if (m !== -1 && l === columnRight.length - 1) {
                             columnRight[m] = columnRight[l];
                         }
-                        continue;
                     }
                     else if (m !== -1) {
                         columnRight[m] = columnRight[l - 1];

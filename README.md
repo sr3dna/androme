@@ -217,7 +217,7 @@ There is no official documentation as this project is still in early development
 ```javascript
 .settings // see user preferences section
 
-setFramework(module: {}, cached?: boolean); // install application converter
+setFramework(module: {}, cached?: boolean) // install application converter
 
 parseDocument() // see installation section
 

@@ -66,10 +66,14 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
 
         constructor(
             id = 0,
-            element?: Element)
+            element?: Element,
+            afterInit?: SelfWrapped<View>)
         {
             super(id, element);
             this.constraint = { current: {} } as any;
+            if (afterInit) {
+                afterInit(this);
+            }
         }
 
         public attr(obj: string, attr: string, value = '', overwrite = true) {

@@ -3,14 +3,14 @@ import NodeList from './nodelist';
 import Application from './application';
 
 export default abstract class Controller<T extends Node> implements androme.lib.base.Controller<T> {
-    public abstract settings: Settings;
     public cache: NodeList<T>;
     public application: Application<T>;
+    public abstract settings: Settings;
+    public abstract readonly settingsInternal: SettingsInternal;
 
     private _before: ObjectIndex<string[]> = {};
     private _after: ObjectIndex<string[]> = {};
 
-    public abstract initNode(node: T): void;
     public abstract createGroup(parent: T, node: T, children: T[]): T;
     public abstract renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
     public abstract renderNode(node: T, parent: T, nodeName: number | string): string;
@@ -23,8 +23,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     public abstract setDimensions(data: ViewData<NodeList<T>>): void;
     public abstract renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
     public abstract finalize(data: ViewData<NodeList<T>>): void;
-    public abstract get baseTemplate(): string;
-    public abstract get settingsInternal(): SettingsInternal;
+    public abstract get delegateNodeInit(): SelfWrapped<T>;
 
     public reset() {
         this._before = {};

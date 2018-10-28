@@ -82,12 +82,23 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
     }
 
     public settings: SettingsAndroid;
+    public readonly settingsInternal: SettingsInternal = {
+        includes: true,
+        baseTemplate: BASE_TMPL,
+        layout: {
+            pathName: 'res/layout',
+            fileExtension: 'xml'
+        },
+        inline: {
+            always: ['BR'],
+            tagName: WEBVIEW_ANDROID,
+        },
+        unsupported: {
+            tagName: ['OPTION', 'MAP', 'AREA']
+        }
+    };
 
     private _merge = {};
-
-    public initNode(node: T) {
-        node.api = this.settings.targetAPI;
-    }
 
     public finalize(data: ViewData<NodeList<T>>) {
         this.setAttributes(data);
@@ -2407,24 +2418,9 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         return this.cache.find('stringId', id);
     }
 
-    get baseTemplate(): string {
-        return BASE_TMPL;
-    }
-
-    get settingsInternal(): SettingsInternal {
-        return {
-            includes: true,
-            layout: {
-                pathName: 'res/layout',
-                fileExtension: 'xml'
-            },
-            inline: {
-                always: ['BR'],
-                tagName: WEBVIEW_ANDROID,
-            },
-            unsupported: {
-                tagName: ['OPTION', 'MAP', 'AREA']
-            }
+    public get delegateNodeInit(): SelfWrapped<T> {
+        return (self: T) => {
+            self.api = this.settings.targetAPI;
         };
     }
 }

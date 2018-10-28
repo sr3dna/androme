@@ -297,17 +297,17 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
         }
-        const images: HTMLImageElement[] = Array.from(this.elements).map(element => {
-            const queue: HTMLImageElement[] = [];
+        const images = Array.from(this.elements).map(element => {
+            const incomplete: HTMLImageElement[] = [];
             Array.from(element.querySelectorAll('IMG')).forEach((image: HTMLImageElement) => {
                 if (image.complete) {
                     this.setImageCache(image);
                 }
                 else {
-                    queue.push(image);
+                    incomplete.push(image);
                 }
             });
-            return queue;
+            return incomplete;
         })
         .reduce((a, b) => a.concat(b), []);
         if (images.length === 0) {
@@ -367,9 +367,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         const rootNode = this.insertNode(rootElement);
         if (rootNode) {
-            rootNode.parent = new this.nodeObject(0, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body);
+            rootNode.parent = new this.nodeObject(0, (rootElement === document.body ? rootElement : rootElement.parentElement) || document.body, this.viewController.delegateNodeInit);
             rootNode.documentRoot = true;
-            this.viewController.initNode(rootNode);
             this.cacheProcessing.parent = rootNode;
         }
         else {
@@ -566,7 +565,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public createDocument() {
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
-        let baseTemplate = this.viewController.baseTemplate;
+        let baseTemplate = this.viewController.settingsInternal.baseTemplate;
         let empty = true;
         function setMapY(depth: number, id: number, node: T) {
             if (!mapY.has(depth)) {
@@ -1914,15 +1913,14 @@ export default class Application<T extends Node> implements androme.lib.base.App
         if (element.nodeName.charAt(0) === '#') {
             if (element.nodeName === '#text') {
                 if (isPlainText(element, true) || cssParent(element, 'whiteSpace', 'pre', 'pre-wrap')) {
-                    node = new this.nodeObject(this.cacheProcessing.nextId, element);
-                    this.viewController.initNode(node);
+                    node = new this.nodeObject(this.cacheProcessing.nextId, element, this.viewController.delegateNodeInit);
                     node.nodeName = 'PLAINTEXT';
                     if (parent) {
                         node.parent = parent;
                         node.inherit(parent, 'style');
                     }
                     else {
-                        node.css('whiteSpace', (element.parentElement ? getStyle(element.parentElement).whiteSpace : null) || 'normal');
+                        node.css('whiteSpace', getStyle(element.parentElement).whiteSpace || 'normal');
                     }
                     node.css({
                         position: 'static',
@@ -1935,8 +1933,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
         }
         else if (isStyleElement(element)) {
-            const elementNode = new this.nodeObject(this.cacheProcessing.nextId, element);
-            this.viewController.initNode(elementNode);
+            const elementNode = new this.nodeObject(this.cacheProcessing.nextId, element, this.viewController.delegateNodeInit);
             if (isElementVisible(element, this.settings.hideOffScreenElements)) {
                 node = elementNode;
                 node.setExclusions();

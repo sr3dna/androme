@@ -2,12 +2,11 @@ declare global {
     namespace androme.lib.base {
         export class Controller<T extends Node> implements AppCurrent<T> {
             public static getEnclosingTag(depth: number, controlName: string, id: number, xml?: string, preXml?: string, postXml?: string): string;
-            public settings: Settings;
             public cache: NodeList<T>;
             public application: Application<T>;
-            public readonly baseTemplate: string;
+            public settings: Settings;
             public readonly settingsInternal: SettingsInternal;
-            public initNode(node: T): void;
+            public readonly delegateNodeInit: SelfWrapped<T>;
             public createGroup(parent: T, node: T, children: T[]): T;
             public renderGroup(node: T, parent: T, nodeName: number | string, options?: {}): string;
             public renderNode(node: T, parent: T, nodeName: number | string): string;

@@ -31,6 +31,7 @@ interface Settings {
 
 interface SettingsInternal {
     includes: boolean;
+    baseTemplate: string;
     inline: {
         always: string[];
         tagName: string[];
@@ -58,9 +59,9 @@ interface AppBase<T extends androme.lib.base.Node> {
 }
 
 interface AppCurrent<T extends androme.lib.base.Node> {
-    settings: Settings;
     cache: androme.lib.base.NodeList<T>;
     application: androme.lib.base.Application<T>;
+    settings: Settings;
 }
 
 interface ExtensionDependency {
@@ -92,5 +93,5 @@ interface InitialData<T> {
 }
 
 interface NodeConstructor<T> {
-    new (id: number, element?: Element): T;
+    new (id: number, element?: Element, afterInit?: SelfWrapped<T>): T;
 }
