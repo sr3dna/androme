@@ -67,7 +67,7 @@ export function camelToLowerCase(value: string) {
 
 export function convertCamelCase(value: string, char = '-') {
     value = value.replace(new RegExp(`^${char}+`), '');
-    const result = value.match(new RegExp(`(${char}[a-z\\d])`, 'g'));
+    const result = value.match(new RegExp(`(${char}[a-z])`, 'g'));
     if (result) {
         result.forEach(match => value = value.replace(match, match[1].toUpperCase()));
     }

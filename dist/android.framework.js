@@ -1,4 +1,4 @@
-/* androme 2.1.2
+/* androme 2.1.3
    https://github.com/anpham6/androme */
 
 var android = (function () {
@@ -485,7 +485,7 @@ var android = (function () {
     var $dom = androme.lib.dom;
     var ViewBase = (Base) => {
         return class View extends Base {
-            constructor(id = 0, element) {
+            constructor(id = 0, element, afterInit) {
                 super(id, element);
                 this.api = 0;
                 this.children = [];
@@ -496,6 +496,9 @@ var android = (function () {
                 this._android = {};
                 this._app = {};
                 this.constraint = { current: {} };
+                if (afterInit) {
+                    afterInit(this);
+                }
             }
             static documentBody() {
                 if (View._documentBody == null) {
@@ -822,11 +825,7 @@ var android = (function () {
                             }
                             if (!this.documentBody && this.has('maxWidth', $enum.CSS_STANDARD.UNIT) && this.layoutVertical) {
                                 const maxWidth = this.css('maxWidth');
-                                for (const node of renderChildren) {
-                                    if (node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
-                                        node.android('maxWidth', maxWidth);
-                                    }
-                                }
+                                renderChildren.forEach(node => node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth') && node.android('maxWidth', maxWidth));
                             }
                         }
                         if (this.android('layout_width') === '') {
@@ -890,7 +889,7 @@ var android = (function () {
                                 }
                             }
                             else {
-                                this.android('layout_height', this.css('overflow') === 'hidden' && this.toInt('height') < this.box.height ? 'wrap_content' : styleMap.height);
+                                this.android('layout_height', this.css('overflow') === 'hidden' && this.toInt('height') < Math.floor(this.box.height) ? 'wrap_content' : styleMap.height);
                             }
                         }
                         if (constraint.layoutHeight) {
@@ -911,11 +910,7 @@ var android = (function () {
                         }
                         if (!this.documentBody && this.has('maxHeight', $enum.CSS_STANDARD.UNIT) && this.layoutHorizontal) {
                             const maxHeight = this.css('maxHeight');
-                            for (const node of renderChildren) {
-                                if (node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxWidth')) {
-                                    node.android('maxWidth', maxHeight);
-                                }
-                            }
+                            renderChildren.forEach(node => node.is($enum.NODE_STANDARD.TEXT) && !node.has('maxHeight') && node.android('maxHeight', maxHeight));
                         }
                     }
                     if (this.android('layout_height') === '') {
@@ -936,7 +931,7 @@ var android = (function () {
                                     this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, null);
                                     this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, null);
                                 }
-                                else if (this.block && this.box.height > 0 && this.lineHeight === this.box.height) {
+                                else if (this.block && this.box.height > 0 && $util.withinFraction(this.lineHeight, this.box.height)) {
                                     this.android('layout_height', $util.formatPX(boundsHeight));
                                 }
                             }
@@ -1405,6 +1400,9 @@ var android = (function () {
                     }, true);
                 }
                 else if (this.linearVertical) {
+                    function getPreviousBottom(list) {
+                        return list.sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0].linear.bottom;
+                    }
                     const children = this.initial.children.some(node => $util.hasValue(node.dataset.include)) ? this.initial.children : this.renderChildren;
                     children.forEach((node) => {
                         const previous = (() => {
@@ -1414,7 +1412,9 @@ var android = (function () {
                             } while (current && !this.initial.children.includes(current));
                             return current;
                         })();
-                        const elements = $dom.getElementsBetweenSiblings(previous ? (previous.length > 0 && !previous.styleElement ? previous.lastElementChild : previous.baseElement) : null, node.baseElement)
+                        const elements = $dom.getElementsBetweenSiblings(previous
+                            ? (previous.length > 0 && !previous.styleElement ? previous.lastElementChild : previous.baseElement)
+                            : null, node.baseElement)
                             .filter(element => {
                             const item = $dom.getNodeFromElement(element);
                             return item && (item.lineBreak || (item.excluded && item.blockStatic));
@@ -1426,8 +1426,11 @@ var android = (function () {
                             }
                             else {
                                 bottom = (() => {
-                                    if (previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
-                                        return previous.renderChildren.filter(item => !item.floating).sort((a, b) => a.linear.bottom < b.linear.bottom ? 1 : -1)[0].linear.bottom;
+                                    if (previous.renderParent.of($enum.NODE_STANDARD.FRAME, $enum.NODE_ALIGNMENT.FLOAT)) {
+                                        return getPreviousBottom(previous.renderParent.renderChildren.slice());
+                                    }
+                                    else if (previous.layoutHorizontal && previous.length > 0 && previous.renderChildren.some(item => !item.floating)) {
+                                        return getPreviousBottom(previous.renderChildren.filter(item => !item.floating));
                                     }
                                     return previous.linear.bottom;
                                 })();
@@ -1471,7 +1474,16 @@ var android = (function () {
                                 if (!tallest.includes(node)) {
                                     const offset = node.toInt('verticalAlign');
                                     if (marginTop > 0) {
-                                        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageElement ? node.bounds.height : 0));
+                                        let offsetHeight = 0;
+                                        if (tallest[0].imageElement) {
+                                            if ($dom.isUserAgent($enum.USER_AGENT.EDGE) && node.plainText) {
+                                                offsetHeight = node.bounds.height - offsetTop;
+                                            }
+                                            else {
+                                                offsetHeight = node.bounds.height;
+                                            }
+                                        }
+                                        node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - offsetHeight);
                                     }
                                     if (offset !== 0) {
                                         node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);
@@ -1667,11 +1679,9 @@ var android = (function () {
             this.depth = node.depth;
             this.nodeName = `${node.nodeName}_GROUP`;
             this.documentParent = node.documentParent;
-            if (Array.isArray(children)) {
-                this.children = children;
-                if (children.length > 0) {
-                    this.init();
-                }
+            this.children = children;
+            if (children.length > 0) {
+                this.init();
             }
         }
     }
@@ -1687,7 +1697,7 @@ var android = (function () {
         '	<solid android:color="@color/{&color}" />',
         '!2',
         '!3',
-        '	<corners android:radius="{&radius}" android:topLeftRadius="{@topLeftRadius}" android:topRightRadius="{@topRightRadius}" android:bottomLeftRadius="{@bottomLeftRadius}" android:bottomRightRadius="{@bottomRightRadius}" />',
+        '	<corners android:radius="{@radius}" android:topLeftRadius="{@topLeftRadius}" android:topRightRadius="{@topRightRadius}" android:bottomLeftRadius="{@bottomLeftRadius}" android:bottomRightRadius="{@bottomRightRadius}" />',
         '!3',
         '!4',
         '	<gradient android:type="{&type}" android:startColor="@color/{&startColor}" android:centerColor="@color/{@centerColor}" android:endColor="@color/{&endColor}" android:angle="{@angle}" android:centerX="{@centerX}" android:centerY="{@centerY}" android:gradientRadius="{@gradientRadius}" android:useLevel="{@useLevel}" />',
@@ -1815,7 +1825,7 @@ var android = (function () {
                 let opacity = '1';
                 if (hex.length === 9) {
                     hex = `#${hex.substring(3)}`;
-                    opacity = `0.${hex.substring(1, 3)}`;
+                    opacity = `0.${parseInt(hex.substring(1, 3), 16)}`;
                 }
                 const reduced = $color.parseRGBA($color.reduceToRGB(hex, groove || hex === '#000000' ? 0.3 : -0.3));
                 if (reduced.length > 0) {
@@ -1899,9 +1909,6 @@ var android = (function () {
             super(...arguments);
             this._tagStyle = {};
             this._tagCount = {};
-        }
-        static getStored(name) {
-            return $resource.STORED[name];
         }
         static formatOptions(options, settings) {
             for (const namespace in options) {
@@ -2087,8 +2094,10 @@ var android = (function () {
             this._tagCount = {};
         }
         finalize(viewData) {
-            const styles = {};
+            const callbackArray = [];
             this.processFontStyle(viewData);
+            callbackArray.push(this.processDimensions(viewData));
+            const styles = {};
             viewData.cache.each(node => {
                 const children = node.renderChildren.filter(item => item.visible && item.auto);
                 if (children.length > 1) {
@@ -2150,7 +2159,7 @@ var android = (function () {
                                 }
                             }
                             if (!(name !== '' && style !== '' && name.startsWith(`${style}.`))) {
-                                name = (style !== '' ? `${style}.` : '') + $util$1.capitalize(node.nodeId);
+                                name = $util$1.convertCamelCase((style !== '' ? `${style}.` : '') + $util$1.capitalize(node.nodeId), '_');
                                 styles[name] = common;
                             }
                             children.forEach(item => item.attr('_', 'style', `@style/${name}`));
@@ -2165,6 +2174,7 @@ var android = (function () {
                     ids: []
                 });
             }
+            return callbackArray.filter(item => typeof item === 'function');
         }
         setBoxSpacing() {
             super.setBoxSpacing();
@@ -2297,34 +2307,6 @@ var android = (function () {
                         stored.borderRadius.length > 0);
                     const hasBackgroundImage = backgroundImage.filter(value => value !== '').length > 0;
                     if (hasBorder || hasBackgroundImage || backgroundGradient.length > 0) {
-                        function createDoubleBorder(root, border, top, right, bottom, left) {
-                            const width = parseInt(border.width);
-                            const baseWidth = Math.floor(width / 3);
-                            const remainder = width % 3;
-                            const leftWidth = baseWidth + (remainder === 2 ? 1 : 0);
-                            const rightWidth = baseWidth + (remainder === 2 ? 1 : 0);
-                            let leftTop = `-${$util$1.formatPX(leftWidth + 1)}`;
-                            let rightBottom = `-${$util$1.formatPX(leftWidth)}`;
-                            root['5'].push({
-                                'top': top ? '' : rightBottom,
-                                'right': right ? '' : leftTop,
-                                'bottom': bottom ? '' : rightBottom,
-                                'left': left ? '' : leftTop,
-                                '6': [{ width: $util$1.formatPX(leftWidth), borderStyle: getBorderStyle(border) }],
-                                '7': borderRadius
-                            });
-                            leftTop = `-${$util$1.formatPX(width + 1)}`;
-                            rightBottom = `-${$util$1.formatPX(width)}`;
-                            const indentWidth = `${$util$1.formatPX(width - baseWidth)}`;
-                            root['5'].push({
-                                'top': top ? indentWidth : leftTop,
-                                'right': right ? indentWidth : rightBottom,
-                                'bottom': bottom ? indentWidth : rightBottom,
-                                'left': left ? indentWidth : leftTop,
-                                '6': [{ width: $util$1.formatPX(rightWidth), borderStyle: getBorderStyle(border) }],
-                                '7': borderRadius
-                            });
-                        }
                         function getShapeAttribute(boxStyle, name, direction = -1, hasInset = false, isInset = false) {
                             switch (name) {
                                 case 'stroke':
@@ -2388,7 +2370,7 @@ var android = (function () {
                                 let tileMode = '';
                                 let tileModeX = '';
                                 let tileModeY = '';
-                                const imageRepeat = (image == null || image.width < node.bounds.width || image.height < node.bounds.height);
+                                const imageRepeat = image == null || image.width < node.bounds.width || image.height < node.bounds.height;
                                 switch (backgroundRepeat[i]) {
                                     case 'repeat-x':
                                         if (imageRepeat) {
@@ -2579,8 +2561,8 @@ var android = (function () {
                         if (stored.border && !((parseInt(stored.border.width) > 1 && (stored.border.style === 'groove' || stored.border.style === 'ridge')) ||
                             (parseInt(stored.border.width) > 2 && stored.border.style === 'double'))) {
                             if (!hasBackgroundImage && backgroundGradient.length <= 1) {
-                                if (borderRadius && borderRadius['radius'] == null) {
-                                    borderRadius['radius'] = '1px';
+                                if (borderRadius && borderRadius[0]['radius'] == null) {
+                                    borderRadius[0]['radius'] = '1px';
                                 }
                                 template = $xml.parseTemplate(SHAPE_TMPL);
                                 data = {
@@ -2607,6 +2589,14 @@ var android = (function () {
                             }
                         }
                         else {
+                            function getHideWidth(value) {
+                                switch (value) {
+                                    case 1:
+                                        return value + 1;
+                                    default:
+                                        return value + 2;
+                                }
+                            }
                             template = $xml.parseTemplate(LAYERLIST_TMPL);
                             data = {
                                 '0': [{
@@ -2623,11 +2613,36 @@ var android = (function () {
                             const borderWidth = new Set(borderVisible.map(item => item.width));
                             const borderStyle = new Set(borderVisible.map(item => getBorderStyle(item)));
                             const borderData = borderVisible[0];
+                            function createDoubleBorder(border, top, right, bottom, left) {
+                                const width = parseInt(border.width);
+                                const baseWidth = Math.floor(width / 3);
+                                const remainder = width % 3;
+                                const offset = remainder === 2 ? 1 : 0;
+                                const leftWidth = baseWidth + offset;
+                                const rightWidth = baseWidth + offset;
+                                const indentWidth = `${$util$1.formatPX(width - baseWidth)}`;
+                                const hideWidth = `-${indentWidth}`;
+                                root['5'].push({
+                                    'top': top ? '' : hideWidth,
+                                    'right': right ? '' : hideWidth,
+                                    'bottom': bottom ? '' : hideWidth,
+                                    'left': left ? '' : hideWidth,
+                                    '6': [{ width: $util$1.formatPX(leftWidth), borderStyle: getBorderStyle(border) }],
+                                    '7': borderRadius
+                                });
+                                root['5'].push({
+                                    'top': top ? indentWidth : hideWidth,
+                                    'right': right ? indentWidth : hideWidth,
+                                    'bottom': bottom ? indentWidth : hideWidth,
+                                    'left': left ? indentWidth : hideWidth,
+                                    '6': [{ width: $util$1.formatPX(rightWidth), borderStyle: getBorderStyle(border) }],
+                                    '7': borderRadius
+                                });
+                            }
                             if (borderWidth.size === 1 && borderStyle.size === 1 && !(borderData.style === 'groove' || borderData.style === 'ridge')) {
                                 const width = parseInt(borderData.width);
                                 if (width > 2 && borderData.style === 'double') {
                                     createDoubleBorder.apply(null, [
-                                        root,
                                         borderData,
                                         $resource.isBorderVisible(stored.borderTop),
                                         $resource.isBorderVisible(stored.borderRight),
@@ -2636,26 +2651,29 @@ var android = (function () {
                                     ]);
                                 }
                                 else {
-                                    const leftTop = `-${$util$1.formatPX(width + 1)}`;
-                                    const rightBottom = `-${$util$1.formatPX(width)}`;
+                                    const hideWidth = `-${$util$1.formatPX(getHideWidth(width))}`;
+                                    const topVisible = $resource.isBorderVisible(stored.borderTop);
                                     root['5'].push({
-                                        'top': $resource.isBorderVisible(stored.borderTop) ? '' : leftTop,
-                                        'right': $resource.isBorderVisible(stored.borderRight) ? '' : rightBottom,
-                                        'bottom': $resource.isBorderVisible(stored.borderBottom) ? '' : rightBottom,
-                                        'left': $resource.isBorderVisible(stored.borderLeft) ? '' : leftTop,
+                                        'top': topVisible ? '' : hideWidth,
+                                        'right': $resource.isBorderVisible(stored.borderRight) ? '' : hideWidth,
+                                        'bottom': $resource.isBorderVisible(stored.borderBottom) ? (topVisible ? '' : borderVisible[0].width) : hideWidth,
+                                        'left': $resource.isBorderVisible(stored.borderLeft) ? '' : hideWidth,
                                         '6': getShapeAttribute({ border: borderVisible[0] }, 'stroke'),
                                         '7': borderRadius
                                     });
                                 }
                             }
                             else {
+                                let topVisible = false;
                                 for (let i = 0; i < borders.length; i++) {
                                     const border = borders[i];
                                     if ($resource.isBorderVisible(border)) {
+                                        if (i === 0) {
+                                            topVisible = true;
+                                        }
                                         const width = parseInt(border.width);
                                         if (width > 2 && border.style === 'double') {
                                             createDoubleBorder.apply(null, [
-                                                root,
                                                 border,
                                                 i === 0,
                                                 i === 1,
@@ -2666,24 +2684,22 @@ var android = (function () {
                                         else {
                                             const hasInset = width > 1 && (border.style === 'groove' || border.style === 'ridge');
                                             const outsetWidth = hasInset ? Math.ceil(width / 2) : width;
-                                            let leftTop = `-${$util$1.formatPX(outsetWidth + 1)}`;
-                                            let rightBottom = `-${$util$1.formatPX(outsetWidth)}`;
+                                            let hideWidth = `-${$util$1.formatPX(getHideWidth(outsetWidth))}`;
                                             root['5'].push({
-                                                'top': i === 0 ? '' : leftTop,
-                                                'right': i === 1 ? '' : rightBottom,
-                                                'bottom': i === 2 ? '' : rightBottom,
-                                                'left': i === 3 ? '' : leftTop,
+                                                'top': i === 0 ? '' : hideWidth,
+                                                'right': i === 1 ? '' : hideWidth,
+                                                'bottom': i === 2 ? (topVisible ? '' : border.width) : hideWidth,
+                                                'left': i === 3 ? '' : hideWidth,
                                                 '6': getShapeAttribute({ border }, 'stroke', i, hasInset),
                                                 '7': borderRadius
                                             });
                                             if (hasInset) {
-                                                leftTop = `-${$util$1.formatPX(width + 1)}`;
-                                                rightBottom = `-${$util$1.formatPX(width)}`;
+                                                hideWidth = `-${$util$1.formatPX(getHideWidth(width))}`;
                                                 root['8'].push({
-                                                    'top': i === 0 ? '' : leftTop,
-                                                    'right': i === 1 ? '' : rightBottom,
-                                                    'bottom': i === 2 ? '' : rightBottom,
-                                                    'left': i === 3 ? '' : leftTop,
+                                                    'top': i === 0 ? '' : hideWidth,
+                                                    'right': i === 1 ? '' : hideWidth,
+                                                    'bottom': i === 2 ? (topVisible ? '' : border.width) : hideWidth,
+                                                    'left': i === 3 ? '' : hideWidth,
                                                     '9': getShapeAttribute({ border }, 'stroke', i, true, true)
                                                 });
                                             }
@@ -2936,15 +2952,15 @@ var android = (function () {
                                     group.translateY = svg.y.toString();
                                 }
                             }
-                            svg.children.forEach(path => {
-                                if (path.clipPath) {
+                            svg.children.forEach(item => {
+                                if (item.clipPath) {
                                     group['2'].push({
-                                        name: path.name,
-                                        d: path.d
+                                        name: item.name,
+                                        d: item.d
                                     });
                                 }
                                 else {
-                                    group['3'].push(path);
+                                    group['3'].push(item);
                                 }
                             });
                             root['1'].push(group);
@@ -3325,6 +3341,86 @@ var android = (function () {
                 });
             }
         }
+        processDimensions(data) {
+            if (this.settings.dimensResourceValue) {
+                const groups = {};
+                const resource = $resource.STORED.dimens;
+                function addToGroup(nodeName, node, dimen, attr, value) {
+                    const group = groups[nodeName];
+                    let name = dimen;
+                    if (arguments.length === 5) {
+                        if (value && /(px|dp|sp)$/.test(value)) {
+                            name += `,${attr},${value}`;
+                        }
+                        else {
+                            return;
+                        }
+                    }
+                    if (group[name] == null) {
+                        group[name] = [];
+                    }
+                    group[name].push(node);
+                }
+                function boxValue(node, region, settings) {
+                    const name = $util$1.convertEnum(parseInt(region), $enum$1.BOX_STANDARD, BOX_ANDROID);
+                    if (name !== '') {
+                        const attr = parseRTL(name, settings);
+                        return [attr, node.android(attr) || '0px'];
+                    }
+                    return ['', '0px'];
+                }
+                function getResourceKey(key, value) {
+                    return resource.has(key) && resource.get(key) !== value ? generateId('dimens', key, 1) : key;
+                }
+                data.cache.visible.forEach(node => {
+                    const nodeName = node.nodeName.toLowerCase();
+                    if (groups[nodeName] == null) {
+                        groups[nodeName] = {};
+                    }
+                    for (const key of Object.keys($enum$1.BOX_STANDARD)) {
+                        const result = boxValue(node, key, this.application.settings);
+                        if (result[0] !== '' && result[1] !== '0px') {
+                            const name = `${$enum$1.BOX_STANDARD[key].toLowerCase()},${result[0]},${result[1]}`;
+                            addToGroup(nodeName, node, name);
+                        }
+                    }
+                    [
+                        'android:layout_width:width',
+                        'android:layout_height:height',
+                        'android:minWidth:min_width',
+                        'android:minHeight:min_height',
+                        'app:layout_constraintWidth_min:constraint_width_min',
+                        'app:layout_constraintHeight_min:constraint_height_min'
+                    ]
+                        .forEach(value => {
+                        const [obj, attr, dimen] = value.split(':');
+                        addToGroup(nodeName, node, dimen, attr, node[obj](attr));
+                    });
+                });
+                for (const nodeName in groups) {
+                    const group = groups[nodeName];
+                    for (const name in group) {
+                        const [dimen, attr, value] = name.split(',');
+                        const key = getResourceKey(`${nodeName}_${parseRTL(dimen, this.settings)}`, value);
+                        group[name].forEach(node => node[attr.indexOf('constraint') !== -1 ? 'app' : 'android'](attr, `@dimen/${key}`));
+                        resource.set(key, value);
+                    }
+                }
+                return (_data) => {
+                    for (const value of [..._data.views, ..._data.includes]) {
+                        let content = value.content;
+                        const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
+                        let match;
+                        while ((match = pattern.exec(content)) != null) {
+                            const key = getResourceKey(`${match[2]}_${parseRTL(match[3], this.settings)}`, match[4]);
+                            resource.set(key, match[4]);
+                            content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
+                        }
+                        value.content = content;
+                    }
+                };
+            }
+        }
     }
 
     var NodeList$2 = androme.lib.base.NodeList;
@@ -3360,9 +3456,6 @@ var android = (function () {
         widthHeight: ['Width', 'Height'],
         horizontalVertical: ['Horizontal', 'Vertical']
     };
-    function getDimensResourceKey(resource, key, value) {
-        return resource.has(key) && resource.get(key) !== value ? generateId('dimens', key, 1) : key;
-    }
     function setAlignParent(node, orientation = '', bias = false) {
         [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
             if (!node.constraint[value] && (orientation === '' || value === orientation)) {
@@ -3378,6 +3471,21 @@ var android = (function () {
     class ViewController extends androme.lib.base.Controller {
         constructor() {
             super(...arguments);
+            this.settingsInternal = {
+                includes: true,
+                baseTemplate: BASE_TMPL,
+                layout: {
+                    pathName: 'res/layout',
+                    fileExtension: 'xml'
+                },
+                inline: {
+                    always: ['BR'],
+                    tagName: WEBVIEW_ANDROID,
+                },
+                unsupported: {
+                    tagName: ['OPTION', 'MAP', 'AREA']
+                }
+            };
             this._merge = {};
         }
         static getEnclosingTag(depth, controlName, id, xml = '', preXml = '', postXml = '') {
@@ -3396,27 +3504,15 @@ var android = (function () {
                 postXml;
             return output;
         }
-        initNode(node) {
-            node.api = this.settings.targetAPI;
-        }
-        finalize(data) {
+        finalize(data, callbackArray) {
             this.setAttributes(data);
             for (const value of [...data.views, ...data.includes]) {
-                value.content = $xml$1.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
-                if (this.settings.dimensResourceValue) {
-                    let content = value.content;
-                    const resource = ResourceHandler.getStored('dimens');
-                    const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
-                    let match;
-                    while ((match = pattern.exec(content)) != null) {
-                        const key = getDimensResourceKey(resource, `${match[2]}_${parseRTL(match[3], this.settings)}`, match[4]);
-                        resource.set(key, match[4]);
-                        content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
-                    }
-                    value.content = content;
+                if (Array.isArray(callbackArray)) {
+                    callbackArray.forEach(callbackfn => callbackfn(data));
                 }
                 value.content = replaceUnit(value.content, this.settings);
                 value.content = $xml$1.replaceTab(value.content, this.settings);
+                value.content = $xml$1.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
             }
         }
         reset() {
@@ -4096,9 +4192,7 @@ var android = (function () {
                                                 }
                                                 break;
                                         }
-                                        for (const y of levels) {
-                                            horizontal.push(new NodeList$2(map[y]));
-                                        }
+                                        levels.forEach(value => horizontal.push(new NodeList$2(map[value])));
                                     }
                                 }
                                 else if (columnCount > 0) {
@@ -4158,7 +4252,7 @@ var android = (function () {
                                         return coordinate.map(value => {
                                             const sameXY = $util$2.sortAsc(siblings.list.filter(item => $util$2.sameValue(current, item, value) && item[orientation === AXIS_ANDROID.HORIZONTAL ? 'intersectX' : 'intersectY'](current.linear)), coordinate[0]);
                                             if (sameXY.length > 1) {
-                                                if (!validate || (!sameXY.some(item => item.floating) && sameXY[0].app(mapParent[0]) === 'parent' && sameXY[sameXY.length - 1].app(mapParent[1]) === 'parent')) {
+                                                if (!validate || (sameXY.every(item => !item.floating) && sameXY[0].app(mapParent[0]) === 'parent' && sameXY[sameXY.length - 1].app(mapParent[1]) === 'parent')) {
                                                     return sameXY;
                                                 }
                                                 else {
@@ -5338,70 +5432,7 @@ var android = (function () {
             return this._merge[name] ? 0 : -1;
         }
         setBoxSpacing(data) {
-            data.cache.visible.forEach(node => node.setBoxSpacing(this.settings));
-        }
-        setDimensions(data) {
-            const groups = {};
-            function addToGroup(nodeName, node, dimen, attr, value) {
-                const group = groups[nodeName];
-                let name = dimen;
-                if (arguments.length === 5) {
-                    if (value && /(px|dp|sp)$/.test(value)) {
-                        name += `,${attr},${value}`;
-                    }
-                    else {
-                        return;
-                    }
-                }
-                if (group[name] == null) {
-                    group[name] = [];
-                }
-                group[name].push(node);
-            }
-            function valueBox(node, region, settings) {
-                const name = $util$2.convertEnum(parseInt(region), $enum$2.BOX_STANDARD, BOX_ANDROID);
-                if (name !== '') {
-                    const attr = parseRTL(name, settings);
-                    return [attr, node.android(attr) || '0px'];
-                }
-                return ['', '0px'];
-            }
-            data.cache.visible.forEach(node => {
-                if (this.settings.dimensResourceValue) {
-                    const nodeName = node.nodeName.toLowerCase();
-                    if (groups[nodeName] == null) {
-                        groups[nodeName] = {};
-                    }
-                    for (const key of Object.keys($enum$2.BOX_STANDARD)) {
-                        const result = valueBox(node, key, this.application.settings);
-                        if (result[0] !== '' && result[1] !== '0px') {
-                            const name = `${$enum$2.BOX_STANDARD[key].toLowerCase()},${result[0]},${result[1]}`;
-                            addToGroup(nodeName, node, name);
-                        }
-                    }
-                    ['android:layout_width:width',
-                        'android:layout_height:height',
-                        'android:minWidth:min_width',
-                        'android:minHeight:min_height',
-                        'app:layout_constraintWidth_min:constraint_width_min',
-                        'app:layout_constraintHeight_min:constraint_height_min'].forEach(value => {
-                        const [obj, attr, dimen] = value.split(':');
-                        addToGroup(nodeName, node, dimen, attr, node[obj](attr));
-                    });
-                }
-            });
-            if (this.settings.dimensResourceValue) {
-                const resource = ResourceHandler.getStored('dimens');
-                for (const nodeName in groups) {
-                    const group = groups[nodeName];
-                    for (const name in group) {
-                        const [dimen, attr, value] = name.split(',');
-                        const key = getDimensResourceKey(resource, `${nodeName}_${parseRTL(dimen, this.settings)}`, value);
-                        group[name].forEach(node => node[attr.indexOf('constraint') !== -1 ? 'app' : 'android'](attr, `@dimen/${key}`));
-                        resource.set(key, value);
-                    }
-                }
-            }
+            data.cache.visible.forEach(node => node.rendered && node.setBoxSpacing(this.settings));
         }
         addGuideline(node, orientation = '', percent, opposite) {
             const map = MAP_LAYOUT.constraint;
@@ -5451,10 +5482,9 @@ var android = (function () {
                     }
                     const dimension = node.pageflow ? 'bounds' : 'linear';
                     const position = percent ? Math.abs((node[dimension][LT] + offset) - (parent.documentBody ? 0 : parent.box[LT])) / parent.box[index === 0 ? 'width' : 'height'] : 0;
-                    if (!percent) {
+                    if (!percent && node.alignOrigin) {
                         found = parent.renderChildren.some(item => {
-                            if (item !== node && item.constraint[value] && (!item.constraint[`chain${$util$2.capitalize(value)}`] ||
-                                item.constraint[`margin${$util$2.capitalize(value)}`])) {
+                            if (item !== node && item.constraint[value] && (!item.constraint[`chain${$util$2.capitalize(value)}`] || item.constraint[`margin${$util$2.capitalize(value)}`])) {
                                 if ($util$2.withinFraction(node.linear[LT] + offset, item.linear[RB])) {
                                     node.anchor(map[LTRB], item.stringId, value, true);
                                     return true;
@@ -5592,23 +5622,9 @@ var android = (function () {
         findByStringId(id) {
             return this.cache.find('stringId', id);
         }
-        get baseTemplate() {
-            return BASE_TMPL;
-        }
-        get settingsInternal() {
-            return {
-                includes: true,
-                layout: {
-                    pathName: 'res/layout',
-                    fileExtension: 'xml'
-                },
-                inline: {
-                    always: ['BR'],
-                    tagName: WEBVIEW_ANDROID,
-                },
-                unsupported: {
-                    tagName: ['OPTION', 'MAP', 'AREA']
-                }
+        get delegateNodeInit() {
+            return (self) => {
+                self.api = this.settings.targetAPI;
             };
         }
     }
@@ -5674,9 +5690,9 @@ var android = (function () {
         '<?xml version="1.0" encoding="utf-8"?>',
         '<resources>',
         '!1',
-        '	<style name="{name1}" parent="{@parent}">',
+        '	<style name="{parentName}" parent="{@parent}">',
         '!2',
-        '		<item name="{name2}">{value}</item>',
+        '		<item name="{name}">{value}</item>',
         '!2',
         '	</style>',
         '!1',
@@ -5850,9 +5866,7 @@ var android = (function () {
                         '2': []
                     };
                     const item = arrayItem['2'];
-                    for (const value of values) {
-                        item.push({ value });
-                    }
+                    values.forEach(value => item.push({ value }));
                     root['1'].push(arrayItem);
                 }
                 xml = $xml$2.createTemplate($xml$2.parseTemplate(STRINGARRAY_TMPL), data);
@@ -5926,22 +5940,22 @@ var android = (function () {
                             '1': []
                         }]
                 };
-                const styles = Array.from(this.stored.styles.values()).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
                 const root = $xml$2.getTemplateBranch(data, '0');
+                const styles = Array.from(this.stored.styles.values()).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
                 for (const style of styles) {
-                    const styleItem = {
-                        name1: style.name,
+                    const item = {
+                        parentName: style.name,
                         parent: style.parent || '',
                         '2': []
                     };
                     style.attrs.split(';').sort().forEach((attr) => {
-                        const [name2, value] = attr.split('=');
-                        styleItem['2'].push({
-                            name2,
+                        const [name, value] = attr.split('=');
+                        item['2'].push({
+                            name,
                             value: value.replace(/"/g, '')
                         });
                     });
-                    root['1'].push(styleItem);
+                    root['1'].push(item);
                 }
                 xml = $xml$2.createTemplate($xml$2.parseTemplate(STYLE_TMPL), data);
                 xml = replaceUnit(xml, this.settings, true);
@@ -6276,7 +6290,7 @@ var android = (function () {
                             companion.css('fontSize', '12px');
                         }
                         node.companion = companion;
-                        this.application.cacheProcessing.append(companion);
+                        this.application.cacheProcessing.append(companion, false);
                         controller.prependBefore(node.id, controller.renderNodeStatic(image !== '' ? $enum$5.NODE_STANDARD.IMAGE
                             : mainData.ordinal !== '' ? $enum$5.NODE_STANDARD.TEXT : $enum$5.NODE_STANDARD.SPACE, parent.renderDepth + 1, options, 'wrap_content', 'wrap_content', companion));
                     }
@@ -6350,7 +6364,7 @@ var android = (function () {
                 container.excludeResource |= $enum$6.NODE_RESOURCE.IMAGE_SOURCE;
                 parent.replaceChild(node, container);
                 container.render(parent);
-                this.application.cacheProcessing.append(container);
+                this.application.cacheProcessing.append(container, false);
                 node.parent = container;
                 node.nodeType = $enum$6.NODE_STANDARD.IMAGE;
                 node.setNodeType(NODE_ANDROID.IMAGE);

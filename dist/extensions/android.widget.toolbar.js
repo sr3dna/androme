@@ -1,4 +1,4 @@
-/* android.widget 2.1.0
+/* android.widget 2.1.3
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -75,9 +75,7 @@ this.android.widget.toolbar = (function () {
                 const placeholder = new View(nextId);
                 placeholder.init();
                 placeholder.api = container.api;
-                for (const item of nodes) {
-                    item.parent = placeholder;
-                }
+                nodes.forEach(item => item.parent = placeholder);
                 placeholder.inherit(container, 'dimensions');
                 placeholder.auto = false;
                 placeholder.excludeResource |= $enum.NODE_RESOURCE.ALL;
@@ -222,7 +220,7 @@ this.android.widget.toolbar = (function () {
                 appBarNode = createPlaceholder(this.application.cacheProcessing.nextId, node, appBarChildren);
                 appBarNode.parent = node.parent;
                 appBarNode.nodeId = $util_android.stripId(optionsAppBar.android.id);
-                this.application.cacheProcessing.append(appBarNode);
+                this.application.cacheProcessing.append(appBarNode, appBarChildren.length > 0);
                 outer = controller.renderNodeStatic($const_android.VIEW_SUPPORT.APPBAR, target ? -1 : depth, optionsAppBar, 'match_parent', 'wrap_content', appBarNode, true);
                 if (hasCollapsingToolbar) {
                     depth++;
@@ -237,7 +235,7 @@ this.android.widget.toolbar = (function () {
                     collapsingToolbarNode.parent = appBarNode;
                     if (collapsingToolbarNode) {
                         collapsingToolbarNode.each(item => item.dataset.target = collapsingToolbarNode.nodeId);
-                        this.application.cacheProcessing.append(collapsingToolbarNode);
+                        this.application.cacheProcessing.append(collapsingToolbarNode, collapsingToolbarChildren.length > 0);
                         const content = controller.renderNodeStatic($const_android.VIEW_SUPPORT.COLLAPSING_TOOLBAR, target && !hasAppBar ? -1 : depth, optionsCollapsingToolbar, 'match_parent', 'match_parent', collapsingToolbarNode, true);
                         outer = $xml.replacePlaceholder(outer, appBarNode.id, content);
                     }

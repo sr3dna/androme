@@ -469,7 +469,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             }
                         }
                         else {
-                            this.android('layout_height', this.css('overflow') === 'hidden' && this.toInt('height') < this.box.height ? 'wrap_content' : styleMap.height);
+                            this.android('layout_height', this.css('overflow') === 'hidden' && this.toInt('height') < Math.floor(this.box.height) ? 'wrap_content' : styleMap.height);
                         }
                     }
                     if (constraint.layoutHeight) {
@@ -513,7 +513,7 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                                 this.modifyBox($enum.BOX_STANDARD.PADDING_TOP, null);
                                 this.modifyBox($enum.BOX_STANDARD.PADDING_BOTTOM, null);
                             }
-                            else if (this.block && this.box.height > 0 && this.lineHeight === this.box.height) {
+                            else if (this.block && this.box.height > 0 && $util.withinFraction(this.lineHeight, this.box.height)) {
                                 this.android('layout_height', $util.formatPX(boundsHeight));
                             }
                         }
@@ -1083,7 +1083,16 @@ export default (Base: Constructor<androme.lib.base.Node>) => {
                             if (!tallest.includes(node)) {
                                 const offset = node.toInt('verticalAlign');
                                 if (marginTop > 0) {
-                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - (tallest[0].imageElement ? node.bounds.height : 0));
+                                    let offsetHeight = 0;
+                                    if (tallest[0].imageElement) {
+                                        if ($dom.isUserAgent($enum.USER_AGENT.EDGE) && node.plainText) {
+                                            offsetHeight = node.bounds.height - offsetTop;
+                                        }
+                                        else {
+                                            offsetHeight = node.bounds.height;
+                                        }
+                                    }
+                                    node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offsetTop - offsetHeight);
                                 }
                                 if (offset !== 0) {
                                     node.modifyBox($enum.BOX_STANDARD.MARGIN_TOP, offset * -1, true);

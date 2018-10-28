@@ -96,12 +96,15 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
 
     private _merge = {};
 
-    public finalize(data: ViewData<NodeList<T>>) {
+    public finalize(data: ViewData<NodeList<T>>, callbackArray: ArrayObject<FunctionVoid>) {
         this.setAttributes(data);
         for (const value of [...data.views, ...data.includes]) {
-            value.content = $xml.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
+            if (Array.isArray(callbackArray)) {
+                callbackArray.forEach(callbackfn => callbackfn(data));
+            }
             value.content = replaceUnit(value.content, this.settings);
             value.content = $xml.replaceTab(value.content, this.settings);
+            value.content = $xml.removePlaceholderAll(value.content).replace(/\n\n/g, '\n');
         }
     }
 
@@ -2173,11 +2176,10 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 }
                 const dimension = node.pageflow ? 'bounds' : 'linear';
                 const position = percent ? Math.abs((node[dimension][LT] + offset) - (parent.documentBody ? 0 : parent.box[LT])) / parent.box[index === 0 ? 'width' : 'height'] : 0;
-                if (!percent) {
+                if (!percent && node.alignOrigin) {
                     found = parent.renderChildren.some(item => {
                         if (item !== node && item.constraint[value] && (
-                                !item.constraint[`chain${$util.capitalize(value)}`] ||
-                                item.constraint[`margin${$util.capitalize(value)}`]
+                                !item.constraint[`chain${$util.capitalize(value)}`] || item.constraint[`margin${$util.capitalize(value)}`]
                            ))
                         {
                             if ($util.withinFraction(node.linear[LT] + offset, item.linear[RB])) {

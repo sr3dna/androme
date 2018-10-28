@@ -82,14 +82,14 @@ export function parseDocument(...elements: Null<string | Element>[]): FunctionMa
         return main.parseDocument(...elements);
     }
     return {
-        then: (callback: () => void) => {
+        then: (callbackfn: () => void) => {
             if (!main) {
                 alert('ERROR: Framework not installed.');
             }
             else if (main.closed) {
                 if (confirm('ERROR: Document is closed. Reset and rerun?')) {
                     main.reset();
-                    parseDocument.apply(null, arguments).then(callback);
+                    parseDocument.apply(null, arguments).then(callbackfn);
                 }
             }
         }

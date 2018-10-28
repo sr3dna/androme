@@ -21,7 +21,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
     public abstract setConstraints(): void;
     public abstract setBoxSpacing(data: ViewData<NodeList<T>>): void;
     public abstract renderColumnSpace(depth: number, width?: string, height?: string, columnSpan?: number): string;
-    public abstract finalize(data: ViewData<NodeList<T>>): void;
+    public abstract finalize(data: ViewData<NodeList<T>>, callbackArray: ArrayObject<FunctionVoid>): void;
     public abstract get delegateNodeInit(): SelfWrapped<T>;
 
     public reset() {

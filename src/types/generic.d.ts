@@ -8,6 +8,8 @@ type IteratorPredicate<T, U> = (value: T, index?: number) => U;
 
 type SelfWrapped<T> = (self: T) => void;
 
+type FunctionVoid = (...args: any[]) => void;
+
 interface StringMap {
     [key: string]: string;
 }

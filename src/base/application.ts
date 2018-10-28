@@ -165,8 +165,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         this.viewController.setBoxSpacing(this.viewData);
         this.appendRenderQueue();
-        this.resourceHandler.finalize(this.viewData);
-        this.viewController.finalize(this.viewData);
+        this.viewController.finalize(
+            this.viewData,
+            this.resourceHandler.finalize(this.viewData)
+        );
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
                 ext.setTarget(node);
@@ -371,8 +373,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
         else {
             return false;
         }
-        const inlineAlways = this.viewController.settingsInternal.inline.always;
-        const inlineSupport = this.settings.renderInlineText ? [] : this.viewController.settingsInternal.inline.tagName;
+        const settingsInternal = this.viewController.settingsInternal;
+        const inlineAlways = settingsInternal.inline.always;
+        const inlineSupport = this.settings.renderInlineText ? [] : settingsInternal.inline.tagName;
         function inlineElement(element: Element) {
             const styleMap = getElementCache(element, 'styleMap');
             return (
@@ -384,7 +387,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         for (const element of Array.from(elements) as HTMLElement[]) {
             if (!this.elements.has(element)) {
                 prioritizeExtensions(this.extensions, element).some(item => item.init(element));
-                if (!this.elements.has(element)) {
+                if (!this.elements.has(element) && !settingsInternal.unsupported.tagName.includes(element.tagName)) {
                     if (inlineAlways.includes(element.tagName) || (
                             inlineElement(element) &&
                             element.parentElement &&
@@ -560,9 +563,10 @@ export default class Application<T extends Node> implements androme.lib.base.App
     }
 
     public createDocument() {
+        const settingsInternal = this.viewController.settingsInternal;
         const mapX: LayoutMapX<T> = [];
         const mapY: LayoutMapY<T> = new Map<number, Map<number, T>>();
-        let baseTemplate = this.viewController.settingsInternal.baseTemplate;
+        let baseTemplate = settingsInternal.baseTemplate;
         let empty = true;
         function setMapY(depth: number, id: number, node: T) {
             if (!mapY.has(depth)) {
@@ -715,9 +719,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         continue;
                     }
                     let parentY = nodeY.parent as T;
-                    let renderForced = false;
                     let currentY = '';
-                    if (this.viewController.settingsInternal.includes) {
+                    if (settingsInternal.includes) {
                         if (!nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE)) {
                             const filename = trimNull(nodeY.dataset.include);
                             if (filename !== '' && includes.indexOf(filename) === -1) {
@@ -895,11 +898,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                     clearedPartial.size > 0 &&
                                     !(floated.size === 1 && vertical.slice(1, vertical.length - 1).every(node => clearedPartial.has(node))))
                                 {
-                                    if (parentY.linearVertical) {
+                                    if (parentY.linearVertical && !hasValue(nodeY.dataset.ext)) {
                                         group = nodeY;
                                         groupOutput = this.writeFrameLayoutVertical(null, parentY, vertical, clearedPartial);
-                                        nodeY.render(parentY);
-                                        renderForced = true;
                                     }
                                     else {
                                         group = this.viewController.createGroup(parentY, nodeY, vertical);
@@ -932,7 +933,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             }
                         }
                     }
-                    if (!nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION) && (!nodeY.rendered || renderForced)) {
+                    if (!nodeY.hasBit('excludeSection', APP_SECTION.EXTENSION) && !nodeY.rendered) {
                         let next = false;
                         for (const ext of [...parentY.renderExtension, ...this.extensions.filter(item => item.subscribersChild.has(nodeY))]) {
                             ext.setTarget(nodeY, parentY);
@@ -1154,7 +1155,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         }
                         renderNode(nodeY, parentY, output, currentY);
                     }
-                    if (this.viewController.settingsInternal.includes && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && nodeY.dataset.includeEnd === 'true') {
+                    if (settingsInternal.includes && !nodeY.hasBit('excludeSection', APP_SECTION.INCLUDE) && nodeY.dataset.includeEnd === 'true') {
                         includes.pop();
                     }
                 }
@@ -1190,7 +1191,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                 }
             }
-            if (this.viewController.settingsInternal.includes) {
+            if (settingsInternal.includes) {
                 for (const [filename, templates] of external.entries()) {
                     const content = Array.from(templates.values());
                     if (content.length > 0) {

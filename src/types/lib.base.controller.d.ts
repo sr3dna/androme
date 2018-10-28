@@ -17,7 +17,7 @@ declare global {
             public baseRenderDepth(name: string): number;
             public setConstraints(): void;
             public setBoxSpacing(data: ViewData<NodeList<T>>): void;
-            public finalize(data: ViewData<NodeList<T>>): void;
+            public finalize(data: ViewData<NodeList<T>>, callbackArray: ArrayObject<FunctionVoid>): void;
             public reset(): void;
             public appendRenderQueue(output: string): string;
             public prependBefore(id: number, output: string, index?: number): void;

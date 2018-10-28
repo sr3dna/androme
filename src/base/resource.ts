@@ -152,7 +152,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         this.file.stored = Resource.STORED;
     }
 
-    public abstract finalize(viewData: ViewData<NodeList<T>>): void;
+    public abstract finalize(viewData: ViewData<NodeList<T>>): ArrayObject<FunctionVoid>;
 
     public addFile(pathname: string, filename: string, content = '', uri = '') {
         this.file.addFile(pathname, filename, content, uri);

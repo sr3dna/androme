@@ -13,7 +13,7 @@ declare global {
             public file: File<T>;
             constructor(file: File<T>);
             public setImageSource(): void;
-            public finalize(viewData: ViewData<NodeList<T>>): void;
+            public finalize(viewData: ViewData<NodeList<T>>): ArrayObject<FunctionVoid>;
             public addFile(pathname: string, filename: string, content?: string, uri?: string): void;
             public reset(): void;
             public setBoxSpacing(): void;

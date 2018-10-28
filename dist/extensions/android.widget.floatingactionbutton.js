@@ -1,4 +1,4 @@
-/* android.widget 2.1.0
+/* android.widget 2.1.3
    https://github.com/anpham6/androme */
 
 this.android = this.android || {};
@@ -41,7 +41,7 @@ this.android.widget.floatingactionbutton = (function () {
                     break;
                 case 'INPUT':
                     if (element.type === 'image') {
-                        src = $resource_android.addImage({ 'mdpi': element.src }, $const_android.DRAWABLE_PREFIX.DIALOG);
+                        src = $resource_android.addImage({ mdpi: element.src }, $const_android.DRAWABLE_PREFIX.DIALOG);
                     }
                     else {
                         src = $resource_android.addImageURL(node.css('backgroundImage'), $const_android.DRAWABLE_PREFIX.DIALOG);

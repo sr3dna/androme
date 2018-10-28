@@ -363,9 +363,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
     }
 
     public finalize(viewData: ViewData<NodeList<T>>) {
-        const styles: ObjectMap<string[]> = {};
+        const callbackArray: Null<FunctionVoid>[] = [];
         this.processFontStyle(viewData);
-        this.processDimensions(viewData);
+        callbackArray.push(this.processDimensions(viewData));
+        const styles: ObjectMap<string[]> = {};
         viewData.cache.each(node => {
             const children = node.renderChildren.filter(item => item.visible && item.auto);
             if (children.length > 1) {
@@ -442,6 +443,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 ids: []
             });
         }
+        return <ArrayObject<FunctionVoid>> callbackArray.filter(item => typeof item === 'function');
     }
 
     public setBoxSpacing() {
@@ -1696,17 +1698,19 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     resource.set(key, value);
                 }
             }
-            for (const value of [...data.views, ...data.includes]) {
-                let content = value.content;
-                const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
-                let match: Null<RegExpExecArray>;
-                while ((match = pattern.exec(content)) != null) {
-                    const key = getResourceKey(`${match[2]}_${parseRTL(match[3], this.settings)}`, match[4]);
-                    resource.set(key, match[4]);
-                    content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
+            return (_data: ViewData<NodeList<T>>) => {
+                for (const value of [..._data.views, ..._data.includes]) {
+                    let content = value.content;
+                    const pattern = /\s+\w+:\w+="({%(\w+),(\w+),(-?\w+)})"/g;
+                    let match: Null<RegExpExecArray>;
+                    while ((match = pattern.exec(content)) != null) {
+                        const key = getResourceKey(`${match[2]}_${parseRTL(match[3], this.settings)}`, match[4]);
+                        resource.set(key, match[4]);
+                        content = content.replace(new RegExp(match[1], 'g'), `@dimen/${key}`);
+                    }
+                    value.content = content;
                 }
-                value.content = content;
-            }
+            };
         }
     }
 }
