@@ -90,7 +90,8 @@ androme.settings = {
         'androme.sprite',
         'androme.list',
         'androme.table',
-        'androme.grid'
+        'androme.grid',
+        'androme.percent'
     ],
     targetAPI: 26,
     density: 160,
@@ -113,7 +114,7 @@ androme.settings = {
     constraintPercentAccuracy: 4, // eq: 1px
     supportNegativeLeftTop: true,
     floatOverlapDisabled: false,
-    hideOffScreenElements: true;
+    hideOffScreenElements: true,
     collapseUnattributedElements: true,
     customizationsOverwritePrivilege: false,
     showAttributes: true,

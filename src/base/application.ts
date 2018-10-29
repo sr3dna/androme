@@ -941,6 +941,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                             if (result.output !== '') {
                                 renderNode(nodeY, parentY, result.output, currentY);
                             }
+                            if (result.renderAs && result.renderOutput) {
+                                renderNode(result.renderAs as T, parentY, result.renderOutput, currentY);
+                            }
                             if (result.parent) {
                                 parentY = result.parent as T;
                             }
@@ -961,6 +964,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                                         const result =  item.processNode(mapX, mapY);
                                         if (result.output !== '') {
                                             renderNode(nodeY, parentY, result.output, currentY);
+                                        }
+                                        if (result.renderAs && result.renderOutput) {
+                                            renderNode(result.renderAs as T, parentY, result.renderOutput, currentY);
                                         }
                                         if (result.parent) {
                                             parentY = result.parent as T;
@@ -984,18 +990,6 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                     if (!nodeY.hasBit('excludeSection', APP_SECTION.RENDER) && !nodeY.rendered) {
                         let output = '';
-                        if (nodeY.alignmentType === NODE_ALIGNMENT.NONE &&
-                            !nodeY.imageElement &&
-                            nodeY.has('width', CSS_STANDARD.PERCENT, { not: '100%' }) &&
-                            (parentY.linearVertical || (parentY.is(NODE_STANDARD.FRAME) && nodeY.singleChild)))
-                        {
-                            const group = this.viewController.createGroup(parentY, nodeY, [nodeY]);
-                            const groupOutput = this.writeGridLayout(group, parentY, 2, 1);
-                            group.alignmentType |= NODE_ALIGNMENT.PERCENT;
-                            renderNode(group, parentY, groupOutput, currentY);
-                            this.viewController[nodeY.float === 'right' || nodeY.autoMarginLeft ? 'prependBefore' : 'appendAfter'](nodeY.id, this.viewController.renderColumnSpace(group.renderDepth + 1, `${100 - nodeY.toInt('width')}%`));
-                            parentY = group;
-                        }
                         if (nodeY.controlName === '') {
                             const borderVisible = nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0;
                             const backgroundImage = DOM_REGEX.URL.test(nodeY.css('backgroundImage')) || DOM_REGEX.URL.test(nodeY.css('background'));

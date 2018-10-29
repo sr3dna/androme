@@ -74,6 +74,8 @@ interface ExtensionResult {
     complete: boolean;
     next?: boolean;
     parent?: Null<{}>;
+    renderAs?: androme.lib.base.Node;
+    renderOutput?: string;
     include?: boolean;
 }
 

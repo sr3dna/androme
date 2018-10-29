@@ -15,6 +15,7 @@ import External from './extension/external';
 import Grid from './extension/grid';
 import List from './extension/list';
 import Origin from './extension/origin';
+import Percent from './extension/percent';
 import Sprite from './extension/sprite';
 import Table from './extension/table';
 
@@ -167,7 +168,8 @@ const appBase: AppFramework<T> = {
             [EXT_NAME.SPRITE]: new Sprite(EXT_NAME.SPRITE, framework),
             [EXT_NAME.LIST]: new List(EXT_NAME.LIST, framework, ['UL', 'OL', 'DL', 'DIV']),
             [EXT_NAME.TABLE]: new Table(EXT_NAME.TABLE, framework, ['TABLE']),
-            [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN'])
+            [EXT_NAME.GRID]: new Grid(EXT_NAME.GRID, framework, ['FORM', 'UL', 'OL', 'DL', 'DIV', 'TABLE', 'NAV', 'SECTION', 'ASIDE', 'MAIN', 'HEADER', 'FOOTER', 'P', 'ARTICLE', 'FIELDSET', 'SPAN']),
+            [EXT_NAME.PERCENT]: new Percent(EXT_NAME.PERCENT, framework)
         };
         initialized = true;
         return {

@@ -12,3 +12,4 @@ package-lock.json
 rollup.config.js
 tsconfig.json
 tslint.json
+_config.yml

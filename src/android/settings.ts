@@ -11,7 +11,8 @@ const settings: SettingsAndroid = {
         'androme.sprite',
         'androme.list',
         'androme.table',
-        'androme.grid'
+        'androme.grid',
+        'androme.percent'
     ],
     targetAPI: BUILD_ANDROID.OREO,
     density: DENSITY_ANDROID.MDPI,
