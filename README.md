@@ -99,6 +99,7 @@ androme.settings = {
     dimensResourceValue: true,
     numberResourceValue: false,
     fontAliasResourceValue: true,
+    vectorColorResourceValue: true,
     alwaysReevaluateResources: true,
     renderInlineText: true,
     ellipsisOnTextOverflow: true,

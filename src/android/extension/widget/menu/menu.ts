@@ -4,6 +4,7 @@ import View = android.lib.base.View;
 
 import $enum = androme.lib.enumeration;
 import $const_android = android.lib.constant;
+import $dom = androme.lib.dom;
 import $resource_android = android.lib.base.Resource;
 
 const VIEW_NAVIGATION = {
@@ -140,7 +141,8 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
             case VIEW_NAVIGATION.ITEM:
                 this.parseDataSet(VALIDATE_ITEM, element, options);
                 if (node.android('icon') === '') {
-                    let src = $resource_android.addImageURL(element.style.backgroundImage as string, $const_android.DRAWABLE_PREFIX.MENU);
+                    const style = $dom.getStyle(element);
+                    let src = $resource_android.addImageURL((style.backgroundImage !== 'none' ? style.backgroundImage : style.background) as string, $const_android.DRAWABLE_PREFIX.MENU);
                     if (src !== '') {
                         options.android.icon = `@drawable/${src}`;
                     }

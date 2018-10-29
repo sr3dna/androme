@@ -2,7 +2,7 @@ import { USER_AGENT } from './enumeration';
 
 import { DOM_REGEX } from './constant';
 
-import { convertCamelCase, convertInt, convertPX, formatPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
+import { convertCamelCase, convertInt, convertPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';
 
 export function isUserAgent(value: number) {
     let client = USER_AGENT.CHROME;
@@ -44,12 +44,12 @@ export function getBoxModel(): BoxModel {
     };
 }
 
-export function convertClientPX(value: string, dimension: number, fontSize: string, percent = false) {
+export function convertClientUnit(value: string, dimension: number, fontSize: string, percent = false) {
     if (percent) {
-        return isPercent(value) ? value : `${((parseFloat(convertPX(value)) / dimension) * 100).toFixed(2)}%`;
+        return isPercent(value) ? convertInt(value) / 100 : (parseFloat(convertPX(value, fontSize)) / dimension);
     }
     else {
-        return isPercent(value) ? formatPX(dimension * (convertInt(value) / 100)) : convertPX(value, fontSize);
+        return isPercent(value) ? Math.round(dimension * (convertInt(value) / 100)) : convertInt(convertPX(value, fontSize));
     }
 }
 

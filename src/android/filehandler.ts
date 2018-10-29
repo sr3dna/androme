@@ -130,18 +130,19 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     }
 
     public resourceStringToXml(saveToDisk = false) {
-        const data: {} = {
-            '0': [{
-                '1': []
-            }]
-        };
+        const data: ObjectMap<any> = { '1': [] };
         this.stored.strings = new Map([...this.stored.strings.entries()].sort(caseInsensitive));
-        const root = $xml.getTemplateBranch(data, '0');
         if (this.appName !== '' && !this.stored.strings.has('app_name')) {
-            root['1'].push({ name: 'app_name', value: this.appName });
+            data['1'].push({
+                name: 'app_name',
+                value: this.appName
+            });
         }
         for (const [name, value] of this.stored.strings.entries()) {
-            root['1'].push({ name, value });
+            data['1'].push({
+                name,
+                value
+            });
         }
         let xml = $xml.createTemplate($xml.parseTemplate(STRING_TMPL), data);
         xml = $xml.replaceTab(xml, this.settings, true);
@@ -154,21 +155,15 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     public resourceStringArrayToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.arrays.size > 0) {
-            const data: {} = {
-                '0': [{
-                    '1': []
-                }]
-            };
+            const data: ObjectMap<any> = { '1': [] };
             this.stored.arrays = new Map([...this.stored.arrays.entries()].sort());
-            const root = $xml.getTemplateBranch(data, '0');
             for (const [name, values] of this.stored.arrays.entries()) {
-                const arrayItem: {} = {
+                const itemA: ArrayObject<StringMap> = [];
+                values.forEach(value => itemA.push({ value }));
+                data['1'].push({
                     name,
-                    '2': []
-                };
-                const item = arrayItem['2'];
-                values.forEach(value => item.push({ value }));
-                root['1'].push(arrayItem);
+                    '1a': itemA
+                });
             }
             xml = $xml.createTemplate($xml.parseTemplate(STRINGARRAY_TMPL), data);
             xml = $xml.replaceTab(xml, this.settings, true);
@@ -185,17 +180,14 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             this.stored.fonts = new Map([...this.stored.fonts.entries()].sort());
             const namespace = this.settings.targetAPI < BUILD_ANDROID.OREO ? 'app' : 'android';
             for (const [name, font] of this.stored.fonts.entries()) {
-                const data = {
-                    '0': [{
-                        name,
-                        namespace: `xmlns:${namespace}="${XMLNS_ANDROID[namespace]}"`,
-                        '1': []
-                    }]
+                const data: ObjectMap<any> = {
+                    name,
+                    namespace: `xmlns:${namespace}="${XMLNS_ANDROID[namespace]}"`,
+                    '1': []
                 };
-                const root = $xml.getTemplateBranch(data, '0');
                 for (const attr in font) {
                     const [style, weight] = attr.split('-');
-                    root['1'].push({
+                    data['1'].push({
                         style,
                         weight,
                         font: `@font/${name + (style === 'normal' && weight === '400' ? `_${style}` : (style !== 'normal' ? `_${style}` : '') + (weight !== '400' ? `_${FONTWEIGHT_ANDROID[weight] || weight}` : ''))}`
@@ -217,15 +209,13 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     public resourceColorToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.colors.size > 0) {
-            const data: {} = {
-                '0': [{
-                    '1': []
-                }]
-            };
+            const data: ObjectMap<any> = { '1': [] };
             this.stored.colors = new Map([...this.stored.colors.entries()].sort());
-            const root = $xml.getTemplateBranch(data, '0');
             for (const [name, value] of this.stored.colors.entries()) {
-                root['1'].push({ name, value });
+                data['1'].push({
+                    name,
+                    value
+                });
             }
             xml = $xml.createTemplate($xml.parseTemplate(COLOR_TMPL), data);
             xml = $xml.replaceTab(xml, this.settings);
@@ -239,27 +229,22 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     public resourceStyleToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.styles.size > 0) {
-            const data: {} = {
-                '0': [{
-                    '1': []
-                }]
-            };
-            const root = $xml.getTemplateBranch(data, '0');
+            const data: ObjectMap<any> = { '1': [] };
             const styles = Array.from(this.stored.styles.values()).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
             for (const style of styles) {
-                const item: {} = {
-                    parentName: style.name,
-                    parent: style.parent || '',
-                    '2': []
-                };
+                const itemA: ArrayObject<StringMap> = [];
                 style.attrs.split(';').sort().forEach((attr: string) => {
                     const [name, value] = attr.split('=');
-                    item['2'].push({
+                    itemA.push({
                         name,
                         value: value.replace(/"/g, '')
                     });
                 });
-                root['1'].push(item);
+                data['1'].push({
+                    parentName: style.name,
+                    parent: style.parent || '',
+                    '1a': itemA
+                });
             }
             xml = $xml.createTemplate($xml.parseTemplate(STYLE_TMPL), data);
             xml = replaceUnit(xml, this.settings, true);
@@ -274,15 +259,10 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     public resourceDimenToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.dimens.size > 0) {
-            const data: {} = {
-                '0': [{
-                    '1': []
-                }]
-            };
+            const data: ObjectMap<any> = { '1': [] };
             this.stored.dimens = new Map([...this.stored.dimens.entries()].sort());
-            const root = $xml.getTemplateBranch(data, '0');
             for (const [name, value] of this.stored.dimens.entries()) {
-                root['1'].push({
+                data['1'].push({
                     name,
                     value
                 });
@@ -300,12 +280,9 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     public resourceDrawableToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.drawables.size > 0 || this.stored.images.size > 0) {
-            const data: {} = {
-                '0': []
-            };
-            const root = data['0'];
+            const template = $xml.parseTemplate(DRAWABLE_TMPL);
             for (const [name, value] of this.stored.drawables.entries()) {
-                root.push({
+                xml += '\n\n' + $xml.createTemplate(template, {
                     name: `res/drawable/${name}.xml`,
                     value
                 });
@@ -313,21 +290,20 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             for (const [name, images] of this.stored.images.entries()) {
                 if (Object.keys(images).length > 1) {
                     for (const dpi in images) {
-                        root.push({
+                        xml += '\n\n' + $xml.createTemplate(template, {
                             name: `res/drawable-${dpi}/${name}.${$util.lastIndexOf(images[dpi], '.')}`,
                             value: `<!-- image: ${images[dpi]} -->`
                         });
                     }
                 }
                 else if (images.mdpi) {
-                    root.push({
+                    xml += '\n\n' + $xml.createTemplate(template, {
                         name: `res/drawable/${name}.${$util.lastIndexOf(images.mdpi, '.')}`,
                         value: `<!-- image: ${images.mdpi} -->`
                     });
                 }
             }
-            xml = $xml.createTemplate($xml.parseTemplate(DRAWABLE_TMPL), data);
-            xml = replaceUnit(xml, this.settings);
+            xml = replaceUnit(xml.trim(), this.settings);
             xml = $xml.replaceTab(xml, this.settings);
             if (saveToDisk) {
                 this.saveToDisk([...parseImageDetails(xml), ...parseFileDetails(xml)]);

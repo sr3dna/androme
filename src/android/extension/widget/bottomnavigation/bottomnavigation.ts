@@ -71,11 +71,9 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
         $util.overwriteDefault(options, '', 'appTheme', 'AppTheme');
         $util.overwriteDefault(options, '', 'parentTheme', 'Theme.AppCompat.Light.DarkActionBar');
         const data = {
-            '0': [{
-                'appTheme': options.appTheme,
-                'parentTheme': options.parentTheme,
-                '1': []
-            }]
+            'appTheme': options.appTheme,
+            'parentTheme': options.parentTheme,
+            '1': []
         };
         $util.overwriteDefault(options, 'output', 'path', 'res/values');
         $util.overwriteDefault(options, 'output', 'file', `${WIDGET_NAME.BOTTOM_NAVIGATION}.xml`);

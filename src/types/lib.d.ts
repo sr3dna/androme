@@ -50,7 +50,7 @@ declare global {
             export function indexOf(value: string, ...terms: string[]): number;
             export function lastIndexOf(value: string, char?: string): string;
             export function sameValue(obj1: {}, obj2: {}, ...attrs: string[]): boolean;
-            export function searchObject(obj: ObjectMap<string>, value: string | StringMap): any[][];
+            export function searchObject(obj: StringMap, value: string | StringMap): any[][];
             export function hasValue(value: any): boolean;
             export function withinRange(a: number, b: number, offset?: number): boolean;
             export function withinFraction(lower: number, upper: number): boolean;
@@ -64,7 +64,7 @@ declare global {
             export function getBoxRect(): BoxRect;
             export function getClientRect(): BoxDimensions;
             export function getBoxModel(): BoxModel;
-            export function convertClientPX(value: string, dimension: number, fontSize: string, percent?: boolean): string;
+            export function convertClientUnit(value: string, dimension: number, fontSize: string, percent?: boolean): number;
             export function getRangeClientRect(element: Element): [Null<BoxDimensions>, boolean];
             export function assignBounds(bounds: BoxDimensions | DOMRect): BoxDimensions;
             export function getStyle(element: Null<Element>, cache?: boolean): CSSStyleDeclaration;
@@ -92,10 +92,10 @@ declare global {
             export function removePlaceholderAll(value: string): string;
             export function replaceIndent(value: string, depth: number): string;
             export function replaceTab(value: string, settings?: {}, preserve?: boolean): string;
-            export function replaceEntity(value: string): string;
-            export function parseTemplate(template: string): ObjectMap<string>;
+            export function replaceEntities(value: string): string;
+            export function parseTemplate(template: string): StringMap;
+            export function createTemplate(template: StringMap, data: {}, index?: string, include?: {}, exclude?: {}): string;
             export function getTemplateBranch(data: {}, ...levels: string[]): {};
-            export function createTemplate(template: ObjectMap<string>, data: {}, index?: string, include?: {}, exclude?: {}): string;
         }
         namespace color {
             export function getColorByName(value: string): Color | null;
@@ -104,6 +104,7 @@ declare global {
             export function getColorNearest(value: string): Color | null;
             export function parseRGBA(value: string, opacity?: string): string[];
             export function parseHex(value: string): string;
+            export function getHexAlpha(value: string, opacity: string): string;
             export function reduceToRGB(value: string, percent: number): string;
         }
     }

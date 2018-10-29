@@ -66,7 +66,7 @@ interface AppCurrent<T extends androme.lib.base.Node> {
 
 interface ExtensionDependency {
     name: string;
-    init: boolean;
+    preload: boolean;
 }
 
 interface ExtensionResult {

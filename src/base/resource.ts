@@ -8,8 +8,8 @@ import Application from './application';
 import File from './file';
 
 import { convertFloat, convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
-import { convertClientPX, cssAttribute, cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isUserAgent, isLineBreak, setElementCache } from '../lib/dom';
-import { replaceEntity } from '../lib/xml';
+import { convertClientUnit, cssAttribute, cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isUserAgent, isLineBreak, setElementCache } from '../lib/dom';
+import { replaceEntities } from '../lib/xml';
 import { parseHex, parseRGBA } from '../lib/color';
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
@@ -45,14 +45,14 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         break;
                     case 1:
                     case 3:
-                        const clientXY = convertClientPX(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
-                        result[position[index - 1]] = convertInt(clientXY);
+                        result[position[index - 1]] = convertClientUnit(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
                         break;
                 }
             });
         }
         else if (orientation.length === 2) {
             orientation.forEach((position, index) => {
+                const clientXY = convertClientUnit(position, index === 0 ? dimension.width : dimension.height, fontSize, percent);
                 switch (position) {
                     case '0%':
                         break;
@@ -63,6 +63,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         else {
                             result.vertical = 'center';
                         }
+                        result[index === 0 ? 'left' : 'top'] = clientXY;
                         break;
                     case '100%':
                         if (index === 0) {
@@ -82,8 +83,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             }
                         }
                         else {
-                            const clientXY = convertClientPX(position, index === 1 ? dimension.width : dimension.height, fontSize, percent);
-                            result[index === 0 ? 'left' : 'top'] = convertInt(clientXY);
+                            result[index === 0 ? 'left' : 'top'] = clientXY;
                         }
                         break;
                 }
@@ -127,7 +127,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public static isBorderVisible(border?: BorderAttribute) {
-        return border && !(border.style === 'none' || border.width === '0px' || border.color === '' || (Array.isArray(border.color) && (border.color.length === 0 || parseFloat(border.color[2]).toString() === '0')));
+        return border != null && !(border.style === 'none' || border.width === '0px' || border.color === '' || (Array.isArray(border.color) && (border.color.length === 0 || parseFloat(border.color[2]).toString() === '0')));
     }
 
     public static hasDrawableBackground(object?: BoxStyle) {
@@ -285,13 +285,16 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         case 'background':
                         case 'backgroundImage': {
                             if (value !== 'none' && !node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE)) {
-                                const colorStop = '(?:,?\\s*(rgba?\\(\\d+, \\d+, \\d+(?:,\\s*[\\d.]+)?\\)|[a-z]+)\\s*(\\d+[a-z%]+)?)';
+                                function colorStop(parse: boolean) {
+                                    return `${parse ? '' : '(?:'},?\\s*(${parse ? '' : '?:'}rgba?\\(\\d+, \\d+, \\d+(?:, [\\d.]+)?\\)|[a-z]+)\\s*(${parse ? '' : '?:'}\\d+%)?${parse ? '' : ')'}`;
+                                }
                                 const gradients: Gradient[] = [];
-                                let pattern: Null<RegExp> = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?${colorStop}${colorStop}${colorStop}?\\)`, 'g');
+                                let pattern: Null<RegExp> = new RegExp(`([a-z\-]+)-gradient\\(([\\w\\s%]+)?(${colorStop(false)}+)\\)`, 'g');
                                 let match: Null<RegExpExecArray> = null;
                                 while ((match = pattern.exec(value)) != null) {
+                                    let gradient: Gradient;
                                     if (match[1] === 'linear') {
-                                        gradients.push(<GradientLinear> {
+                                        gradient = {
                                             type: 'linear',
                                             angle: (() => {
                                                 switch (match[2]) {
@@ -315,14 +318,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                                         return convertInt(match[2]);
                                                 }
                                             })(),
-                                            startColor: parseRGBA(match[3]),
-                                            startColorStop: match[4],
-                                            endColor: parseRGBA(match[5]),
-                                            endColorStop: match[6]
-                                        });
+                                            colorStop: []
+                                        } as GradientLinear;
                                     }
                                     else {
-                                        gradients.push(<GradientRadial> {
+                                        gradient = {
                                             type: 'radial',
                                             shapePosition: (() => {
                                                 const result = ['ellipse', 'center'];
@@ -347,13 +347,20 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                                 }
                                                 return result;
                                             })(),
-                                            startColor: parseRGBA(match[3]),
-                                            startColorStop: match[4],
-                                            endColor: parseRGBA(match[7] || match[5]),
-                                            endColorStop: match[8] || match[6],
-                                            centerColor: match[7] ? parseRGBA(match[5]) : [],
-                                            centerColorStop: match[8] ? match[6] : undefined
-                                        });
+                                            colorStop: []
+                                        } as GradientRadial;
+                                    }
+                                    const stopMatch = match[3].trim().split(new RegExp(colorStop(true), 'g'));
+                                    for (let i = 0; i < stopMatch.length; i += 3) {
+                                        if (stopMatch[i + 1]) {
+                                            gradient.colorStop.push({
+                                                color: parseRGBA(stopMatch[i + 1]),
+                                                percent: convertInt(stopMatch[i + 2])
+                                            });
+                                        }
+                                    }
+                                    if (gradient.colorStop.length > 1) {
+                                        gradients.push(gradient);
                                     }
                                 }
                                 if (gradients.length > 0) {
@@ -572,7 +579,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         [element, ...gOrSvg].forEach((item, index) => {
                             const group: SVGGroup = {
                                 element: item,
-                                name: element.id || `group_${index}`,
+                                name: item.id || `g_${index}`,
                                 translateX: 0,
                                 translateY: 0,
                                 scaleX: 1,
@@ -775,19 +782,19 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     }
                     else if (node.inlineText) {
                         name = node.textContent.trim();
-                        value = replaceEntity(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
+                        value = replaceEntities(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
                         [value, inlineTrim] = parseWhiteSpace(node, value);
                         value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
                     else if (element.innerText.trim() === '' && Resource.hasDrawableBackground(<BoxStyle> getElementCache(element, 'boxStyle'))) {
-                        value = replaceEntity(element.innerText);
+                        value = replaceEntities(element.innerText);
                         performTrim = false;
                     }
                 }
                 else if (node.plainText) {
                     name = node.textContent.trim();
-                    value = replaceEntity(node.textContent);
+                    value = replaceEntities(node.textContent);
                     value = value.replace(/&[A-Za-z]+;/g, match => match.replace('&', '&amp;'));
                     [value, inlineTrim] = parseWhiteSpace(node, value);
                 }

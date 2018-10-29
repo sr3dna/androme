@@ -98,10 +98,7 @@ interface SVGPath {
 
 interface Gradient {
     type: string;
-    startColor: string[];
-    startColorStop: string | undefined;
-    endColor: string[];
-    endColorStop: string | undefined;
+    colorStop: ColorStop[];
 }
 
 interface GradientLinear extends Gradient {
@@ -110,8 +107,6 @@ interface GradientLinear extends Gradient {
 
 interface GradientRadial extends Gradient {
     shapePosition: string[];
-    centerColor: string[];
-    centerColorStop: string | undefined;
 }
 
 interface BoxRect {
@@ -162,6 +157,11 @@ interface Color {
         s: number;
         l: number;
     };
+}
+
+interface ColorStop {
+    color: string[];
+    percent: number;
 }
 
 interface RGB {

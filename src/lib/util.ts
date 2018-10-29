@@ -289,7 +289,7 @@ export function sameValue(obj1: {}, obj2: {}, ...attrs: string[]) {
     return true;
 }
 
-export function searchObject(obj: ObjectMap<string>, value: string | StringMap) {
+export function searchObject(obj: StringMap, value: string | StringMap) {
     const result: any[][] = [];
     if (typeof value === 'object') {
         for (const term in value) {

@@ -323,6 +323,10 @@ export function parseHex(value: string) {
     return '';
 }
 
+export function getHexAlpha(value: string, opacity: string) {
+    return (parseFloat(opacity) < 1 ? `#${convertToHex('255', parseFloat(opacity)) + value.substring(1)}` : value).toUpperCase();
+}
+
 export function reduceToRGB(value: string, percent: number) {
     const rgb = convertToRGB(value);
     if (rgb) {

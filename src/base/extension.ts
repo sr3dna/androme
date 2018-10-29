@@ -40,8 +40,11 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
         return this.tagNames.length === 0 || this.tagNames.includes(node.tagName);
     }
 
-    public require(value: string, init = false) {
-        this.dependencies.push({ name: value, init });
+    public require(value: string, preload = false) {
+        this.dependencies.push({
+            name: value,
+            preload
+        });
     }
 
     public included(element?: HTMLElement) {
@@ -53,7 +56,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
 
     public beforeInit(internal = false) {
         if (!internal && this.included()) {
-            this.dependencies.filter(item => item.init).forEach(item => {
+            this.dependencies.filter(item => item.preload).forEach(item => {
                 const ext = this.application.getExtension(item.name);
                 if (ext) {
                     ext.setTarget(this.node, this.parent, <HTMLElement> this.element);
@@ -69,7 +72,7 @@ export default abstract class Extension<T extends Node> implements androme.lib.b
 
     public afterInit(init = false) {
         if (!init && this.included()) {
-            this.dependencies.filter(item => item.init).forEach(item => {
+            this.dependencies.filter(item => item.preload).forEach(item => {
                 const ext = this.application.getExtension(item.name);
                 if (ext) {
                     ext.setTarget(this.node, this.parent, <HTMLElement> this.element);

@@ -23,6 +23,7 @@ const settings: SettingsAndroid = {
     dimensResourceValue: true,
     numberResourceValue: false,
     fontAliasResourceValue: true,
+    vectorColorResourceValue: true,
     alwaysReevaluateResources: true,
     autoSizeBackgroundImage: true,
     autoSizePaddingAndBorderWidth: true,

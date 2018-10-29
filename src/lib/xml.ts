@@ -1,16 +1,4 @@
-import { isString, repeat } from './util';
-
-function replaceWhiteSpace(value: string) {
-    value = value.replace(/\u00A0/g, '&#160;');
-    value = value.replace(/\u2002/g, '&#8194;');
-    value = value.replace(/\u2003/g, '&#8195;');
-    value = value.replace(/\u2009/g, '&#8201;');
-    value = value.replace(/\u200C/g, '&#8204;');
-    value = value.replace(/\u200D/g, '&#8205;');
-    value = value.replace(/\u200E/g, '&#8206;');
-    value = value.replace(/\u200F/g, '&#8207;');
-    return value;
-}
+import { isString, repeat, trimEnd } from './util';
 
 export function formatPlaceholder(id: string | number, symbol = ':') {
     return `{${symbol + id.toString()}}`;
@@ -62,37 +50,52 @@ export function replaceTab(value: string, { insertSpaces = 4 }, preserve = false
     return value;
 }
 
-export function replaceEntity(value: string) {
+export function replaceEntities(value: string) {
     value = value.replace(/&#(\d+);/g, (match, capture) => String.fromCharCode(parseInt(capture)));
     value = value.replace(/&nbsp;/g, '&#160;');
-    return replaceWhiteSpace(value);
+    value = value.replace(/\u00A0/g, '&#160;');
+    value = value.replace(/\u2002/g, '&#8194;');
+    value = value.replace(/\u2003/g, '&#8195;');
+    value = value.replace(/\u2009/g, '&#8201;');
+    value = value.replace(/\u200C/g, '&#8204;');
+    value = value.replace(/\u200D/g, '&#8205;');
+    value = value.replace(/\u200E/g, '&#8206;');
+    value = value.replace(/\u200F/g, '&#8207;');
+    return value;
 }
 
 export function parseTemplate(template: string) {
-    const result: ObjectMap<string> = {};
+    const result: StringMap = { 'root': template };
     let pattern: Null<RegExp> = null;
     let match: Null<RegExpExecArray> | boolean = false;
-    let section = 0;
     let characters = template.length;
+    let section = '';
     do {
         if (match) {
-            const segment: string = match[0].replace(new RegExp(match[1], 'g'), '');
+            const segment = match[0].replace(new RegExp(`^${match[1]}\\n`), '').replace(new RegExp(`${match[1]}$`), '');
             for (const index in result) {
                 result[index] = result[index].replace(new RegExp(match[0], 'g'), `{%${match[2]}}`);
             }
             result[match[2]] = segment;
             characters -= match[0].length;
+            section = match[2];
         }
         if (match == null || characters === 0) {
-            template = result[section++];
-            if (!template) {
+            if (section) {
+                template = result[section];
+                if (!template) {
+                    break;
+                }
+                characters = template.length;
+                section = '';
+                match = null;
+            }
+            else {
                 break;
             }
-            characters = template.length;
-            match = null;
         }
         if (!match) {
-            pattern = /(!(\d+)\n?)[\w\W]*\1/g;
+            pattern = /(!(\w+))\n[\w\W]*\n*\1/g;
         }
         if (pattern) {
             match = pattern.exec(template);
@@ -105,40 +108,42 @@ export function parseTemplate(template: string) {
     return result;
 }
 
+export function createTemplate(template: StringMap, data: {}, index?: string) {
+    let output = index ? template[index] : template['root'].trim();
+    for (const attr in data) {
+        let value: any = '';
+        if (Array.isArray(data[attr]) && data[attr].length > 0) {
+            for (let i = 0; i < data[attr].length; i++) {
+                value += createTemplate(template, data[attr][i], attr);
+            }
+            value = trimEnd(value, '\\n');
+        }
+        else {
+            value = data[attr];
+        }
+        if (isString(value)) {
+            output = output.replace(new RegExp(`{[%&~]${attr}}`, 'g'), value);
+        }
+        else if (value === false || (Array.isArray(value) && value.length === 0)) {
+            output = output.replace(new RegExp(`{%${attr}}\\n*`, 'g'), '');
+        }
+        else if (new RegExp(`{&${attr}}`).test(output)) {
+            output = '';
+        }
+    }
+    return output.replace(/\s+([\w:]+="[^"]*)?{~\w+}"?/g, '');
+}
+
 export function getTemplateBranch(data: {}, ...levels: string[]) {
     let current = data;
     for (const level of levels) {
         const [index, array = '0'] = level.split('-');
-        current = current[index][array];
-    }
-    return current;
-}
-
-export function createTemplate(template: ObjectMap<string>, data: {}, index?: string) {
-    let output = index ? template[index] : '';
-    for (const i in data) {
-        let value: any = '';
-        if (data[i] === false || (Array.isArray(data[i]) && data[i].length === 0)) {
-            output = output.replace(`{%${i}}`, '');
-            continue;
-        }
-        else if (Array.isArray(data[i])) {
-            for (const j in data[i]) {
-                value += createTemplate(template, data[i][j], i);
-            }
+        if (current[index] && current[index][parseInt(array)]) {
+            current = current[index][parseInt(array)];
         }
         else {
-            value = data[i];
-        }
-        if (isString(value)) {
-            output = index ? output.replace(new RegExp(`{[%@&]?${i}}`, 'g'), value) : value.trim();
-        }
-        else if (value === false || new RegExp(`{%${i}}`).test(output)) {
-            output = output.replace(`{%${i}}`, '');
-        }
-        else if (new RegExp(`{&${i}}`).test(output)) {
-            output = '';
+            return {};
         }
     }
-    return output.replace(/\s+[\w:]+="[^"]*{@\w+}"/g, '');
+    return current;
 }
