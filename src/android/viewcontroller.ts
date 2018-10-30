@@ -45,7 +45,7 @@ const MAP_CHAIN = {
     horizontalVertical: ['Horizontal', 'Vertical']
 };
 
-function setAlignParent<T extends View>(node: T, orientation = '', bias = false) {
+function setAlignParent(node: View, orientation = '', bias = false) {
     [AXIS_ANDROID.HORIZONTAL, AXIS_ANDROID.VERTICAL].forEach((value, index) => {
         if (!node.constraint[value] && (orientation === '' || value === orientation)) {
             node.app(MAP_LAYOUT.constraint[index === 0 ? 'left' : 'top'], 'parent');
@@ -1671,7 +1671,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
         return group;
     }
 
-    public renderGroup(node: T, parent: T, nodeType: number | string, options?: ObjectMap<any>) {
+    public renderGroup(node: T, parent: T, nodeType: number | string, options?: ObjectMap<StringMap>) {
         const target = $util.hasValue(node.dataset.target) && !$util.hasValue(node.dataset.include);
         if (typeof nodeType === 'number') {
             node.nodeType = nodeType;
@@ -1689,7 +1689,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 options = {
                     android: {
                         columnCount: options && $util.convertInt(options.columnCount) > 0 ? options.columnCount.toString() : '2',
-                        rowCount: options && $util.convertInt(options.rowCount > 0) ? options.rowCount.toString() : ''
+                        rowCount: options && $util.convertInt(options.rowCount) > 0 ? options.rowCount.toString() : ''
                     }
                 };
                 break;

@@ -9,7 +9,7 @@ declare global {
             public settings: Settings;
             public cache: NodeList<T>;
             public application: Application<T>;
-            public imageDimensions: Map<string, Image>;
+            public imageDimensions: Map<string, ImageAsset>;
             public file: File<T>;
             constructor(file: File<T>);
             public setImageSource(): void;

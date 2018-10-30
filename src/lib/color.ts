@@ -224,6 +224,32 @@ export function getColorByName(value: string) {
     return null;
 }
 
+export function getColorNearest(value: string) {
+    const result = HSL_SORTED.slice();
+    let index = result.findIndex(item => item.hex === value);
+    if (index !== -1) {
+        return result[index];
+    }
+    else {
+        const rgb = convertRGBA(value);
+        if (rgb) {
+            const hsl = convertHSL(rgb);
+            if (hsl) {
+                result.push({
+                    name: '',
+                    hsl,
+                    rgba: { r: -1, g: -1, b: -1, a: 1 },
+                    hex: ''
+                });
+                result.sort(sortHSL);
+                index = result.findIndex(item => item.name === '');
+                return result[Math.min(index + 1, result.length - 1)];
+            }
+        }
+        return null;
+    }
+}
+
 export function convertHex(value: string, opacity = 1) {
     const hex = '0123456789ABCDEF';
     let rgb = parseInt(value) * opacity;
@@ -266,32 +292,6 @@ export function convertRGBA(value: string): Null<RGBA> {
     return null;
 }
 
-export function getColorNearest(value: string) {
-    const result = HSL_SORTED.slice();
-    let index = result.findIndex(item => item.hex === value);
-    if (index !== -1) {
-        return result[index];
-    }
-    else {
-        const rgb = convertRGBA(value);
-        if (rgb) {
-            const hsl = convertHSL(rgb);
-            if (hsl) {
-                result.push({
-                    name: '',
-                    hsl,
-                    rgba: { r: -1, g: -1, b: -1, a: 1 },
-                    hex: ''
-                });
-                result.sort(sortHSL);
-                index = result.findIndex(item => item.name === '');
-                return result[Math.min(index + 1, result.length - 1)];
-            }
-        }
-        return null;
-    }
-}
-
 export function parseRGBA(value: string, opacity = '1'): Null<ColorHexAlpha> {
     if (value && value !== 'initial' && value !== 'transparent') {
         if (value.charAt(0) === '#') {
@@ -328,14 +328,6 @@ export function parseRGBA(value: string, opacity = '1'): Null<ColorHexAlpha> {
         }
     }
     return null;
-}
-
-export function parseHex(value: string) {
-    const hexAlpha = parseRGBA(value);
-    if (hexAlpha) {
-        return hexAlpha.valueRGB;
-    }
-    return value;
 }
 
 export function reduceRGBA(value: string, percent: number) {

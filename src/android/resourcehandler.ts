@@ -1,4 +1,4 @@
-import { SettingsAndroid } from './types/local';
+import { BackgroundImage, BackgroundGradient, SettingsAndroid, ResourceStyleData } from './types/local';
 
 import { BOX_ANDROID, FONT_ANDROID, FONTALIAS_ANDROID, FONTREPLACE_ANDROID, FONTWEIGHT_ANDROID, RESERVED_JAVA } from './lib/constant';
 
@@ -18,43 +18,15 @@ import $xml = androme.lib.xml;
 import $color = androme.lib.color;
 import $resource = androme.lib.base.Resource;
 
-type BackgroundImage = {
-    src: string;
-    top: string;
-    right: string;
-    bottom: string;
-    left: string;
-    gravity: string;
-    tileMode: string;
-    tileModeX: string;
-    tileModeY: string;
-    width: string;
-    height: string;
-};
-
-type BackgroundGradient = {
-    type: string;
-    startColor: string;
-    endColor: string;
-    centerColor: string;
-    colorStop: BackgroundGradientColorStop[];
-    angle?: string;
-    startX?: string;
-    startY?: string;
-    endX?: string;
-    endY?: string;
-    centerX?: string;
-    centerY?: string;
-    gradientRadius?: string;
-    tileMode?: string;
-};
-
-type BackgroundGradientColorStop = {
-    color: string;
-    offset: string;
-};
-
 type StyleList = ArrayObject<ObjectMap<number[]>>;
+
+type ThemeTemplate = {
+    output: {
+        path: string;
+        file: string;
+    }
+    item?: StringMap
+};
 
 const FONT_STYLE = {
     'fontFamily': 'android:fontFamily="{0}"',
@@ -321,8 +293,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         return '';
     }
 
-    public static addColor(hexAlpha: Null<ColorHexAlpha>) {
-        if (hexAlpha && hexAlpha.visible) {
+    public static addColor(hexAlpha: Null<string | ColorHexAlpha>) {
+        if ($util.isString(hexAlpha)) {
+            hexAlpha = $color.parseRGBA(hexAlpha);
+        }
+        if (hexAlpha && typeof hexAlpha === 'object' && hexAlpha.visible) {
             const value = this.getHexARGB(hexAlpha);
             let name = $resource.STORED.colors.get(value) || '';
             if (name === '') {
@@ -352,8 +327,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         return '';
     }
 
-    public static getHexARGB(hexAlpha: ColorHexAlpha) {
-        return hexAlpha.opaque ? hexAlpha.valueARGB : hexAlpha.valueRGB;
+    public static getHexARGB(hexAlpha: Null<string | ColorHexAlpha>) {
+        if (typeof hexAlpha === 'string') {
+            hexAlpha = $color.parseRGBA(hexAlpha);
+        }
+        return hexAlpha ? (hexAlpha.opaque ? hexAlpha.valueARGB : hexAlpha.valueRGB) : '';
     }
 
     public settings: SettingsAndroid;
@@ -494,13 +472,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     return current;
                 }
-                if (typeof stored.backgroundColor === 'object') {
-                    stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor);
-                }
+                stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor);
                 const backgroundImage: string[] = [];
                 const backgroundVector: ArrayObject<StringMap> = [];
                 const backgroundRepeat = stored.backgroundRepeat.split(',').map(value => value.trim());
-                const backgroundDimensions: Null<Image>[] = [];
+                const backgroundDimensions: Null<ImageAsset>[] = [];
                 const backgroundGradient: BackgroundGradient[] = [];
                 const backgroundPositionX = stored.backgroundPositionX.split(',').map(value => value.trim());
                 const backgroundPositionY = stored.backgroundPositionY.split(',').map(value => value.trim());
@@ -527,79 +503,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                 }
                 else if (stored.backgroundGradient) {
-                    for (const shape of stored.backgroundGradient) {
-                        const hasStop = shape.colorStop.filter(item => item.percent > 0).length > 0;
-                        const gradient: BackgroundGradient = {
-                            type: shape.type,
-                            startColor: !hasStop ? ResourceHandler.addColor(shape.colorStop[0].color) : '',
-                            centerColor: !hasStop && shape.colorStop.length > 2 ? ResourceHandler.addColor(shape.colorStop[1].color) : '',
-                            endColor: !hasStop ? ResourceHandler.addColor(shape.colorStop[shape.colorStop.length - 1].color) : '',
-                            colorStop: []
-                        };
-                        switch (shape.type) {
-                            case 'radial':
-                                const radial = <GradientRadial> shape;
-                                const boxPosition: Null<BoxPosition> = radial.shapePosition.length > 1 ? $resource.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), !hasStop) : null;
-                                if (hasStop) {
-                                    gradient.gradientRadius = node.bounds.width.toString();
-                                    if (boxPosition) {
-                                        gradient.centerX = boxPosition.horizontal === 'right' ? (node.bounds.width - boxPosition.right).toString() : boxPosition.left.toString();
-                                        gradient.centerY = boxPosition.vertical === 'bottom' ? (node.bounds.height - boxPosition.bottom).toString() : boxPosition.top.toString();
-                                    }
-                                }
-                                else {
-                                    gradient.gradientRadius = $util.formatPX(node.bounds.width);
-                                    if (boxPosition) {
-                                        gradient.centerX = `${boxPosition.horizontal === 'right' ? 100 - $util.convertPercent(boxPosition.right) : boxPosition.left}%`;
-                                        gradient.centerY = `${boxPosition.vertical === 'bottom' ? 100 - $util.convertPercent(boxPosition.bottom) : boxPosition.top}%`;
-                                    }
-                                }
-                                break;
-                            case 'linear':
-                                const linear = <GradientLinear> shape;
-                                if (hasStop) {
-                                    gradient.startX = '0';
-                                    gradient.startY = '0';
-                                    gradient.endX = node.bounds.width.toString();
-                                    gradient.endY = node.bounds.height.toString();
-                                }
-                                else {
-                                    gradient.angle = (Math.floor(linear.angle / 45) * 45).toString();
-                                }
-                                break;
-                        }
-                        if (hasStop) {
-                            shape.colorStop.sort();
-                            for (let i = 0; i < shape.colorStop.length; i++) {
-                                const item = shape.colorStop[i];
-                                let percent = item.percent;
-                                const color = this.settings.vectorColorResourceValue ? `@color/${ResourceHandler.addColor(item.color)}` : ResourceHandler.getHexARGB(item.color);
-                                if (i === 0) {
-                                    if (percent !== 0) {
-                                        gradient.colorStop.push({
-                                            color,
-                                            offset: '0'
-                                        });
-                                    }
-                                }
-                                else if (i === shape.colorStop.length - 1) {
-                                    if (percent === 0) {
-                                        percent = 100;
-                                    }
-                                }
-                                else {
-                                    if (percent === 0) {
-                                        percent = Math.round((shape.colorStop[i - 1].percent + shape.colorStop[i + 1].percent) / 2);
-                                    }
-                                }
-                                gradient.colorStop.push({
-                                    color,
-                                    offset: (percent / 100).toFixed(2)
-                                });
-                            }
-                        }
-                        backgroundGradient.push(gradient);
-                    }
+                    backgroundGradient.push(...this.buildBackgroundGradient(node, stored.backgroundGradient));
                 }
                 const companion = node.companion;
                 if (companion &&
@@ -608,8 +512,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     !$dom.cssFromParent(companion.element, 'backgroundColor'))
                 {
                     const boxStyle: BoxStyle = $dom.getElementCache(companion.element, 'boxStyle');
-                    if (typeof boxStyle.backgroundColor === 'object') {
-                        stored.backgroundColor = ResourceHandler.addColor(boxStyle.backgroundColor);
+                    const backgroundColor = ResourceHandler.addColor(boxStyle.backgroundColor);
+                    if (backgroundColor !== '') {
+                        stored.backgroundColor = backgroundColor;
                     }
                 }
                 const hasBorder = (
@@ -664,13 +569,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         stored.borderLeft
                     ];
                     borders.forEach((item: BorderAttribute) => {
-                        if ($resource.isBorderVisible(item) && typeof item.color === 'object') {
+                        if ($resource.isBorderVisible(item)) {
                             item.color = ResourceHandler.addColor(item.color);
                         }
                     });
-                    const image4: BackgroundImage[] = [];
-                    const image5: BackgroundImage[] = [];
-                    let data: ObjectMap<any>;
+                    const images4: BackgroundImage[] = [];
+                    const images5: BackgroundImage[] = [];
+                    let data: TemplateData;
                     let resourceName = '';
                     for (let i = 0; i < backgroundImage.length; i++) {
                         if (backgroundImage[i] !== '') {
@@ -838,20 +743,20 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         src: backgroundImage[i]
                                     };
                                     if (gravity !== '' || tileMode !== '' || tileModeX !== '' || tileModeY !== '') {
-                                        image5.push(imageXml);
+                                        images5.push(imageXml);
                                     }
                                     else {
                                         if (stored.backgroundSize.length > 0) {
                                             imageXml.width = stored.backgroundSize[0];
                                             imageXml.height = stored.backgroundSize[1];
                                         }
-                                        image4.push(imageXml);
+                                        images4.push(imageXml);
                                     }
                                 }
                             }
                         }
                     }
-                    image5.sort((a, b) => {
+                    images5.sort((a, b) => {
                         if (!(a.tileModeX === 'repeat' || a.tileModeY === 'repeat' || a.tileMode === 'repeat')) {
                             return 1;
                         }
@@ -887,7 +792,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 '2': false,
                                 '3': [{
                                     d: `'M0,0 L${width},0 L${width},${height} L0,${height} Z`,
-                                    'gradient': backgroundGradient
+                                    fill: [{ 'gradients': backgroundGradient }]
                                 }]
                             }]
                         });
@@ -922,13 +827,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 '1': backgroundColor,
                                 '2': !vectorGradient && backgroundGradient.length > 0 ? backgroundGradient : false,
                                 '3': backgroundVector,
-                                '4': image4.length > 0 ? image4 : false,
-                                '5': image5.length > 0 ? image5 : false,
-                                '6': $resource.isBorderVisible(stored.border) || borderRadius ? [{
-                                        '6a': getShapeAttribute(stored, 'stroke'),
-                                        '6b': borderRadius
-                                     }]
-                                   : false
+                                '4': images4.length > 0 ? images4 : false,
+                                '5': images5.length > 0 ? images5 : false,
+                                '6': $resource.isBorderVisible(stored.border) || borderRadius ? [{ 'stroke': getShapeAttribute(stored, 'stroke'), 'corners': borderRadius }] : false
                             };
                         }
                     }
@@ -946,8 +847,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             '1': backgroundColor,
                             '2': !vectorGradient && backgroundGradient.length > 0 ? backgroundGradient : false,
                             '3': backgroundVector,
-                            '4': image4.length > 0 ? image4 : false,
-                            '5': image5.length > 0 ? image5 : false,
+                            '4': images4.length > 0 ? images4 : false,
+                            '5': images5.length > 0 ? images5 : false,
                             '6': []
                         };
                         const borderVisible = borders.filter(item => $resource.isBorderVisible(item));
@@ -964,20 +865,20 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             const indentWidth = `${$util.formatPX(width - baseWidth)}`;
                             const hideWidth = `-${indentWidth}`;
                             data['6'].push({
-                                'top': top ? '' : hideWidth,
-                                'right': right ? '' : hideWidth,
-                                'bottom': bottom ? '' : hideWidth,
-                                'left': left ? '' :  hideWidth,
-                                '6a': [{ width: $util.formatPX(leftWidth), borderStyle: getBorderStyle(border) }],
-                                '6b': borderRadius
+                                top: top ? '' : hideWidth,
+                                right: right ? '' : hideWidth,
+                                bottom: bottom ? '' : hideWidth,
+                                left: left ? '' :  hideWidth,
+                                'stroke': [{ width: $util.formatPX(leftWidth), borderStyle: getBorderStyle(border) }],
+                                'corners': borderRadius
                             });
                             data['6'].push({
-                                'top': top ? indentWidth : hideWidth,
-                                'right': right ? indentWidth : hideWidth,
-                                'bottom': bottom ? indentWidth : hideWidth,
-                                'left': left ? indentWidth : hideWidth,
-                                '6a': [{ width: $util.formatPX(rightWidth), borderStyle: getBorderStyle(border) }],
-                                '6b': borderRadius
+                                top: top ? indentWidth : hideWidth,
+                                right: right ? indentWidth : hideWidth,
+                                bottom: bottom ? indentWidth : hideWidth,
+                                left: left ? indentWidth : hideWidth,
+                                'stroke': [{ width: $util.formatPX(rightWidth), borderStyle: getBorderStyle(border) }],
+                                'corners': borderRadius
                             });
                         }
                         if (borderWidth.size === 1 && borderStyle.size === 1 && !(borderData.style === 'groove' || borderData.style === 'ridge')) {
@@ -995,12 +896,12 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 const hideWidth = `-${$util.formatPX(getHideWidth(width))}`;
                                 const topVisible = $resource.isBorderVisible(stored.borderTop);
                                 data['6'].push({
-                                    'top': topVisible ? '' : hideWidth,
-                                    'right': $resource.isBorderVisible(stored.borderRight) ? '' : hideWidth,
-                                    'bottom': $resource.isBorderVisible(stored.borderBottom) ? (topVisible ? '' : borderVisible[0].width) : hideWidth,
-                                    'left': $resource.isBorderVisible(stored.borderLeft) ? '' : hideWidth,
-                                    '6a': getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
-                                    '6b': borderRadius
+                                    top: topVisible ? '' : hideWidth,
+                                    right: $resource.isBorderVisible(stored.borderRight) ? '' : hideWidth,
+                                    bottom: $resource.isBorderVisible(stored.borderBottom) ? (topVisible ? '' : borderVisible[0].width) : hideWidth,
+                                    left: $resource.isBorderVisible(stored.borderLeft) ? '' : hideWidth,
+                                    'stroke': getShapeAttribute(<BoxStyle> { border: borderVisible[0] }, 'stroke'),
+                                    'corners': borderRadius
                                 });
                             }
                         }
@@ -1027,22 +928,22 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         const outsetWidth = hasInset ? Math.ceil(width / 2) : width;
                                         let hideWidth = `-${$util.formatPX(getHideWidth(outsetWidth))}`;
                                         data['6'].push({
-                                            'top':  i === 0 ? '' : hideWidth,
-                                            'right': i === 1 ? '' : hideWidth,
-                                            'bottom': i === 2 ? (topVisible ? '' : border.width) : hideWidth,
-                                            'left': i === 3 ? '' : hideWidth,
-                                            '6a': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
-                                            '6b': borderRadius
+                                            top:  i === 0 ? '' : hideWidth,
+                                            right: i === 1 ? '' : hideWidth,
+                                            bottom: i === 2 ? (topVisible ? '' : border.width) : hideWidth,
+                                            left: i === 3 ? '' : hideWidth,
+                                            'stroke': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, hasInset),
+                                            'corners': borderRadius
                                         });
                                         if (hasInset) {
                                             hideWidth = `-${$util.formatPX(getHideWidth(width))}`;
                                             data['6'].unshift({
-                                                'top':  i === 0 ? '' : hideWidth,
-                                                'right': i === 1 ? '' : hideWidth,
-                                                'bottom': i === 2 ? (topVisible ? '' : border.width) : hideWidth,
-                                                'left': i === 3 ? '' : hideWidth,
-                                                '6a': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true),
-                                                '6b': false
+                                                top:  i === 0 ? '' : hideWidth,
+                                                right: i === 1 ? '' : hideWidth,
+                                                bottom: i === 2 ? (topVisible ? '' : border.width) : hideWidth,
+                                                left: i === 3 ? '' : hideWidth,
+                                                'stroke': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true),
+                                                'corners': false
                                             });
                                         }
                                     }
@@ -1067,7 +968,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             node.renderParent.tagName !== 'TABLE' &&
                             !node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.AUTOFIT))
                         {
-                            const sizeParent: Image = { width: 0, height: 0 };
+                            const sizeParent: ImageAsset = { width: 0, height: 0 };
                             backgroundDimensions.forEach(item => {
                                 if (item) {
                                     sizeParent.width = Math.max(sizeParent.width, item.width);
@@ -1157,15 +1058,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             nodes.each(node => {
                 const nodeId = node.id;
                 const companion = node.companion;
-                let system = false;
-                if (companion && !companion.visible && (companion.textElement || companion.tagName === 'LABEL')) {
+                if (companion && !companion.visible && companion.tagName === 'LABEL') {
                     node = companion as T;
                 }
                 const element = node.element;
                 const stored: FontAttribute = Object.assign({}, $dom.getElementCache(element, 'fontStyle'));
-                if (typeof stored.backgroundColor === 'object') {
-                    stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor);
-                }
+                let system = false;
+                stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor);
                 if (stored.fontFamily) {
                     let fontFamily = stored.fontFamily.split(',')[0]
                         .replace(/"/g, '')
@@ -1173,9 +1072,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         .trim();
                     let fontStyle = '';
                     let fontWeight = '';
-                    if (typeof stored.color === 'object') {
-                        stored.color = ResourceHandler.addColor(stored.color);
-                    }
+                    stored.color = ResourceHandler.addColor(stored.color);
                     if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily]) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
                     }
@@ -1251,12 +1148,12 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 const stored: SVG = $dom.getElementCache(node.element, 'imageSource');
                 if (stored) {
                     const item1: ArrayObject<StringMap> = [];
+                    const namespace = new Set<string>();
                     stored.children.forEach(svg => {
-                        const group: ObjectMap<any> = {
+                        const group: TemplateData = {
                             name: svg.name,
                             '2': [],
-                            '3': [],
-                            '4': false
+                            '3': []
                         };
                         if (!svg.nestedSVG) {
                             if (svg.scaleX !== 1) {
@@ -1268,10 +1165,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             if (svg.rotation !== 0) {
                                 group.rotation = svg.rotation.toString();
                             }
-                            if (svg.skewX !== 1) {
+                            if (svg.skewX !== 0) {
                                 group.pivotX = svg.skewX.toString();
                             }
-                            if (svg.skewY !== 1) {
+                            if (svg.skewY !== 0) {
                                 group.pivotY = svg.skewY.toString();
                             }
                             if (svg.translateX !== 0) {
@@ -1297,18 +1194,37 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 });
                             }
                             else {
-                                if (this.settings.vectorColorResourceValue) {
-                                    if (item.fillColor) {
-                                        const color = $color.parseRGBA(item.fillColor);
-                                        if (color && color.visible) {
-                                            item.fillColor = `@color/${ResourceHandler.addColor(color)}`;
+                                ['fill', 'stroke'].forEach(value => {
+                                    if ($util.isArray<string>(item[value])) {
+                                        const gradients: Gradient[] = [];
+                                        item[value].forEach((id: string) => {
+                                            const gradient = stored.defs.gradients.get(id);
+                                            if (gradient) {
+                                                gradients.push(gradient);
+                                            }
+                                        });
+                                        if (gradients.length > 0) {
+                                            item[value] = [{ gradients: this.buildBackgroundGradient(node, gradients) }];
+                                            namespace.add('aapt');
                                         }
                                     }
-                                    if (item.strokeColor) {
-                                        const color = $color.parseRGBA(item.strokeColor);
-                                        if (color && color.visible) {
-                                            item.strokeColor = `@color/${ResourceHandler.addColor(color)}`;
+                                    else if (this.settings.vectorColorResourceValue) {
+                                        if ($util.isString(item[value])) {
+                                            const color = $color.parseRGBA(item[value]);
+                                            if (color && color.visible) {
+                                                item[value] = `@color/${ResourceHandler.addColor(color)}`;
+                                            }
                                         }
+                                    }
+                                });
+                                if (item.fillRule) {
+                                    switch (item.fillRule) {
+                                        case 'evenodd':
+                                            item.fillRule = 'evenOdd';
+                                            break;
+                                        default:
+                                            item.fillRule = 'nonZero';
+                                            break;
                                     }
                                 }
                                 group['3'].push(item);
@@ -1317,6 +1233,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         item1.push(group);
                     });
                     const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), {
+                        namespace: namespace.size > 0 ? getXmlNs(...Array.from(namespace)) : '',
                         width: $util.formatPX(stored.width),
                         height: $util.formatPX(stored.height),
                         viewportWidth: stored.viewBoxWidth > 0 ? stored.viewBoxWidth.toString() : false,
@@ -1438,22 +1355,109 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         });
     }
 
-    public addTheme(template: string, data: ObjectMap<any>, options: ObjectMap<any>) {
+    public addTheme(template: string, data: {}, options: ThemeTemplate) {
         if (options.item) {
-            for (const name in options.item) {
-                let value = options.item[name];
-                const hexAlpha = $color.parseRGBA(value);
-                if (hexAlpha && hexAlpha.visible) {
-                    value = `@color/${ResourceHandler.addColor(hexAlpha)}`;
-                }
+            const items = { item: options.item };
+            ResourceHandler.formatOptions(items, this.settings);
+            for (const name in items) {
                 data['1'].push({
                     name,
-                    value
+                    value: items[name]
                 });
             }
         }
         const xml = $xml.createTemplate($xml.parseTemplate(template), data);
         this.addFile(options.output.path, options.output.file, xml);
+    }
+
+    protected buildBackgroundGradient(node: View, gradients: Gradient[]) {
+        const result: BackgroundGradient[] = [];
+        for (const shape of gradients) {
+            const hasStop = shape.colorStop.filter(item => $util.convertInt(item.offset) > 0).length > 0;
+            const gradient: BackgroundGradient = {
+                type: shape.type,
+                startColor: !hasStop ? ResourceHandler.addColor(shape.colorStop[0].color) : '',
+                centerColor: !hasStop && shape.colorStop.length > 2 ? ResourceHandler.addColor(shape.colorStop[1].color) : '',
+                endColor: !hasStop ? ResourceHandler.addColor(shape.colorStop[shape.colorStop.length - 1].color) : '',
+                colorStop: []
+            };
+            switch (shape.type) {
+                case 'radial':
+                    const radial = <RadialGradient> shape;
+                    let boxPosition: Null<BoxPosition> = null;
+                    if (radial.shapePosition && radial.shapePosition.length > 1) {
+                        boxPosition = $resource.parseBackgroundPosition(radial.shapePosition[1], node.bounds, node.css('fontSize'), !hasStop);
+                    }
+                    if (hasStop) {
+                        if (node.svgElement) {
+                            gradient.gradientRadius = radial.r.toString();
+                            gradient.centerX = radial.cx.toString();
+                            gradient.centerY = radial.cy.toString();
+                        }
+                        else {
+                            gradient.gradientRadius = node.bounds.width.toString();
+                            if (boxPosition) {
+                                gradient.centerX = boxPosition.horizontal === 'right' ? (node.bounds.width - boxPosition.right).toString() : boxPosition.left.toString();
+                                gradient.centerY = boxPosition.vertical === 'bottom' ? (node.bounds.height - boxPosition.bottom).toString() : boxPosition.top.toString();
+                            }
+                        }
+                    }
+                    else {
+                        gradient.gradientRadius = $util.formatPX(node.bounds.width);
+                        if (boxPosition) {
+                            gradient.centerX = `${boxPosition.horizontal === 'right' ? 100 - $util.convertPercent(boxPosition.right) : boxPosition.left}%`;
+                            gradient.centerY = `${boxPosition.vertical === 'bottom' ? 100 - $util.convertPercent(boxPosition.bottom) : boxPosition.top}%`;
+                        }
+                    }
+                    break;
+                case 'linear':
+                    const linear = <LinearGradient> shape;
+                    if (hasStop) {
+                        gradient.startX = linear.x1.toString();
+                        gradient.startY = linear.y1.toString();
+                        gradient.endX = linear.x2.toString();
+                        gradient.endY = linear.y2.toString();
+                    }
+                    else {
+                        if (linear.angle) {
+                            gradient.angle = (Math.floor(linear.angle / 45) * 45).toString();
+                        }
+                    }
+                    break;
+            }
+            if (hasStop) {
+                shape.colorStop.sort();
+                for (let i = 0; i < shape.colorStop.length; i++) {
+                    const item = shape.colorStop[i];
+                    let offset = $util.convertInt(item.offset);
+                    const color = this.settings.vectorColorResourceValue ? `@color/${ResourceHandler.addColor(item.color)}` : ResourceHandler.getHexARGB(item.color);
+                    if (i === 0) {
+                        if (offset !== 0 && !node.svgElement) {
+                            gradient.colorStop.push({
+                                color,
+                                offset: '0'
+                            });
+                        }
+                    }
+                    else if (i === shape.colorStop.length - 1) {
+                        if (offset === 0) {
+                            offset = 100;
+                        }
+                    }
+                    else {
+                        if (offset === 0) {
+                            offset = Math.round(($util.convertInt(shape.colorStop[i - 1].offset) + $util.convertInt(shape.colorStop[i + 1].offset)) / 2);
+                        }
+                    }
+                    gradient.colorStop.push({
+                        color,
+                        offset: (offset / 100).toFixed(2)
+                    });
+                }
+            }
+            result.push(gradient);
+        }
+        return result;
     }
 
     private processFontStyle(viewData: ViewData<NodeList<T>>) {

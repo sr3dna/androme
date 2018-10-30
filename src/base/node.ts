@@ -414,7 +414,7 @@ export default abstract class Node implements androme.lib.base.Node {
         return result;
     }
 
-    public has(attr: string, checkType: number = 0, options?: ObjectMap<any>) {
+    public has(attr: string, checkType: number = 0, options?: ObjectMap<string | string[]>) {
         const value = (options && options.map === 'initial' ? this.initial.styleMap : this.styleMap)[attr];
         if (hasValue(value)) {
             switch (value) {

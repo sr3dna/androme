@@ -45,7 +45,7 @@ const VALIDATE_GROUP = {
 
 const NAMESPACE_APP = ['showAsAction', 'actionViewClass', 'actionProviderClass'];
 
-function hasInputType<T extends View>(node: T, value: string) {
+function hasInputType(node: View, value: string) {
     return node.children.length > 0 && node.children.some(item => (<HTMLInputElement> item.element).type === value);
 }
 

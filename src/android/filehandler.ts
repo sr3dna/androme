@@ -1,4 +1,4 @@
-import { SettingsAndroid } from './types/local';
+import { ResourceStyleData, SettingsAndroid } from './types/local';
 
 import { BUILD_ANDROID } from './lib/enumeration';
 import { FONTWEIGHT_ANDROID } from './lib/constant';
@@ -19,7 +19,7 @@ import $util = androme.lib.util;
 import $xml = androme.lib.xml;
 
 function parseImageDetails(xml: string) {
-    const result: PlainFile[] = [];
+    const result: FileAsset[] = [];
     const pattern = /<!-- image: (.+) -->\n<!-- filename: (.+)\/(.*?\.\w+) -->/;
     let match: Null<RegExpExecArray>;
     while ((match = pattern.exec(xml)) != null) {
@@ -35,7 +35,7 @@ function parseImageDetails(xml: string) {
 }
 
 function parseFileDetails(xml: string) {
-    const result: PlainFile[] = [];
+    const result: FileAsset[] = [];
     const pattern = /<\?xml[\w\W]*?(<!-- filename: (.+)\/(.*?\.xml) -->)/;
     let match: Null<RegExpExecArray>;
     while ((match = pattern.exec(xml)) != null) {
@@ -49,7 +49,7 @@ function parseFileDetails(xml: string) {
     return result;
 }
 
-function createPlainFile(pathname: string, filename: string, content: string): PlainFile {
+function createPlainFile(pathname: string, filename: string, content: string): FileAsset {
     return {
         pathname,
         filename,
@@ -67,7 +67,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     }
 
     public saveAllToDisk(data: ViewData<androme.lib.base.NodeList<T>>) {
-        const files: PlainFile[] = [];
+        const files: FileAsset[] = [];
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
             const view = views[i];
@@ -86,7 +86,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
 
     public layoutAllToXml(data: ViewData<androme.lib.base.NodeList<T>>, saveToDisk = false) {
         const result = {};
-        const files: PlainFile[] = [];
+        const files: FileAsset[] = [];
         const views = [...data.views, ...data.includes];
         for (let i = 0; i < views.length; i++) {
             const view = views[i];
@@ -117,7 +117,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             }
         }
         if (saveToDisk) {
-            const files: PlainFile[] = [];
+            const files: FileAsset[] = [];
             for (const resource in result) {
                 if (resource === 'drawable') {
                     files.push(...parseImageDetails(result[resource]));
@@ -130,7 +130,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     }
 
     public resourceStringToXml(saveToDisk = false) {
-        const data: ObjectMap<any> = { '1': [] };
+        const data: TemplateData = { '1': [] };
         this.stored.strings = new Map([...this.stored.strings.entries()].sort(caseInsensitive));
         if (this.appName !== '' && !this.stored.strings.has('app_name')) {
             data['1'].push({
@@ -155,14 +155,12 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     public resourceStringArrayToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.arrays.size > 0) {
-            const data: ObjectMap<any> = { '1': [] };
+            const data: TemplateData = { '1': [] };
             this.stored.arrays = new Map([...this.stored.arrays.entries()].sort());
             for (const [name, values] of this.stored.arrays.entries()) {
-                const itemA: ArrayObject<StringMap> = [];
-                values.forEach(value => itemA.push({ value }));
                 data['1'].push({
                     name,
-                    '1a': itemA
+                    items: values.map(value => ({ value }))
                 });
             }
             xml = $xml.createTemplate($xml.parseTemplate(STRINGARRAY_TMPL), data);
@@ -180,7 +178,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             this.stored.fonts = new Map([...this.stored.fonts.entries()].sort());
             const namespace = this.settings.targetAPI < BUILD_ANDROID.OREO ? 'app' : 'android';
             for (const [name, font] of this.stored.fonts.entries()) {
-                const data: ObjectMap<any> = {
+                const data: TemplateData = {
                     name,
                     namespace: getXmlNs(namespace),
                     '1': []
@@ -209,7 +207,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     public resourceColorToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.colors.size > 0) {
-            const data: ObjectMap<any> = { '1': [] };
+            const data: TemplateData = { '1': [] };
             this.stored.colors = new Map([...this.stored.colors.entries()].sort());
             for (const [name, value] of this.stored.colors.entries()) {
                 data['1'].push({
@@ -229,13 +227,13 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     public resourceStyleToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.styles.size > 0) {
-            const data: ObjectMap<any> = { '1': [] };
-            const styles = Array.from(this.stored.styles.values()).sort((a, b) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1);
+            const data: TemplateData = { '1': [] };
+            const styles = Array.from(this.stored.styles.values()).sort((a: ResourceStyleData, b: ResourceStyleData) => a.name.toString().toLowerCase() >= b.name.toString().toLowerCase() ? 1 : -1) as ResourceStyleData[];
             for (const style of styles) {
-                const itemA: ArrayObject<StringMap> = [];
+                const items: ArrayObject<StringMap> = [];
                 style.attrs.split(';').sort().forEach((attr: string) => {
                     const [name, value] = attr.split('=');
-                    itemA.push({
+                    items.push({
                         name,
                         value: value.replace(/"/g, '')
                     });
@@ -243,7 +241,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
                 data['1'].push({
                     parentName: style.name,
                     parent: style.parent || '',
-                    '1a': itemA
+                    items
                 });
             }
             xml = $xml.createTemplate($xml.parseTemplate(STYLE_TMPL), data);
@@ -259,7 +257,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
     public resourceDimenToXml(saveToDisk = false) {
         let xml = '';
         if (this.stored.dimens.size > 0) {
-            const data: ObjectMap<any> = { '1': [] };
+            const data: TemplateData = { '1': [] };
             this.stored.dimens = new Map([...this.stored.dimens.entries()].sort());
             for (const [name, value] of this.stored.dimens.entries()) {
                 data['1'].push({

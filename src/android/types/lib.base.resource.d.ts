@@ -10,7 +10,6 @@ declare global {
             public static addImageURL(value: string, prefix?: string): string;
             public static addColor(hexAlpha: Null<ColorHexAlpha>): string;
             public static getColor(value: string): string;
-            public static getAlphaHex(hexAlpha: ColorHexAlpha): string;
             public addTheme(template: string, data: {}, options: {}): void;
         }
     }

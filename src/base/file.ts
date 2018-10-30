@@ -33,7 +33,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
     public abstract settings: Settings;
     public appName = '';
     public stored: ResourceMap;
-    public readonly queue: PlainFile[] = [];
+    public readonly queue: FileAsset[] = [];
 
     public abstract saveAllToDisk(data: ViewData<NodeList<T>>): void;
     public abstract layoutAllToXml(data: ViewData<NodeList<T>>, saveToDisk?: boolean): StringMap;
@@ -68,7 +68,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
         this.queue.length = 0;
     }
 
-    public saveToDisk(files: PlainFile[]) {
+    public saveToDisk(files: FileAsset[]) {
         if (!location.protocol.startsWith('http')) {
             alert('SERVER (required): See README for instructions');
             return;

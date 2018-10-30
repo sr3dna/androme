@@ -96,16 +96,15 @@ declare global {
             export function replaceTab(value: string, settings?: {}, preserve?: boolean): string;
             export function replaceEntities(value: string): string;
             export function parseTemplate(template: string): StringMap;
-            export function createTemplate(template: StringMap, data: {}, index?: string, include?: {}, exclude?: {}): string;
+            export function createTemplate(template: StringMap, data: TemplateData, index?: string, include?: {}, exclude?: {}): string;
             export function getTemplateBranch(data: {}, ...levels: string[]): {};
         }
         namespace color {
             export function getColorByName(value: string): Color | null;
+            export function getColorNearest(value: string): Color | null;
             export function convertHex(value: string, opacity?: number): string;
             export function convertRGBA(value: string): RGBA | null;
-            export function getColorNearest(value: string): Color | null;
             export function parseRGBA(value: string, opacity?: string): Null<ColorHexAlpha>;
-            export function parseHex(value: string): string;
             export function reduceRGBA(value: string, percent: number): string;
         }
     }

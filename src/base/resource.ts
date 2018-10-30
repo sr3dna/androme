@@ -7,10 +7,10 @@ import NodeList from './nodelist';
 import Application from './application';
 import File from './file';
 
-import { convertFloat, convertInt, convertPX, hasValue, isNumber, isPercent } from '../lib/util';
+import { convertFloat, convertInt, convertPX, hasValue, isNumber, isPercent, isString } from '../lib/util';
 import { convertClientUnit, cssAttribute, cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isUserAgent, isLineBreak, setElementCache } from '../lib/dom';
 import { replaceEntities } from '../lib/xml';
-import { parseHex, parseRGBA } from '../lib/color';
+import { parseRGBA } from '../lib/color';
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
     public static STORED: ResourceMap = {
@@ -146,7 +146,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public abstract settings: Settings;
     public cache: NodeList<T>;
     public application: Application<T>;
-    public imageDimensions: Map<string, Image>;
+    public imageDimensions: Map<string, ImageAsset>;
 
     protected constructor(public file: File<T>) {
         this.file.stored = Resource.STORED;
@@ -190,8 +190,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public setBoxStyle() {
         this.cache.elements.forEach(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (
-                    !getElementCache(node.element, 'boxStyle') ||
-                    this.settings.alwaysReevaluateResources
+                    !getElementCache(node.element, 'boxStyle') || this.settings.alwaysReevaluateResources
                ))
             {
                 const boxStyle: BoxStyle = {
@@ -304,8 +303,12 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 while ((match = pattern.exec(value)) != null) {
                                     let gradient: Gradient;
                                     if (match[1] === 'linear') {
-                                        gradient = {
+                                        gradient = <LinearGradient> {
                                             type: 'linear',
+                                            x1: 0,
+                                            y1: 0,
+                                            x2: 0,
+                                            y2: 0,
                                             angle: (() => {
                                                 switch (match[2]) {
                                                     case 'to top':
@@ -323,17 +326,22 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                                     case 'to left':
                                                         return 270;
                                                     case 'to left top':
-                                                        return 305;
+                                                        return 315;
                                                     default:
                                                         return convertInt(match[2]);
                                                 }
                                             })(),
                                             colorStop: []
-                                        } as GradientLinear;
+                                        };
                                     }
                                     else {
-                                        gradient = {
+                                        gradient = <RadialGradient> {
                                             type: 'radial',
+                                            cx: 0,
+                                            cy: 0,
+                                            r: 0,
+                                            fx: 0,
+                                            fy: 0,
                                             shapePosition: (() => {
                                                 const result = ['ellipse', 'center'];
                                                 if (match[2]) {
@@ -358,7 +366,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                                 return result;
                                             })(),
                                             colorStop: []
-                                        } as GradientRadial;
+                                        };
                                     }
                                     const stopMatch = match[3].trim().split(new RegExp(colorStop(true), 'g'));
                                     for (let i = 0; i < stopMatch.length; i += 3) {
@@ -366,7 +374,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                         if (color && color.visible) {
                                             gradient.colorStop.push({
                                                 color,
-                                                percent: convertInt(stopMatch[i + 2])
+                                                offset: stopMatch[i + 2]
                                             });
                                         }
                                     }
@@ -378,15 +386,15 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     boxStyle.backgroundGradient = gradients.reverse();
                                 }
                                 else {
-                                    const result: string[] = [];
+                                    const images: string[] = [];
                                     pattern = new RegExp(DOM_REGEX.URL, 'g');
                                     match = null;
                                     while ((match = pattern.exec(value)) != null) {
                                         if (match) {
-                                            result.push(match[0]);
+                                            images.push(match[0]);
                                         }
                                     }
-                                    boxStyle.backgroundImage = result;
+                                    boxStyle.backgroundImage = images;
                                 }
                             }
                             break;
@@ -414,8 +422,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public setFontStyle() {
         this.cache.each(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (
-                    !getElementCache(node.element, 'fontStyle') ||
-                    this.settings.alwaysReevaluateResources
+                    !getElementCache(node.element, 'fontStyle') || this.settings.alwaysReevaluateResources
                ))
             {
                 const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
@@ -510,67 +517,81 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     public setImageSource() {
         this.cache.visible.forEach(node => {
             if (!node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE) && (
-                    !getElementCache(node.element, 'imageSource') ||
-                    this.settings.alwaysReevaluateResources
+                    !getElementCache(node.element, 'imageSource') || this.settings.alwaysReevaluateResources
                ))
             {
                 if (node.svgElement) {
                     const element = <SVGSVGElement> node.element;
                     if (element.children.length > 0) {
                         function getPath(item: SVGGraphicsElement, d: string, clipPath: boolean) {
-                            if (d === '') {
-                                d = cssAttribute(item, 'd');
-                            }
-                            if (d && d !== 'none' && cssAttribute(item, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(item, 'visibility'))) {
-                                let fillColor = cssAttribute(item, 'fill');
-                                let strokeColor = cssAttribute(item, 'stroke');
-                                const color = parseHex(cssAttribute(item, 'color'));
-                                if (fillColor !== '') {
-                                    switch (fillColor.toLowerCase()) {
+                            if (isString(d) && d !== 'none' && cssAttribute(item, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(item, 'visibility'))) {
+                                let fill: string | string[] = cssAttribute(item, 'fill');
+                                let stroke: string | string[] = cssAttribute(item, 'stroke');
+                                let match = DOM_REGEX.URL.exec(fill);
+                                let color = parseRGBA(cssAttribute(item, 'color'));
+                                if (color == null || !color.visible) {
+                                    color = parseRGBA(cssInherit(item, 'color'));
+                                }
+                                if (match) {
+                                    fill = [match[1]];
+                                }
+                                else if (isString(fill)) {
+                                    switch (fill.toLowerCase()) {
                                         case 'none':
                                         case 'transparent':
-                                            fillColor = '';
+                                            fill = '';
                                             break;
                                         case 'currentcolor':
-                                            fillColor = color || parseHex(cssInherit(item, 'color'));
+                                            fill = color ? color.valueRGB : '';
                                             break;
                                         default:
-                                            fillColor = parseHex(fillColor);
+                                            const fillColor = parseRGBA(fill);
+                                            if (fillColor) {
+                                                fill = fillColor.valueRGB;
+                                            }
                                             break;
                                     }
                                 }
-                                if (strokeColor !== '') {
-                                    switch (strokeColor.toLowerCase()) {
+                                match = DOM_REGEX.URL.exec(stroke);
+                                if (match) {
+                                    stroke = [match[1]];
+                                }
+                                else if (isString(stroke)) {
+                                    switch (stroke.toLowerCase()) {
                                         case 'none':
                                         case 'transparent':
-                                            strokeColor = '';
+                                            stroke = '';
                                             break;
                                         case 'currentcolor':
-                                            strokeColor = color || parseHex(cssInherit(item, 'color'));
+                                            stroke = color ? color.valueRGB : '';
                                             break;
                                         default:
-                                            strokeColor = parseHex(strokeColor);
+                                            const strokeColor = parseRGBA(stroke);
+                                            if (strokeColor) {
+                                                stroke = strokeColor.valueRGB;
+                                            }
                                             break;
                                     }
                                 }
-                                const fillAlpha = parseFloat(cssAttribute(item, 'fill-opacity'));
-                                const strokeAlpha = parseFloat(cssAttribute(item, 'stroke-opacity'));
-                                return {
+                                const fillOpacity = parseFloat(cssAttribute(item, 'fill-opacity'));
+                                const strokeOpacity = parseFloat(cssAttribute(item, 'stroke-opacity'));
+                                return <SVGPath> {
                                     name: item.id,
                                     element: item,
-                                    color,
-                                    fillColor,
-                                    strokeColor,
+                                    fillRule: cssAttribute(item, 'fill-rule'),
+                                    fill,
+                                    stroke,
                                     strokeWidth: convertInt(cssAttribute(item, 'stroke-width')).toString(),
-                                    fillAlpha: !isNaN(fillAlpha) && fillAlpha < 1 ? fillAlpha : 1,
-                                    strokeAlpha: !isNaN(strokeAlpha) && strokeAlpha < 1 ? strokeAlpha : 1,
+                                    fillOpacity: !isNaN(fillOpacity) && fillOpacity < 1 ? fillOpacity : 1,
+                                    strokeOpacity: !isNaN(strokeOpacity) && strokeOpacity < 1 ? strokeOpacity : 1,
                                     strokeLineCap: cssAttribute(item, 'stroke-linecap'),
                                     strokeLineJoin: cssAttribute(item, 'stroke-linejoin'),
                                     strokeMiterLimit: cssAttribute(item, 'stroke-miterlimit'),
-                                    gradient: [],
+                                    gradients: [],
                                     clipPath,
+                                    clipRule: cssAttribute(item, 'clip-rule'),
                                     d
-                                } as SVGPath;
+                                };
                             }
                             return null;
                         }
@@ -583,135 +604,191 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             viewBoxWidth: element.viewBox.baseVal.width,
                             viewBoxHeight: element.viewBox.baseVal.height,
                             opacity: !isNaN(opacity) && opacity < 1 ? opacity : 1,
+                            defs: {
+                                gradients: new Map<string, Gradient>()
+                            },
                             children: []
                         };
-                        const gOrSvg = Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'g') as SVGSVGElement[];
-                        [element, ...gOrSvg].forEach((item, index) => {
-                            const group: SVGGroup = {
-                                element: item,
-                                name: item.id || `g_${index}`,
-                                translateX: 0,
-                                translateY: 0,
-                                scaleX: 1,
-                                scaleY: 1,
-                                rotation: 0,
-                                skewX: 0,
-                                skewY: 0,
-                                nestedSVG: false,
-                                children: []
-                            };
-                            if (item.tagName === 'g') {
-                                const g = <SVGGElement> item;
-                                for (let i = 0; i < g.transform.baseVal.numberOfItems; i++) {
-                                    const transform = g.transform.baseVal.getItem(i);
-                                    switch (transform.type) {
-                                        case SVGTransform.SVG_TRANSFORM_TRANSLATE:
-                                            group.translateX = transform.matrix.e;
-                                            group.translateY = transform.matrix.f;
-                                            break;
-                                        case SVGTransform.SVG_TRANSFORM_SCALE:
-                                            group.scaleX = transform.matrix.a;
-                                            group.scaleY = transform.matrix.d;
-                                            break;
-                                        case SVGTransform.SVG_TRANSFORM_ROTATE:
-                                            group.rotation = transform.angle;
-                                            break;
-                                        case SVGTransform.SVG_TRANSFORM_SKEWX:
-                                            group.skewX = transform.angle;
-                                            break;
-                                        case SVGTransform.SVG_TRANSFORM_SKEWY:
-                                            group.skewY = transform.angle;
-                                            break;
+                        const baseElements = Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'defs' || item.tagName === 'g') as SVGSVGElement[];
+                        [element, ...baseElements].forEach((item, index) => {
+                            if (item.tagName === 'defs') {
+                                function getColorStop(gradient: SVGGradientElement) {
+                                    const result: ColorStop[] = [];
+                                    Array.from(gradient.getElementsByTagName('stop')).forEach(stop => {
+                                        const color = parseRGBA(cssAttribute(stop, 'stop-color'));
+                                        if (color) {
+                                            result.push({
+                                                color,
+                                                offset: cssAttribute(stop, 'offset')
+                                            });
+                                        }
+                                    });
+                                    return result;
+                                }
+                                const defs = <SVGDefsElement> item;
+                                for (let i = 0; i < defs.children.length; i++) {
+                                    if (defs.children[i].id) {
+                                        switch (defs.children[i].tagName) {
+                                            case 'linearGradient': {
+                                                const gradient = <SVGLinearGradientElement> defs.children[i];
+                                                svg.defs.gradients.set(`#${gradient.id}`, <LinearGradient> {
+                                                    type: 'linear',
+                                                    x1: gradient.x1.baseVal.value,
+                                                    x2: gradient.x2.baseVal.value,
+                                                    y1: gradient.y1.baseVal.value,
+                                                    y2: gradient.y2.baseVal.value,
+                                                    colorStop: getColorStop(gradient)
+                                                });
+                                                break;
+                                            }
+                                            case 'radialGradient': {
+                                                const gradient = <SVGRadialGradientElement> defs.children[i];
+                                                svg.defs.gradients.set(`#${gradient.id}`, <RadialGradient> {
+                                                    type: 'radial',
+                                                    cx: gradient.cx.baseVal.value,
+                                                    cy: gradient.cy.baseVal.value,
+                                                    r: gradient.r.baseVal.value,
+                                                    fx: gradient.fx.baseVal.value,
+                                                    fy: gradient.fy.baseVal.value,
+                                                    colorStop: getColorStop(gradient)
+                                                });
+                                                break;
+                                            }
+                                        }
                                     }
                                 }
                             }
                             else {
-                                if (index > 0) {
-                                    group.x = item.x.baseVal.value;
-                                    group.y = item.y.baseVal.value;
-                                    group.nestedSVG = true;
+                                const group: SVGGroup = {
+                                    element: item,
+                                    name: item.id || `g_${index}`,
+                                    translateX: 0,
+                                    translateY: 0,
+                                    scaleX: 1,
+                                    scaleY: 1,
+                                    rotation: 0,
+                                    skewX: 0,
+                                    skewY: 0,
+                                    nestedSVG: false,
+                                    children: []
+                                };
+                                switch (item.tagName) {
+                                    case 'g':
+                                        const g = <SVGGElement> item;
+                                        for (let i = 0; i < g.transform.baseVal.numberOfItems; i++) {
+                                            const transform = g.transform.baseVal.getItem(i);
+                                            switch (transform.type) {
+                                                case SVGTransform.SVG_TRANSFORM_TRANSLATE:
+                                                    group.translateX = transform.matrix.e;
+                                                    group.translateY = transform.matrix.f;
+                                                    break;
+                                                case SVGTransform.SVG_TRANSFORM_SCALE:
+                                                    group.scaleX = transform.matrix.a;
+                                                    group.scaleY = transform.matrix.d;
+                                                    break;
+                                                case SVGTransform.SVG_TRANSFORM_ROTATE:
+                                                    group.rotation = transform.angle;
+                                                    break;
+                                                case SVGTransform.SVG_TRANSFORM_SKEWX:
+                                                    group.skewX = transform.angle;
+                                                    break;
+                                                case SVGTransform.SVG_TRANSFORM_SKEWY:
+                                                    group.skewY = transform.angle;
+                                                    break;
+                                            }
+                                        }
+                                        break;
+                                    default:
+                                        if (index > 0) {
+                                            group.x = item.x.baseVal.value;
+                                            group.y = item.y.baseVal.value;
+                                            group.nestedSVG = true;
+                                        }
+                                        break;
                                 }
-                            }
-                            const clipPath = Array.from(item.children).filter(path => path.tagName === 'clipPath') as SVGClipPathElement[];
-                            [item, ...clipPath].forEach((shape, layerIndex) => {
-                                for (let i = 0; i < shape.children.length; i++) {
-                                    const tagName = shape.children[i].tagName;
-                                    const clipped = layerIndex > 0;
-                                    switch (tagName) {
-                                        case 'path': {
-                                            const subitem = <SVGPathElement> shape.children[i];
-                                            const path = getPath(subitem, '', clipped);
-                                            if (path) {
-                                                group.children.push(path);
-                                            }
-                                            break;
-                                        }
-                                        case 'line': {
-                                            const subitem = <SVGLineElement> shape.children[i];
-                                            if (subitem.x1.baseVal.value !== 0 || subitem.y1.baseVal.value !== 0 || subitem.x2.baseVal.value !== 0 || subitem.y2.baseVal.value !== 0) {
-                                                const path = getPath(subitem, `M${subitem.x1.baseVal.value},${subitem.y1.baseVal.value} L${subitem.x2.baseVal.value},${subitem.y2.baseVal.value}`, clipped);
-                                                if (path && path.strokeColor) {
-                                                    path.fillColor = '';
-                                                    group.children.push(path);
-                                                }
-                                            }
-                                            break;
-                                        }
-                                        case 'rect': {
-                                            const subitem = <SVGRectElement> shape.children[i];
-                                            if (subitem.width.baseVal.value > 0 && subitem.height.baseVal.value > 0) {
-                                                const x = subitem.x.baseVal.value;
-                                                const y = subitem.y.baseVal.value;
-                                                const path = getPath(subitem, `M${x},${y} H${x + subitem.width.baseVal.value} V${y + subitem.height.baseVal.value} H${x} L${x},${y}`, clipped);
+                                const clipPath = Array.from(item.children).filter(path => path.tagName === 'clipPath') as SVGClipPathElement[];
+                                [item, ...clipPath].forEach((shape, layerIndex) => {
+                                    for (let i = 0; i < shape.children.length; i++) {
+                                        const tagName = shape.children[i].tagName;
+                                        const clipped = layerIndex > 0;
+                                        switch (tagName) {
+                                            case 'path': {
+                                                const subitem = <SVGPathElement> shape.children[i];
+                                                const path = getPath(subitem, cssAttribute(subitem, 'd'), clipped);
                                                 if (path) {
                                                     group.children.push(path);
                                                 }
+                                                break;
                                             }
-                                            break;
-                                        }
-                                        case 'polyline':
-                                        case 'polygon': {
-                                            const subitem = <SVGPolygonElement> shape.children[i];
-                                            if (subitem.points.numberOfItems > 0) {
-                                                const d: string[] = [];
-                                                for (let j = 0; j < subitem.points.numberOfItems; j++) {
-                                                    const point = subitem.points.getItem(j);
-                                                    d.push(`${point.x},${point.y}`);
+                                            case 'line': {
+                                                const subitem = <SVGLineElement> shape.children[i];
+                                                if (subitem.x1.baseVal.value !== 0 || subitem.y1.baseVal.value !== 0 || subitem.x2.baseVal.value !== 0 || subitem.y2.baseVal.value !== 0) {
+                                                    const path = getPath(subitem, `M${subitem.x1.baseVal.value},${subitem.y1.baseVal.value} L${subitem.x2.baseVal.value},${subitem.y2.baseVal.value}`, clipped);
+                                                    if (path && path.stroke) {
+                                                        path.fill = '';
+                                                        group.children.push(path);
+                                                    }
                                                 }
-                                                const path = getPath(subitem, `M${d.join(' ') + (tagName === 'polygon' ? 'z' : '')}`, clipped);
-                                                if (path) {
-                                                    group.children.push(path);
-                                                }
+                                                break;
                                             }
-                                            break;
-                                        }
-                                        case 'circle': {
-                                            const subitem = <SVGCircleElement> shape.children[i];
-                                            const r = subitem.r.baseVal.value;
-                                            if (r > 0) {
-                                                const path = getPath(subitem, `M${subitem.cx.baseVal.value},${subitem.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`, clipped);
-                                                if (path) {
-                                                    group.children.push(path);
+                                            case 'rect': {
+                                                const subitem = <SVGRectElement> shape.children[i];
+                                                if (subitem.width.baseVal.value > 0 && subitem.height.baseVal.value > 0) {
+                                                    const x = subitem.x.baseVal.value;
+                                                    const y = subitem.y.baseVal.value;
+                                                    const path = getPath(subitem, `M${x},${y} H${x + subitem.width.baseVal.value} V${y + subitem.height.baseVal.value} H${x} L${x},${y}`, clipped);
+                                                    if (path) {
+                                                        group.children.push(path);
+                                                    }
                                                 }
+                                                break;
                                             }
-                                            break;
-                                        }
-                                        case 'ellipse': {
-                                            const subitem = <SVGEllipseElement> shape.children[i];
-                                            const rx = subitem.rx.baseVal.value;
-                                            const ry = subitem.ry.baseVal.value;
-                                            if (rx > 0 && ry > 0) {
-                                                const path = getPath(subitem, `M${subitem.cx.baseVal.value - rx},${subitem.cy.baseVal.value}a${rx},${ry} 0 1,0 ${rx * 2},0a${rx},${ry} 0 1,0 -${rx * 2},0`, clipped);
-                                                if (path) {
-                                                    group.children.push(path);
+                                            case 'polyline':
+                                            case 'polygon': {
+                                                const subitem = <SVGPolygonElement> shape.children[i];
+                                                if (subitem.points.numberOfItems > 0) {
+                                                    const d: string[] = [];
+                                                    for (let j = 0; j < subitem.points.numberOfItems; j++) {
+                                                        const point = subitem.points.getItem(j);
+                                                        d.push(`${point.x},${point.y}`);
+                                                    }
+                                                    const path = getPath(subitem, `M${d.join(' ') + (tagName === 'polygon' ? 'z' : '')}`, clipped);
+                                                    if (path) {
+                                                        group.children.push(path);
+                                                    }
                                                 }
+                                                break;
                                             }
-                                            break;
+                                            case 'circle': {
+                                                const subitem = <SVGCircleElement> shape.children[i];
+                                                const r = subitem.r.baseVal.value;
+                                                if (r > 0) {
+                                                    const path = getPath(subitem, `M${subitem.cx.baseVal.value},${subitem.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`, clipped);
+                                                    if (path) {
+                                                        group.children.push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
+                                            case 'ellipse': {
+                                                const subitem = <SVGEllipseElement> shape.children[i];
+                                                const rx = subitem.rx.baseVal.value;
+                                                const ry = subitem.ry.baseVal.value;
+                                                if (rx > 0 && ry > 0) {
+                                                    const path = getPath(subitem, `M${subitem.cx.baseVal.value - rx},${subitem.cy.baseVal.value}a${rx},${ry} 0 1,0 ${rx * 2},0a${rx},${ry} 0 1,0 -${rx * 2},0`, clipped);
+                                                    if (path) {
+                                                        group.children.push(path);
+                                                    }
+                                                }
+                                                break;
+                                            }
                                         }
                                     }
+                                });
+                                if (group.children.length > 0) {
+                                    svg.children.push(group);
                                 }
-                            });
-                            svg.children.push(group);
+                            }
                         });
                         if (svg.children.length > 0) {
                             setElementCache(element, 'imageSource', svg);
@@ -757,8 +834,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         this.cache.visible.forEach(node => {
             const element = node.element;
             if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (
-                    !getElementCache(element, 'valueString') ||
-                    this.settings.alwaysReevaluateResources
+                    !getElementCache(element, 'valueString') || this.settings.alwaysReevaluateResources
                ))
             {
                 let name = '';

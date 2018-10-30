@@ -1,5 +1,4 @@
 import { APP_SECTION, BOX_STANDARD, CSS_STANDARD, NODE_ALIGNMENT, NODE_PROCEDURE, NODE_RESOURCE, NODE_STANDARD, USER_AGENT } from '../lib/enumeration';
-
 import { DOM_REGEX } from '../lib/constant';
 
 import Node from './node';
@@ -98,7 +97,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
     public renderQueue: ObjectMap<string[]> = {};
     public loading = false;
     public closed = false;
-    public readonly cacheImage = new Map<string, Image>();
+    public readonly cacheImage = new Map<string, ImageAsset>();
     public readonly cacheSession = new NodeList<T>();
     public readonly cacheProcessing = new NodeList<T>();
     public readonly elements = new Set<Element>();
@@ -108,8 +107,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
     private _settings: Settings;
     private _renderPosition: ObjectMap<number[]> = {};
     private _currentIndex = -1;
-    private readonly _views: PlainFile[] = [];
-    private readonly _includes: PlainFile[] = [];
+    private readonly _views: FileAsset[] = [];
+    private readonly _includes: FileAsset[] = [];
 
     constructor(public readonly framework: number) {
     }
@@ -1844,7 +1843,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
 
     public createLayoutFile(pathname: string, filename: string, content: string, documentRoot = false) {
         pathname = pathname || this.viewController.settingsInternal.layout.pathName;
-        const layout: PlainFile = {
+        const layout: FileAsset = {
             pathname,
             filename,
             content

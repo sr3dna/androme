@@ -46,7 +46,7 @@ interface SettingsInternal {
 }
 
 interface AppFramework<T extends androme.lib.base.Node> {
-    lib: ObjectMap<any>;
+    lib: {};
     system: FunctionMap<any>;
     create(): AppBase<T>;
     cached(): AppBase<T>;
@@ -81,8 +81,8 @@ interface ExtensionResult {
 
 interface ViewData<T> {
     cache: T;
-    views: PlainFile[];
-    includes: PlainFile[];
+    views: FileAsset[];
+    includes: FileAsset[];
 }
 
 interface InitialData<T> {

@@ -3,7 +3,7 @@ declare global {
         export class Extension<T extends Node> {
             public application: Application<T>;
             public tagNames: string[];
-            public options: ObjectMap<any>;
+            public options: ExternalData;
             public documentRoot: boolean;
             public readonly framework: number;
             public readonly name: string;

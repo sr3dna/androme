@@ -22,7 +22,7 @@ export default abstract class Sprite<T extends Node> extends Extension<T> {
             }
             if (url !== '') {
                 url = cssResolveUrl(url);
-                const image = <Image> this.application.cacheImage.get(url);
+                const image = <ImageAsset> this.application.cacheImage.get(url);
                 if (image) {
                     const fontSize = node.css('fontSize');
                     const width = convertClientUnit(node.has('width') ? node.css('width') : node.css('minWidth'), node.bounds.width, fontSize);

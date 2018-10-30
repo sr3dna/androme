@@ -49,7 +49,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
     }
 
     public processNode(): ExtensionResult {
-        function createPlaceholder<T extends View>(nextId: number, container: T, nodes: T[]) {
+        function createPlaceholder(nextId: number, container: View, nodes: View[]) {
             const placeholder = new View(nextId);
             placeholder.init();
             placeholder.api = container.api;

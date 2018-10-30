@@ -83,6 +83,6 @@ export function parseRTL(value: string, { supportRTL = true, targetAPI = BUILD_A
     return value;
 }
 
-export function getXmlNs(value: string) {
-    return XMLNS_ANDROID[value] ? `xmlns:${value}="${XMLNS_ANDROID[value]}"` : '';
+export function getXmlNs(...value: string[]) {
+    return value.map(name => XMLNS_ANDROID[name] ? `xmlns:${value}="${XMLNS_ANDROID[name]}"` : '').filter(result => result).join(' ');
 }

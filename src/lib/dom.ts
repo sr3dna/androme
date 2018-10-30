@@ -1,5 +1,4 @@
 import { USER_AGENT } from './enumeration';
-
 import { DOM_REGEX } from './constant';
 
 import { convertCamelCase, convertInt, convertPX, hasBit, hasValue, includes, isPercent, resolvePath, withinFraction } from './util';

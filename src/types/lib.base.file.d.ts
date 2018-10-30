@@ -5,7 +5,7 @@ declare global {
             public settings: Settings;
             public appName: string;
             public stored: ResourceMap;
-            public readonly queue: PlainFile[];
+            public readonly queue: FileAsset[];
             public saveAllToDisk(data: ViewData<NodeList<T>>): void;
             public layoutAllToXml(data: ViewData<NodeList<T>>, saveToDisk?: boolean): StringMap;
             public resourceAllToXml(saveToDisk?: boolean): StringMap;
@@ -18,7 +18,7 @@ declare global {
             public resourceDrawableToXml(saveToDisk?: boolean): string;
             public addFile(pathname: string, filename: string, content: string, uri: string): void;
             public reset(): void;
-            public saveToDisk(files: PlainFile[]): void;
+            public saveToDisk(files: FileAsset[]): void;
         }
     }
 }

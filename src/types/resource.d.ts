@@ -1,56 +1,17 @@
-interface ResourceMap {
-    strings: Map<string, string>;
-    arrays: Map<string, string[]>;
-    fonts: Map<string, ObjectMap<boolean>>;
-    colors: Map<string, string>;
-    styles: Map<string, ResourceStyleData>;
-    dimens: Map<string, string>;
-    drawables: Map<string, string>;
-    images: Map<string, StringMap>;
+interface Asset {
+    uri?: string;
 }
 
-interface ResourceStyleData {
-    name: string;
-    parent?: string;
-    attrs: string;
-    ids: number[];
+interface FileAsset extends Asset {
+    pathname: string;
+    filename: string;
+    content: string;
 }
 
-interface BoxStyle {
-    border?: BorderAttribute;
-    borderTop: BorderAttribute;
-    borderRight: BorderAttribute;
-    borderBottom: BorderAttribute;
-    borderLeft: BorderAttribute;
-    borderRadius: string[];
-    backgroundColor: string | ColorHexAlpha;
-    background?: string;
-    backgroundImage?: string[];
-    backgroundGradient?: Gradient[];
-    backgroundSize: string[];
-    backgroundRepeat: string;
-    backgroundPositionX: string;
-    backgroundPositionY: string;
-}
-
-interface BoxPosition extends BoxRect {
-    horizontal: string;
-    vertical: string;
-}
-
-interface BorderAttribute {
-    width: string;
-    style: string;
-    color: string | ColorHexAlpha;
-}
-
-interface FontAttribute {
-    fontFamily: string;
-    fontStyle: string;
-    fontSize: string;
-    fontWeight: string;
-    color: string | ColorHexAlpha;
-    backgroundColor: string | ColorHexAlpha;
+interface ImageAsset extends Asset {
+    width: number;
+    height: number;
+    position?: Point;
 }
 
 interface SVG {
@@ -61,6 +22,9 @@ interface SVG {
     viewBoxWidth: number;
     viewBoxHeight: number;
     opacity: number;
+    defs: {
+        gradients: Map<string, Gradient>
+    };
     children: SVGGroup[];
 }
 
@@ -83,17 +47,17 @@ interface SVGGroup {
 interface SVGPath {
     element: SVGGraphicsElement;
     name: string;
-    color: string;
-    fillColor: string;
-    fillAlpha: number;
-    strokeColor: string;
+    fillRule: string;
+    fill: string | string[] | ArrayObject<ObjectMap<any[]>>;
+    fillOpacity: number;
+    stroke: string | string[] | ArrayObject<ObjectMap<any[]>>;
     strokeWidth: string;
-    strokeAlpha: number;
+    strokeOpacity: number;
     strokeLineCap: string;
     strokeLineJoin: string;
     strokeMiterLimit: string;
+    clipRule: string;
     clipPath: boolean;
-    gradient: Gradient[];
     d: string;
 }
 
@@ -102,12 +66,21 @@ interface Gradient {
     colorStop: ColorStop[];
 }
 
-interface GradientLinear extends Gradient {
-    angle: number;
+interface LinearGradient extends Gradient {
+    angle?: number;
+    x1: number;
+    y1: number;
+    x2: number;
+    y2: number;
 }
 
-interface GradientRadial extends Gradient {
-    shapePosition: string[];
+interface RadialGradient extends Gradient {
+    shapePosition?: string[];
+    cx: number;
+    cy: number;
+    r: number;
+    fx: number;
+    fy: number;
 }
 
 interface BoxRect {
@@ -120,6 +93,11 @@ interface BoxRect {
 interface BoxDimensions extends BoxRect {
     width: number;
     height: number;
+}
+
+interface BoxPosition extends BoxRect {
+    horizontal: string;
+    vertical: string;
 }
 
 interface BoxModel {
@@ -149,6 +127,13 @@ interface Flexbox {
     order: number;
 }
 
+interface RGBA {
+    r: number;
+    g: number;
+    b: number;
+    a: number;
+}
+
 interface Color {
     name: string;
     hex: string;
@@ -161,8 +146,8 @@ interface Color {
 }
 
 interface ColorStop {
-    color: ColorHexAlpha;
-    percent: number;
+    color: string | ColorHexAlpha;
+    offset: string;
 }
 
 interface ColorHexAlpha {
@@ -175,23 +160,48 @@ interface ColorHexAlpha {
     visible: boolean;
 }
 
-interface RGBA {
-    r: number;
-    g: number;
-    b: number;
-    a: number;
+interface BorderAttribute {
+    width: string;
+    style: string;
+    color: string | ColorHexAlpha;
 }
 
-interface PlainFile {
-    pathname: string;
-    filename: string;
-    content: string;
-    uri?: string;
+interface FontAttribute {
+    fontFamily: string;
+    fontStyle: string;
+    fontSize: string;
+    fontWeight: string;
+    color: string | ColorHexAlpha;
+    backgroundColor: string | ColorHexAlpha;
 }
 
-interface Image {
-    width: number;
-    height: number;
-    uri?: string;
-    position?: Point;
+interface BoxStyle {
+    border?: BorderAttribute;
+    borderTop: BorderAttribute;
+    borderRight: BorderAttribute;
+    borderBottom: BorderAttribute;
+    borderLeft: BorderAttribute;
+    borderRadius: string[];
+    backgroundColor: string | ColorHexAlpha;
+    background?: string;
+    backgroundImage?: string[];
+    backgroundGradient?: Gradient[];
+    backgroundSize: string[];
+    backgroundRepeat: string;
+    backgroundPositionX: string;
+    backgroundPositionY: string;
 }
+
+interface ResourceMap {
+    strings: Map<string, string>;
+    arrays: Map<string, string[]>;
+    fonts: Map<string, ObjectMap<boolean>>;
+    colors: Map<string, string>;
+    styles: Map<string, {}>;
+    dimens: Map<string, string>;
+    drawables: Map<string, string>;
+    images: Map<string, StringMap>;
+}
+
+type ExternalData = ObjectMap<any>;
+type TemplateData = ObjectMap<any>;

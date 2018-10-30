@@ -15,8 +15,8 @@ declare global {
             public readonly elements: Set<Element>;
             public readonly extensions: Extension<T>[];
             public appName: string;
-            public layoutProcessing: PlainFile;
-            public readonly layouts: PlainFile[];
+            public layoutProcessing: FileAsset;
+            public readonly layouts: FileAsset[];
             public readonly viewData: ViewData<NodeList<T>>;
             public readonly size: number;
             constructor(framework: number);

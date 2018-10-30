@@ -12,7 +12,7 @@ export default class <T extends View> extends androme.lib.base.extensions.Sprite
     public processNode(): ExtensionResult {
         const node = this.node;
         const parent = this.parent as T;
-        const image = <Image> node.data($const.EXT_NAME.SPRITE, 'image');
+        const image = <ImageAsset> node.data($const.EXT_NAME.SPRITE, 'image');
         let output = '';
         let container: Null<T>;
         if (image && image.uri && image.position) {

@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Language" content="en">
+    <title>https://github.com/anpham6/androme</title>
+    <link rel="stylesheet" type="text/css" href="common/dev.css">
+    <style>
+        #androme_ui {
+            padding: 10px;
+        }
+    </style>
+    <script src="/node_modules/systemjs/dist/system.js"></script>
+    <script src="common/dev.js"></script>
+    <script>
+        System.import('/build/main.js').then(result => {
+            androme = result;
+            System.import('/build/android/main.js').then(result => {
+                androme.setFramework(result['default']);
+                androme.parseDocument('androme_ui');
+                androme.close();
+
+                var views = androme.system.writeLayoutAllXml();
+                document.getElementById('output').innerHTML = stringify(views).replace(/</g, '&lt;');
+
+                var resource = androme.system.writeResourceAllXml();
+                document.getElementById('resource').innerHTML = stringify(resource).replace(/</g, '&lt;');
+            });
+        });
+    </script>
+</head>
+<body>
+    <!-- START: DEMO -->
+    <div id="androme_ui">
+        <svg xmlns="http://www.w3.org/2000/svg" width="300px" height="50px" viewBox="0 0 300 50">
+            <defs>
+                <linearGradient id="Gradient01">
+                    <stop offset="20%" stop-color="#39F" />
+                    <stop offset="90%" stop-color="#F3F" />
+                </linearGradient>
+            </defs>
+            <rect x="10" y="10" width="200" height="25" fill="url(#Gradient01)" />
+        </svg>
+        <br /><br />
+        <svg xmlns="http://www.w3.org/2000/svg" width="240" height="120" viewBox="0 0 240 120">
+            <defs>
+                <radialGradient id="exampleGradient"> 
+                    <stop offset="10%" stop-color="gold"/> 
+                    <stop offset="95%" stop-color="green"/> 
+                </radialGradient>
+                <radialGradient id="flameGradient" spreadMethod="reflect"
+                        cx="25%"
+                        cy="50%"
+                        r="100%">
+                    <stop offset="0%" stop-color="white"/>
+                    <stop offset="10%" stop-color="yellow"/>
+                    <stop offset="95%" stop-color="red"/>
+                </radialGradient>
+            </defs> 
+            <circle fill="url(#exampleGradient)" cx="60" cy="60" r="50"/>  
+            <circle fill="url(#flameGradient)" cx="180" cy="60" r="50"/>
+        </svg>
+    </div>
+    <!-- END: DEMO -->
+
+    <div>
+        <div class="output">
+            <pre id="output"></pre>
+            <div>
+                <button onclick="copy('output');">Copy</button>
+                <button onclick="androme.system.writeLayoutAllXml(true);">Save</button>
+                <button onclick="androme.saveAllToDisk();">Save All</button>
+            </div>
+        </div>
+        <div class="output">
+            <pre id="resource"></pre>
+            <div>
+                <button onclick="copy('resource');">Copy</button>
+                <button onclick="androme.system.writeResourceAllXml(true);">Save</button>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

@@ -65,7 +65,7 @@ export function replaceEntities(value: string) {
 }
 
 export function parseTemplate(template: string) {
-    const result: StringMap = { 'root': template };
+    const result: StringMap = { '__root': template };
     let pattern: Null<RegExp> = null;
     let match: Null<RegExpExecArray> | boolean = false;
     let characters = template.length;
@@ -108,28 +108,38 @@ export function parseTemplate(template: string) {
     return result;
 }
 
-export function createTemplate(template: StringMap, data: {}, index?: string) {
-    let output = index ? template[index] : template['root'].trim();
+export function createTemplate(template: StringMap, data: TemplateData, index?: string) {
+    let output = index != null ? template[index] : template['__root'].trim();
     for (const attr in data) {
         let value: any = '';
         if (isArray(data[attr])) {
             for (let i = 0; i < data[attr].length; i++) {
-                value += createTemplate(template, data[attr][i], attr);
+                value += createTemplate(template, data[attr][i], attr.toString());
             }
             value = trimEnd(value, '\\n');
         }
         else {
             value = data[attr];
         }
+        let hash = '';
         if (isString(value)) {
-            output = output.replace(new RegExp(`{[%&~]${attr}}`, 'g'), value);
+            if (isArray(data[attr])) {
+                hash = '%';
+            }
+            else {
+                hash = '[&~]';
+            }
+            output = output.replace(new RegExp(`{${hash + attr}}`, 'g'), value);
         }
-        else if (value === false || (Array.isArray(value) && value.length === 0)) {
+        if (value === false || (Array.isArray(value) && value.length === 0) || (hash && hash !== '%')) {
             output = output.replace(new RegExp(`{%${attr}}\\n*`, 'g'), '');
         }
-        else if (new RegExp(`{&${attr}}`).test(output)) {
+        if (hash === '' && new RegExp(`{&${attr}}`).test(output)) {
             output = '';
         }
+    }
+    if (index == null) {
+        output = output.replace(/\n{%\w+}\n/g, '\n');
     }
     return output.replace(/\s+([\w:]+="[^"]*)?{~\w+}"?/g, '');
 }

@@ -6,7 +6,7 @@ import { isStyleElement } from '../lib/dom';
 
 export default abstract class Extension<T extends Node> implements androme.lib.base.Extension<T> {
     public application: Application<T>;
-    public options: ObjectMap<any> = {};
+    public options: ExternalData = {};
     public tagNames: string[] = [];
     public documentRoot = false;
     public readonly dependencies: ExtensionDependency[] = [];
