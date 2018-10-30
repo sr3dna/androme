@@ -1,3 +1,4 @@
+import { SettingsAndroid } from '../../../types/local';
 import WIDGET_NAME from '../namespace';
 
 import EXTENSION_GENERIC_TMPL from '../__template/generic';
@@ -8,6 +9,7 @@ import $enum = androme.lib.enumeration;
 import $const_android = android.lib.constant;
 import $util = androme.lib.util;
 import $dom = androme.lib.dom;
+import $resource_android = android.lib.base.Resource;
 
 export default class BottomNavigation<T extends View> extends androme.lib.base.Extension<T> {
     constructor(
@@ -28,7 +30,7 @@ export default class BottomNavigation<T extends View> extends androme.lib.base.E
         const output = this.application.viewController.renderNodeStatic(
             $const_android.VIEW_SUPPORT.BOTTOM_NAVIGATION,
             node.depth,
-            options,
+            $resource_android.formatOptions(options, <SettingsAndroid> this.application.settings),
             parent.is($enum.NODE_STANDARD.CONSTRAINT) ? '0px' : 'match_parent',
             'wrap_content',
             node

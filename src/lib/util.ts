@@ -90,6 +90,10 @@ export function convertFloat(value: any) {
     return (value && parseFloat(value)) || 0;
 }
 
+export function convertPercent(value: number, precision = 0) {
+    return value < 1 ? precision === 0 ? Math.round(value * 100) : parseFloat((value * 100).toFixed(precision)) : value;
+}
+
 export function convertPX(value: any, fontSize?: Null<string>) {
     if (hasValue(value)) {
         if (isNumber(value)) {
@@ -169,6 +173,10 @@ export function isNumber(value: string | number): value is number {
 
 export function isString(value: any): value is string {
     return typeof value === 'string' && value !== '';
+}
+
+export function isArray<T>(value: any): value is Array<T> {
+    return Array.isArray(value) && value.length > 0;
 }
 
 export function isUnit(value: string) {

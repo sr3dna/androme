@@ -1,3 +1,5 @@
+import { SettingsAndroid } from '../../../types/local';
+
 import WIDGET_NAME from '../namespace';
 
 import EXTENSION_DRAWER_TMPL from '../__template/drawer';
@@ -10,6 +12,7 @@ import $const_android = android.lib.constant;
 import $util = androme.lib.util;
 import $util_android = android.lib.util;
 import $dom = androme.lib.dom;
+import $resource_android = android.lib.base.Resource;
 
 export default class Drawer<T extends View> extends androme.lib.base.Extension<T> {
     constructor(
@@ -56,7 +59,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
         const output = this.application.viewController.renderNodeStatic(
             $const_android.VIEW_SUPPORT.DRAWER,
             node.depth,
-            options,
+            $resource_android.formatOptions(options, <SettingsAndroid> this.application.settings),
             'match_parent',
             'match_parent',
             node,
@@ -95,7 +98,7 @@ export default class Drawer<T extends View> extends androme.lib.base.Extension<T
             const output = application.viewController.renderNodeStatic(
                 $const_android.VIEW_SUPPORT.NAVIGATION_VIEW,
                 node.depth + 1,
-                options,
+                $resource_android.formatOptions(options, <SettingsAndroid> this.application.settings),
                 'wrap_content',
                 'match_parent'
             );

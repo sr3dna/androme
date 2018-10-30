@@ -1,7 +1,7 @@
 import { SettingsAndroid } from './types/local';
 
 import { BUILD_ANDROID } from './lib/enumeration';
-import { FONTWEIGHT_ANDROID, XMLNS_ANDROID } from './lib/constant';
+import { FONTWEIGHT_ANDROID } from './lib/constant';
 
 import STRING_TMPL from './template/resource/string';
 import STRINGARRAY_TMPL from './template/resource/string-array';
@@ -13,7 +13,7 @@ import DRAWABLE_TMPL from './template/resource/drawable';
 
 import View from './view';
 
-import { replaceUnit } from './lib/util';
+import { getXmlNs, replaceUnit } from './lib/util';
 
 import $util = androme.lib.util;
 import $xml = androme.lib.xml;
@@ -182,7 +182,7 @@ export default class FileHandler<T extends View> extends androme.lib.base.File<T
             for (const [name, font] of this.stored.fonts.entries()) {
                 const data: ObjectMap<any> = {
                     name,
-                    namespace: `xmlns:${namespace}="${XMLNS_ANDROID[namespace]}"`,
+                    namespace: getXmlNs(namespace),
                     '1': []
                 };
                 for (const attr in font) {

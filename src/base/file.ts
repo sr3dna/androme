@@ -73,7 +73,7 @@ export default abstract class File<T extends Node> implements androme.lib.base.F
             alert('SERVER (required): See README for instructions');
             return;
         }
-        if (Array.isArray(files) && files.length > 0) {
+        if (files.length > 0) {
             files.push(...this.queue);
             fetch(`/api/savetodisk` +
                 `?directory=${encodeURIComponent(trimString(this.settings.outputDirectory, '/'))}` +

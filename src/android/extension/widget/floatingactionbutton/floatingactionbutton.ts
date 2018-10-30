@@ -19,7 +19,7 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
         const element = node.element;
         const options = Object.assign({}, this.options[element.id]);
         const backgroundColor = $color.parseRGBA(node.css('backgroundColor'), node.css('opacity'));
-        $util.overwriteDefault(options, 'android', 'backgroundTint', backgroundColor.length > 0 ? `@color/${$resource_android.addColor(backgroundColor[0], backgroundColor[2])}` : '?attr/colorAccent');
+        $util.overwriteDefault(options, 'android', 'backgroundTint', backgroundColor && backgroundColor.visible ? `@color/${$resource_android.addColor(backgroundColor)}` : '?attr/colorAccent');
         if (node.hasBit('excludeProcedure', $enum.NODE_PROCEDURE.ACCESSIBILITY)) {
             $util.overwriteDefault(options, 'android', 'focusable', 'false');
         }
@@ -46,7 +46,7 @@ export default class FloatingActionButton<T extends View> extends androme.lib.ba
         const output = this.application.viewController.renderNodeStatic(
             $const_android.VIEW_SUPPORT.FLOATING_ACTION_BUTTON,
             target ? -1 : parent.renderDepth + 1,
-            options,
+            $resource_android.formatOptions(options, <SettingsAndroid> this.application.settings),
             'wrap_content',
             'wrap_content',
             node

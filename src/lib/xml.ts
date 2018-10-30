@@ -1,4 +1,4 @@
-import { isString, repeat, trimEnd } from './util';
+import { isArray, isString, repeat, trimEnd } from './util';
 
 export function formatPlaceholder(id: string | number, symbol = ':') {
     return `{${symbol + id.toString()}}`;
@@ -112,7 +112,7 @@ export function createTemplate(template: StringMap, data: {}, index?: string) {
     let output = index ? template[index] : template['root'].trim();
     for (const attr in data) {
         let value: any = '';
-        if (Array.isArray(data[attr]) && data[attr].length > 0) {
+        if (isArray(data[attr])) {
             for (let i = 0; i < data[attr].length; i++) {
                 value += createTemplate(template, data[attr][i], attr);
             }

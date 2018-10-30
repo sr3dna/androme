@@ -6,10 +6,9 @@ import BASE_TMPL from './template/base';
 
 import View from './view';
 import ViewGroup from './viewgroup';
-import ResourceHandler from './resourcehandler';
 import NodeList = androme.lib.base.NodeList;
 
-import { delimitUnit, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
+import { delimitUnit, getXmlNs, parseRTL, replaceUnit, resetId, stripId } from './lib/util';
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
@@ -2018,7 +2017,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
             node = new View() as T;
             node.api = this.settings.targetAPI;
         }
-        node.apply(ResourceHandler.formatOptions(options, this.settings));
+        node.apply(options);
         const renderDepth = Math.max(0, depth);
         let viewName =  '';
         if (typeof nodeType === 'number') {
@@ -2321,7 +2320,7 @@ export default class ViewController<T extends View> extends androme.lib.base.Con
                 let output = '';
                 for (const namespace in XMLNS_ANDROID) {
                     if (new RegExp(`\\s+${namespace}:`).test(content)) {
-                        output += `\n\txmlns:${namespace}="${XMLNS_ANDROID[namespace]}"`;
+                        output += `\n\t${getXmlNs(namespace)}`;
                     }
                 }
                 return output;

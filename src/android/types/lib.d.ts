@@ -33,6 +33,7 @@ declare global {
                 export function replaceUnit(value: string, settings: Settings, font?: boolean): string;
                 export function calculateBias(start: number, end: number, accuracy: number): number;
                 export function parseRTL(value: string, settings: Settings): string;
+                export function getXmlNs(value: string): string;
             }
         }
     }

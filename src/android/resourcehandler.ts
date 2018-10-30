@@ -9,7 +9,7 @@ import LAYERLIST_TMPL from './template/resource/layer-list';
 import View from './view';
 import NodeList = androme.lib.base.NodeList;
 
-import { generateId, parseRTL, replaceUnit } from './lib/util';
+import { generateId, parseRTL, replaceUnit, getXmlNs } from './lib/util';
 
 import $enum = androme.lib.enumeration;
 import $util = androme.lib.util;
@@ -88,18 +88,13 @@ function getBorderStyle(border: BorderAttribute, direction = -1, halfSize = fals
         dashed: `${result.solid} android:dashWidth="1px" android:dashGap="1px"`
     });
     const groove = border.style === 'groove';
-    if (parseInt(border.width) > 1 && (groove || border.style === 'ridge')) {
-        let colorName = $util.isString(border.color) ? border.color : '';
-        let hex = ResourceHandler.getColor(colorName);
+    if (parseInt(border.width) > 1 && $util.isString(border.color) && (groove || border.style === 'ridge')) {
+        let colorName = border.color;
+        const hex = ResourceHandler.getColor(border.color);
         if (hex !== '') {
-            let opacity = '1';
-            if (hex.length === 9) {
-                hex = `#${hex.substring(3)}`;
-                opacity = `0.${parseInt(hex.substring(1, 3), 16)}`;
-            }
-            const reduced = $color.parseRGBA($color.reduceToRGB(hex, groove || hex === '#000000' ? 0.3 : -0.3));
-            if (reduced.length > 0) {
-                colorName = ResourceHandler.addColor(reduced[0], opacity);
+            const hexAlpha = $color.parseRGBA($color.reduceRGBA(hex, groove || hex === '#000000' ? 0.3 : -0.3));
+            if (hexAlpha && hexAlpha.visible) {
+                colorName = ResourceHandler.addColor(hexAlpha);
             }
         }
         const colorReduced = `android:color="@color/${colorName}"`;
@@ -207,9 +202,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 }
                                 break;
                         }
-                        const hex = $color.parseHex(value);
-                        if (hex !== '') {
-                            obj[attr] = `@color/${this.addColor(hex)}`;
+                        const hexAlpha = $color.parseRGBA(value);
+                        if (hexAlpha && hexAlpha.visible) {
+                            obj[attr] = `@color/${this.addColor(hexAlpha)}`;
                         }
                     }
                 }
@@ -326,26 +321,24 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         return '';
     }
 
-    public static addColor(value: string, opacity = '1') {
-        if (value.charAt(0) === '#') {
-            const hex = $color.getHexAlpha(value, opacity);
-            if (hex !== '#00000000') {
-                let colorName = $resource.STORED.colors.get(hex) || '';
-                if (colorName === '') {
-                    const color = $color.getColorNearest(value);
-                    if (color) {
-                        color.name = $util.camelToLowerCase(color.name);
-                        if (hex === color.hex) {
-                            colorName = color.name;
-                        }
-                        else {
-                            colorName = generateId('color', color.name, 1);
-                        }
-                        $resource.STORED.colors.set(hex, colorName);
+    public static addColor(hexAlpha: Null<ColorHexAlpha>) {
+        if (hexAlpha && hexAlpha.visible) {
+            const value = this.getHexARGB(hexAlpha);
+            let name = $resource.STORED.colors.get(value) || '';
+            if (name === '') {
+                const color = $color.getColorNearest(value);
+                if (color) {
+                    color.name = $util.camelToLowerCase(color.name);
+                    if (color.hex === value) {
+                        name = color.name;
                     }
+                    else {
+                        name = generateId('color', color.name, 1);
+                    }
+                    $resource.STORED.colors.set(value, name);
                 }
-                return colorName;
             }
+            return name;
         }
         return '';
     }
@@ -357,6 +350,10 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             }
         }
         return '';
+    }
+
+    public static getHexARGB(hexAlpha: ColorHexAlpha) {
+        return hexAlpha.opaque ? hexAlpha.valueARGB : hexAlpha.valueRGB;
     }
 
     public settings: SettingsAndroid;
@@ -497,8 +494,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     return current;
                 }
-                if (stored.backgroundColor.length > 0) {
-                    stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
+                if (typeof stored.backgroundColor === 'object') {
+                    stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor);
                 }
                 const backgroundImage: string[] = [];
                 const backgroundVector: ArrayObject<StringMap> = [];
@@ -532,14 +529,11 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 else if (stored.backgroundGradient) {
                     for (const shape of stored.backgroundGradient) {
                         const hasStop = shape.colorStop.filter(item => item.percent > 0).length > 0;
-                        const startColor = shape.colorStop[0].color;
-                        const centerColor = shape.colorStop[1].color;
-                        const endColor = shape.colorStop[shape.colorStop.length - 1].color;
                         const gradient: BackgroundGradient = {
                             type: shape.type,
-                            startColor: !hasStop ? ResourceHandler.addColor(startColor[0], startColor[2]) : '',
-                            centerColor: !hasStop && shape.colorStop.length > 2 ? ResourceHandler.addColor(centerColor[0], centerColor[2]) : '',
-                            endColor: !hasStop ? ResourceHandler.addColor(endColor[0], endColor[2]) : '',
+                            startColor: !hasStop ? ResourceHandler.addColor(shape.colorStop[0].color) : '',
+                            centerColor: !hasStop && shape.colorStop.length > 2 ? ResourceHandler.addColor(shape.colorStop[1].color) : '',
+                            endColor: !hasStop ? ResourceHandler.addColor(shape.colorStop[shape.colorStop.length - 1].color) : '',
                             colorStop: []
                         };
                         switch (shape.type) {
@@ -556,18 +550,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 else {
                                     gradient.gradientRadius = $util.formatPX(node.bounds.width);
                                     if (boxPosition) {
-                                        if (boxPosition.horizontal === 'right') {
-                                            gradient.centerX = `${100 - boxPosition.right}%`;
-                                        }
-                                        else {
-                                            gradient.centerX = `${boxPosition.left}%`;
-                                        }
-                                        if (boxPosition.vertical === 'bottom') {
-                                            gradient.centerY = `${100 - boxPosition.bottom}%`;
-                                        }
-                                        else {
-                                            gradient.centerY = `${boxPosition.top}%`;
-                                        }
+                                        gradient.centerX = `${boxPosition.horizontal === 'right' ? 100 - $util.convertPercent(boxPosition.right) : boxPosition.left}%`;
+                                        gradient.centerY = `${boxPosition.vertical === 'bottom' ? 100 - $util.convertPercent(boxPosition.bottom) : boxPosition.top}%`;
                                     }
                                 }
                                 break;
@@ -589,7 +573,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             for (let i = 0; i < shape.colorStop.length; i++) {
                                 const item = shape.colorStop[i];
                                 let percent = item.percent;
-                                const color = this.settings.vectorColorResourceValue ? `@color/${ResourceHandler.addColor(item.color[0], item.color[2])}` : $color.getHexAlpha(item.color[0], item.color[2]);
+                                const color = this.settings.vectorColorResourceValue ? `@color/${ResourceHandler.addColor(item.color)}` : ResourceHandler.getHexARGB(item.color);
                                 if (i === 0) {
                                     if (percent !== 0) {
                                         gradient.colorStop.push({
@@ -624,8 +608,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     !$dom.cssFromParent(companion.element, 'backgroundColor'))
                 {
                     const boxStyle: BoxStyle = $dom.getElementCache(companion.element, 'boxStyle');
-                    if (boxStyle.backgroundColor.length > 0) {
-                        stored.backgroundColor = ResourceHandler.addColor(boxStyle.backgroundColor[0], boxStyle.backgroundColor[2]);
+                    if (typeof boxStyle.backgroundColor === 'object') {
+                        stored.backgroundColor = ResourceHandler.addColor(boxStyle.backgroundColor);
                     }
                 }
                 const hasBorder = (
@@ -656,7 +640,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 }
                                 return false;
                             case 'backgroundColor':
-                                return boxStyle.backgroundColor.length !== 0 && boxStyle.backgroundColor !== '' ? [{ color: boxStyle.backgroundColor }] : false;
+                                return $util.isString(boxStyle.backgroundColor) ? [{ color: boxStyle.backgroundColor }] : false;
                             case 'radius':
                                 if (boxStyle.borderRadius.length === 1) {
                                     if (boxStyle.borderRadius[0] !== '0px') {
@@ -680,8 +664,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         stored.borderLeft
                     ];
                     borders.forEach((item: BorderAttribute) => {
-                        if ($resource.isBorderVisible(item) && item.color.length > 0) {
-                            item.color = ResourceHandler.addColor(item.color[0], item.color[2]);
+                        if ($resource.isBorderVisible(item) && typeof item.color === 'object') {
+                            item.color = ResourceHandler.addColor(item.color);
                         }
                     });
                     const image4: BackgroundImage[] = [];
@@ -893,6 +877,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         const width = node.bounds.width;
                         const height = node.bounds.height;
                         const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), {
+                            namespace: getXmlNs('aapt'),
                             width: $util.formatPX(width),
                             height: $util.formatPX(height),
                             viewportWidth: width.toString(),
@@ -902,7 +887,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                 '2': false,
                                 '3': [{
                                     d: `'M0,0 L${width},0 L${width},${height} L0,${height} Z`,
-                                    '3a': backgroundGradient
+                                    'gradient': backgroundGradient
                                 }]
                             }]
                         });
@@ -943,8 +928,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         '6a': getShapeAttribute(stored, 'stroke'),
                                         '6b': borderRadius
                                      }]
-                                   : false,
-                                '7': false
+                                   : false
                             };
                         }
                     }
@@ -964,8 +948,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             '3': backgroundVector,
                             '4': image4.length > 0 ? image4 : false,
                             '5': image5.length > 0 ? image5 : false,
-                            '6': [],
-                            '7': []
+                            '6': []
                         };
                         const borderVisible = borders.filter(item => $resource.isBorderVisible(item));
                         const borderWidth = new Set(borderVisible.map(item => item.width));
@@ -1053,12 +1036,13 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         });
                                         if (hasInset) {
                                             hideWidth = `-${$util.formatPX(getHideWidth(width))}`;
-                                            data['7'].push({
+                                            data['6'].unshift({
                                                 'top':  i === 0 ? '' : hideWidth,
                                                 'right': i === 1 ? '' : hideWidth,
                                                 'bottom': i === 2 ? (topVisible ? '' : border.width) : hideWidth,
                                                 'left': i === 3 ? '' : hideWidth,
-                                                '7a': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true)
+                                                '6a': getShapeAttribute(<BoxStyle> { border }, 'stroke', i, true, true),
+                                                '6b': false
                                             });
                                         }
                                     }
@@ -1147,15 +1131,15 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 const textShadow = node.css('textShadow');
                 if (textShadow !== 'none') {
                     [
-                        /^(rgb(?:a)?\(\d+, \d+, \d+(?:, [\d.]+)?\)) ([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+)$/,
+                        /^(rgba?\(\d+, \d+, \d+(?:, [\d.]+)?\)) ([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+)$/,
                         /^([\d.]+[a-z]+) ([\d.]+[a-z]+) ([\d.]+[a-z]+) (.+)$/
                     ]
                     .some((value, index) => {
                         const match = textShadow.match(value);
                         if (match) {
                             const color = $color.parseRGBA(match[index === 0 ? 1 : 4]);
-                            if (color.length > 0) {
-                                node.android('shadowColor', `@color/${ResourceHandler.addColor(color[0], color[2])}`);
+                            if (color && color.visible) {
+                                node.android('shadowColor', `@color/${ResourceHandler.addColor(color)}`);
                             }
                             node.android('shadowDx', $util.convertInt(match[index === 0 ? 2 : 1]).toString());
                             node.android('shadowDy', $util.convertInt(match[index === 0 ? 3 : 2]).toString());
@@ -1179,8 +1163,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                 }
                 const element = node.element;
                 const stored: FontAttribute = Object.assign({}, $dom.getElementCache(element, 'fontStyle'));
-                if (stored.backgroundColor.length > 0) {
-                    stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor[0], stored.backgroundColor[2]);
+                if (typeof stored.backgroundColor === 'object') {
+                    stored.backgroundColor = ResourceHandler.addColor(stored.backgroundColor);
                 }
                 if (stored.fontFamily) {
                     let fontFamily = stored.fontFamily.split(',')[0]
@@ -1189,8 +1173,8 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                         .trim();
                     let fontStyle = '';
                     let fontWeight = '';
-                    if (stored.color.length > 0) {
-                        stored.color = ResourceHandler.addColor(stored.color[0], stored.color[2]);
+                    if (typeof stored.color === 'object') {
+                        stored.color = ResourceHandler.addColor(stored.color);
                     }
                     if (this.settings.fontAliasResourceValue && FONTREPLACE_ANDROID[fontFamily]) {
                         fontFamily = FONTREPLACE_ANDROID[fontFamily];
@@ -1315,10 +1299,16 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                             else {
                                 if (this.settings.vectorColorResourceValue) {
                                     if (item.fillColor) {
-                                        item.fillColor = `@color/${ResourceHandler.addColor(item.fillColor)}`;
+                                        const color = $color.parseRGBA(item.fillColor);
+                                        if (color && color.visible) {
+                                            item.fillColor = `@color/${ResourceHandler.addColor(color)}`;
+                                        }
                                     }
                                     if (item.strokeColor) {
-                                        item.strokeColor = `@color/${ResourceHandler.addColor(item.strokeColor)}`;
+                                        const color = $color.parseRGBA(item.strokeColor);
+                                        if (color && color.visible) {
+                                            item.strokeColor = `@color/${ResourceHandler.addColor(color)}`;
+                                        }
                                     }
                                 }
                                 group['3'].push(item);
@@ -1452,9 +1442,9 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         if (options.item) {
             for (const name in options.item) {
                 let value = options.item[name];
-                const hex = $color.parseHex(value);
-                if (hex !== '') {
-                    value = `@color/${ResourceHandler.addColor(hex)}`;
+                const hexAlpha = $color.parseRGBA(value);
+                if (hexAlpha && hexAlpha.visible) {
+                    value = `@color/${ResourceHandler.addColor(hexAlpha)}`;
                 }
                 data['1'].push({
                     name,

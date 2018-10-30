@@ -153,7 +153,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
         output = controller.renderNodeStatic(
             $const_android.VIEW_SUPPORT.TOOLBAR,
             innerDepth,
-            optionsToolbar,
+            $resource_android.formatOptions(optionsToolbar, <SettingsAndroid> this.application.settings),
             'match_parent',
             'wrap_content',
             node,
@@ -185,7 +185,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
                 output = controller.renderNodeStatic(
                     $const_android.NODE_ANDROID.IMAGE,
                     innerDepth,
-                    optionsBackgroundImage,
+                    $resource_android.formatOptions(optionsBackgroundImage, <SettingsAndroid> this.application.settings),
                     'match_parent',
                     'match_parent'
                 ) + output;
@@ -216,7 +216,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
             outer = controller.renderNodeStatic(
                 $const_android.VIEW_SUPPORT.APPBAR,
                 target ? -1 : depth,
-                optionsAppBar,
+                $resource_android.formatOptions(optionsAppBar, <SettingsAndroid> this.application.settings),
                 'match_parent',
                 'wrap_content',
                 appBarNode,
@@ -239,7 +239,7 @@ export default class Toolbar<T extends View> extends androme.lib.base.Extension<
                     const content = controller.renderNodeStatic(
                         $const_android.VIEW_SUPPORT.COLLAPSING_TOOLBAR,
                         target && !hasAppBar ? -1 : depth,
-                        optionsCollapsingToolbar,
+                        $resource_android.formatOptions(optionsCollapsingToolbar, <SettingsAndroid> this.application.settings),
                         'match_parent',
                         'match_parent',
                         collapsingToolbarNode,

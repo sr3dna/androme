@@ -8,8 +8,9 @@ declare global {
             public static addImageSrcSet(element: HTMLImageElement, prefix?: string): string;
             public static addImage(images: StringMap, prefix?: string): string;
             public static addImageURL(value: string, prefix?: string): string;
-            public static addColor(value: string, opacity?: string): string;
+            public static addColor(hexAlpha: Null<ColorHexAlpha>): string;
             public static getColor(value: string): string;
+            public static getAlphaHex(hexAlpha: ColorHexAlpha): string;
             public addTheme(template: string, data: {}, options: {}): void;
         }
     }

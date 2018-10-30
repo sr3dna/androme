@@ -1,4 +1,5 @@
 import { BUILD_ANDROID } from './enumeration';
+import { XMLNS_ANDROID } from './constant';
 
 let MAP_ID: ObjectMap<string[]>;
 
@@ -80,4 +81,8 @@ export function parseRTL(value: string, { supportRTL = true, targetAPI = BUILD_A
         value = value.replace(/Left/g, 'Start').replace(/Right/g, 'End');
     }
     return value;
+}
+
+export function getXmlNs(value: string) {
+    return XMLNS_ANDROID[value] ? `xmlns:${value}="${XMLNS_ANDROID[value]}"` : '';
 }

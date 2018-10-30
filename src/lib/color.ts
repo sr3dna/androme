@@ -147,17 +147,17 @@ const HSL_SORTED: Color[] = [];
 for (const name in X11_CSS3) {
     const x11: Color = X11_CSS3[name];
     x11.name = name;
-    const rgb = convertToRGB(x11.hex);
-    if (rgb) {
-        x11.rgb = rgb;
-        x11.hsl = convertToHSL(x11.rgb);
+    const rgba = convertRGBA(x11.hex);
+    if (rgba) {
+        x11.rgba = rgba;
+        x11.hsl = convertHSL(x11.rgba);
         HSL_SORTED.push(x11);
     }
 }
 
 HSL_SORTED.sort(sortHSL);
 
-function convertToHSL({ r = 0, g = 0, b = 0 }) {
+function convertHSL({ r = 0, g = 0, b = 0 }) {
     r = r / 255;
     g = g / 255;
     b = b / 255;
@@ -207,8 +207,12 @@ function sortHSL(a: Color, b: Color) {
     return 0;
 }
 
-function formatRGB(rgb: RGB) {
-    return rgb ? `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` : '';
+function formatRGBA(rgba: RGBA) {
+    return `rgb${rgba.a < 1 ? 'a' : ''}(${rgba.r}, ${rgba.g}, ${rgba.b}${rgba.a < 1 ? `, ${rgba.a.toFixed(2)}` : ''})`;
+}
+
+function getHexAlpha(value: string) {
+    return parseFloat(value) < 1 ? convertHex('255', parseFloat(value)) : 'FF';
 }
 
 export function getColorByName(value: string) {
@@ -220,7 +224,7 @@ export function getColorByName(value: string) {
     return null;
 }
 
-export function convertToHex(value: string, opacity = 1) {
+export function convertHex(value: string, opacity = 1) {
     const hex = '0123456789ABCDEF';
     let rgb = parseInt(value) * opacity;
     if (isNaN(rgb)) {
@@ -230,17 +234,34 @@ export function convertToHex(value: string, opacity = 1) {
     return hex.charAt((rgb - (rgb % 16)) / 16) + hex.charAt(rgb % 16);
 }
 
-export function convertToRGB(value: string): Null<RGB> {
-    value = value.replace('#', '').trim();
-    if (value.length === 3) {
-        value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
-    }
-    if (value.length === 6) {
-        return {
-            r: parseInt(value.substring(0, 2), 16),
-            g: parseInt(value.substring(2, 4), 16),
-            b: parseInt(value.substring(4), 16)
-        };
+export function convertRGBA(value: string): Null<RGBA> {
+    value = value.replace(/#/g, '').trim();
+    if (/[A-Za-z\d]{3,}/.test(value)) {
+        let a = 1;
+        switch (value.length) {
+            case 4:
+                a = parseInt(value.charAt(3).repeat(2), 16);
+            case 3:
+                value = value.charAt(0).repeat(2) + value.charAt(1).repeat(2) + value.charAt(2).repeat(2);
+                break;
+            case 5:
+                value += value.charAt(4);
+                break;
+            default:
+                value = value.substring(0, 6);
+                if (value.length >= 8) {
+                    a = parseInt(value.substring(6, 8), 16);
+                }
+                break;
+        }
+        if (value.length === 6) {
+            return {
+                r: parseInt(value.substring(0, 2), 16),
+                g: parseInt(value.substring(2, 4), 16),
+                b: parseInt(value.substring(4), 16),
+                a
+            };
+        }
     }
     return null;
 }
@@ -252,14 +273,14 @@ export function getColorNearest(value: string) {
         return result[index];
     }
     else {
-        const rgb = convertToRGB(value);
+        const rgb = convertRGBA(value);
         if (rgb) {
-            const hsl = convertToHSL(rgb);
+            const hsl = convertHSL(rgb);
             if (hsl) {
                 result.push({
                     name: '',
                     hsl,
-                    rgb: { r: -1, g: -1, b: -1 },
+                    rgba: { r: -1, g: -1, b: -1, a: 1 },
                     hex: ''
                 });
                 result.sort(sortHSL);
@@ -271,68 +292,61 @@ export function getColorNearest(value: string) {
     }
 }
 
-export function parseRGBA(value: string, opacity = '1'): string[] {
-    if (value !== '') {
-        if (value === 'initial') {
-            return [];
-        }
-        else if (value === 'transparent') {
-            value = '#000000';
-            opacity = '0';
-        }
-        else {
-            const color = getColorByName(value);
-            if (color) {
-                return [color.hex, formatRGB(<RGB> color.rgb), opacity];
+export function parseRGBA(value: string, opacity = '1'): Null<ColorHexAlpha> {
+    if (value && value !== 'initial' && value !== 'transparent') {
+        if (value.charAt(0) === '#') {
+            const rgba = convertRGBA(value);
+            if (rgba) {
+                value = formatRGBA(rgba);
             }
         }
-        const rgb = convertToRGB(value);
-        if (rgb) {
-            value = formatRGB(rgb);
+        else if (!value.startsWith('rgb')) {
+            const color = getColorByName(value);
+            if (color && color.rgba) {
+                color.rgba.a = parseFloat(opacity);
+                value = formatRGBA(color.rgba);
+            }
         }
         const match = value.match(/rgba?\((\d+), (\d+), (\d+),?\s*([\d.]+)?\)/);
-        if (match && match.length >= 4 && match[4] !== '0') {
+        if (match && match.length >= 4 && (match[4] == null || parseFloat(match[4]) > 0)) {
             if (match[4] == null) {
-                match[4] = opacity;
+                match[4] = parseFloat(opacity).toFixed(2);
             }
-            return [
-                `#${convertToHex(match[1]) + convertToHex(match[2]) + convertToHex(match[3])}`,
-                match[0],
-                parseFloat(match[4]) < 1 ? parseFloat(match[4]).toFixed(2) : '1'
-            ];
+            const valueHex = convertHex(match[1]) + convertHex(match[2]) + convertHex(match[3]);
+            const valueA = getHexAlpha(match[4]);
+            const valueRGBA = `#${valueHex + valueA}`;
+            const alpha = parseFloat(match[4]);
+            return {
+                valueRGB: `#${valueHex}`,
+                valueRGBA,
+                valueARGB: `#${valueA + valueHex}`,
+                alpha,
+                rgba: convertRGBA(valueRGBA) as RGBA,
+                opaque: alpha < 1,
+                visible: alpha > 0
+            };
         }
     }
-    return [];
+    return null;
 }
 
 export function parseHex(value: string) {
-    if (value !== '') {
-        value = value.trim();
-        const color = parseRGBA(value);
-        if (color.length > 0) {
-            value = color[0];
-        }
-        if (/^#[a-zA-Z\d]{3,8}$/.test(value)) {
-            if (value.length === 9) {
-                value = `#${value.substring(3)}`;
-            }
-            const rgb = convertToRGB(value);
-            return value.length === 4 && rgb ? parseRGBA(formatRGB(rgb))[0] : value;
-        }
+    const hexAlpha = parseRGBA(value);
+    if (hexAlpha) {
+        return hexAlpha.valueRGB;
     }
-    return '';
+    return value;
 }
 
-export function getHexAlpha(value: string, opacity: string) {
-    return (parseFloat(opacity) < 1 ? `#${convertToHex('255', parseFloat(opacity)) + value.substring(1)}` : value).toUpperCase();
-}
-
-export function reduceToRGB(value: string, percent: number) {
-    const rgb = convertToRGB(value);
-    if (rgb) {
+export function reduceRGBA(value: string, percent: number) {
+    const rgba = convertRGBA(value);
+    if (rgba) {
         const base = percent < 0 ? 0 : 255;
         percent = Math.abs(percent);
-        return `rgb(${Math.round((base - rgb.r) * percent) + rgb.r}, ${Math.round((base - rgb.g) * percent) + rgb.g}, ${Math.round((base - rgb.b) * percent) + rgb.b})`;
+        rgba.r = Math.round((base - rgba.r) * percent) + rgba.r;
+        rgba.g = Math.round((base - rgba.g) * percent) + rgba.g;
+        rgba.b = Math.round((base - rgba.b) * percent) + rgba.b;
+        return formatRGBA(rgba);
     }
     return value;
 }

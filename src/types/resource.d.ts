@@ -23,8 +23,8 @@ interface BoxStyle {
     borderBottom: BorderAttribute;
     borderLeft: BorderAttribute;
     borderRadius: string[];
+    backgroundColor: string | ColorHexAlpha;
     background?: string;
-    backgroundColor: string[] | string;
     backgroundImage?: string[];
     backgroundGradient?: Gradient[];
     backgroundSize: string[];
@@ -41,7 +41,7 @@ interface BoxPosition extends BoxRect {
 interface BorderAttribute {
     width: string;
     style: string;
-    color: string | string[];
+    color: string | ColorHexAlpha;
 }
 
 interface FontAttribute {
@@ -49,8 +49,8 @@ interface FontAttribute {
     fontStyle: string;
     fontSize: string;
     fontWeight: string;
-    color: string | string[];
-    backgroundColor: string | string[];
+    color: string | ColorHexAlpha;
+    backgroundColor: string | ColorHexAlpha;
 }
 
 interface SVG {
@@ -93,6 +93,7 @@ interface SVGPath {
     strokeLineJoin: string;
     strokeMiterLimit: string;
     clipPath: boolean;
+    gradient: Gradient[];
     d: string;
 }
 
@@ -151,7 +152,7 @@ interface Flexbox {
 interface Color {
     name: string;
     hex: string;
-    rgb?: RGB;
+    rgba?: RGBA;
     hsl?: {
         h: number;
         s: number;
@@ -160,14 +161,25 @@ interface Color {
 }
 
 interface ColorStop {
-    color: string[];
+    color: ColorHexAlpha;
     percent: number;
 }
 
-interface RGB {
+interface ColorHexAlpha {
+    valueRGB: string;
+    valueRGBA: string;
+    valueARGB: string;
+    rgba: RGBA;
+    alpha: number;
+    opaque: boolean;
+    visible: boolean;
+}
+
+interface RGBA {
     r: number;
     g: number;
     b: number;
+    a: number;
 }
 
 interface PlainFile {

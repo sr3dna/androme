@@ -179,7 +179,7 @@ export default class Menu<T extends View> extends androme.lib.base.extensions.Na
         const output = this.application.viewController.renderNodeStatic(
             nodeName,
             parent.renderDepth + 1,
-            options,
+            $resource_android.formatOptions(options, <SettingsAndroid> this.application.settings),
             '',
             '',
             node,

@@ -127,7 +127,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
     }
 
     public static isBorderVisible(border?: BorderAttribute) {
-        return border != null && !(border.style === 'none' || border.width === '0px' || border.color === '' || (Array.isArray(border.color) && (border.color.length === 0 || parseFloat(border.color[2]).toString() === '0')));
+        return border != null && !(border.style === 'none' || convertPX(border.width) === '0px' || border.color === '' || (typeof border.color === 'object' && !border.color.visible));
     }
 
     public static hasDrawableBackground(object?: BoxStyle) {
@@ -230,10 +230,11 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             if (style === 'inset' && width === '0px') {
                                 width = '1px';
                             }
+                            const color = parseRGBA(cssColor, node.css('opacity'));
                             boxStyle[attr] = {
                                 width,
                                 style,
-                                color: style !== 'none' ? parseRGBA(cssColor, node.css('opacity')) : ''
+                                color: style !== 'none' && color && color.visible ? color : ''
                             };
                             break;
                         }
@@ -253,7 +254,16 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                             break;
                         }
                         case 'backgroundColor': {
-                            boxStyle.backgroundColor = parseRGBA(value, node.css('opacity'));
+                            if (!node.has('backgroundColor') && (
+                                    value === node.cssParent('backgroundColor', false, true) || node.documentParent.visible && cssFromParent(node.element, 'backgroundColor')
+                               ))
+                            {
+                                boxStyle.backgroundColor = '';
+                            }
+                            else {
+                                const color = parseRGBA(value, node.css('opacity'));
+                                boxStyle.backgroundColor = color && color.visible ? color : '';
+                            }
                             break;
                         }
                         case 'backgroundSize': {
@@ -352,9 +362,10 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     }
                                     const stopMatch = match[3].trim().split(new RegExp(colorStop(true), 'g'));
                                     for (let i = 0; i < stopMatch.length; i += 3) {
-                                        if (stopMatch[i + 1]) {
+                                        const color = parseRGBA(stopMatch[i + 1]);
+                                        if (color && color.visible) {
                                             gradient.colorStop.push({
-                                                color: parseRGBA(stopMatch[i + 1]),
+                                                color,
                                                 percent: convertInt(stopMatch[i + 2])
                                             });
                                         }
@@ -388,13 +399,6 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                         }
                     }
                 }
-                if (Array.isArray(boxStyle.backgroundColor) && !node.has('backgroundColor') && (
-                        node.cssParent('backgroundColor', false, true) === boxStyle.backgroundColor[1] ||
-                        (node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))
-                   ))
-                {
-                    boxStyle.backgroundColor.length = 0;
-                }
                 const borderTop = JSON.stringify(boxStyle.borderTop);
                 if (borderTop === JSON.stringify(boxStyle.borderRight) &&
                     borderTop === JSON.stringify(boxStyle.borderBottom) &&
@@ -423,13 +427,17 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     return;
                 }
                 else {
-                    const color = parseRGBA(node.css('color'), node.css('opacity'));
-                    const backgroundColor: string[] = [];
+                    const opacity = node.css('opacity');
+                    const color = parseRGBA(node.css('color'), opacity) || '';
+                    let backgroundColor: string | ColorHexAlpha = node.css('backgroundColor');
                     if (!(backgroundImage ||
-                        (node.cssParent('backgroundColor', false, true) === backgroundColor[1] && (node.plainText || backgroundColor[1] !== node.styleMap.backgroundColor)) ||
-                        (!node.has('backgroundColor') && cssFromParent(node.element, 'backgroundColor'))))
+                        (node.cssParent('backgroundColor', false, true) === backgroundColor && (node.plainText || backgroundColor !== node.styleMap.backgroundColor)) ||
+                        (!node.has('backgroundColor') && node.documentParent.visible && cssFromParent(node.element, 'backgroundColor'))))
                     {
-                        backgroundColor.push(...parseRGBA(node.css('backgroundColor'), node.css('opacity')));
+                        backgroundColor = parseRGBA(node.css('backgroundColor'), opacity) || '';
+                    }
+                    else {
+                        backgroundColor = '';
                     }
                     let fontFamily = node.css('fontFamily');
                     let fontSize = node.css('fontSize');
@@ -509,7 +517,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                 if (node.svgElement) {
                     const element = <SVGSVGElement> node.element;
                     if (element.children.length > 0) {
-                        function getPath(item: Element, d: string, clipPath: boolean) {
+                        function getPath(item: SVGGraphicsElement, d: string, clipPath: boolean) {
                             if (d === '') {
                                 d = cssAttribute(item, 'd');
                             }
@@ -549,6 +557,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 const strokeAlpha = parseFloat(cssAttribute(item, 'stroke-opacity'));
                                 return {
                                     name: item.id,
+                                    element: item,
                                     color,
                                     fillColor,
                                     strokeColor,
@@ -558,6 +567,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                     strokeLineCap: cssAttribute(item, 'stroke-linecap'),
                                     strokeLineJoin: cssAttribute(item, 'stroke-linejoin'),
                                     strokeMiterLimit: cssAttribute(item, 'stroke-miterlimit'),
+                                    gradient: [],
                                     clipPath,
                                     d
                                 } as SVGPath;

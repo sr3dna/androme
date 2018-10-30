@@ -29,6 +29,7 @@ declare global {
             export function capitalize(value: string, upper?: boolean): string;
             export function convertInt(value: any): number;
             export function convertFloat(value: any): number;
+            export function convertPercent(value: number, precision?: number): number;
             export function convertPX(value: any, fontSize?: Null<string>): string;
             export function convertAlpha(value: number): string;
             export function convertRoman(value: number): string;
@@ -37,6 +38,7 @@ declare global {
             export function hasBit(value: number, type: number): boolean;
             export function isNumber(value: string | number): value is number;
             export function isString(value: any): value is string;
+            export function isArray<T>(value: any): value is Array<T>;
             export function isUnit(value: string): boolean;
             export function isPercent(value: string): boolean;
             export function includes(source: Null<string>, value: string, delimiter?: string): boolean;
@@ -99,13 +101,12 @@ declare global {
         }
         namespace color {
             export function getColorByName(value: string): Color | null;
-            export function convertToHex(value: string, opacity?: number): string;
-            export function convertToRGB(value: string): RGB | null;
+            export function convertHex(value: string, opacity?: number): string;
+            export function convertRGBA(value: string): RGBA | null;
             export function getColorNearest(value: string): Color | null;
-            export function parseRGBA(value: string, opacity?: string): string[];
+            export function parseRGBA(value: string, opacity?: string): Null<ColorHexAlpha>;
             export function parseHex(value: string): string;
-            export function getHexAlpha(value: string, opacity: string): string;
-            export function reduceToRGB(value: string, percent: number): string;
+            export function reduceRGBA(value: string, percent: number): string;
         }
     }
 }
