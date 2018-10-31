@@ -149,7 +149,7 @@ export function getBoxSpacing(element: Element, complete = false, merge = false)
 }
 
 export function cssResolveUrl(value: string) {
-    const match = value.match(DOM_REGEX.URL);
+    const match = value.match(DOM_REGEX.CSS_URL);
     if (match) {
         return resolvePath(match[1]);
     }

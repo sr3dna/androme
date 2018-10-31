@@ -4,7 +4,7 @@ import { BLOCK_ELEMENT, INLINE_ELEMENT } from '../lib/constant';
 import Extension from './extension';
 
 import { convertCamelCase, convertInt, hasBit, hasValue, isPercent, isUnit, searchObject, trimNull } from '../lib/util';
-import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, isPlainText, isStyleElement, setElementCache, hasLineBreak } from '../lib/dom';
+import { assignBounds, getClientRect, getElementCache, getNodeFromElement, getRangeClientRect, hasFreeFormText, hasLineBreak, isPlainText, isStyleElement, setElementCache } from '../lib/dom';
 
 type T = Node;
 

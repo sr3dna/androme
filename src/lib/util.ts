@@ -1,3 +1,5 @@
+import { DOM_REGEX } from './constant';
+
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const NUMERALS = [
     '', 'C', 'CC', 'CCC', 'CD', 'D', 'DC', 'DCC', 'DCCC', 'CM',
@@ -223,7 +225,7 @@ export function optional(obj: Null<{}>, value: string, type?: string) {
 }
 
 export function resolvePath(value: string) {
-    if (!/^\w+:\/\//.test(value)) {
+    if (!DOM_REGEX.URI.test(value)) {
         let pathname = location.pathname.split('/');
         pathname.pop();
         if (value.charAt(0) === '/') {

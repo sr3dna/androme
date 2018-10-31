@@ -3,7 +3,11 @@
   "extends": [
     "tslint:recommended"
   ],
-  "jsRules": {},
+  "linterOptions": {
+    "exclude": [
+      "node_modules/**"
+    ]
+  },
   "rules": {
     "eofline": false,
     "trailing-comma": false,
@@ -33,6 +37,5 @@
     "label-position": false,
     "no-namespace": [true, "allow-declarations"],
     "max-classes-per-file": false
-  },
-  "rulesDirectory": []
+  }
 }

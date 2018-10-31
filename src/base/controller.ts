@@ -29,7 +29,7 @@ export default abstract class Controller<T extends Node> implements androme.lib.
         this._after = {};
     }
 
-    public appendRenderQueue(output: string) {
+    public replaceRenderQueue(output: string) {
         for (const id in this._before) {
             output = output.replace(`{<${id}}`, this._before[id].join(''));
         }

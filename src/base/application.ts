@@ -163,7 +163,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             }
         }
         this.viewController.setBoxSpacing(this.viewData);
-        this.appendRenderQueue();
+        this.processRenderQueue();
         this.viewController.finalize(
             this.viewData,
             this.resourceHandler.finalize(this.viewData)
@@ -991,7 +991,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                         let output = '';
                         if (nodeY.controlName === '') {
                             const borderVisible = nodeY.borderTopWidth > 0 || nodeY.borderBottomWidth > 0 || nodeY.borderRightWidth > 0 || nodeY.borderLeftWidth > 0;
-                            const backgroundImage = DOM_REGEX.URL.test(nodeY.css('backgroundImage')) || DOM_REGEX.URL.test(nodeY.css('background'));
+                            const backgroundImage = DOM_REGEX.CSS_URL.test(nodeY.css('backgroundImage')) || DOM_REGEX.CSS_URL.test(nodeY.css('background'));
                             const backgroundColor = nodeY.has('backgroundColor');
                             const backgroundVisible = borderVisible || backgroundImage || backgroundColor;
                             if (nodeY.children.length === 0) {
@@ -1778,7 +1778,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
         return output;
     }
 
-    public appendRenderQueue() {
+    public processRenderQueue() {
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
                 ext.setTarget(node);
@@ -1787,8 +1787,8 @@ export default class Application<T extends Node> implements androme.lib.base.App
         }
         const template: StringMap = {};
         for (const id in this.renderQueue) {
-            const [originalId] = id.split(':');
-            let replaceId = originalId;
+            const [nodeId] = id.split(':');
+            let replaceId = nodeId;
             if (!isNumber(replaceId)) {
                 const target = getNodeFromElement(document.getElementById(replaceId));
                 if (target) {
@@ -1796,7 +1796,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
                 }
             }
             let output = this.renderQueue[id].join('\n');
-            if (replaceId !== originalId) {
+            if (replaceId !== nodeId) {
                 const target = this.cacheSession.find('id', parseInt(replaceId));
                 if (target) {
                     const depth = target.renderDepth + 1;
@@ -1831,7 +1831,7 @@ export default class Application<T extends Node> implements androme.lib.base.App
             for (const id in template) {
                 value.content = value.content.replace(formatPlaceholder(id), template[id]);
             }
-            value.content = this.viewController.appendRenderQueue(value.content);
+            value.content = this.viewController.replaceRenderQueue(value.content);
         }
         for (const ext of this.extensions) {
             for (const node of ext.subscribers) {
@@ -2013,9 +2013,9 @@ export default class Application<T extends Node> implements androme.lib.base.App
                     }
                     catch (error) {
                         if (!warning) {
-                            alert('External CSS files cannot be parsed when loading this program from your hard drive with Chrome 64+ (file://). ' +
-                                  'Either use a local web server (http://), embed your CSS files into a <style> tag, or use a different browser. ' +
-                                  'See the README for further instructions.\n\n' +
+                            alert('External CSS files cannot be parsed with Chrome 64+ when loading HTML pages directly from your hard drive [file://]. ' +
+                                  'Either use a local web server [http://], embed your CSS into a &lt;style&gt; element, or use a different browser. ' +
+                                  'See the README for more detailed instructions.\n\n' +
                                   `${styleSheet.href}\n\n${error}`);
                             warning = true;
                         }

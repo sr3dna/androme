@@ -7,7 +7,7 @@ declare global {
             public static textBaseline<T>(list: T[]): T[];
             public static linearX<T>(list: T[], traverse?: boolean): boolean;
             public static linearY<T>(list: T[]): boolean;
-            public static sortByAlignment<T extends Node>(list: T[], alignmentType?: number, parent?: T): boolean;
+            public static sortByAlignment<T>(list: T[], alignmentType?: number, parent?: T): boolean;
             public static siblingIndex(): number;
             public parent?: T;
             public delegateAppend?: (node: T) => void;

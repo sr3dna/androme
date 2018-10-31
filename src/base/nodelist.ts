@@ -5,7 +5,7 @@ import Node from './node';
 import { convertInt, hasBit, partition, sortAsc, sortDesc } from '../lib/util';
 import { getNodeFromElement, isUserAgent } from '../lib/dom';
 
-function getDocumentParent<T extends Node>(nodes: T[]) {
+function getDocumentParent(nodes: Node[]) {
     for (const node of nodes) {
         if (!node.companion && node.domElement) {
             return node.documentParent;

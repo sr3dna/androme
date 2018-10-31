@@ -1,3 +1,7 @@
+type ExternalData = ObjectMap<any>;
+type TemplateData = ObjectMap<any>;
+type TemplateItemData = ArrayObject<ObjectMap<any[]>>;
+
 interface Asset {
     uri?: string;
 }
@@ -23,41 +27,44 @@ interface SVG {
     viewBoxHeight: number;
     opacity: number;
     defs: {
+        clipPaths: Map<string, SVGPath[]>,
         gradients: Map<string, Gradient>
     };
     children: SVGGroup[];
 }
 
 interface SVGGroup {
-    element: SVGSVGElement | SVGGElement;
+    element: SVGElement | SVGGElement;
     name: string;
     x?: number;
     y?: number;
+    width?: number;
+    height?: number;
     translateX: number;
     translateY: number;
     scaleX: number;
     scaleY: number;
-    rotation: number;
+    rotate: number;
     skewX: number;
     skewY: number;
-    nestedSVG: boolean;
     children: SVGPath[];
 }
 
 interface SVGPath {
     element: SVGGraphicsElement;
     name: string;
+    color: string;
     fillRule: string;
-    fill: string | string[] | ArrayObject<ObjectMap<any[]>>;
+    fill: string | TemplateItemData;
     fillOpacity: number;
-    stroke: string | string[] | ArrayObject<ObjectMap<any[]>>;
+    stroke: string | TemplateItemData;
     strokeWidth: string;
     strokeOpacity: number;
-    strokeLineCap: string;
-    strokeLineJoin: string;
-    strokeMiterLimit: string;
+    strokeLinecap: string;
+    strokeLinejoin: string;
+    strokeMiterlimit: string;
+    clipPath: string;
     clipRule: string;
-    clipPath: boolean;
     d: string;
 }
 
@@ -202,6 +209,3 @@ interface ResourceMap {
     drawables: Map<string, string>;
     images: Map<string, StringMap>;
 }
-
-type ExternalData = ObjectMap<any>;
-type TemplateData = ObjectMap<any>;

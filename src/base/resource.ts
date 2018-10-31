@@ -7,10 +7,90 @@ import NodeList from './nodelist';
 import Application from './application';
 import File from './file';
 
-import { convertFloat, convertInt, convertPX, hasValue, isNumber, isPercent, isString } from '../lib/util';
+import { convertInt, convertPX, hasValue, isNumber, isPercent, isString } from '../lib/util';
 import { convertClientUnit, cssAttribute, cssFromParent, cssInherit, getBoxSpacing, getElementCache, hasLineBreak, isUserAgent, isLineBreak, setElementCache } from '../lib/dom';
 import { replaceEntities } from '../lib/xml';
 import { parseRGBA } from '../lib/color';
+
+function buildSVGPath(item: SVGGraphicsElement, d: string) {
+    if (isString(d) && d !== 'none' && cssAttribute(item, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(item, 'visibility'))) {
+        let fill: string | string[] = cssAttribute(item, 'fill');
+        let stroke: string | string[] = cssAttribute(item, 'stroke');
+        let clipPath = '';
+        let color = parseRGBA(cssAttribute(item, 'color'));
+        if (color == null || !color.visible) {
+            color = parseRGBA(cssInherit(item, 'color'));
+        }
+        const pattern = /url\(#(.*?)\)/;
+        let match = pattern.exec(fill);
+        if (match) {
+            fill = `@${match[1]}`;
+        }
+        else if (isString(fill)) {
+            switch (fill.toLowerCase()) {
+                case 'none':
+                case 'transparent':
+                    fill = '';
+                    break;
+                case 'currentcolor':
+                    fill = color ? color.valueRGB : '';
+                    break;
+                default:
+                    const fillColor = parseRGBA(fill);
+                    if (fillColor) {
+                        fill = fillColor.valueRGB;
+                    }
+                    break;
+            }
+        }
+        match = pattern.exec(stroke);
+        if (match) {
+            stroke = `@${match[1]}`;
+        }
+        else if (isString(stroke)) {
+            switch (stroke.toLowerCase()) {
+                case 'none':
+                case 'transparent':
+                    stroke = '';
+                    break;
+                case 'currentcolor':
+                    stroke = color ? color.valueRGB : '';
+                    break;
+                default:
+                    const strokeColor = parseRGBA(stroke);
+                    if (strokeColor) {
+                        stroke = strokeColor.valueRGB;
+                    }
+                    break;
+            }
+        }
+        match = pattern.exec(cssAttribute(item, 'clip-path'));
+        if (match) {
+            clipPath = match[1];
+        }
+        const fillOpacity = parseFloat(cssAttribute(item, 'fill-opacity'));
+        const strokeOpacity = parseFloat(cssAttribute(item, 'stroke-opacity'));
+        return <SVGPath> {
+            name: item.id,
+            element: item,
+            color: color ? color.valueRGB : '',
+            fillRule: cssAttribute(item, 'fill-rule'),
+            fill,
+            stroke,
+            strokeWidth: convertInt(cssAttribute(item, 'stroke-width')).toString(),
+            fillOpacity: !isNaN(fillOpacity) && fillOpacity < 1 ? fillOpacity : 1,
+            strokeOpacity: !isNaN(strokeOpacity) && strokeOpacity < 1 ? strokeOpacity : 1,
+            strokeLinecap: cssAttribute(item, 'stroke-linecap'),
+            strokeLinejoin: cssAttribute(item, 'stroke-linejoin'),
+            strokeMiterlimit: cssAttribute(item, 'stroke-miterlimit'),
+            gradients: [],
+            clipPath,
+            clipRule: cssAttribute(item, 'clip-rule'),
+            d
+        };
+    }
+    return null;
+}
 
 export default abstract class Resource<T extends Node> implements androme.lib.base.Resource<T> {
     public static STORED: ResourceMap = {
@@ -143,6 +223,66 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         );
     }
 
+    public static createSVGPath(element: SVGElement) {
+        switch (element.tagName) {
+            case 'path': {
+                const subitem = <SVGPathElement> element;
+                return buildSVGPath(subitem, cssAttribute(subitem, 'd'));
+            }
+            case 'line': {
+                const subitem = <SVGLineElement> element;
+                if (subitem.x1.baseVal.value !== 0 || subitem.y1.baseVal.value !== 0 || subitem.x2.baseVal.value !== 0 || subitem.y2.baseVal.value !== 0) {
+                    const path = buildSVGPath(subitem, `M${subitem.x1.baseVal.value},${subitem.y1.baseVal.value} L${subitem.x2.baseVal.value},${subitem.y2.baseVal.value}`);
+                    if (path && path.stroke) {
+                        path.fill = '';
+                        return path;
+                    }
+                }
+                break;
+            }
+            case 'rect': {
+                const subitem = <SVGRectElement> element;
+                if (subitem.width.baseVal.value > 0 && subitem.height.baseVal.value > 0) {
+                    const x = subitem.x.baseVal.value;
+                    const y = subitem.y.baseVal.value;
+                    return buildSVGPath(subitem, `M${x},${y} H${x + subitem.width.baseVal.value} V${y + subitem.height.baseVal.value} H${x} L${x},${y}`);
+                }
+                break;
+            }
+            case 'polyline':
+            case 'polygon': {
+                const subitem = <SVGPolygonElement> element;
+                if (subitem.points.numberOfItems > 0) {
+                    const d: string[] = [];
+                    for (let j = 0; j < subitem.points.numberOfItems; j++) {
+                        const point = subitem.points.getItem(j);
+                        d.push(`${point.x},${point.y}`);
+                    }
+                    return buildSVGPath(subitem, `M${d.join(' ') + (element.tagName === 'polygon' ? 'z' : '')}`);
+                }
+                break;
+            }
+            case 'circle': {
+                const subitem = <SVGCircleElement> element;
+                const r = subitem.r.baseVal.value;
+                if (r > 0) {
+                    return buildSVGPath(subitem, `M${subitem.cx.baseVal.value},${subitem.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`);
+                }
+                break;
+            }
+            case 'ellipse': {
+                const subitem = <SVGEllipseElement> element;
+                const rx = subitem.rx.baseVal.value;
+                const ry = subitem.ry.baseVal.value;
+                if (rx > 0 && ry > 0) {
+                    return buildSVGPath(subitem, `M${subitem.cx.baseVal.value - rx},${subitem.cy.baseVal.value}a${rx},${ry} 0 1,0 ${rx * 2},0a${rx},${ry} 0 1,0 -${rx * 2},0`);
+                }
+                break;
+            }
+        }
+        return null;
+    }
+
     public abstract settings: Settings;
     public cache: NodeList<T>;
     public application: Application<T>;
@@ -165,34 +305,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         this.file.reset();
     }
 
-    public setBoxSpacing() {
-        this.cache.elements.forEach(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_SPACING) && (
-                    !getElementCache(node.element, 'boxSpacing') ||
-                    this.settings.alwaysReevaluateResources
-               ))
-            {
-                const result = getBoxSpacing(node.element);
-                const formatted = {};
-                for (const attr in result) {
-                    if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
-                        formatted[attr] = '0px';
-                    }
-                    else {
-                        formatted[attr] = convertPX(result[attr], node.css('fontSize'));
-                    }
-                }
-                setElementCache(node.element, 'boxSpacing', formatted);
-            }
-        });
-    }
-
     public setBoxStyle() {
         this.cache.elements.forEach(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.BOX_STYLE) && (
-                    !getElementCache(node.element, 'boxStyle') || this.settings.alwaysReevaluateResources
-               ))
-            {
+            if (this.checkPermissions(node, NODE_RESOURCE.BOX_STYLE, 'boxStyle')) {
                 const boxStyle: BoxStyle = {
                     background: null,
                     borderTop: null,
@@ -387,7 +502,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                                 }
                                 else {
                                     const images: string[] = [];
-                                    pattern = new RegExp(DOM_REGEX.URL, 'g');
+                                    pattern = new RegExp(DOM_REGEX.CSS_URL, 'g');
                                     match = null;
                                     while ((match = pattern.exec(value)) != null) {
                                         if (match) {
@@ -421,14 +536,9 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
 
     public setFontStyle() {
         this.cache.each(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.FONT_STYLE) && (
-                    !getElementCache(node.element, 'fontStyle') || this.settings.alwaysReevaluateResources
-               ))
-            {
+            if (this.checkPermissions(node, NODE_RESOURCE.FONT_STYLE, 'fontStyle')) {
                 const backgroundImage = Resource.hasDrawableBackground(<BoxStyle> getElementCache(node.element, 'boxStyle'));
-                if (node.length > 0 ||
-                    node.imageElement ||
-                    node.tagName === 'HR' ||
+                if (node.length > 0 || node.imageElement || node.tagName === 'HR' ||
                     (node.inlineText && !backgroundImage && !node.preserveWhiteSpace && node.element.innerHTML.trim() === ''))
                 {
                     return;
@@ -514,293 +624,26 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         });
     }
 
-    public setImageSource() {
-        this.cache.visible.forEach(node => {
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.IMAGE_SOURCE) && (
-                    !getElementCache(node.element, 'imageSource') || this.settings.alwaysReevaluateResources
-               ))
-            {
-                if (node.svgElement) {
-                    const element = <SVGSVGElement> node.element;
-                    if (element.children.length > 0) {
-                        function getPath(item: SVGGraphicsElement, d: string, clipPath: boolean) {
-                            if (isString(d) && d !== 'none' && cssAttribute(item, 'display') !== 'none' && !['hidden', 'collpase'].includes(cssAttribute(item, 'visibility'))) {
-                                let fill: string | string[] = cssAttribute(item, 'fill');
-                                let stroke: string | string[] = cssAttribute(item, 'stroke');
-                                let match = DOM_REGEX.URL.exec(fill);
-                                let color = parseRGBA(cssAttribute(item, 'color'));
-                                if (color == null || !color.visible) {
-                                    color = parseRGBA(cssInherit(item, 'color'));
-                                }
-                                if (match) {
-                                    fill = [match[1]];
-                                }
-                                else if (isString(fill)) {
-                                    switch (fill.toLowerCase()) {
-                                        case 'none':
-                                        case 'transparent':
-                                            fill = '';
-                                            break;
-                                        case 'currentcolor':
-                                            fill = color ? color.valueRGB : '';
-                                            break;
-                                        default:
-                                            const fillColor = parseRGBA(fill);
-                                            if (fillColor) {
-                                                fill = fillColor.valueRGB;
-                                            }
-                                            break;
-                                    }
-                                }
-                                match = DOM_REGEX.URL.exec(stroke);
-                                if (match) {
-                                    stroke = [match[1]];
-                                }
-                                else if (isString(stroke)) {
-                                    switch (stroke.toLowerCase()) {
-                                        case 'none':
-                                        case 'transparent':
-                                            stroke = '';
-                                            break;
-                                        case 'currentcolor':
-                                            stroke = color ? color.valueRGB : '';
-                                            break;
-                                        default:
-                                            const strokeColor = parseRGBA(stroke);
-                                            if (strokeColor) {
-                                                stroke = strokeColor.valueRGB;
-                                            }
-                                            break;
-                                    }
-                                }
-                                const fillOpacity = parseFloat(cssAttribute(item, 'fill-opacity'));
-                                const strokeOpacity = parseFloat(cssAttribute(item, 'stroke-opacity'));
-                                return <SVGPath> {
-                                    name: item.id,
-                                    element: item,
-                                    fillRule: cssAttribute(item, 'fill-rule'),
-                                    fill,
-                                    stroke,
-                                    strokeWidth: convertInt(cssAttribute(item, 'stroke-width')).toString(),
-                                    fillOpacity: !isNaN(fillOpacity) && fillOpacity < 1 ? fillOpacity : 1,
-                                    strokeOpacity: !isNaN(strokeOpacity) && strokeOpacity < 1 ? strokeOpacity : 1,
-                                    strokeLineCap: cssAttribute(item, 'stroke-linecap'),
-                                    strokeLineJoin: cssAttribute(item, 'stroke-linejoin'),
-                                    strokeMiterLimit: cssAttribute(item, 'stroke-miterlimit'),
-                                    gradients: [],
-                                    clipPath,
-                                    clipRule: cssAttribute(item, 'clip-rule'),
-                                    d
-                                };
-                            }
-                            return null;
-                        }
-                        const opacity = convertFloat(node.css('opacity'));
-                        const svg: SVG = {
-                            element,
-                            name: element.id,
-                            width: element.width.baseVal.value,
-                            height: element.height.baseVal.value,
-                            viewBoxWidth: element.viewBox.baseVal.width,
-                            viewBoxHeight: element.viewBox.baseVal.height,
-                            opacity: !isNaN(opacity) && opacity < 1 ? opacity : 1,
-                            defs: {
-                                gradients: new Map<string, Gradient>()
-                            },
-                            children: []
-                        };
-                        const baseElements = Array.from(element.children).filter(item => item.tagName === 'svg' || item.tagName === 'defs' || item.tagName === 'g') as SVGSVGElement[];
-                        [element, ...baseElements].forEach((item, index) => {
-                            if (item.tagName === 'defs') {
-                                function getColorStop(gradient: SVGGradientElement) {
-                                    const result: ColorStop[] = [];
-                                    Array.from(gradient.getElementsByTagName('stop')).forEach(stop => {
-                                        const color = parseRGBA(cssAttribute(stop, 'stop-color'));
-                                        if (color) {
-                                            result.push({
-                                                color,
-                                                offset: cssAttribute(stop, 'offset')
-                                            });
-                                        }
-                                    });
-                                    return result;
-                                }
-                                const defs = <SVGDefsElement> item;
-                                for (let i = 0; i < defs.children.length; i++) {
-                                    if (defs.children[i].id) {
-                                        switch (defs.children[i].tagName) {
-                                            case 'linearGradient': {
-                                                const gradient = <SVGLinearGradientElement> defs.children[i];
-                                                svg.defs.gradients.set(`#${gradient.id}`, <LinearGradient> {
-                                                    type: 'linear',
-                                                    x1: gradient.x1.baseVal.value,
-                                                    x2: gradient.x2.baseVal.value,
-                                                    y1: gradient.y1.baseVal.value,
-                                                    y2: gradient.y2.baseVal.value,
-                                                    colorStop: getColorStop(gradient)
-                                                });
-                                                break;
-                                            }
-                                            case 'radialGradient': {
-                                                const gradient = <SVGRadialGradientElement> defs.children[i];
-                                                svg.defs.gradients.set(`#${gradient.id}`, <RadialGradient> {
-                                                    type: 'radial',
-                                                    cx: gradient.cx.baseVal.value,
-                                                    cy: gradient.cy.baseVal.value,
-                                                    r: gradient.r.baseVal.value,
-                                                    fx: gradient.fx.baseVal.value,
-                                                    fy: gradient.fy.baseVal.value,
-                                                    colorStop: getColorStop(gradient)
-                                                });
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else {
-                                const group: SVGGroup = {
-                                    element: item,
-                                    name: item.id || `g_${index}`,
-                                    translateX: 0,
-                                    translateY: 0,
-                                    scaleX: 1,
-                                    scaleY: 1,
-                                    rotation: 0,
-                                    skewX: 0,
-                                    skewY: 0,
-                                    nestedSVG: false,
-                                    children: []
-                                };
-                                switch (item.tagName) {
-                                    case 'g':
-                                        const g = <SVGGElement> item;
-                                        for (let i = 0; i < g.transform.baseVal.numberOfItems; i++) {
-                                            const transform = g.transform.baseVal.getItem(i);
-                                            switch (transform.type) {
-                                                case SVGTransform.SVG_TRANSFORM_TRANSLATE:
-                                                    group.translateX = transform.matrix.e;
-                                                    group.translateY = transform.matrix.f;
-                                                    break;
-                                                case SVGTransform.SVG_TRANSFORM_SCALE:
-                                                    group.scaleX = transform.matrix.a;
-                                                    group.scaleY = transform.matrix.d;
-                                                    break;
-                                                case SVGTransform.SVG_TRANSFORM_ROTATE:
-                                                    group.rotation = transform.angle;
-                                                    break;
-                                                case SVGTransform.SVG_TRANSFORM_SKEWX:
-                                                    group.skewX = transform.angle;
-                                                    break;
-                                                case SVGTransform.SVG_TRANSFORM_SKEWY:
-                                                    group.skewY = transform.angle;
-                                                    break;
-                                            }
-                                        }
-                                        break;
-                                    default:
-                                        if (index > 0) {
-                                            group.x = item.x.baseVal.value;
-                                            group.y = item.y.baseVal.value;
-                                            group.nestedSVG = true;
-                                        }
-                                        break;
-                                }
-                                const clipPath = Array.from(item.children).filter(path => path.tagName === 'clipPath') as SVGClipPathElement[];
-                                [item, ...clipPath].forEach((shape, layerIndex) => {
-                                    for (let i = 0; i < shape.children.length; i++) {
-                                        const tagName = shape.children[i].tagName;
-                                        const clipped = layerIndex > 0;
-                                        switch (tagName) {
-                                            case 'path': {
-                                                const subitem = <SVGPathElement> shape.children[i];
-                                                const path = getPath(subitem, cssAttribute(subitem, 'd'), clipped);
-                                                if (path) {
-                                                    group.children.push(path);
-                                                }
-                                                break;
-                                            }
-                                            case 'line': {
-                                                const subitem = <SVGLineElement> shape.children[i];
-                                                if (subitem.x1.baseVal.value !== 0 || subitem.y1.baseVal.value !== 0 || subitem.x2.baseVal.value !== 0 || subitem.y2.baseVal.value !== 0) {
-                                                    const path = getPath(subitem, `M${subitem.x1.baseVal.value},${subitem.y1.baseVal.value} L${subitem.x2.baseVal.value},${subitem.y2.baseVal.value}`, clipped);
-                                                    if (path && path.stroke) {
-                                                        path.fill = '';
-                                                        group.children.push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'rect': {
-                                                const subitem = <SVGRectElement> shape.children[i];
-                                                if (subitem.width.baseVal.value > 0 && subitem.height.baseVal.value > 0) {
-                                                    const x = subitem.x.baseVal.value;
-                                                    const y = subitem.y.baseVal.value;
-                                                    const path = getPath(subitem, `M${x},${y} H${x + subitem.width.baseVal.value} V${y + subitem.height.baseVal.value} H${x} L${x},${y}`, clipped);
-                                                    if (path) {
-                                                        group.children.push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'polyline':
-                                            case 'polygon': {
-                                                const subitem = <SVGPolygonElement> shape.children[i];
-                                                if (subitem.points.numberOfItems > 0) {
-                                                    const d: string[] = [];
-                                                    for (let j = 0; j < subitem.points.numberOfItems; j++) {
-                                                        const point = subitem.points.getItem(j);
-                                                        d.push(`${point.x},${point.y}`);
-                                                    }
-                                                    const path = getPath(subitem, `M${d.join(' ') + (tagName === 'polygon' ? 'z' : '')}`, clipped);
-                                                    if (path) {
-                                                        group.children.push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'circle': {
-                                                const subitem = <SVGCircleElement> shape.children[i];
-                                                const r = subitem.r.baseVal.value;
-                                                if (r > 0) {
-                                                    const path = getPath(subitem, `M${subitem.cx.baseVal.value},${subitem.cy.baseVal.value} m-${r},0 a${r},${r} 0 1,0 ${r * 2},0 a${r},${r} 0 1,0 -${r * 2},0`, clipped);
-                                                    if (path) {
-                                                        group.children.push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                            case 'ellipse': {
-                                                const subitem = <SVGEllipseElement> shape.children[i];
-                                                const rx = subitem.rx.baseVal.value;
-                                                const ry = subitem.ry.baseVal.value;
-                                                if (rx > 0 && ry > 0) {
-                                                    const path = getPath(subitem, `M${subitem.cx.baseVal.value - rx},${subitem.cy.baseVal.value}a${rx},${ry} 0 1,0 ${rx * 2},0a${rx},${ry} 0 1,0 -${rx * 2},0`, clipped);
-                                                    if (path) {
-                                                        group.children.push(path);
-                                                    }
-                                                }
-                                                break;
-                                            }
-                                        }
-                                    }
-                                });
-                                if (group.children.length > 0) {
-                                    svg.children.push(group);
-                                }
-                            }
-                        });
-                        if (svg.children.length > 0) {
-                            setElementCache(element, 'imageSource', svg);
-                        }
+    public setBoxSpacing() {
+        this.cache.elements.forEach(node => {
+            if (this.checkPermissions(node, NODE_RESOURCE.BOX_SPACING, 'boxSpacing')) {
+                const result = getBoxSpacing(node.element);
+                const formatted = {};
+                for (const attr in result) {
+                    if (node.inlineStatic && (attr === 'marginTop' || attr === 'marginBottom')) {
+                        formatted[attr] = '0px';
+                    }
+                    else {
+                        formatted[attr] = convertPX(result[attr], node.css('fontSize'));
                     }
                 }
+                setElementCache(node.element, 'boxSpacing', formatted);
             }
         });
     }
 
     public setValueString() {
-        function parseWhiteSpace(node: T, value: string): [string, boolean] {
+        function replaceWhiteSpace(node: T, value: string): [string, boolean] {
             if (node.multiLine && !node.renderParent.linearVertical) {
                 value = value.replace(/^\s*\n/, '');
             }
@@ -833,10 +676,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         }
         this.cache.visible.forEach(node => {
             const element = node.element;
-            if (!node.hasBit('excludeResource', NODE_RESOURCE.VALUE_STRING) && (
-                    !getElementCache(element, 'valueString') || this.settings.alwaysReevaluateResources
-               ))
-            {
+            if (this.checkPermissions(node, NODE_RESOURCE.VALUE_STRING, 'valueString')) {
                 let name = '';
                 let value = '';
                 let inlineTrim = false;
@@ -869,7 +709,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     else if (node.inlineText) {
                         name = node.textContent.trim();
                         value = replaceEntities(element.children.length > 0 || element.tagName === 'CODE' ? element.innerHTML : node.textContent);
-                        [value, inlineTrim] = parseWhiteSpace(node, value);
+                        [value, inlineTrim] = replaceWhiteSpace(node, value);
                         value = value.replace(/\s*<br\s*\/?>\s*/g, '\\n');
                         value = value.replace(/\s+(class|style)=".*?"/g, '');
                     }
@@ -882,7 +722,7 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
                     name = node.textContent.trim();
                     value = replaceEntities(node.textContent);
                     value = value.replace(/&[A-Za-z]+;/g, match => match.replace('&', '&amp;'));
-                    [value, inlineTrim] = parseWhiteSpace(node, value);
+                    [value, inlineTrim] = replaceWhiteSpace(node, value);
                 }
                 if (value !== '') {
                     if (performTrim) {
@@ -944,38 +784,240 @@ export default abstract class Resource<T extends Node> implements androme.lib.ba
         this.cache.list.filter(node =>
             node.visible &&
             node.tagName === 'SELECT' &&
-            !node.hasBit('excludeResource', NODE_RESOURCE.OPTION_ARRAY)
-        )
-        .forEach(node => {
+            this.checkPermissions(node, NODE_RESOURCE.OPTION_ARRAY, 'optionArray')
+        ).forEach(node => {
             const element = <HTMLSelectElement> node.element;
-            if (!getElementCache(element, 'optionArray') || this.settings.alwaysReevaluateResources) {
-                const stringArray: string[] = [];
-                let numberArray: Null<string[]> = [];
-                let i = -1;
-                while (++i < element.children.length) {
-                    const item = <HTMLOptionElement> element.children[i];
-                    const value = item.text.trim();
-                    if (value !== '') {
-                        if (numberArray && stringArray.length === 0 && isNumber(value)) {
-                            numberArray.push(value);
+            const stringArray: string[] = [];
+            let numberArray: Null<string[]> = [];
+            let i = -1;
+            while (++i < element.children.length) {
+                const item = <HTMLOptionElement> element.children[i];
+                const value = item.text.trim();
+                if (value !== '') {
+                    if (numberArray && stringArray.length === 0 && isNumber(value)) {
+                        numberArray.push(value);
+                    }
+                    else {
+                        if (numberArray && numberArray.length > 0) {
+                            i = -1;
+                            numberArray = null;
+                            continue;
                         }
-                        else {
-                            if (numberArray && numberArray.length > 0) {
-                                i = -1;
-                                numberArray = null;
-                                continue;
-                            }
-                            if (value !== '') {
-                                stringArray.push(value);
-                            }
+                        if (value !== '') {
+                            stringArray.push(value);
                         }
                     }
                 }
-                setElementCache(element, 'optionArray', {
-                    stringArray: stringArray.length > 0 ? stringArray : null,
-                    numberArray: numberArray && numberArray.length > 0 ? numberArray : null
-                });
+            }
+            setElementCache(element, 'optionArray', {
+                stringArray: stringArray.length > 0 ? stringArray : null,
+                numberArray: numberArray && numberArray.length > 0 ? numberArray : null
+            });
+        });
+    }
+
+    public setImageSource() {
+        this.cache.visible.forEach(node => {
+            if (this.checkPermissions(node, NODE_RESOURCE.IMAGE_SOURCE, 'imageSource')) {
+                if (node.svgElement) {
+                    const element = <SVGSVGElement> node.element;
+                    if (element.children.length > 0) {
+                        const opacity = parseFloat(node.css('opacity'));
+                        const svg: SVG = {
+                            element,
+                            name: element.id,
+                            width: element.width.baseVal.value,
+                            height: element.height.baseVal.value,
+                            viewBoxWidth: element.viewBox.baseVal.width,
+                            viewBoxHeight: element.viewBox.baseVal.height,
+                            opacity: !isNaN(opacity) && opacity < 1 ? opacity : 1,
+                            defs: {
+                                clipPaths: new Map<string, SVGPath[]>(),
+                                gradients: new Map<string, Gradient>()
+                            },
+                            children: []
+                        };
+                        const baseTags = new Set(['defs', 'svg', 'g', 'clipPath']);
+                        function addClipPath(clipPath: SVGClipPathElement) {
+                            if (clipPath.id) {
+                                const result: SVGPath[] = [];
+                                for (const item of Array.from(clipPath.children)) {
+                                    const path = Resource.createSVGPath(<SVGElement> item);
+                                    if (path) {
+                                        result.push(path);
+                                    }
+                                }
+                                if (result.length > 0) {
+                                    svg.defs.clipPaths.set(`${clipPath.id}`, result);
+                                }
+                            }
+                        }
+                        [element, ...Array.from(element.children).filter(item => baseTags.has(item.tagName))].forEach((item: SVGElement, index) => {
+                            if (item.tagName === 'defs') {
+                                function getColorStop(gradient: SVGGradientElement) {
+                                    const result: ColorStop[] = [];
+                                    Array.from(gradient.getElementsByTagName('stop')).forEach(stop => {
+                                        const color = parseRGBA(cssAttribute(stop, 'stop-color'));
+                                        if (color) {
+                                            result.push({
+                                                color,
+                                                offset: cssAttribute(stop, 'offset')
+                                            });
+                                        }
+                                    });
+                                    return result;
+                                }
+                                const defs = <SVGDefsElement> item;
+                                for (let i = 0; i < defs.children.length; i++) {
+                                    if (defs.children[i].id) {
+                                        switch (defs.children[i].tagName) {
+                                            case 'clipPath': {
+                                                addClipPath(<SVGClipPathElement> defs.children[i]);
+                                                break;
+                                            }
+                                            case 'linearGradient': {
+                                                const gradient = <SVGLinearGradientElement> defs.children[i];
+                                                svg.defs.gradients.set(`@${gradient.id}`, <LinearGradient> {
+                                                    type: 'linear',
+                                                    x1: gradient.x1.baseVal.value,
+                                                    x2: gradient.x2.baseVal.value,
+                                                    y1: gradient.y1.baseVal.value,
+                                                    y2: gradient.y2.baseVal.value,
+                                                    colorStop: getColorStop(gradient)
+                                                });
+                                                break;
+                                            }
+                                            case 'radialGradient': {
+                                                const gradient = <SVGRadialGradientElement> defs.children[i];
+                                                svg.defs.gradients.set(`@${gradient.id}`, <RadialGradient> {
+                                                    type: 'radial',
+                                                    cx: gradient.cx.baseVal.value,
+                                                    cy: gradient.cy.baseVal.value,
+                                                    r: gradient.r.baseVal.value,
+                                                    fx: gradient.fx.baseVal.value,
+                                                    fy: gradient.fy.baseVal.value,
+                                                    colorStop: getColorStop(gradient)
+                                                });
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            else {
+                                const group: SVGGroup = {
+                                    element: item,
+                                    name: item.id,
+                                    translateX: 0,
+                                    translateY: 0,
+                                    scaleX: 1,
+                                    scaleY: 1,
+                                    rotate: 0,
+                                    skewX: 0,
+                                    skewY: 0,
+                                    children: []
+                                };
+                                switch (item.tagName) {
+                                    case 'g': {
+                                        const g = <SVGGElement> item;
+                                        for (let i = 0; i < g.transform.baseVal.numberOfItems; i++) {
+                                            const transform = g.transform.baseVal.getItem(i);
+                                            switch (transform.type) {
+                                                case SVGTransform.SVG_TRANSFORM_TRANSLATE:
+                                                    group.translateX = transform.matrix.e;
+                                                    group.translateY = transform.matrix.f;
+                                                    break;
+                                                case SVGTransform.SVG_TRANSFORM_SCALE:
+                                                    group.scaleX = transform.matrix.a;
+                                                    group.scaleY = transform.matrix.d;
+                                                    break;
+                                                case SVGTransform.SVG_TRANSFORM_ROTATE:
+                                                    group.rotate = transform.angle;
+                                                    break;
+                                                case SVGTransform.SVG_TRANSFORM_SKEWX:
+                                                    group.skewX = transform.angle;
+                                                    break;
+                                                case SVGTransform.SVG_TRANSFORM_SKEWY:
+                                                    group.skewY = transform.angle;
+                                                    break;
+                                            }
+                                        }
+                                        break;
+                                    }
+                                    case 'clipPath': {
+                                        addClipPath(<SVGClipPathElement> item);
+                                        return;
+                                    }
+                                    case 'svg': {
+                                        if (index > 0) {
+                                            const nestedSvg = <SVGSVGElement> item;
+                                            group.x = nestedSvg.x.baseVal.value;
+                                            group.y = nestedSvg.y.baseVal.value;
+                                            group.width = nestedSvg.width.baseVal.value;
+                                            group.height = nestedSvg.height.baseVal.value;
+                                        }
+                                        break;
+                                    }
+                                }
+                                for (let i = 0; i < item.children.length; i++) {
+                                    const path = Resource.createSVGPath(<SVGElement> item.children[i]);
+                                    if (path) {
+                                        group.children.push(path);
+                                    }
+                                }
+                                if (group.children.length > 0) {
+                                    svg.children.push(group);
+                                }
+                            }
+                        });
+                        const useResult: SVGGroup[] = [];
+                        Array.from(element.children).filter(item => item.tagName === 'use').forEach((item: SVGUseElement) => {
+                            let svgGroup: Null<SVGGroup> = null;
+                            let svgPath: Null<SVGPath> = null;
+                            for (let i = 0; i < svg.children.length; i++) {
+                                svgGroup = svg.children[i];
+                                for (let j = 0; j < svgGroup.children.length; j++) {
+                                    if (item.href.baseVal === `#${svgGroup.children[j].name}`) {
+                                        svgPath = svgGroup.children[i];
+                                        break;
+                                    }
+                                }
+                            }
+                            if (svgGroup && svgPath) {
+                                const useGroup = Object.assign({}, svgGroup);
+                                useGroup.element = item;
+                                useGroup.name = item.id;
+                                useGroup.children = [];
+                                if (cssAttribute(item, 'x') !== '0px') {
+                                    useGroup.x = item.x.baseVal.value;
+                                }
+                                if (cssAttribute(item, 'y') !== '0px') {
+                                    useGroup.y = item.y.baseVal.value;
+                                }
+                                if (item.width.baseVal.value > 0) {
+                                    useGroup.width = item.width.baseVal.value;
+                                }
+                                if (item.height.baseVal.value > 0) {
+                                    useGroup.height = item.height.baseVal.value;
+                                }
+                                const usePath = buildSVGPath(item, svgPath.d);
+                                if (usePath) {
+                                    useGroup.children.push(usePath);
+                                    useResult.push(useGroup);
+                                }
+                            }
+                        });
+                        svg.children.push(...useResult);
+                        if (svg.children.length > 0) {
+                            setElementCache(element, 'imageSource', svg);
+                        }
+                    }
+                }
             }
         });
+    }
+
+    private checkPermissions(node: Node, resourceFlag: number, storedName: string) {
+        return !node.hasBit('excludeResource', resourceFlag) && (!getElementCache(node.element, storedName) || this.settings.alwaysReevaluateResources);
     }
 }

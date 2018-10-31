@@ -8,7 +8,7 @@ const template = [
     '!2',
     '!3',
 '		<path',
-'			android:name="{~name}" android:fillType="{~fillRule}" android:fillColor="{~fill}" android:fillAlpha="{~fillOpacity}" android:strokeColor="{~stroke}" android:strokeWidth="{~strokeWidth}" android:strokeAlpha="{~strokeOpacity}" android:strokeLineCap="{~strokeLineCap}" android:strokeLineJoin="{~strokeLineJoin}" android:strokeMiterLimit="{~strokeMiterLimit}"',
+'			android:name="{~name}" android:fillType="{~fillRule}" android:fillColor="{~fill}" android:fillAlpha="{~fillOpacity}" android:strokeColor="{~stroke}" android:strokeWidth="{~strokeWidth}" android:strokeAlpha="{~strokeOpacity}" android:strokeLineCap="{~strokeLinecap}" android:strokeLineJoin="{~strokeLinejoin}" android:strokeMiterLimit="{~strokeMiterlimit}"',
 '			android:pathData="{&d}">',
         '!fill',
 '			<aapt:attr name="android:fillColor">',

@@ -151,7 +151,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     if (obj[attr] != null) {
                         let value = obj[attr].toString();
                         switch (namespace) {
-                            case 'android':
+                            case 'android': {
                                 switch (attr) {
                                     case 'text':
                                         if (!value.startsWith('@string/')) {
@@ -173,6 +173,7 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                                         break;
                                 }
                                 break;
+                            }
                         }
                         const hexAlpha = $color.parseRGBA(value);
                         if (hexAlpha && hexAlpha.visible) {
@@ -430,30 +431,6 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
             });
         }
         return <ArrayObject<FunctionVoid>> callbackArray;
-    }
-
-    public setBoxSpacing() {
-        super.setBoxSpacing();
-        this.cache.elements.forEach(node => {
-            const stored: StringMap = $dom.getElementCache(node.element, 'boxSpacing');
-            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
-                if (stored.marginLeft === stored.marginRight &&
-                    node.alignParent('left', this.settings) &&
-                    node.alignParent('right', this.settings) &&
-                    !node.blockWidth &&
-                    !(node.position === 'relative' && node.alignNegative))
-                {
-                    node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-                    node.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
-                }
-                if (node.css('marginLeft') === 'auto') {
-                    node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
-                }
-                if (node.css('marginRight') === 'auto') {
-                    node.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
-                }
-            }
-        });
     }
 
     public setBoxStyle() {
@@ -1140,125 +1117,26 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
         }
     }
 
-    public setImageSource() {
-        super.setImageSource();
-        this.cache.visible.forEach(node => {
-            let result = '';
-            if (node.svgElement) {
-                const stored: SVG = $dom.getElementCache(node.element, 'imageSource');
-                if (stored) {
-                    const item1: ArrayObject<StringMap> = [];
-                    const namespace = new Set<string>();
-                    stored.children.forEach(svg => {
-                        const group: TemplateData = {
-                            name: svg.name,
-                            '2': [],
-                            '3': []
-                        };
-                        if (!svg.nestedSVG) {
-                            if (svg.scaleX !== 1) {
-                                group.scaleX = svg.scaleX.toString();
-                            }
-                            if (svg.scaleY !== 1) {
-                                group.scaleY = svg.scaleY.toString();
-                            }
-                            if (svg.rotation !== 0) {
-                                group.rotation = svg.rotation.toString();
-                            }
-                            if (svg.skewX !== 0) {
-                                group.pivotX = svg.skewX.toString();
-                            }
-                            if (svg.skewY !== 0) {
-                                group.pivotY = svg.skewY.toString();
-                            }
-                            if (svg.translateX !== 0) {
-                                group.translateX = svg.translateX.toString();
-                            }
-                            if (svg.translateY !== 0) {
-                                group.translateY = svg.translateY.toString();
-                            }
-                        }
-                        else {
-                            if (svg.x && svg.x !== 0) {
-                                group.translateX = svg.x.toString();
-                            }
-                            if (svg.y && svg.y !== 0) {
-                                group.translateY = svg.y.toString();
-                            }
-                        }
-                        svg.children.forEach(item => {
-                            if (item.clipPath) {
-                                group['2'].push({
-                                    name: item.name,
-                                    d: item.d
-                                });
-                            }
-                            else {
-                                ['fill', 'stroke'].forEach(value => {
-                                    if ($util.isArray<string>(item[value])) {
-                                        const gradients: Gradient[] = [];
-                                        item[value].forEach((id: string) => {
-                                            const gradient = stored.defs.gradients.get(id);
-                                            if (gradient) {
-                                                gradients.push(gradient);
-                                            }
-                                        });
-                                        if (gradients.length > 0) {
-                                            item[value] = [{ gradients: this.buildBackgroundGradient(node, gradients) }];
-                                            namespace.add('aapt');
-                                        }
-                                    }
-                                    else if (this.settings.vectorColorResourceValue) {
-                                        if ($util.isString(item[value])) {
-                                            const color = $color.parseRGBA(item[value]);
-                                            if (color && color.visible) {
-                                                item[value] = `@color/${ResourceHandler.addColor(color)}`;
-                                            }
-                                        }
-                                    }
-                                });
-                                if (item.fillRule) {
-                                    switch (item.fillRule) {
-                                        case 'evenodd':
-                                            item.fillRule = 'evenOdd';
-                                            break;
-                                        default:
-                                            item.fillRule = 'nonZero';
-                                            break;
-                                    }
-                                }
-                                group['3'].push(item);
-                            }
-                        });
-                        item1.push(group);
-                    });
-                    const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), {
-                        namespace: namespace.size > 0 ? getXmlNs(...Array.from(namespace)) : '',
-                        width: $util.formatPX(stored.width),
-                        height: $util.formatPX(stored.height),
-                        viewportWidth: stored.viewBoxWidth > 0 ? stored.viewBoxWidth.toString() : false,
-                        viewportHeight: stored.viewBoxHeight > 0 ? stored.viewBoxHeight.toString() : false,
-                        alpha: stored.opacity < 1 ? stored.opacity : false,
-                        '1': item1
-                    });
-                    result = getStoredDrawable(xml);
-                    if (result === '') {
-                        result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
-                        $resource.STORED.drawables.set(result, xml);
-                    }
-                }
-            }
-            else {
-                if ((node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
-                    !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE))
+    public setBoxSpacing() {
+        super.setBoxSpacing();
+        this.cache.elements.forEach(node => {
+            const stored: StringMap = $dom.getElementCache(node.element, 'boxSpacing');
+            if (stored && !node.hasBit('excludeResource', $enum.NODE_RESOURCE.BOX_SPACING)) {
+                if (stored.marginLeft === stored.marginRight &&
+                    !node.blockWidth &&
+                    node.alignParent('left', this.settings) &&
+                    node.alignParent('right', this.settings) &&
+                    !(node.position === 'relative' && node.alignNegative))
                 {
-                    const element = <HTMLImageElement> node.element;
-                    result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ mdpi: element.src });
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
                 }
-            }
-            if (result !== '') {
-                node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
-                $dom.setElementCache(node.element, 'imageSource', result);
+                if (node.css('marginLeft') === 'auto') {
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_LEFT, null);
+                }
+                if (node.css('marginRight') === 'auto') {
+                    node.modifyBox($enum.BOX_STANDARD.MARGIN_RIGHT, null);
+                }
             }
         });
     }
@@ -1351,6 +1229,133 @@ export default class ResourceHandler<T extends View> extends androme.lib.base.Re
                     }
                     node.android('entries', `@array/${arrayName}`, node.renderExtension.size === 0);
                 }
+            }
+        });
+    }
+
+    public setImageSource() {
+        super.setImageSource();
+        this.cache.visible.forEach(node => {
+            let result = '';
+            if (node.svgElement) {
+                const stored: SVG = $dom.getElementCache(node.element, 'imageSource');
+                if (stored) {
+                    const namespace = new Set<string>();
+                    const groups: ArrayObject<StringMap> = [];
+                    stored.children.forEach(group => {
+                        const data: TemplateData = {
+                            name: group.name,
+                            '2': [],
+                            '3': []
+                        };
+                        if (group.element.tagName !== 'svg' || group.element === node.element) {
+                            if (group.scaleX !== 1) {
+                                data.scaleX = group.scaleX.toString();
+                            }
+                            if (group.scaleY !== 1) {
+                                data.scaleY = group.scaleY.toString();
+                            }
+                            if (group.rotate !== 0) {
+                                data.rotation = group.rotate.toString();
+                            }
+                            if (group.skewX !== 0) {
+                                data.pivotX = group.skewX.toString();
+                            }
+                            if (group.skewY !== 0) {
+                                data.pivotY = group.skewY.toString();
+                            }
+                            if (group.element.tagName === 'use') {
+                                if (group.x) {
+                                    data.translateX = group.x.toString();
+                                }
+                                if (group.y) {
+                                    data.translateY = group.y.toString();
+                                }
+                            }
+                            else {
+                                if (group.translateX !== 0) {
+                                    data.translateX = group.translateX.toString();
+                                }
+                                if (group.translateY !== 0) {
+                                    data.translateY = group.translateY.toString();
+                                }
+                            }
+                        }
+                        else {
+                            if (group.x) {
+                                data.translateX = group.x.toString();
+                            }
+                            if (group.y) {
+                                data.translateY = group.y.toString();
+                            }
+                        }
+                        group.children.forEach(item => {
+                            if (item.clipPath !== '') {
+                                const clipPath = stored.defs.clipPaths.get(item.clipPath);
+                                if (clipPath) {
+                                    clipPath.forEach(path => data['2'].push({ name: path.name, d: path.d }));
+                                }
+                            }
+                            ['fill', 'stroke'].forEach(value => {
+                                if (item[value].charAt(0) === '@') {
+                                    const gradient = stored.defs.gradients.get(item[value]);
+                                    if (gradient) {
+                                        item[value] = [{ gradients: this.buildBackgroundGradient(node, [gradient]) }];
+                                        namespace.add('aapt');
+                                        return;
+                                    }
+                                    else {
+                                        item[value] = item.color;
+                                    }
+                                }
+                                if (this.settings.vectorColorResourceValue) {
+                                    const color = ResourceHandler.addColor(item[value]);
+                                    if (color !== '') {
+                                        item[value] = `@color/${color}`;
+                                    }
+                                }
+                            });
+                            if (item.fillRule) {
+                                switch (item.fillRule) {
+                                    case 'evenodd':
+                                        item.fillRule = 'evenOdd';
+                                        break;
+                                    default:
+                                        item.fillRule = 'nonZero';
+                                        break;
+                                }
+                            }
+                            data['3'].push(item);
+                        });
+                        groups.push(data);
+                    });
+                    const xml = $xml.createTemplate($xml.parseTemplate(VECTOR_TMPL), {
+                        namespace: namespace.size > 0 ? getXmlNs(...Array.from(namespace)) : '',
+                        width: $util.formatPX(stored.width),
+                        height: $util.formatPX(stored.height),
+                        viewportWidth: stored.viewBoxWidth > 0 ? stored.viewBoxWidth.toString() : false,
+                        viewportHeight: stored.viewBoxHeight > 0 ? stored.viewBoxHeight.toString() : false,
+                        alpha: stored.opacity < 1 ? stored.opacity : false,
+                        '1': groups
+                    });
+                    result = getStoredDrawable(xml);
+                    if (result === '') {
+                        result = `${node.nodeName.toLowerCase()}_${node.nodeId}`;
+                        $resource.STORED.drawables.set(result, xml);
+                    }
+                }
+            }
+            else {
+                if ((node.imageElement || (node.tagName === 'INPUT' && (<HTMLInputElement> node.element).type === 'image')) &&
+                    !node.hasBit('excludeResource', $enum.NODE_RESOURCE.IMAGE_SOURCE))
+                {
+                    const element = <HTMLImageElement> node.element;
+                    result = node.imageElement ? ResourceHandler.addImageSrcSet(element) : ResourceHandler.addImage({ mdpi: element.src });
+                }
+            }
+            if (result !== '') {
+                node.android('src', `@drawable/${result}`, node.renderExtension.size === 0);
+                $dom.setElementCache(node.element, 'imageSource', result);
             }
         });
     }

@@ -19,7 +19,7 @@ declare global {
             public setBoxSpacing(data: ViewData<NodeList<T>>): void;
             public finalize(data: ViewData<NodeList<T>>, callbackArray: ArrayObject<FunctionVoid>): void;
             public reset(): void;
-            public appendRenderQueue(output: string): string;
+            public replaceRenderQueue(output: string): string;
             public prependBefore(id: number, output: string, index?: number): void;
             public appendAfter(id: number, output: string, index?: number): void;
             public hasAppendProcessing(id: number): boolean;
